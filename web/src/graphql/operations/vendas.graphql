@@ -1,0 +1,236 @@
+# Orçamentos, pedidos e estoque.
+
+fragment OrcamentoFields on Orcamento {
+  id
+  numero
+  empresaId
+  contatoId
+  oportunidadeId
+  vendedorId
+  status
+  emitidoEm
+  validoAte
+  subtotal
+  desconto
+  frete
+  total
+  condicaoPagamento
+  observacoes
+  convertidoPedidoId
+  createdAt
+  updatedAt
+}
+
+fragment OrcamentoItemFields on OrcamentoItem {
+  id
+  orcamentoId
+  produtoId
+  descricao
+  quantidade
+  precoUnitario
+  desconto
+  total
+}
+
+fragment PedidoFields on Pedido {
+  id
+  numero
+  empresaId
+  contatoId
+  enderecoFaturamentoId
+  enderecoEntregaId
+  origem
+  orcamentoId
+  carrinhoId
+  vendedorId
+  status
+  subtotal
+  desconto
+  frete
+  total
+  condicaoPagamento
+  observacoes
+  createdAt
+  updatedAt
+}
+
+fragment PedidoItemFields on PedidoItem {
+  id
+  pedidoId
+  produtoId
+  descricao
+  sku
+  quantidade
+  precoUnitario
+  desconto
+  total
+}
+
+fragment EstoqueSaldoFields on EstoqueSaldo {
+  produtoId
+  quantidadeDisponivel
+  quantidadeReservada
+}
+
+fragment EstoqueMovimentacaoFields on EstoqueMovimentacao {
+  id
+  produtoId
+  tipo
+  quantidade
+  saldoAntes
+  saldoDepois
+  pedidoId
+  ordemServicoId
+  usuarioId
+  motivo
+  createdAt
+}
+
+query Orcamentos(
+  $pagina: Int
+  $porPagina: Int
+  $status: StatusOrcamento
+  $empresaId: ID
+  $oportunidadeId: ID
+  $vendedorId: ID
+) {
+  orcamentos(
+    pagina: $pagina
+    porPagina: $porPagina
+    status: $status
+    empresaId: $empresaId
+    oportunidadeId: $oportunidadeId
+    vendedorId: $vendedorId
+  ) {
+    itens {
+      ...OrcamentoFields
+    }
+    total
+    pagina
+    porPagina
+    totalPaginas
+  }
+}
+
+query Orcamento($id: ID!) {
+  orcamento(id: $id) {
+    orcamento {
+      ...OrcamentoFields
+    }
+    itens {
+      ...OrcamentoItemFields
+    }
+  }
+}
+
+query Pedidos(
+  $pagina: Int
+  $porPagina: Int
+  $status: StatusPedido
+  $empresaId: ID
+  $contatoId: ID
+  $origem: OrigemPedido
+) {
+  pedidos(
+    pagina: $pagina
+    porPagina: $porPagina
+    status: $status
+    empresaId: $empresaId
+    contatoId: $contatoId
+    origem: $origem
+  ) {
+    itens {
+      ...PedidoFields
+    }
+    total
+    pagina
+    porPagina
+    totalPaginas
+  }
+}
+
+query Pedido($id: ID!) {
+  pedido(id: $id) {
+    pedido {
+      ...PedidoFields
+    }
+    itens {
+      ...PedidoItemFields
+    }
+  }
+}
+
+query EstoqueSaldo($produtoId: ID!) {
+  estoqueSaldo(produtoId: $produtoId) {
+    ...EstoqueSaldoFields
+  }
+}
+
+query EstoqueMovimentacoes($pagina: Int, $porPagina: Int, $produtoId: ID) {
+  estoqueMovimentacoes(
+    pagina: $pagina
+    porPagina: $porPagina
+    produtoId: $produtoId
+  ) {
+    itens {
+      ...EstoqueMovimentacaoFields
+    }
+    total
+    pagina
+    porPagina
+    totalPaginas
+  }
+}
+
+query EstoqueAbaixoDoMinimo($limite: Int) {
+  estoqueAbaixoDoMinimo(limite: $limite) {
+    produto {
+      ...ProdutoFields
+    }
+    saldo {
+      ...EstoqueSaldoFields
+    }
+  }
+}
+
+mutation CriarOrcamento($input: OrcamentoInput!) {
+  criarOrcamento(input: $input) {
+    ...OrcamentoFields
+  }
+}
+
+mutation AtualizarItensOrcamento($id: ID!, $input: ItensOrcamentoInput!) {
+  atualizarItensOrcamento(id: $id, input: $input) {
+    ...OrcamentoFields
+  }
+}
+
+mutation TransicionarOrcamento($id: ID!, $status: StatusOrcamento!) {
+  transicionarOrcamento(id: $id, status: $status) {
+    ...OrcamentoFields
+  }
+}
+
+mutation ConverterOrcamento($id: ID!) {
+  converterOrcamento(id: $id) {
+    ...PedidoFields
+  }
+}
+
+mutation CriarPedidoManual($input: PedidoManualInput!) {
+  criarPedidoManual(input: $input) {
+    ...PedidoFields
+  }
+}
+
+mutation TransicionarPedido($id: ID!, $status: StatusPedido!) {
+  transicionarPedido(id: $id, status: $status) {
+    ...PedidoFields
+  }
+}
+
+mutation LancarMovimentacaoEstoque($input: MovimentacaoEstoqueInput!) {
+  lancarMovimentacaoEstoque(input: $input) {
+    ...EstoqueMovimentacaoFields
+  }
+}

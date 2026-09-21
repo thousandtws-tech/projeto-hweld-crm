@@ -1,0 +1,102 @@
+# Ordens de serviço.
+
+fragment OrdemServicoFields on OrdemServico {
+  id
+  numero
+  pedidoId
+  empresaId
+  contatoId
+  responsavelId
+  descricao
+  status
+  prioridade
+  abertaEm
+  previstaEm
+  concluidaEm
+  valorMaoObra
+  valorTotal
+  observacoes
+  createdAt
+  updatedAt
+}
+
+fragment OsItemFields on OsItem {
+  id
+  osId
+  produtoId
+  quantidade
+  precoUnitario
+  total
+}
+
+fragment OsHistoricoFields on OsHistorico {
+  id
+  osId
+  statusAnterior
+  statusNovo
+  usuarioId
+  observacao
+  createdAt
+}
+
+query OrdensServico(
+  $pagina: Int
+  $porPagina: Int
+  $status: StatusOs
+  $empresaId: ID
+  $pedidoId: ID
+  $responsavelId: ID
+) {
+  ordensServico(
+    pagina: $pagina
+    porPagina: $porPagina
+    status: $status
+    empresaId: $empresaId
+    pedidoId: $pedidoId
+    responsavelId: $responsavelId
+  ) {
+    itens {
+      ...OrdemServicoFields
+    }
+    total
+    pagina
+    porPagina
+    totalPaginas
+  }
+}
+
+query OrdemServico($id: ID!) {
+  ordemServico(id: $id) {
+    ordem {
+      ...OrdemServicoFields
+    }
+    itens {
+      ...OsItemFields
+    }
+    historico {
+      ...OsHistoricoFields
+    }
+  }
+}
+
+mutation CriarOrdemServico($input: OrdemServicoInput!) {
+  criarOrdemServico(input: $input) {
+    ...OrdemServicoFields
+  }
+}
+
+mutation ConsumirMaterialOs($id: ID!, $produtoId: ID!, $quantidade: Decimal!) {
+  consumirMaterialOs(id: $id, produtoId: $produtoId, quantidade: $quantidade) {
+    ...OsItemFields
+  }
+}
+
+mutation TransicionarOrdemServico(
+  $id: ID!
+  $status: StatusOs!
+  $observacao: String
+) {
+  transicionarOrdemServico(id: $id, status: $status, observacao: $observacao) {
+    ...OrdemServicoFields
+  }
+}

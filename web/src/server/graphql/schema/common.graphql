@@ -1,0 +1,157 @@
+# ── Escalares ────────────────────────────────────────────────────────────────
+# O backend serializa Decimal/NaiveDate/DateTime como string; `Id<T>` como i64.
+# No schema, ids são `ID` (serializados como string) e dinheiro é `Decimal`.
+
+scalar Decimal
+scalar DateTime
+scalar Date
+scalar JSON
+scalar UUID
+
+# ── Enums (valores idênticos ao contrato REST — snake_case) ─────────────────
+
+enum Perfil {
+  admin
+  vendedor
+  financeiro
+  estoque
+  tecnico
+}
+
+enum StatusEmpresa {
+  prospecto
+  ativo
+  inativo
+}
+
+enum TipoEndereco {
+  fiscal
+  entrega
+  correspondencia
+}
+
+enum OrigemOportunidade {
+  ecommerce
+  indicacao
+  prospeccao
+  site
+  telefone
+  outro
+}
+
+enum EstagioOportunidade {
+  lead
+  qualificacao
+  proposta
+  negociacao
+  ganha
+  perdida
+}
+
+enum TipoInteracao {
+  ligacao
+  email
+  whatsapp
+  reuniao
+  visita
+  nota_interna
+  outro
+}
+
+enum StatusOrcamento {
+  rascunho
+  enviado
+  em_analise
+  aprovado
+  recusado
+  expirado
+  convertido
+}
+
+enum OrigemPedido {
+  ecommerce
+  orcamento
+  manual
+}
+
+enum StatusPedido {
+  aguardando_pagamento
+  confirmado
+  em_separacao
+  faturado
+  enviado
+  entregue
+  concluido
+  cancelado
+}
+
+enum StatusPagamento {
+  pendente
+  pago
+  vencido
+  cancelado
+  estornado
+}
+
+enum TipoMovimentacao {
+  entrada
+  saida
+  reserva
+  liberacao_reserva
+  ajuste
+}
+
+enum StatusOs {
+  aberta
+  em_andamento
+  aguardando_material
+  concluida
+  cancelada
+}
+
+enum PrioridadeOs {
+  baixa
+  normal
+  alta
+  urgente
+}
+
+enum TipoNotaFiscal {
+  saida
+  devolucao
+  complementar
+}
+
+enum StatusNotaFiscal {
+  rascunho
+  autorizada
+  cancelada
+  rejeitada
+  denegada
+}
+
+enum StatusCaixa {
+  aberto
+  fechado
+}
+
+enum TipoCaixaMovimentacao {
+  suprimento
+  sangria
+  venda
+  recebimento
+  despesa
+  estorno
+}
+
+enum StatusCarrinho {
+  aberto
+  convertido
+  abandonado
+}
+
+enum AcaoAuditoria {
+  insert
+  update
+  delete
+}

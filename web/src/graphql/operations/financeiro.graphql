@@ -1,0 +1,222 @@
+# Fiscal (notas fiscais) e financeiro (pagamentos/parcelas + caixa).
+
+fragment NotaFiscalFields on NotaFiscal {
+  id
+  numero
+  serie
+  chaveAcesso
+  pedidoId
+  empresaId
+  tipo
+  status
+  naturezaOperacao
+  cfop
+  emitidaEm
+  valorProdutos
+  valorFrete
+  valorDesconto
+  valorTotal
+  protocoloAutorizacao
+  xmlPath
+  pdfPath
+  motivoCancelamento
+  createdAt
+  updatedAt
+}
+
+fragment NotaFiscalItemFields on NotaFiscalItem {
+  id
+  nfId
+  produtoId
+  codigo
+  descricao
+  ncm
+  cfop
+  unidade
+  quantidade
+  valorUnitario
+  valorTotal
+  icmsAliquota
+  icmsValor
+  ipiAliquota
+  ipiValor
+  pisValor
+  cofinsValor
+}
+
+fragment PagamentoFields on Pagamento {
+  id
+  pedidoId
+  parcelaNum
+  valor
+  vencimento
+  pagoEm
+  status
+  formaPagamentoId
+  caixaMovimentacaoId
+  observacao
+  createdAt
+  updatedAt
+}
+
+fragment CaixaFields on Caixa {
+  id
+  abertoPor
+  abertoEm
+  valorAbertura
+  fechadoPor
+  fechadoEm
+  valorFechamentoCalculado
+  valorFechamentoInformado
+  diferenca
+  status
+}
+
+fragment CaixaMovimentacaoFields on CaixaMovimentacao {
+  id
+  caixaId
+  tipo
+  valor
+  formaPagamentoId
+  pagamentoId
+  usuarioId
+  descricao
+  createdAt
+}
+
+query NotasFiscais(
+  $pagina: Int
+  $porPagina: Int
+  $status: StatusNotaFiscal
+  $empresaId: ID
+  $pedidoId: ID
+) {
+  notasFiscais(
+    pagina: $pagina
+    porPagina: $porPagina
+    status: $status
+    empresaId: $empresaId
+    pedidoId: $pedidoId
+  ) {
+    itens {
+      ...NotaFiscalFields
+    }
+    total
+    pagina
+    porPagina
+    totalPaginas
+  }
+}
+
+query NotaFiscal($id: ID!) {
+  notaFiscal(id: $id) {
+    nota {
+      ...NotaFiscalFields
+    }
+    itens {
+      ...NotaFiscalItemFields
+    }
+  }
+}
+
+query Pagamentos(
+  $pagina: Int
+  $porPagina: Int
+  $pedidoId: ID
+  $status: StatusPagamento
+  $vencidosEm: Date
+) {
+  pagamentos(
+    pagina: $pagina
+    porPagina: $porPagina
+    pedidoId: $pedidoId
+    status: $status
+    vencidosEm: $vencidosEm
+  ) {
+    itens {
+      ...PagamentoFields
+    }
+    total
+    pagina
+    porPagina
+    totalPaginas
+  }
+}
+
+query CaixaAberto {
+  caixaAberto {
+    ...CaixaFields
+  }
+}
+
+query Caixas($pagina: Int, $porPagina: Int) {
+  caixas(pagina: $pagina, porPagina: $porPagina) {
+    itens {
+      ...CaixaFields
+    }
+    total
+    pagina
+    porPagina
+    totalPaginas
+  }
+}
+
+query CaixaMovimentacoes($caixaId: ID!) {
+  caixaMovimentacoes(caixaId: $caixaId) {
+    ...CaixaMovimentacaoFields
+  }
+}
+
+mutation EmitirNotaFiscal($pedidoId: ID!) {
+  emitirNotaFiscal(pedidoId: $pedidoId) {
+    ...NotaFiscalFields
+  }
+}
+
+mutation AutorizarNotaFiscal($id: ID!) {
+  autorizarNotaFiscal(id: $id) {
+    ...NotaFiscalFields
+  }
+}
+
+mutation CancelarNotaFiscal($id: ID!, $motivo: String!) {
+  cancelarNotaFiscal(id: $id, motivo: $motivo) {
+    ...NotaFiscalFields
+  }
+}
+
+mutation GerarParcelas($input: GerarParcelasInput!) {
+  gerarParcelas(input: $input) {
+    ...PagamentoFields
+  }
+}
+
+mutation BaixarPagamento($id: ID!, $input: BaixarPagamentoInput!) {
+  baixarPagamento(id: $id, input: $input) {
+    ...PagamentoFields
+  }
+}
+
+mutation EstornarPagamento($id: ID!, $motivo: String!) {
+  estornarPagamento(id: $id, motivo: $motivo) {
+    ...PagamentoFields
+  }
+}
+
+mutation AbrirCaixa($valorAbertura: Decimal!) {
+  abrirCaixa(valorAbertura: $valorAbertura) {
+    ...CaixaFields
+  }
+}
+
+mutation LancarCaixa($input: LancarCaixaInput!) {
+  lancarCaixa(input: $input) {
+    ...CaixaMovimentacaoFields
+  }
+}
+
+mutation FecharCaixa($valorInformado: Decimal!) {
+  fecharCaixa(valorInformado: $valorInformado) {
+    ...CaixaFields
+  }
+}

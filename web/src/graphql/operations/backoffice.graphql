@@ -1,0 +1,107 @@
+# Busca do backoffice (staff) + reindexação + trilha de auditoria.
+
+fragment ItemBuscaStaffFields on ItemBuscaStaff {
+  id
+  sku
+  nome
+  slug
+  categoriaId
+  marca
+  unidadeMedida
+  descricaoCurta
+  descricaoTecnica
+  precoCusto
+  precoVenda
+  estoqueMinimo
+  controlaEstoque
+  ativo
+  destaque
+  createdAt
+  updatedAt
+  deletedAt
+  score
+}
+
+fragment LogAuditoriaFields on LogAuditoria {
+  id
+  usuarioId
+  entidade
+  entidadeId
+  acao
+  dadosAntes
+  dadosDepois
+  ip
+  createdAt
+}
+
+query BuscarProdutosStaff(
+  $pagina: Int
+  $porPagina: Int
+  $q: String
+  $categoriaId: ID
+  $marca: String
+  $precoMin: Decimal
+  $precoMax: Decimal
+) {
+  buscarProdutosStaff(
+    pagina: $pagina
+    porPagina: $porPagina
+    q: $q
+    categoriaId: $categoriaId
+    marca: $marca
+    precoMin: $precoMin
+    precoMax: $precoMax
+  ) {
+    itens {
+      ...ItemBuscaStaffFields
+    }
+    total
+    pagina
+    porPagina
+    totalPaginas
+    facetas {
+      categorias {
+        valor
+        rotulo
+        contagem
+      }
+      marcas {
+        valor
+        rotulo
+        contagem
+      }
+      precoMin
+      precoMax
+    }
+  }
+}
+
+query Auditoria(
+  $pagina: Int
+  $porPagina: Int
+  $entidade: String
+  $entidadeId: ID
+  $usuarioId: ID
+) {
+  auditoria(
+    pagina: $pagina
+    porPagina: $porPagina
+    entidade: $entidade
+    entidadeId: $entidadeId
+    usuarioId: $usuarioId
+  ) {
+    itens {
+      ...LogAuditoriaFields
+    }
+    total
+    pagina
+    porPagina
+    totalPaginas
+  }
+}
+
+mutation ReindexarBusca {
+  reindexarBusca {
+    indexados
+  }
+}

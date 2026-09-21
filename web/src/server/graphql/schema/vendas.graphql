@@ -1,0 +1,233 @@
+# Orçamentos, pedidos e estoque.
+
+type OrcamentoItem {
+  id: ID!
+  orcamentoId: ID!
+  produtoId: ID!
+  descricao: String!
+  quantidade: Decimal!
+  precoUnitario: Decimal!
+  desconto: Decimal!
+  total: Decimal!
+}
+
+type Orcamento {
+  id: ID!
+  numero: String!
+  empresaId: ID!
+  contatoId: ID
+  oportunidadeId: ID
+  vendedorId: ID!
+  status: StatusOrcamento!
+  emitidoEm: DateTime!
+  validoAte: Date
+  subtotal: Decimal!
+  desconto: Decimal!
+  frete: Decimal!
+  total: Decimal!
+  condicaoPagamento: String
+  observacoes: String
+  convertidoPedidoId: ID
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type OrcamentoDetalhe {
+  orcamento: Orcamento!
+  itens: [OrcamentoItem!]!
+}
+
+type OrcamentoPagina {
+  itens: [Orcamento!]!
+  total: Int!
+  pagina: Int!
+  porPagina: Int!
+  totalPaginas: Int!
+}
+
+type PedidoItem {
+  id: ID!
+  pedidoId: ID!
+  produtoId: ID!
+  descricao: String!
+  sku: String!
+  quantidade: Decimal!
+  precoUnitario: Decimal!
+  desconto: Decimal!
+  total: Decimal!
+}
+
+type Pedido {
+  id: ID!
+  numero: String!
+  empresaId: ID!
+  contatoId: ID!
+  enderecoFaturamentoId: ID!
+  enderecoEntregaId: ID!
+  origem: OrigemPedido!
+  orcamentoId: ID
+  carrinhoId: ID
+  vendedorId: ID
+  status: StatusPedido!
+  subtotal: Decimal!
+  desconto: Decimal!
+  frete: Decimal!
+  total: Decimal!
+  condicaoPagamento: String
+  observacoes: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type PedidoDetalhe {
+  pedido: Pedido!
+  itens: [PedidoItem!]!
+}
+
+type PedidoPagina {
+  itens: [Pedido!]!
+  total: Int!
+  pagina: Int!
+  porPagina: Int!
+  totalPaginas: Int!
+}
+
+type EstoqueSaldo {
+  produtoId: ID!
+  quantidadeDisponivel: Decimal!
+  quantidadeReservada: Decimal!
+}
+
+type EstoqueMovimentacao {
+  id: ID!
+  produtoId: ID!
+  tipo: TipoMovimentacao!
+  quantidade: Decimal!
+  saldoAntes: Decimal!
+  saldoDepois: Decimal!
+  pedidoId: ID
+  ordemServicoId: ID
+  usuarioId: ID
+  motivo: String
+  createdAt: DateTime!
+}
+
+type EstoqueMovimentacaoPagina {
+  itens: [EstoqueMovimentacao!]!
+  total: Int!
+  pagina: Int!
+  porPagina: Int!
+  totalPaginas: Int!
+}
+
+type SaldoAbaixoMinimo {
+  produto: Produto!
+  saldo: EstoqueSaldo!
+}
+
+# ── Inputs ───────────────────────────────────────────────────────────────────
+
+input ItemOrcamentoInput {
+  produtoId: ID!
+  descricao: String!
+  quantidade: Decimal!
+  precoUnitario: Decimal!
+  desconto: Decimal!
+}
+
+input OrcamentoInput {
+  empresaId: ID!
+  contatoId: ID
+  oportunidadeId: ID
+  vendedorId: ID!
+  validoAte: Date
+  desconto: Decimal!
+  frete: Decimal!
+  condicaoPagamento: String
+  observacoes: String
+  itens: [ItemOrcamentoInput!]!
+}
+
+input ItensOrcamentoInput {
+  itens: [ItemOrcamentoInput!]!
+  desconto: Decimal!
+  frete: Decimal!
+}
+
+input ItemPedidoInput {
+  produtoId: ID!
+  descricao: String!
+  sku: String!
+  quantidade: Decimal!
+  precoUnitario: Decimal!
+  desconto: Decimal!
+}
+
+input PedidoManualInput {
+  empresaId: ID!
+  contatoId: ID!
+  enderecoFaturamentoId: ID!
+  enderecoEntregaId: ID!
+  condicaoPagamento: String
+  observacoes: String
+  itens: [ItemPedidoInput!]!
+}
+
+input MovimentacaoEstoqueInput {
+  produtoId: ID!
+  tipo: TipoMovimentacao!
+  quantidade: Decimal!
+  motivo: String
+}
+
+extend type Query {
+  orcamentos(
+    pagina: Int
+    porPagina: Int
+    status: StatusOrcamento
+    empresaId: ID
+    oportunidadeId: ID
+    vendedorId: ID
+  ): OrcamentoPagina!
+  "Orçamento + itens."
+  orcamento(id: ID!): OrcamentoDetalhe
+
+  pedidos(
+    pagina: Int
+    porPagina: Int
+    status: StatusPedido
+    empresaId: ID
+    contatoId: ID
+    origem: OrigemPedido
+  ): PedidoPagina!
+  "Pedido + itens."
+  pedido(id: ID!): PedidoDetalhe
+
+  "Saldo projetado do produto (disponível = físico − reservado)."
+  estoqueSaldo(produtoId: ID!): EstoqueSaldo!
+  estoqueMovimentacoes(
+    pagina: Int
+    porPagina: Int
+    produtoId: ID
+  ): EstoqueMovimentacaoPagina!
+  "Produtos com saldo disponível abaixo do mínimo configurado."
+  estoqueAbaixoDoMinimo(limite: Int): [SaldoAbaixoMinimo!]!
+}
+
+extend type Mutation {
+  criarOrcamento(input: OrcamentoInput!): Orcamento!
+  "Substitui os itens do orçamento (somente em elaboração/rascunho)."
+  atualizarItensOrcamento(id: ID!, input: ItensOrcamentoInput!): Orcamento!
+  "Transição de status do orçamento (enviar/aprovar/rejeitar)."
+  transicionarOrcamento(id: ID!, status: StatusOrcamento!): Orcamento!
+  "Orçamento aprovado → pedido aguardando_pagamento (uma única vez)."
+  converterOrcamento(id: ID!): Pedido!
+
+  "Pedido manual (balcão/telefone) — origem manual."
+  criarPedidoManual(input: PedidoManualInput!): Pedido!
+  "Transição de status — confirmação reserva estoque, faturamento baixa."
+  transicionarPedido(id: ID!, status: StatusPedido!): Pedido!
+
+  "Entrada (reposição) ou ajuste (correção ±) de estoque."
+  lancarMovimentacaoEstoque(input: MovimentacaoEstoqueInput!): EstoqueMovimentacao!
+}

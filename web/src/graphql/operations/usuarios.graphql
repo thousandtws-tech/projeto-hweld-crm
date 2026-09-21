@@ -1,0 +1,57 @@
+# Usuários staff (admin).
+
+fragment UsuarioFields on Usuario {
+  id
+  nome
+  email
+  perfil
+  ativo
+  createdAt
+  updatedAt
+}
+
+query Usuarios(
+  $pagina: Int
+  $porPagina: Int
+  $perfil: Perfil
+  $ativo: Boolean
+  $busca: String
+) {
+  usuarios(
+    pagina: $pagina
+    porPagina: $porPagina
+    perfil: $perfil
+    ativo: $ativo
+    busca: $busca
+  ) {
+    itens {
+      ...UsuarioFields
+    }
+    total
+    pagina
+    porPagina
+    totalPaginas
+  }
+}
+
+query Usuario($id: ID!) {
+  usuario(id: $id) {
+    ...UsuarioFields
+  }
+}
+
+mutation CriarUsuario($input: CriarUsuarioInput!) {
+  criarUsuario(input: $input) {
+    ...UsuarioFields
+  }
+}
+
+mutation AtualizarUsuario($id: ID!, $input: AtualizarUsuarioInput!) {
+  atualizarUsuario(id: $id, input: $input) {
+    ...UsuarioFields
+  }
+}
+
+mutation DefinirUsuarioAtivo($id: ID!, $ativo: Boolean!) {
+  definirUsuarioAtivo(id: $id, ativo: $ativo)
+}

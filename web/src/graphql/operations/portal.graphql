@@ -1,0 +1,163 @@
+# Portal B2B — catálogo precificado, busca, carrinho e checkout.
+
+fragment ProdutoPortalFields on ItemCatalogoPortal {
+  id
+  sku
+  nome
+  slug
+  categoriaId
+  marca
+  unidadeMedida
+  descricaoCurta
+  descricaoTecnica
+  precoVenda
+  precoEfetivo
+  estoqueMinimo
+  controlaEstoque
+  ativo
+  destaque
+}
+
+fragment ItemBuscaPortalFields on ItemBuscaPortal {
+  id
+  sku
+  nome
+  slug
+  categoriaId
+  marca
+  unidadeMedida
+  descricaoCurta
+  descricaoTecnica
+  precoVenda
+  precoEfetivo
+  estoqueMinimo
+  controlaEstoque
+  ativo
+  destaque
+  score
+}
+
+fragment CarrinhoFields on Carrinho {
+  id
+  uuid
+  contatoId
+  empresaId
+  sessionId
+  status
+  createdAt
+  updatedAt
+  total
+  itens {
+    id
+    carrinhoId
+    produtoId
+    quantidade
+    precoUnitario
+    createdAt
+    updatedAt
+  }
+}
+
+query CatalogoPortal(
+  $pagina: Int
+  $porPagina: Int
+  $categoriaId: ID
+  $busca: String
+  $destaque: Boolean
+) {
+  catalogoPortal(
+    pagina: $pagina
+    porPagina: $porPagina
+    categoriaId: $categoriaId
+    busca: $busca
+    destaque: $destaque
+  ) {
+    itens {
+      ...ProdutoPortalFields
+    }
+    total
+    pagina
+    porPagina
+    totalPaginas
+  }
+}
+
+query BuscarProdutosPortal(
+  $pagina: Int
+  $porPagina: Int
+  $q: String
+  $categoriaId: ID
+  $marca: String
+  $precoMin: Decimal
+  $precoMax: Decimal
+) {
+  buscarProdutosPortal(
+    pagina: $pagina
+    porPagina: $porPagina
+    q: $q
+    categoriaId: $categoriaId
+    marca: $marca
+    precoMin: $precoMin
+    precoMax: $precoMax
+  ) {
+    itens {
+      ...ItemBuscaPortalFields
+    }
+    total
+    pagina
+    porPagina
+    totalPaginas
+    facetas {
+      categorias {
+        valor
+        rotulo
+        contagem
+      }
+      marcas {
+        valor
+        rotulo
+        contagem
+      }
+      precoMin
+      precoMax
+    }
+  }
+}
+
+query SugerirProdutosPortal($q: String!, $limite: Int) {
+  sugerirProdutosPortal(q: $q, limite: $limite) {
+    produtoId
+    nome
+    sku
+  }
+}
+
+query CarrinhoPortal {
+  carrinhoPortal {
+    ...CarrinhoFields
+  }
+}
+
+mutation AdicionarItemCarrinho($produtoId: ID!, $quantidade: Decimal!) {
+  adicionarItemCarrinho(produtoId: $produtoId, quantidade: $quantidade) {
+    ...CarrinhoFields
+  }
+}
+
+mutation AtualizarItemCarrinho($produtoId: ID!, $quantidade: Decimal!) {
+  atualizarItemCarrinho(produtoId: $produtoId, quantidade: $quantidade) {
+    ...CarrinhoFields
+  }
+}
+
+mutation RemoverItemCarrinho($produtoId: ID!) {
+  removerItemCarrinho(produtoId: $produtoId) {
+    ...CarrinhoFields
+  }
+}
+
+mutation CheckoutPortal($input: CheckoutInput!) {
+  checkoutPortal(input: $input) {
+    ...PedidoFields
+  }
+}
