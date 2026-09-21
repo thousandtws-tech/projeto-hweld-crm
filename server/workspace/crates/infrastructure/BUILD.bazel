@@ -1,0 +1,36 @@
+"""Infrastructure crate: SQLx repositories, security, external adapters."""
+
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_library(
+    name = "hweld_infrastructure",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2021",
+    proc_macro_deps = [
+        "@crates//:async-trait",
+        "@crates//:rust_decimal_macros",
+    ],
+    deps = [
+        "//crates/application:hweld_application",
+        "//crates/domain:hweld_domain",
+        "@crates//:argon2",
+        "@crates//:chrono",
+        "@crates//:dotenvy",
+        "@crates//:elasticsearch",
+        "@crates//:futures",
+        "@crates//:hex",
+        "@crates//:jsonwebtoken",
+        "@crates//:rand",
+        "@crates//:rust_decimal",
+        "@crates//:serde",
+        "@crates//:serde_json",
+        "@crates//:sha2",
+        "@crates//:sqlx",
+        "@crates//:thiserror",
+        "@crates//:tokio",
+        "@crates//:tracing",
+        "@crates//:uuid",
+    ],
+)

@@ -1,0 +1,26 @@
+"""Application crate: use cases, ports (traits), DTOs."""
+
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_library(
+    name = "hweld_application",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2021",
+    proc_macro_deps = [
+        "@crates//:async-trait",
+    ],
+    deps = [
+        "//crates/domain:hweld_domain",
+        "@crates//:chrono",
+        "@crates//:futures",
+        "@crates//:rust_decimal",
+        "@crates//:serde",
+        "@crates//:serde_json",
+        "@crates//:thiserror",
+        "@crates//:tracing",
+        "@crates//:utoipa",
+        "@crates//:uuid",
+    ],
+)

@@ -1,0 +1,27 @@
+"""Server crate: bootstrap binary, composition root, HTTP server."""
+
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_binary(
+    name = "hweld_server",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2021",
+    deps = [
+        "//crates/api:hweld_api",
+        "//crates/application:hweld_application",
+        "//crates/domain:hweld_domain",
+        "//crates/infrastructure:hweld_infrastructure",
+        "@crates//:actix-cors",
+        "@crates//:actix-web",
+        "@crates//:anyhow",
+        "@crates//:dotenvy",
+        "@crates//:serde",
+        "@crates//:sqlx",
+        "@crates//:tokio",
+        "@crates//:tracing",
+        "@crates//:tracing-actix-web",
+        "@crates//:tracing-subscriber",
+    ],
+)

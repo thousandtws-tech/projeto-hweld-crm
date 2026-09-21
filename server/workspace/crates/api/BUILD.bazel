@@ -1,0 +1,32 @@
+"""API crate: Actix-web HTTP adapters, DTOs, error mapping."""
+
+load("@rules_rust//rust:defs.bzl", "rust_library")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_library(
+    name = "hweld_api",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2021",
+    proc_macro_deps = [
+        "@crates//:utoipa",
+    ],
+    deps = [
+        "//crates/application:hweld_application",
+        "//crates/domain:hweld_domain",
+        "//crates/infrastructure:hweld_infrastructure",
+        "@crates//:actix-cors",
+        "@crates//:actix-web",
+        "@crates//:chrono",
+        "@crates//:futures",
+        "@crates//:rust_decimal",
+        "@crates//:serde",
+        "@crates//:serde_json",
+        "@crates//:sqlx",
+        "@crates//:thiserror",
+        "@crates//:tracing",
+        "@crates//:tracing-actix-web",
+        "@crates//:utoipa-swagger-ui",
+        "@crates//:uuid",
+    ],
+)

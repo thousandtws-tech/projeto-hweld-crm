@@ -1,0 +1,23 @@
+"""Root BUILD file for HWeld Bazel workspace."""
+
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "Cargo.toml",
+    "Cargo.lock",
+    ".env",
+])
+
+# Convenience alias for the main server binary.
+alias(
+    name = "hweld-server",
+    actual = "//crates/server:hweld_server",
+)
+
+# Convenience alias to run all Rust tests in the workspace.
+alias(
+    name = "test",
+    actual = "//crates/domain:hweld_domain_test",
+)

@@ -1,0 +1,28 @@
+"""Domain crate: pure business logic, no I/O, no framework dependencies."""
+
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_library(
+    name = "hweld_domain",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2021",
+    proc_macro_deps = [
+        "@crates//:rust_decimal_macros",
+    ],
+    deps = [
+        "@crates//:chrono",
+        "@crates//:rust_decimal",
+        "@crates//:serde",
+        "@crates//:serde_json",
+        "@crates//:thiserror",
+        "@crates//:utoipa",
+        "@crates//:uuid",
+    ],
+)
+
+rust_test(
+    name = "hweld_domain_test",
+    crate = ":hweld_domain",
+)

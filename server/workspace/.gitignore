@@ -1,0 +1,9 @@
+/target
+**/*.rs.bk
+.env
+*.pem
+*.key
+.idea/
+.vscode/
+*.iml
+Dockerfile.local

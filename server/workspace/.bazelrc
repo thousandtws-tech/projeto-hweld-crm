@@ -1,0 +1,31 @@
+# Bazel 8.2.0 + bzlmod
+startup --output_base=D:/.bazel/hweld
+common --enable_bzlmod
+common --repository_cache=D:/.bazel/cache
+build --disk_cache=D:/.bazel/disk_cache
+common --java_runtime_version=local_jdk
+
+# Build defaults
+build --incompatible_strict_action_env
+build --nolegacy_external_runfiles
+build --incompatible_default_to_explicit_init_py
+build --incompatible_enable_cc_toolchain_resolution
+
+# Windows-specific
+build:windows --enable_runfiles
+build:windows --copt=-fansi-escapes=0
+
+# Rust defaults (rules_rust)
+build:rust --@rules_rust//:edition=2021
+build:rust --@rules_rust//rust/toolchain:srcs_version=1.85.0
+build --@rules_rust//:extra_rustc_flags=-Dwarnings
+
+# Test output
+common --color=yes
+test --test_output=errors
+test --test_summary=short
+
+# Performance
+common --show_timestamps
+build --jobs=auto
+fetch --experimental_repository_cache_hardlinks

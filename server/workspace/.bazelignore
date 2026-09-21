@@ -1,0 +1,3 @@
+# Directories ignored by Bazel during source discovery.
+.git
+target
