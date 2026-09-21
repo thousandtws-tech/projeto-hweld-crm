@@ -1,0 +1,9 @@
+[build]
+builder = "nixpacks"
+buildCommand = "cargo build --release --bin hweld-server"
+
+[deploy]
+startCommand = "./target/release/hweld-server"
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "on-failure"

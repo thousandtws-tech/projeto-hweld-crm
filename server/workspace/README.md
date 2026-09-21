@@ -187,12 +187,7 @@ Ver `.env.example` para a lista completa e comentários.
 - [ ] ES com `xpack.security` + HTTPS + `ELASTICSEARCH_USERNAME/PASSWORD`
 - [ ] Sync de índice via outbox/CDC (hoje é best-effort pós-commit)
 
-## Migrations
 
-SQL puro em `migrations/NNNN_*.sql`, aplicadas pelo `sqlx::migrate!` no boot
-quando `RUN_MIGRATIONS=true`. Schema: 24 tabelas de negócio +
-`refresh_tokens` + sequences para numeração de documentos
-(`pedidos` → `PV-000001`, `orcamentos` → `OR-000001`, OS, NF).
 
 ## Decisões relevantes
 

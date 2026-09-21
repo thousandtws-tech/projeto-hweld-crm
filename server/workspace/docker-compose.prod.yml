@@ -1,0 +1,92 @@
+# ── HWeld — Produção ───────────────────────────────────────────────────────
+# Uso: carregue os segredos em .env.production e execute:
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+#
+# Requisitos antes do deploy:
+#   1. DB_PASSWORD, JWT_SECRET, ES_PASSWORD e KIBANA_ENCRYPTION_KEY preenchidos.
+#   2. Certificados TLS para Elasticsearch (ex: LetsEncrypt ou cert-manager).
+#   3. Reverse proxy (nginx/traefik) terminando TLS na porta 443.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: hweld-postgres-prod
+    environment:
+      POSTGRES_USER: hweld
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: hweld
+    volumes:
+      - hweld-pgdata-prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hweld -d hweld"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - hweld-prod
+    restart: unless-stopped
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.0
+    container_name: hweld-elasticsearch-prod
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      ELASTIC_PASSWORD: ${ES_PASSWORD}
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+    volumes:
+      - hweld-esdata-prod:/usr/share/elasticsearch/data
+      # - ./certs/elasticsearch:/usr/share/elasticsearch/config/certs:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -u elastic:${ES_PASSWORD} http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 18
+      start_period: 60s
+    networks:
+      - hweld-prod
+    restart: unless-stopped
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.19.0
+    container_name: hweld-kibana-prod
+    environment:
+      ELASTICSEARCH_HOSTS: https://elasticsearch:9200
+      ELASTICSEARCH_USERNAME: kibana_system
+      ELASTICSEARCH_PASSWORD: ${ES_PASSWORD}
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: ${KIBANA_ENCRYPTION_KEY}
+      # SERVER_SSL_ENABLED: "true"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - hweld-prod
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hweld-server-prod
+    env_file:
+      - .env.production
+    environment:
+      # Sobrescreve localhost por nomes de serviço na rede do compose.
+      DATABASE_URL: postgres://hweld:${DB_PASSWORD}@postgres:5432/hweld
+      ELASTICSEARCH_URL: https://elasticsearch:9200
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - hweld-prod
+    restart: unless-stopped
+
+volumes:
+  hweld-pgdata-prod:
+  hweld-esdata-prod:
+
+networks:
+  hweld-prod:
+    driver: bridge

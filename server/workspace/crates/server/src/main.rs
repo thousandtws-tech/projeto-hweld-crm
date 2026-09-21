@@ -51,7 +51,10 @@ async fn main() -> ExitCode {
 }
 
 async fn executar() -> anyhow::Result<()> {
-    let _ = dotenvy::dotenv();
+    match dotenvy::dotenv() {
+        Ok(path) => println!(".env carregado: {}", path.display()),
+        Err(e) => println!("aviso: não foi possível carregar .env: {e}"),
+    }
     init_tracing();
 
     let config = Config::from_env().map_err(|e| anyhow::anyhow!("{e}"))?;

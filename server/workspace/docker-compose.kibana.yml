@@ -1,0 +1,21 @@
+# ── Kibana — Railway / Compose ─────────────────────────────────────────────
+# Suba com: docker compose -f docker-compose.kibana.yml --env-file .env.kibana up -d
+# Ou defina as mesmas variáveis no painel do Railway no serviço Kibana.
+
+services:
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.19.0
+    container_name: hweld-kibana
+    environment:
+      SERVER_NAME: ${SERVER_NAME}
+      SERVER_HOST: ${SERVER_HOST}
+      SERVER_PORT: ${PORT:-5601}
+      SERVER_PUBLICBASEURL: ${SERVER_PUBLICBASEURL}
+      ELASTICSEARCH_HOSTS: ${ELASTICSEARCH_HOSTS}
+      ELASTICSEARCH_USERNAME: ${ELASTICSEARCH_USERNAME}
+      ELASTICSEARCH_PASSWORD: ${ELASTICSEARCH_PASSWORD}
+      XPACK_SECURITY_ENABLED: ${xpack.security.enabled:-true}
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: ${KIBANA_ENCRYPTION_KEY}
+    ports:
+      - "${PORT:-5601}:${PORT:-5601}"
+    restart: unless-stopped
