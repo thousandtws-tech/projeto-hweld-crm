@@ -6,6 +6,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use hweld_application::ports::operacao::{FiltroOrdensServico, RepositorioOrdensServico};
 use hweld_application::{ErroApp, Resultado};
 use hweld_domain::catalogo::produto::Produto;
+use hweld_domain::estoque::movimentacao::{MovimentacaoCmd, TipoMovimentacao};
 use hweld_domain::operacao::ordem_servico::{
     OrdemServico, OrdemServicoInput, OsHistorico, OsItem, StatusOs,
 };
@@ -13,7 +14,6 @@ use hweld_domain::shared::dinheiro::{Dinheiro, Quantidade};
 use hweld_domain::shared::documento::TipoDocumento;
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::{Pagina, Paginacao};
-use hweld_domain::estoque::movimentacao::{MovimentacaoCmd, TipoMovimentacao};
 use rust_decimal::Decimal;
 use sqlx::{FromRow, PgPool, Postgres, QueryBuilder};
 

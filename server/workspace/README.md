@@ -77,21 +77,7 @@ Admin inicial (dev): `admin@hweld.local` / valor de `ADMIN_SENHA`.
 cargo test --workspace                                   # unitários do domínio
 cargo fmt --all -- --check                               # formatação
 cargo clippy --workspace --all-targets -- -D warnings    # lint
-python scripts/smoke_test.py                             # E2E (requer servidor no ar)
-python scripts/busca_test.py                             # suite de busca (requer ES no ar)
 ```
-
-O smoke test (`scripts/smoke_test.py`) cobre o fluxo completo: login staff,
-RBAC, CRM, catálogo, estoque, portal B2B (login → catálogo → carrinho →
-checkout → pedido), reserva de estoque, caixa, parcelas, baixa e auditoria.
-É idempotente — pode ser re-executado.
-
-O teste de busca (`scripts/busca_test.py`) semeia 9 produtos variados e
-exercita **todas** as capacidades do Elasticsearch: full-text com relevância,
-fuzzy (typos), asciifolding (acentos), filtros combinados, facetas com
-contagens, autocomplete, paginação, visibilidade staff/portal, RBAC e a
-sincronização best-effort do índice. Reexecutável — localiza recursos
-existentes em vez de recriar.
 
 ## Estrutura de rotas (v1)
 
