@@ -1,6 +1,6 @@
 # HWeld — Backend
 
-Backend da plataforma HWeld: e-commerce B2B, CRM, catálogo, vendas, ordens de
+Backend da plataforma HWeld: e-commerce, CRM, catálogo, vendas, ordens de
 serviço, estoque, fiscal e financeiro — construído em Rust com Actix Web,
 SQLx e PostgreSQL, seguindo Clean Architecture / Hexagonal Architecture.
 
