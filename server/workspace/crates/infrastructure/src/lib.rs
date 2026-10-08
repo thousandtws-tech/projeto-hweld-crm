@@ -8,10 +8,12 @@ pub mod busca;
 pub mod config;
 pub mod fiscal;
 pub mod persistence;
+pub mod realtime;
 pub mod seguranca;
 
 pub use busca::BuscaElastic;
 pub use config::{Config, ErroConfig};
 pub use fiscal::GatewayFiscalStub;
 pub use persistence::{conectar, MIGRATOR};
+pub use realtime::BroadcasterRealtime;
 pub use seguranca::{EmissorJwt, HasherArgon2};

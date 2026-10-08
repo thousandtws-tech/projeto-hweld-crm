@@ -20,21 +20,24 @@ use hweld_application::use_cases::crm::{
 use hweld_application::use_cases::estoque::ServicoEstoque;
 use hweld_application::use_cases::financeiro::{ServicoCaixas, ServicoPagamentos};
 use hweld_application::use_cases::fiscal::ServicoNotasFiscais;
+use hweld_application::use_cases::notificacoes::ServicoNotificacoes;
 use hweld_application::use_cases::orcamentos::ServicoOrcamentos;
 use hweld_application::use_cases::ordens::ServicoOrdensServico;
 use hweld_application::use_cases::pedidos::ServicoPedidos;
+use hweld_application::use_cases::portal::ServicoPortal;
 use hweld_application::use_cases::usuarios::ServicoUsuarios;
 use hweld_domain::acesso::usuario::{NovoUsuario, Perfil};
 use hweld_infrastructure::persistence::{
     RegistradorAuditoriaPg, RepositorioAuditoriaPg, RepositorioCaixasPg, RepositorioCarrinhosPg,
     RepositorioCategoriasPg, RepositorioContatosPg, RepositorioEmpresasPg, RepositorioEnderecosPg,
     RepositorioEstoquePg, RepositorioFormasPagamentoPg, RepositorioInteracoesPg,
-    RepositorioNotasFiscaisPg, RepositorioOportunidadesPg, RepositorioOrcamentosPg,
-    RepositorioOrdensServicoPg, RepositorioPagamentosPg, RepositorioPedidosPg,
-    RepositorioProdutosPg, RepositorioTabelasPrecoPg, RepositorioUsuariosPg,
+    RepositorioNotasFiscaisPg, RepositorioNotificacoesPg, RepositorioOportunidadesPg,
+    RepositorioOrcamentosPg, RepositorioOrdensServicoPg, RepositorioPagamentosPg,
+    RepositorioPedidosPg, RepositorioProdutosPg, RepositorioTabelasPrecoPg, RepositorioUsuariosPg,
 };
 use hweld_infrastructure::{
-    conectar, BuscaElastic, Config, EmissorJwt, GatewayFiscalStub, HasherArgon2, MIGRATOR,
+    conectar, BroadcasterRealtime, BuscaElastic, Config, EmissorJwt, GatewayFiscalStub,
+    HasherArgon2, MIGRATOR,
 };
 use sqlx::PgPool;
 use tracing_actix_web::TracingLogger;
@@ -204,12 +207,23 @@ fn montar_estado(
     let notas_repo = Arc::new(RepositorioNotasFiscaisPg::novo(pool.clone()));
     let caixas_repo = Arc::new(RepositorioCaixasPg::novo(pool.clone()));
     let auditoria_repo = Arc::new(RepositorioAuditoriaPg::novo(pool.clone()));
+    let notificacoes_repo = Arc::new(RepositorioNotificacoesPg::novo(pool.clone()));
 
     let hasher = Arc::new(HasherArgon2::novo());
     let tokens: Arc<dyn hweld_application::ports::seguranca::EmissorTokens> =
         Arc::new(EmissorJwt::novo(&config.jwt, pool.clone()));
     let gateway_fiscal = Arc::new(GatewayFiscalStub::novo());
     let audit = Arc::new(RegistradorAuditoriaPg::novo(pool.clone()));
+    // Barramento realtime — mesmo Arc serve publisher (use cases) e
+    // assinantes (handlers SSE).
+    let realtime = Arc::new(BroadcasterRealtime::novo());
+    // Inbox persistente — fan-out por destinatário + evento `notificacao.nova`.
+    let notificacoes = Arc::new(ServicoNotificacoes::novo(
+        notificacoes_repo,
+        usuarios_repo.clone(),
+        contatos_repo.clone(),
+        realtime.clone(),
+    ));
 
     AppState {
         tokens: tokens.clone(),
@@ -228,24 +242,43 @@ fn montar_estado(
             audit.clone(),
         ),
         enderecos: ServicoEnderecos::novo(enderecos_repo.clone(), empresas_repo.clone()),
-        oportunidades: ServicoOportunidades::novo(oportunidades_repo, audit.clone()),
+        oportunidades: ServicoOportunidades::novo(
+            oportunidades_repo,
+            audit.clone(),
+            realtime.clone(),
+            notificacoes.clone(),
+        ),
         interacoes: ServicoInteracoes::novo(interacoes_repo),
         orcamentos: ServicoOrcamentos::novo(
             orcamentos_repo,
             enderecos_repo.clone(),
             produtos_repo.clone(),
         ),
-        categorias: ServicoCategorias::novo(categorias_repo.clone()),
+        categorias: ServicoCategorias::novo(categorias_repo.clone(), realtime.clone()),
         produtos: ServicoProdutos::novo(
             produtos_repo.clone(),
             categorias_repo.clone(),
             motor_busca.clone(),
+            realtime.clone(),
         ),
-        tabelas_preco: ServicoTabelasPreco::novo(tabelas_repo.clone(), produtos_repo.clone()),
+        tabelas_preco: ServicoTabelasPreco::novo(
+            tabelas_repo.clone(),
+            produtos_repo.clone(),
+            realtime.clone(),
+        ),
         catalogo_portal: ServicoCatalogoPortal::novo(
             produtos_repo.clone(),
             tabelas_repo.clone(),
             empresas_repo.clone(),
+            estoque_repo.clone(),
+        ),
+        portal: ServicoPortal::novo(
+            contatos_repo.clone(),
+            empresas_repo.clone(),
+            enderecos_repo.clone(),
+            pedidos_repo.clone(),
+            tabelas_repo.clone(),
+            categorias_repo.clone(),
         ),
         carrinho: ServicoCarrinho::novo(
             carrinhos_repo.clone(),
@@ -258,8 +291,16 @@ fn montar_estado(
             contatos_repo,
             enderecos_repo,
             produtos_repo.clone(),
+            realtime.clone(),
+            notificacoes.clone(),
         ),
-        pedidos: ServicoPedidos::novo(pedidos_repo.clone(), produtos_repo.clone(), audit.clone()),
+        pedidos: ServicoPedidos::novo(
+            pedidos_repo.clone(),
+            produtos_repo.clone(),
+            audit.clone(),
+            realtime.clone(),
+            notificacoes.clone(),
+        ),
         estoque: ServicoEstoque::novo(estoque_repo, produtos_repo.clone(), audit.clone()),
         ordens: ServicoOrdensServico::novo(ordens_repo, produtos_repo.clone()),
         notas_fiscais: ServicoNotasFiscais::novo(
@@ -276,6 +317,8 @@ fn montar_estado(
         ),
         caixas: ServicoCaixas::novo(caixas_repo, audit.clone()),
         auditoria: ServicoAuditoria::novo(auditoria_repo),
+        realtime,
+        notificacoes,
         busca: motor_busca.map(|motor| {
             ServicoBusca::novo(
                 motor,

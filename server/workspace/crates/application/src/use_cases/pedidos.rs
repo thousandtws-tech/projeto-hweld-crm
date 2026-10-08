@@ -11,12 +11,16 @@ use hweld_domain::vendas::pedido::{OrigemPedido, Pedido, PedidoItem, StatusPedid
 use crate::erro::{ErroApp, Resultado};
 use crate::ports::catalogo::RepositorioProdutos;
 use crate::ports::externos::RegistradorAuditoria;
+use crate::ports::notificacoes::{CaixaDeEntrada, NovaNotificacao};
+use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
 use crate::ports::vendas::{FiltroPedidos, NovoPedido, RepositorioPedidos};
 
 pub struct ServicoPedidos {
     pedidos: Arc<dyn RepositorioPedidos>,
     produtos: Arc<dyn RepositorioProdutos>,
     audit: Arc<dyn RegistradorAuditoria>,
+    realtime: Arc<dyn NotificadorRealtime>,
+    notificacoes: Arc<dyn CaixaDeEntrada>,
 }
 
 impl ServicoPedidos {
@@ -24,11 +28,15 @@ impl ServicoPedidos {
         pedidos: Arc<dyn RepositorioPedidos>,
         produtos: Arc<dyn RepositorioProdutos>,
         audit: Arc<dyn RegistradorAuditoria>,
+        realtime: Arc<dyn NotificadorRealtime>,
+        notificacoes: Arc<dyn CaixaDeEntrada>,
     ) -> Self {
         Self {
             pedidos,
             produtos,
             audit,
+            realtime,
+            notificacoes,
         }
     }
 
@@ -100,6 +108,29 @@ impl ServicoPedidos {
                 serde_json::json!({ "status": pedido.status }),
                 serde_json::json!({ "status": depois.status }),
             ))
+            .await;
+        // Realtime: staff vê toda transição; o portal da empresa vê a própria.
+        self.realtime.publicar(EventoRealtime::novo(
+            "pedido.status_alterado",
+            Audiencia::Empresa(depois.empresa_id.valor()),
+            serde_json::json!({
+                "id": depois.id.valor(),
+                "numero": depois.numero,
+                "de": pedido.status,
+                "para": depois.status,
+            }),
+        ));
+        // Inbox do cliente — "seu pedido mudou" é a notificação que ele espera.
+        self.notificacoes
+            .notificar_empresa(
+                depois.empresa_id,
+                NovaNotificacao {
+                    tipo: "pedido.status_alterado",
+                    titulo: format!("Pedido {} atualizado", depois.numero),
+                    mensagem: format!("Status: {} → {}", pedido.status, depois.status),
+                    link: Some(format!("/conta/pedidos/{}", depois.id.valor())),
+                },
+            )
             .await;
         Ok(depois)
     }

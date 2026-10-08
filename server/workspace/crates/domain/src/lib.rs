@@ -19,6 +19,7 @@ pub mod crm;
 pub mod estoque;
 pub mod financeiro;
 pub mod fiscal;
+pub mod notificacao;
 pub mod operacao;
 pub mod shared;
 pub mod vendas;

@@ -14,13 +14,15 @@ use hweld_domain::shared::paginacao::Pagina;
 use serde::Serialize;
 
 use crate::dto::{
-    CategoriaReq, PrecoItemReq, ProdutoReq, QueryCategorias, QueryProdutos, QueryTabelas,
-    TabelaPrecoReq,
+    CategoriaReq, ImagemProdutoReq, PrecoItemReq, ProdutoReq, QueryCategorias, QueryProdutos,
+    QueryTabelas, TabelaPrecoReq,
 };
 use crate::estado::AppState;
 use crate::extratores::{AuthPortal, AuthStaff};
 
 const CATALOGO: &[Perfil] = &[Perfil::Admin, Perfil::Estoque, Perfil::Vendedor];
+/// Imagens de produto — restrito a quem opera o catálogo físico.
+const IMAGENS: &[Perfil] = &[Perfil::Admin, Perfil::Estoque];
 
 // ── Respostas compostas ─────────────────────────────────────────────────────
 
@@ -252,6 +254,97 @@ pub async fn arquivar_produto(
 ) -> Resposta<HttpResponse> {
     staff.exige(CATALOGO)?;
     state.produtos.arquivar(Id::novo(*id)).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+// ── Imagens de produto ──────────────────────────────────────────────────────
+
+/// Lista imagens do produto ordenadas pela galeria.
+#[utoipa::path(
+    get,
+    path = "/api/v1/produtos/{id}/imagens",
+    tag = "Catálogo",
+    params(("id" = i64, Path, description = "id do produto")),
+    responses(
+        (status = 200, body = Vec<ProdutoImagem>),
+        (status = 404, description = "produto não encontrado"),
+    ),
+    security(("bearer_auth" = [])),
+)]
+#[get("/produtos/{id}/imagens")]
+pub async fn listar_imagens(
+    state: web::Data<AppState>,
+    staff: AuthStaff,
+    id: web::Path<i64>,
+) -> Resposta<HttpResponse> {
+    staff.exige(IMAGENS)?;
+    let imagens = state.produtos.imagens(Id::novo(*id)).await?;
+    Ok(HttpResponse::Ok().json(imagens))
+}
+
+/// Registra imagem por URL externa (v1 — sem upload binário).
+/// `is_principal=true` desmarca a principal anterior (transação no repo).
+#[utoipa::path(
+    post,
+    path = "/api/v1/produtos/{id}/imagens",
+    tag = "Catálogo",
+    params(("id" = i64, Path, description = "id do produto")),
+    request_body = ImagemProdutoReq,
+    responses(
+        (status = 201, body = ProdutoImagem),
+        (status = 422, description = "url inválida"),
+        (status = 404, description = "produto não encontrado"),
+    ),
+    security(("bearer_auth" = [])),
+)]
+#[post("/produtos/{id}/imagens")]
+pub async fn adicionar_imagem(
+    state: web::Data<AppState>,
+    staff: AuthStaff,
+    id: web::Path<i64>,
+    body: web::Json<ImagemProdutoReq>,
+) -> Resposta<HttpResponse> {
+    staff.exige(IMAGENS)?;
+    let imagem = state
+        .produtos
+        .adicionar_imagem(
+            Id::novo(*id),
+            &body.url,
+            body.alt_text.as_deref(),
+            body.ordem,
+            body.is_principal.unwrap_or(false),
+        )
+        .await?;
+    Ok(HttpResponse::Created().json(imagem))
+}
+
+/// Remove imagem — 404 se não pertencer ao produto do path.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/produtos/{id}/imagens/{imagem_id}",
+    tag = "Catálogo",
+    params(
+        ("id" = i64, Path, description = "id do produto"),
+        ("imagem_id" = i64, Path),
+    ),
+    responses(
+        (status = 204, description = "imagem removida"),
+        (status = 404, description = "produto/imagem não encontrado"),
+    ),
+    security(("bearer_auth" = [])),
+)]
+#[delete("/produtos/{id}/imagens/{imagem_id}")]
+pub async fn remover_imagem(
+    state: web::Data<AppState>,
+    staff: AuthStaff,
+    path: web::Path<(i64, i64)>,
+) -> Resposta<HttpResponse> {
+    staff.exige(IMAGENS)?;
+    let (produto_id, imagem_id) = path.into_inner();
+    state
+        .produtos
+        .remover_imagem(Id::novo(produto_id), Id::novo(imagem_id))
+        .await?;
     Ok(HttpResponse::NoContent().finish())
 }
 

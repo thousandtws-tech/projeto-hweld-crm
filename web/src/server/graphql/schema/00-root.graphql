@@ -1,4 +1,0 @@
-# Raiz do schema — os módulos estendem estes tipos.
-
-type Query
-type Mutation

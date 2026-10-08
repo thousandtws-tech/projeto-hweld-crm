@@ -5,7 +5,13 @@
 use hweld_application::ports::busca::{FacetaContagem, Facetas, SugestaoProduto};
 use hweld_application::use_cases::busca::{BuscaPaginada, ItemBuscaPortal, ItemBuscaStaff};
 use hweld_application::use_cases::carrinho::CarrinhoDetalhe;
-use hweld_application::use_cases::catalogo::ItemCatalogoPortal;
+use hweld_application::use_cases::catalogo::{
+    ItemCatalogoPortal, ProdutoDetalhePortal, ProdutoPortal,
+};
+use hweld_application::use_cases::portal::{
+    ContatoPortal, EmpresaPortal, EnderecoPortal, ItemPedidoPortal, MeuPerfilPortal,
+    PedidoDetalhePortal, PedidoResumoPortal, TabelaPortal,
+};
 use hweld_domain::acesso::usuario::{Perfil, Usuario};
 use hweld_domain::auditoria::log::{AcaoAuditoria, LogAuditoria};
 use hweld_domain::catalogo::categoria::Categoria;
@@ -24,6 +30,7 @@ use hweld_domain::financeiro::caixa::{
 use hweld_domain::fiscal::nota_fiscal::{
     NotaFiscal, NotaFiscalItem, StatusNotaFiscal, TipoNotaFiscal,
 };
+use hweld_domain::notificacao::Notificacao;
 use hweld_domain::operacao::ordem_servico::{
     OrdemServico, OsHistorico, OsItem, PrioridadeOs, StatusOs,
 };
@@ -86,6 +93,8 @@ impl utoipa::Modify for SegurancaBearer {
         (name = "Financeiro", description = "pagamentos, parcelas e sessões de caixa"),
         (name = "Busca", description = "busca full-text Elasticsearch (staff) e reindexação"),
         (name = "Portal B2B", description = "catálogo precificado, busca, carrinho e checkout do contato"),
+        (name = "Realtime", description = "SSE — eventos de domínio por contexto (staff/portal)"),
+        (name = "Notificações", description = "inbox persistente do sino (staff e portal)"),
         (name = "Auditoria", description = "consulta do log append-only (admin)"),
     ),
     paths(
@@ -112,6 +121,7 @@ impl utoipa::Modify for SegurancaBearer {
         catalogo::atualizar_produto, catalogo::arquivar_produto, catalogo::listar_tabelas,
         catalogo::buscar_tabela, catalogo::criar_tabela, catalogo::atualizar_tabela,
         catalogo::definir_preco, catalogo::remover_item_tabela, catalogo::catalogo_portal,
+        catalogo::listar_imagens, catalogo::adicionar_imagem, catalogo::remover_imagem,
         // Pedidos
         pedidos::listar, pedidos::buscar, pedidos::criar_manual, pedidos::transicionar,
         // Estoque
@@ -130,9 +140,18 @@ impl utoipa::Modify for SegurancaBearer {
         busca::buscar_staff, busca::reindexar, busca::buscar_portal, busca::sugerir_portal,
         // Auditoria
         auditoria::listar,
-        // Portal B2B — carrinho e checkout
+        // Portal B2B — conta, catálogo e checkout
+        portal::me, portal::enderecos, portal::categorias, portal::produto,
+        portal::pedidos, portal::pedido,
         carrinho::atual, carrinho::adicionar, carrinho::atualizar, carrinho::remover,
         carrinho::checkout,
+        // Realtime
+        realtime::stream_staff, realtime::stream_portal,
+        // Notificações — sino nos dois contextos
+        notificacoes::listar_staff, notificacoes::nao_lidas_staff,
+        notificacoes::marcar_lida_staff, notificacoes::ler_todas_staff,
+        notificacoes::listar_portal, notificacoes::nao_lidas_portal,
+        notificacoes::marcar_lida_portal, notificacoes::ler_todas_portal,
     ),
     components(
         schemas(
@@ -145,14 +164,15 @@ impl utoipa::Modify for SegurancaBearer {
             StatusPedidoReq, MovimentacaoReq, OrdemServicoReq, ItemOsReq, StatusOsReq,
             EmitirNfReq, CancelarNfReq, ParcelasReq, BaixarPagamentoReq,
             EstornarPagamentoReq, AbrirCaixaReq, LancarCaixaReq, FecharCaixaReq,
-            ItemCarrinhoReq, CheckoutReq,
+            ItemCarrinhoReq, CheckoutReq, ImagemProdutoReq,
             // ── Entidades de domínio ────────────────────────────────────
             Usuario, Empresa, Contato, Endereco, Oportunidade, Interacao, Orcamento,
             OrcamentoItem, Categoria, Produto, ProdutoImagem,
             TabelaPreco, TabelaPrecoItem, Pedido, PedidoItem, EstoqueSaldo,
             EstoqueMovimentacao, OrdemServico, OsItem, OsHistorico, NotaFiscal,
             NotaFiscalItem, Pagamento, FormaPagamento, Caixa,
-            CaixaMovimentacao, Carrinho, CarrinhoItem, LogAuditoria,
+            CaixaMovimentacao, Carrinho, CarrinhoItem, LogAuditoria, Notificacao,
+            notificacoes::NaoLidasResposta,
             // ── Enums (valores serializados reais) ──────────────────────
             Perfil, StatusEmpresa, TipoEndereco, TipoInteracao, OrigemOportunidade,
             EstagioOportunidade, StatusOrcamento, TipoMovimentacao, StatusCaixa,
@@ -167,13 +187,17 @@ impl utoipa::Modify for SegurancaBearer {
             Pagina<Interacao>, Pagina<Orcamento>, Pagina<Produto>, Pagina<TabelaPreco>,
             Pagina<Pedido>, Pagina<EstoqueMovimentacao>, Pagina<OrdemServico>,
             Pagina<NotaFiscal>, Pagina<Pagamento>, Pagina<Caixa>, Pagina<LogAuditoria>,
-            Pagina<ItemCatalogoPortal>,
+            Pagina<ItemCatalogoPortal>, Pagina<PedidoResumoPortal>,
             BuscaPaginada<ItemBuscaStaff>, BuscaPaginada<ItemBuscaPortal>,
             // ── Respostas locais dos handlers ───────────────────────────
             auth::TokensResp, auth::PortalLoginResp, auth::ContatoResp, saude::Saude,
             busca::ReindexResultado, catalogo::ProdutoDetalhe, catalogo::TabelaDetalhe,
             estoque::SaldoAbaixoMinimo, fiscal::NotaDetalhe, orcamentos::OrcamentoDetalhe,
             ordens::OsDetalhe, pedidos::PedidoDetalhe,
+            // ── Portal B2B ──────────────────────────────────────────────
+            ProdutoPortal, ProdutoDetalhePortal, ContatoPortal, EmpresaPortal,
+            TabelaPortal, EnderecoPortal, PedidoResumoPortal, ItemPedidoPortal,
+            PedidoDetalhePortal, MeuPerfilPortal,
         )
     ),
     modifiers(&SegurancaBearer)

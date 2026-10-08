@@ -18,6 +18,7 @@ use crate::ports::crm::{
     RepositorioEnderecos, RepositorioInteracoes, RepositorioOportunidades,
 };
 use crate::ports::externos::RegistradorAuditoria;
+use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
 use crate::ports::seguranca::HasherSenha;
 
 // ── Empresas ────────────────────────────────────────────────────────────────
@@ -329,16 +330,22 @@ impl ServicoEnderecos {
 pub struct ServicoOportunidades {
     oportunidades: Arc<dyn RepositorioOportunidades>,
     audit: Arc<dyn RegistradorAuditoria>,
+    realtime: Arc<dyn NotificadorRealtime>,
+    notificacoes: Arc<dyn crate::ports::notificacoes::CaixaDeEntrada>,
 }
 
 impl ServicoOportunidades {
     pub fn novo(
         oportunidades: Arc<dyn RepositorioOportunidades>,
         audit: Arc<dyn RegistradorAuditoria>,
+        realtime: Arc<dyn NotificadorRealtime>,
+        notificacoes: Arc<dyn crate::ports::notificacoes::CaixaDeEntrada>,
     ) -> Self {
         Self {
             oportunidades,
             audit,
+            realtime,
+            notificacoes,
         }
     }
 
@@ -416,6 +423,32 @@ impl ServicoOportunidades {
                 serde_json::json!({ "estagio": depois.estagio }),
             ))
             .await;
+        // Kanban do backoffice atualiza ao vivo — evento só para staff
+        // (oportunidade não é exposta ao portal).
+        self.realtime.publicar(EventoRealtime::novo(
+            "oportunidade.estagio",
+            Audiencia::Staff,
+            serde_json::json!({
+                "id": depois.id.valor(),
+                "de": atual.estagio,
+                "para": depois.estagio,
+            }),
+        ));
+        // Inbox do staff só para desfechos — movimentação intermediária é
+        // rotina de quem arrastou o card, não notificação.
+        if matches!(
+            depois.estagio,
+            EstagioOportunidade::Ganha | EstagioOportunidade::Perdida
+        ) {
+            self.notificacoes
+                .notificar_staff(crate::ports::notificacoes::NovaNotificacao {
+                    tipo: "oportunidade.estagio",
+                    titulo: format!("Oportunidade {}", depois.estagio),
+                    mensagem: depois.titulo.clone(),
+                    link: Some("/crm/oportunidades".to_string()),
+                })
+                .await;
+        }
         Ok(depois)
     }
 }

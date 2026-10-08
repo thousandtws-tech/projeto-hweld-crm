@@ -18,10 +18,13 @@ use hweld_application::use_cases::crm::{
 use hweld_application::use_cases::estoque::ServicoEstoque;
 use hweld_application::use_cases::financeiro::{ServicoCaixas, ServicoPagamentos};
 use hweld_application::use_cases::fiscal::ServicoNotasFiscais;
+use hweld_application::use_cases::notificacoes::ServicoNotificacoes;
 use hweld_application::use_cases::orcamentos::ServicoOrcamentos;
 use hweld_application::use_cases::ordens::ServicoOrdensServico;
 use hweld_application::use_cases::pedidos::ServicoPedidos;
+use hweld_application::use_cases::portal::ServicoPortal;
 use hweld_application::use_cases::usuarios::ServicoUsuarios;
+use hweld_infrastructure::realtime::BroadcasterRealtime;
 
 pub struct AppState {
     pub auth: ServicoAuth,
@@ -38,6 +41,8 @@ pub struct AppState {
     pub produtos: ServicoProdutos,
     pub tabelas_preco: ServicoTabelasPreco,
     pub catalogo_portal: ServicoCatalogoPortal,
+    /// Conta do contato B2B — perfil, endereços, categorias e pedidos.
+    pub portal: ServicoPortal,
     pub carrinho: ServicoCarrinho,
     pub checkout: ServicoCheckout,
     pub pedidos: ServicoPedidos,
@@ -50,4 +55,11 @@ pub struct AppState {
     /// `None` quando `ELASTICSEARCH_URL` não está configurada — os
     /// endpoints de busca respondem 503 e o restante segue normal.
     pub busca: Option<ServicoBusca>,
+    /// Barramento realtime in-process — os handlers SSE criam assinantes
+    /// a partir daqui; use cases publicam via port `NotificadorRealtime`.
+    pub realtime: Arc<BroadcasterRealtime>,
+    /// Inbox persistente — sino com badge nos dois frontends.
+    /// `Arc` porque os use cases de negócio também o usam como
+    /// `CaixaDeEntrada` (fan-out de notificações).
+    pub notificacoes: Arc<ServicoNotificacoes>,
 }

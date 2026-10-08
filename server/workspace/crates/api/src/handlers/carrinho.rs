@@ -4,8 +4,8 @@ use crate::erro::Resposta;
 use actix_web::{delete, get, post, put, web, HttpResponse};
 use hweld_application::ports::vendas::DonoCarrinho;
 use hweld_application::use_cases::carrinho::CarrinhoDetalhe;
+use hweld_application::use_cases::portal::PedidoDetalhePortal;
 use hweld_domain::shared::id::Id;
-use hweld_domain::vendas::pedido::Pedido;
 
 use crate::dto::{CheckoutReq, ItemCarrinhoReq};
 use crate::estado::AppState;
@@ -123,13 +123,15 @@ pub async fn remover(
 }
 
 /// Fluxo A: carrinho → pedido `aguardando_pagamento` (transação única).
+/// Responde o detalhe sanitizado do portal — nunca o `Pedido` cru
+/// (que carrega ids internos de orçamento/carrinho/vendedor).
 #[utoipa::path(
     post,
     path = "/api/v1/portal/checkout",
     tag = "Portal B2B",
     request_body = CheckoutReq,
     responses(
-        (status = 201, body = Pedido),
+        (status = 201, body = PedidoDetalhePortal),
         (status = 404, description = "endereço não encontrado"),
         (status = 422, description = "carrinho vazio ou regra violada"),
     ),
@@ -141,9 +143,11 @@ pub async fn checkout(
     portal: AuthPortal,
     body: web::Json<CheckoutReq>,
 ) -> Resposta<HttpResponse> {
+    let contato_id = Id::novo(portal.contato_id());
     let pedido = state
         .checkout
-        .executar(Id::novo(portal.contato_id()), body.into_inner().input())
+        .executar(contato_id, body.into_inner().input())
         .await?;
-    Ok(HttpResponse::Created().json(pedido))
+    let detalhe = state.portal.pedido(contato_id, pedido.id).await?;
+    Ok(HttpResponse::Created().json(detalhe))
 }

@@ -41,11 +41,12 @@ pub struct ItemBuscaStaff {
     pub score: f64,
 }
 
-/// Item de busca do portal — produto com `preco_efetivo` B2B + score.
+/// Item de busca do portal — `ProdutoPortal` sanitizado (sem `preco_custo`,
+/// `estoque_minimo`, `controla_estoque`) + `preco_efetivo` B2B + score.
 #[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct ItemBuscaPortal {
     #[serde(flatten)]
-    pub produto: Produto,
+    pub produto: crate::use_cases::catalogo::ProdutoPortal,
     pub preco_efetivo: hweld_domain::Dinheiro,
     pub score: f64,
 }
@@ -138,7 +139,7 @@ impl ServicoBusca {
                     .and_then(|(_, itens)| itens.iter().find(|i| i.produto_id == p.id));
                 Some(ItemBuscaPortal {
                     preco_efetivo: preco_efetivo(p, tabela.as_ref().map(|(t, _)| t), item_tabela),
-                    produto: p.clone(),
+                    produto: crate::use_cases::catalogo::ProdutoPortal::from(p.clone()),
                     score: h.score,
                 })
             })

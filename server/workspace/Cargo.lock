@@ -1289,6 +1289,8 @@ dependencies = [
  "serde_json",
  "sqlx",
  "thiserror",
+ "tokio",
+ "tokio-stream",
  "tracing",
  "tracing-actix-web",
  "utoipa",
@@ -3313,6 +3315,7 @@ dependencies = [
  "futures-core",
  "pin-project-lite",
  "tokio",
+ "tokio-util",
 ]
 
 [[package]]

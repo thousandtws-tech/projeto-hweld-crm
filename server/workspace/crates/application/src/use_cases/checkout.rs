@@ -16,6 +16,8 @@ use hweld_domain::vendas::pedido::{ItemPedidoNovo, OrigemPedido, Pedido};
 use crate::erro::{ErroApp, Resultado};
 use crate::ports::catalogo::RepositorioProdutos;
 use crate::ports::crm::{RepositorioContatos, RepositorioEnderecos};
+use crate::ports::notificacoes::{CaixaDeEntrada, NovaNotificacao};
+use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
 use crate::ports::vendas::{DonoCarrinho, NovoPedido, RepositorioCarrinhos, RepositorioPedidos};
 
 #[derive(Debug, Clone)]
@@ -32,6 +34,8 @@ pub struct ServicoCheckout {
     contatos: Arc<dyn RepositorioContatos>,
     enderecos: Arc<dyn RepositorioEnderecos>,
     produtos: Arc<dyn RepositorioProdutos>,
+    realtime: Arc<dyn NotificadorRealtime>,
+    notificacoes: Arc<dyn CaixaDeEntrada>,
 }
 
 impl ServicoCheckout {
@@ -41,6 +45,8 @@ impl ServicoCheckout {
         contatos: Arc<dyn RepositorioContatos>,
         enderecos: Arc<dyn RepositorioEnderecos>,
         produtos: Arc<dyn RepositorioProdutos>,
+        realtime: Arc<dyn NotificadorRealtime>,
+        notificacoes: Arc<dyn CaixaDeEntrada>,
     ) -> Self {
         Self {
             carrinhos,
@@ -48,6 +54,8 @@ impl ServicoCheckout {
             contatos,
             enderecos,
             produtos,
+            realtime,
+            notificacoes,
         }
     }
 
@@ -135,6 +143,38 @@ impl ServicoCheckout {
             itens: itens_pedido,
         };
 
-        self.pedidos.criar_de_carrinho(pedido, carrinho.id).await
+        let pedido = self.pedidos.criar_de_carrinho(pedido, carrinho.id).await?;
+        // Realtime: pedido novo do e-commerce — staff + portal da empresa.
+        self.realtime.publicar(EventoRealtime::novo(
+            "pedido.criado",
+            Audiencia::Empresa(pedido.empresa_id.valor()),
+            serde_json::json!({
+                "id": pedido.id.valor(),
+                "numero": pedido.numero,
+                "total": pedido.total,
+                "origem": pedido.origem,
+            }),
+        ));
+        // Inbox persistente — sino do backoffice + portal da empresa.
+        self.notificacoes
+            .notificar_staff(NovaNotificacao {
+                tipo: "pedido.criado",
+                titulo: format!("Novo pedido {}", pedido.numero),
+                mensagem: format!("Pedido do e-commerce — total R$ {}", pedido.total),
+                link: Some(format!("/vendas/pedidos/{}", pedido.id.valor())),
+            })
+            .await;
+        self.notificacoes
+            .notificar_empresa(
+                pedido.empresa_id,
+                NovaNotificacao {
+                    tipo: "pedido.criado",
+                    titulo: format!("Pedido {} registrado", pedido.numero),
+                    mensagem: "Recebemos o seu pedido — acompanhe o status aqui.".to_string(),
+                    link: Some(format!("/conta/pedidos/{}", pedido.id.valor())),
+                },
+            )
+            .await;
+        Ok(pedido)
     }
 }

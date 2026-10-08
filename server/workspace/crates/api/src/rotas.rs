@@ -74,6 +74,9 @@ pub fn configurar(cfg: &mut web::ServiceConfig) {
             .service(catalogo::atualizar_tabela)
             .service(catalogo::definir_preco)
             .service(catalogo::remover_item_tabela)
+            .service(catalogo::listar_imagens)
+            .service(catalogo::adicionar_imagem)
+            .service(catalogo::remover_imagem)
             // Pedidos.
             .service(pedidos::listar)
             .service(pedidos::buscar)
@@ -112,7 +115,18 @@ pub fn configurar(cfg: &mut web::ServiceConfig) {
             .service(busca::reindexar)
             // Auditoria.
             .service(auditoria::listar)
+            // Notificações — inbox do staff (sino com badge).
+            .service(notificacoes::listar_staff)
+            .service(notificacoes::nao_lidas_staff)
+            .service(notificacoes::marcar_lida_staff)
+            .service(notificacoes::ler_todas_staff)
             // Portal B2B — mesmo escopo, extrator `AuthPortal` valida o contexto.
+            .service(portal::me)
+            .service(portal::enderecos)
+            .service(portal::categorias)
+            .service(portal::produto)
+            .service(portal::pedidos)
+            .service(portal::pedido)
             .service(catalogo::catalogo_portal)
             .service(busca::buscar_portal)
             .service(busca::sugerir_portal)
@@ -120,6 +134,14 @@ pub fn configurar(cfg: &mut web::ServiceConfig) {
             .service(carrinho::adicionar)
             .service(carrinho::atualizar)
             .service(carrinho::remover)
-            .service(carrinho::checkout),
+            .service(carrinho::checkout)
+            // Notificações do portal — inbox do contato.
+            .service(notificacoes::listar_portal)
+            .service(notificacoes::nao_lidas_portal)
+            .service(notificacoes::marcar_lida_portal)
+            .service(notificacoes::ler_todas_portal)
+            // Realtime SSE — um stream por contexto de token.
+            .service(realtime::stream_staff)
+            .service(realtime::stream_portal),
     );
 }

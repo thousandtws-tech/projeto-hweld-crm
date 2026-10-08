@@ -7,6 +7,8 @@ pub mod estoque;
 pub mod externos;
 pub mod financeiro;
 pub mod fiscal;
+pub mod notificacoes;
 pub mod operacao;
+pub mod realtime;
 pub mod seguranca;
 pub mod vendas;

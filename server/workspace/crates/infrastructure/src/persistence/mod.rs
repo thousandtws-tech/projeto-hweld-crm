@@ -9,6 +9,7 @@ pub mod db;
 pub mod estoque;
 pub mod financeiro;
 pub mod fiscal;
+pub mod notificacoes;
 pub mod operacao;
 pub mod usuarios;
 pub mod vendas;
@@ -22,6 +23,7 @@ pub use crm::{
 pub use estoque::RepositorioEstoquePg;
 pub use financeiro::RepositorioCaixasPg;
 pub use fiscal::RepositorioNotasFiscaisPg;
+pub use notificacoes::RepositorioNotificacoesPg;
 pub use operacao::RepositorioOrdensServicoPg;
 pub use usuarios::RepositorioUsuariosPg;
 pub use vendas::{

@@ -625,6 +625,25 @@ pub struct StatusPedidoReq {
     pub status: StatusPedido,
 }
 
+// ── Portal B2B ──────────────────────────────────────────────────────────────
+
+#[derive(Debug, Deserialize, utoipa::ToSchema, utoipa::IntoParams)]
+pub struct QueryPortalPedidos {
+    #[serde(flatten)]
+    pub pag: QueryPaginacao,
+    pub status: Option<StatusPedido>,
+    /// `true` = só pedidos do próprio contato (padrão: empresa inteira).
+    pub so_meus: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct ImagemProdutoReq {
+    pub url: String,
+    pub alt_text: Option<String>,
+    pub ordem: Option<i32>,
+    pub is_principal: Option<bool>,
+}
+
 // ── Estoque ─────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
