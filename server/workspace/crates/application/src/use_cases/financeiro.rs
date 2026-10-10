@@ -17,6 +17,7 @@ use hweld_domain::vendas::pedido::Pedido;
 use crate::erro::{ErroApp, Resultado};
 use crate::ports::externos::RegistradorAuditoria;
 use crate::ports::financeiro::RepositorioCaixas;
+use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
 use crate::ports::vendas::{
     FiltroPagamentos, RepositorioFormasPagamento, RepositorioPagamentos, RepositorioPedidos,
 };
@@ -28,6 +29,7 @@ pub struct ServicoPagamentos {
     pedidos: Arc<dyn RepositorioPedidos>,
     formas: Arc<dyn RepositorioFormasPagamento>,
     audit: Arc<dyn RegistradorAuditoria>,
+    realtime: Arc<dyn NotificadorRealtime>,
 }
 
 impl ServicoPagamentos {
@@ -36,12 +38,14 @@ impl ServicoPagamentos {
         pedidos: Arc<dyn RepositorioPedidos>,
         formas: Arc<dyn RepositorioFormasPagamento>,
         audit: Arc<dyn RegistradorAuditoria>,
+        realtime: Arc<dyn NotificadorRealtime>,
     ) -> Self {
         Self {
             pagamentos,
             pedidos,
             formas,
             audit,
+            realtime,
         }
     }
 
@@ -121,6 +125,15 @@ impl ServicoPagamentos {
                 serde_json::json!({ "parcelas": quantidade, "total": pedido.total }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "pagamento.parcelas",
+            Audiencia::Staff,
+            serde_json::json!({
+                "pedido_id": pedido_id.valor(),
+                "parcelas": quantidade,
+                "total": pedido.total,
+            }),
+        ));
         Ok(criadas)
     }
 
@@ -158,6 +171,15 @@ impl ServicoPagamentos {
                 serde_json::json!({ "status": depois.status }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "pagamento.baixado",
+            Audiencia::Staff,
+            serde_json::json!({
+                "id": depois.id.valor(),
+                "pedido_id": depois.pedido_id.valor(),
+                "valor": depois.valor,
+            }),
+        ));
         Ok(depois)
     }
 
@@ -189,6 +211,11 @@ impl ServicoPagamentos {
                 serde_json::json!({ "status": depois.status, "motivo": motivo }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "pagamento.estornado",
+            Audiencia::Staff,
+            serde_json::json!({ "id": depois.id.valor(), "pedido_id": depois.pedido_id.valor() }),
+        ));
         Ok(depois)
     }
 }
@@ -198,11 +225,20 @@ impl ServicoPagamentos {
 pub struct ServicoCaixas {
     caixas: Arc<dyn RepositorioCaixas>,
     audit: Arc<dyn RegistradorAuditoria>,
+    realtime: Arc<dyn NotificadorRealtime>,
 }
 
 impl ServicoCaixas {
-    pub fn novo(caixas: Arc<dyn RepositorioCaixas>, audit: Arc<dyn RegistradorAuditoria>) -> Self {
-        Self { caixas, audit }
+    pub fn novo(
+        caixas: Arc<dyn RepositorioCaixas>,
+        audit: Arc<dyn RegistradorAuditoria>,
+        realtime: Arc<dyn NotificadorRealtime>,
+    ) -> Self {
+        Self {
+            caixas,
+            audit,
+            realtime,
+        }
     }
 
     pub async fn aberto(&self) -> Resultado<Option<Caixa>> {
@@ -227,6 +263,11 @@ impl ServicoCaixas {
                 serde_json::json!({ "valor_abertura": valor_abertura }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "caixa.aberto",
+            Audiencia::Staff,
+            serde_json::json!({ "id": caixa.id.valor() }),
+        ));
         Ok(caixa)
     }
 
@@ -274,6 +315,11 @@ impl ServicoCaixas {
                 serde_json::json!({ "caixa_id": mov.caixa_id, "tipo": mov.tipo, "valor": mov.valor }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "caixa.movimento",
+            Audiencia::Staff,
+            serde_json::json!({ "caixa_id": mov.caixa_id.valor(), "tipo": mov.tipo, "valor": mov.valor }),
+        ));
         Ok(mov)
     }
 
@@ -294,6 +340,11 @@ impl ServicoCaixas {
                 serde_json::json!({ "status": depois.status, "diferenca": depois.diferenca }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "caixa.fechado",
+            Audiencia::Staff,
+            serde_json::json!({ "id": depois.id.valor(), "diferenca": depois.diferenca }),
+        ));
         Ok(depois)
     }
 }

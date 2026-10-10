@@ -1,0 +1,206 @@
+<div class="institucional-layout">
+  <hw-institucional-nav paginaAtual="Atendimento ao Cliente" />
+
+  <main class="institucional-conteudo">
+    <header class="pagina-topo">
+      <span class="tag-secao">Canais Oficiais</span>
+      <h1>Atendimento ao Cliente</h1>
+      <p class="pagina-sub">
+        Estamos prontos para atender a sua indústria com agilidade técnica, cotações corporativas e
+        suporte pós-venda.
+      </p>
+    </header>
+
+    <!-- Grid de Canais de Contato -->
+    <div class="canais-grid">
+      <div class="canal-card">
+        <div class="canal-icone-box">
+          <span class="material-symbols-outlined">headset_mic</span>
+        </div>
+        <div class="canal-dados">
+          <strong>Televendas & Suporte</strong>
+          <a href="tel:1135089979" class="canal-valor hw-numeric">(11) 3508-9979</a>
+          <span class="canal-desc">Segunda a Sexta das 08h às 18h</span>
+        </div>
+      </div>
+
+      <div class="canal-card">
+        <div class="canal-icone-box">
+          <span class="material-symbols-outlined">business_center</span>
+        </div>
+        <div class="canal-dados">
+          <strong>Vendas Corporativas (B2B)</strong>
+          <a href="tel:1131856786" class="canal-valor hw-numeric">(11) 3185-6786</a>
+          <span class="canal-desc">Grandes contas e compras em escala</span>
+        </div>
+      </div>
+
+      <div class="canal-card">
+        <div class="canal-icone-box">
+          <span class="material-symbols-outlined">chat</span>
+        </div>
+        <div class="canal-dados">
+          <strong>WhatsApp Comercial</strong>
+          <a
+            href="https://wa.me/551135089979"
+            target="_blank"
+            rel="noopener"
+            class="canal-valor hw-numeric"
+          >
+            (11) 3508-9979
+          </a>
+          <span class="canal-desc">Resposta média em menos de 15 minutos</span>
+        </div>
+      </div>
+
+      <div class="canal-card">
+        <div class="canal-icone-box">
+          <span class="material-symbols-outlined">mail</span>
+        </div>
+        <div class="canal-dados">
+          <strong>E-mail Corporativo</strong>
+          <a href="mailto:corporativo@hweld.com.br" class="canal-valor"
+            >corporativo&#64;hweld.com.br</a
+          >
+          <span class="canal-desc">Cotações formais e envio de pedidos</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulário de Mensagem -->
+    <section class="form-secao">
+      <div class="form-header">
+        <h2>Envie uma Mensagem</h2>
+        <p>
+          Preencha os dados abaixo para direcionarmos sua solicitação ao consultor da sua região.
+        </p>
+      </div>
+
+      @if (enviado()) {
+        <div class="alerta-sucesso">
+          <span class="material-symbols-outlined">check_circle</span>
+          <div>
+            <strong>Mensagem enviada com sucesso!</strong>
+            <p>
+              Nossa equipe técnica entrará em contato em até 2 horas úteis pelo e-mail ou telefone
+              informado.
+            </p>
+          </div>
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="enviar()" class="form-contato">
+          <div class="form-grid">
+            <div class="campo-grupo">
+              <label for="empresa">Empresa / Razão Social *</label>
+              <input
+                id="empresa"
+                type="text"
+                formControlName="empresa"
+                placeholder="Nome da sua empresa"
+              />
+              @if (form.controls.empresa.touched && form.controls.empresa.invalid) {
+                <span class="erro-msg">Informe o nome da empresa</span>
+              }
+            </div>
+
+            <div class="campo-grupo">
+              <label for="cnpj">CNPJ *</label>
+              <input
+                id="cnpj"
+                type="text"
+                formControlName="cnpj"
+                placeholder="00.000.000/0000-00"
+                class="hw-numeric"
+              />
+              @if (form.controls.cnpj.touched && form.controls.cnpj.invalid) {
+                <span class="erro-msg">Informe o CNPJ</span>
+              }
+            </div>
+
+            <div class="campo-grupo">
+              <label for="nome">Nome do Responsável *</label>
+              <input id="nome" type="text" formControlName="nome" placeholder="Seu nome completo" />
+              @if (form.controls.nome.touched && form.controls.nome.invalid) {
+                <span class="erro-msg">Informe seu nome</span>
+              }
+            </div>
+
+            <div class="campo-grupo">
+              <label for="email">E-mail Corporativo *</label>
+              <input
+                id="email"
+                type="email"
+                formControlName="email"
+                placeholder="seu.nome@empresa.com.br"
+              />
+              @if (form.controls.email.touched && form.controls.email.invalid) {
+                <span class="erro-msg">Informe um e-mail válido</span>
+              }
+            </div>
+
+            <div class="campo-grupo">
+              <label for="telefone">Telefone / WhatsApp *</label>
+              <input
+                id="telefone"
+                type="tel"
+                formControlName="telefone"
+                placeholder="(11) 99999-9999"
+                class="hw-numeric"
+              />
+              @if (form.controls.telefone.touched && form.controls.telefone.invalid) {
+                <span class="erro-msg">Informe um telefone</span>
+              }
+            </div>
+
+            <div class="campo-grupo">
+              <label for="assunto">Assunto Principal *</label>
+              <select id="assunto" formControlName="assunto">
+                <option value="cotacao">Cotação de Equipamentos & Inversoras</option>
+                <option value="consumiveis">Fornecimento Recorrente de Consumíveis</option>
+                <option value="faturamento">Dúvidas de Faturamento & Tabela PJ</option>
+                <option value="posvenda">Pós-venda e Acompanhamento de Pedido</option>
+                <option value="assistencia">Assistência Técnica e Garantia</option>
+                <option value="outro">Outros Assuntos</option>
+              </select>
+            </div>
+
+            <div class="campo-grupo span-2">
+              <label for="mensagem">Mensagem / Especificações do Pedido *</label>
+              <textarea
+                id="mensagem"
+                rows="4"
+                formControlName="mensagem"
+                placeholder="Descreva os produtos, quantidades ou a sua dúvida técnica..."
+              ></textarea>
+              @if (form.controls.mensagem.touched && form.controls.mensagem.invalid) {
+                <span class="erro-msg">Descreva sua solicitação</span>
+              }
+            </div>
+          </div>
+
+          <div class="form-acoes">
+            <button type="submit" class="btn-enviar" [disabled]="enviando()">
+              <span class="material-symbols-outlined">send</span>
+              <span>{{ enviando() ? 'Enviando mensagem…' : 'Enviar Solicitação' }}</span>
+            </button>
+          </div>
+        </form>
+      }
+    </section>
+
+    <!-- Informações de Sede & Horários -->
+    <section class="sede-secao">
+      <div class="sede-card">
+        <span class="material-symbols-outlined sede-icon">location_on</span>
+        <div>
+          <strong>Centro de Distribuição & Fábrica HWeld</strong>
+          <p>Av. Industrial, 1500 - Distrito Industrial - São Paulo/SP - CEP 01310-100</p>
+          <span class="sede-nota"
+            >Visitas técnicas e demonstrações de soldagem mediante agendamento prévio com o
+            departamento de engenharia.</span
+          >
+        </div>
+      </div>
+    </section>
+  </main>
+</div>

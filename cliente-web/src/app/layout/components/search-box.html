@@ -1,0 +1,62 @@
+<!-- Busca Instantânea de Alta Conversão -->
+<div class="busca-wrap" role="search">
+  <div class="busca-box" [class.com-foco]="buscaFoco()">
+    <input
+      type="search"
+      [formControl]="buscaCtrl"
+      placeholder="Busque por produtos, marcas ou categorias…"
+      aria-label="Buscar produtos no catálogo"
+      (focus)="buscaFoco.set(true)"
+      (blur)="onBlurBusca()"
+      (keydown.enter)="buscar()"
+    />
+    @if (buscaCtrl.value) {
+      <button
+        type="button"
+        class="limpar-busca"
+        aria-label="Limpar busca"
+        (click)="buscaCtrl.setValue(''); sugestoes.set([])"
+        title="Limpar busca"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    }
+    <button
+      type="button"
+      class="btn-busca-acao"
+      (click)="buscar()"
+      aria-label="Buscar no catálogo"
+      title="Buscar"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">search</span>
+    </button>
+  </div>
+
+  <!-- Sugestões Instantâneas -->
+  @if (sugestoes().length > 0) {
+    <div class="sugestoes-flyout" role="listbox">
+      <div class="flyout-topo">
+        <span>Sugestões no Catálogo</span>
+        <span class="flyout-contagem">{{ sugestoes().length }} encontrados</span>
+      </div>
+      <ul class="flyout-lista">
+        @for (s of sugestoes(); track s.sku) {
+          <li
+            role="option"
+            (mousedown)="buscar(s.nome)"
+            (keydown.enter)="buscar(s.nome)"
+            tabindex="0"
+          >
+            <span class="material-symbols-outlined flyout-icone" aria-hidden="true">search</span>
+            <span class="sugestao-nome">{{ s.nome }}</span>
+            <span class="sugestao-sku">{{ s.sku }}</span>
+            <span class="material-symbols-outlined flyout-seta" aria-hidden="true">north_west</span>
+          </li>
+        }
+      </ul>
+      <div class="flyout-rodape">
+        <span>Pressione <strong>Enter</strong> para ver todos os resultados</span>
+      </div>
+    </div>
+  }
+</div>

@@ -627,7 +627,26 @@ impl RepositorioPedidos for RepositorioPedidosPg {
             return map_pedido(row);
         }
 
-        let salvo = inserir_pedido_tx(&mut tx, &pedido).await?;
+        let salvo = match inserir_pedido_tx(&mut tx, &pedido).await {
+            Ok(p) => p,
+            // Race de double-submit: outra transação converteu o mesmo carrinho
+            // primeiro e a UK `pedidos_carrinho_uk` disparou. Devolvemos o pedido
+            // já criado — retentativa idempotente, nunca pedido duplicado.
+            // Só essa constraint — outras violações (FK, numero_uk) propagam.
+            Err(ErroApp::Conflito(ref msg)) if msg.contains("pedidos_carrinho_uk") => {
+                tx.rollback().await.map_err(erro_db(CTX_PED))?;
+                let row = sqlx::query_as::<_, PedidoRow>(&format!(
+                    "SELECT {PED_COLS} FROM pedidos WHERE carrinho_id = $1"
+                ))
+                .bind(carrinho_id.valor())
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(erro_db(CTX_PED))?
+                .ok_or_else(|| ErroApp::conflito("carrinho já convertido"))?;
+                return map_pedido(row);
+            }
+            Err(e) => return Err(e),
+        };
         sqlx::query("UPDATE carrinhos SET status = 'convertido', updated_at = now() WHERE id = $1")
             .bind(carrinho_id.valor())
             .execute(&mut *tx)
@@ -669,8 +688,9 @@ impl RepositorioPedidos for RepositorioPedidosPg {
 }
 
 fn push_filtro_pedidos<'a>(qb: &mut QueryBuilder<'a, Postgres>, filtro: &'a FiltroPedidos) {
-    if let Some(status) = filtro.status {
-        qb.push(" AND status = ").push_bind(status.as_str());
+    if !filtro.statuses.is_empty() {
+        let statuses: Vec<&str> = filtro.statuses.iter().map(|s| s.as_str()).collect();
+        qb.push(" AND status = ANY(").push_bind(statuses).push(")");
     }
     if let Some(empresa_id) = filtro.empresa_id {
         qb.push(" AND empresa_id = ").push_bind(empresa_id.valor());

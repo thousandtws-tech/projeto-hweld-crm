@@ -1,0 +1,66 @@
+<hw-conta-nav />
+
+<div class="conta-header">
+  <h1>Meus Pedidos</h1>
+  <span class="subtitulo">Acompanhe o faturamento, expedição e entrega dos seus pedidos</span>
+</div>
+
+<div class="filtro-rastreio" role="group" aria-label="Filtrar pedidos por etapa da entrega">
+  @for (f of filtros; track f.id) {
+    <button
+      type="button"
+      class="chip-filtro"
+      [class.ativo]="filtroAtivo() === f.id"
+      [attr.aria-pressed]="filtroAtivo() === f.id"
+      (click)="selecionar(f.id)"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">{{ f.icone }}</span>
+      {{ f.rotulo }}
+    </button>
+  }
+</div>
+
+@if (carregando()) {
+  <div class="pedidos-lista">
+    @for (i of [1, 2, 3, 4]; track i) {
+      <hw-skeleton style="height: 72px; border-radius: 12px" />
+    }
+  </div>
+} @else if (pedidos()?.itens?.length === 0) {
+  <hw-empty
+    [titulo]="filtroAtivo() === 'todos' ? 'Nenhum pedido realizado' : 'Nenhum pedido ' + filtroCorrente().rotulo.toLowerCase()"
+    [descricao]="filtroAtivo() === 'todos' ? 'Você ainda não enviou pedidos pelo portal. Navegue pelo catálogo da sua empresa para iniciar.' : 'Não há pedidos nesta etapa de entrega no momento.'"
+    icone="inventory_2"
+  >
+    <a routerLink="/" hwButton size="lg">Ver catálogo de produtos</a>
+  </hw-empty>
+} @else {
+  <ul class="pedidos-lista">
+    @for (p of pedidos()!.itens; track p.id) {
+      <li>
+        <a [routerLink]="['/conta/pedidos', p.id]" class="pedido-card">
+          <div class="pedido-num-col">
+            <span class="pedido-label">Pedido</span>
+            <span class="pedido-num hw-numeric">{{ p.numero }}</span>
+          </div>
+
+          <div class="pedido-status-col">
+            <hw-status-chip [status]="p.status" />
+          </div>
+
+          <div class="pedido-data-col">
+            <span class="pedido-label">Data</span>
+            <span class="pedido-data">{{ p.created_at | date: 'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+
+          <div class="pedido-total-col">
+            <span class="pedido-label">Total</span>
+            <span class="pedido-total hw-numeric">{{ p.total | brl }}</span>
+          </div>
+
+          <span class="material-symbols-outlined seta-abrir" aria-hidden="true">chevron_right</span>
+        </a>
+      </li>
+    }
+  </ul>
+}

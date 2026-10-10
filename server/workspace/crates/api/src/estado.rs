@@ -24,7 +24,7 @@ use hweld_application::use_cases::ordens::ServicoOrdensServico;
 use hweld_application::use_cases::pedidos::ServicoPedidos;
 use hweld_application::use_cases::portal::ServicoPortal;
 use hweld_application::use_cases::usuarios::ServicoUsuarios;
-use hweld_infrastructure::realtime::BroadcasterRealtime;
+
 
 pub struct AppState {
     pub auth: ServicoAuth,
@@ -55,9 +55,9 @@ pub struct AppState {
     /// `None` quando `ELASTICSEARCH_URL` não está configurada — os
     /// endpoints de busca respondem 503 e o restante segue normal.
     pub busca: Option<ServicoBusca>,
-    /// Barramento realtime in-process — os handlers SSE criam assinantes
-    /// a partir daqui; use cases publicam via port `NotificadorRealtime`.
-    pub realtime: Arc<BroadcasterRealtime>,
+    /// Eventos realtime saem pelo port `NotificadorRealtime` direto ao
+    /// motor dedicado (Phoenix) — o Actix não serve mais SSE.
+
     /// Inbox persistente — sino com badge nos dois frontends.
     /// `Arc` porque os use cases de negócio também o usam como
     /// `CaixaDeEntrada` (fan-out de notificações).

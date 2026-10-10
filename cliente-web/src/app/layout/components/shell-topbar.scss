@@ -1,0 +1,94 @@
+:host {
+  display: block;
+}
+
+/* Faixa promocional acima do header — padrão marketplace */
+.topbar {
+  background: linear-gradient(90deg, #0c1f4b 0%, #16357e 55%, #1d4fd8 100%);
+  color: #e8edf8;
+  font-family: var(--hw-font-sans);
+}
+
+.topbar-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  height: 38px;
+  padding: 0 var(--hw-space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hw-space-6);
+}
+
+/* Promoção à esquerda */
+.topbar-promo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+  font-size: 12.5px;
+  min-width: 0;
+}
+
+.topbar-promo-icone {
+  font-size: 17px;
+  color: #fb923c;
+  flex-shrink: 0;
+}
+
+.topbar-promo-txt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-promo-txt strong {
+  color: #fb923c;
+  font-weight: 800;
+}
+
+.topbar-promo:hover .topbar-promo-txt {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Links utilitários à direita */
+.topbar-links {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-6);
+  flex-shrink: 0;
+}
+
+.topbar-link {
+  color: #c3cde4;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.topbar-link:hover {
+  color: #ffffff;
+}
+
+.topbar-link:focus-visible {
+  outline: 2px solid #fb923c;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Mobile: só a promo, centralizada */
+@media (max-width: 900px) {
+  .topbar-container {
+    justify-content: center;
+    height: 34px;
+    padding: 0 var(--hw-space-4);
+  }
+
+  .topbar-links {
+    display: none;
+  }
+}

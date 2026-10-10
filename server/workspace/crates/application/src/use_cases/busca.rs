@@ -31,6 +31,9 @@ pub struct BuscaPaginada<T> {
     pub por_pagina: u32,
     pub total_paginas: u32,
     pub facetas: Facetas,
+    /// Sugestão de correção ortográfica ("você quis dizer?").
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub correcao: Option<String>,
 }
 
 /// Item de busca do backoffice — produto + score de relevância.
@@ -100,6 +103,7 @@ impl ServicoBusca {
             resultado.total,
             consulta.paginacao,
             facetas,
+            resultado.correcao,
         ))
     }
 
@@ -151,6 +155,7 @@ impl ServicoBusca {
             resultado.total,
             consulta.paginacao,
             facetas,
+            resultado.correcao,
         ))
     }
 
@@ -234,6 +239,7 @@ impl ServicoBusca {
         total: i64,
         paginacao: Paginacao,
         facetas: Facetas,
+        correcao: Option<String>,
     ) -> BuscaPaginada<T> {
         let total_paginas = if total == 0 {
             0
@@ -247,6 +253,7 @@ impl ServicoBusca {
             por_pagina: paginacao.por_pagina,
             total_paginas,
             facetas,
+            correcao,
         }
     }
 }

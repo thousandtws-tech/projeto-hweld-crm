@@ -1,0 +1,10 @@
+<div class="toast-region" aria-live="polite">
+  @for (t of toast.toasts(); track t.id) {
+    <div class="toast toast-{{ t.tipo }}" [attr.role]="t.tipo === 'error' ? 'alert' : 'status'">
+      <span>{{ t.texto }}</span>
+      <button type="button" class="fechar" aria-label="Fechar aviso" (click)="toast.fechar(t.id)">
+        ×
+      </button>
+    </div>
+  }
+</div>

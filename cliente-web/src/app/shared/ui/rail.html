@@ -1,0 +1,37 @@
+<section class="rail" [attr.aria-label]="titulo()">
+  <div class="rail-topo">
+    <h2>{{ titulo() }}</h2>
+    @if (verTodos(); as alvo) {
+      <a class="rail-link" [routerLink]="alvo" [queryParams]="verParams()">
+        Ver todos
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+      </a>
+    }
+  </div>
+
+  <div class="rail-wrap">
+    <button
+      type="button"
+      class="seta esq"
+      [class.oculta]="!podeEsq()"
+      (click)="rolar(-1)"
+      aria-label="Rolar para a esquerda"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+    </button>
+
+    <div class="trilho" #trilho (scroll)="atualizar()">
+      <ng-content />
+    </div>
+
+    <button
+      type="button"
+      class="seta dir"
+      [class.oculta]="!podeDir()"
+      (click)="rolar(1)"
+      aria-label="Rolar para a direita"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+    </button>
+  </div>
+</section>

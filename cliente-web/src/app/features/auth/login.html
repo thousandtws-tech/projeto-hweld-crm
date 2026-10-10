@@ -1,0 +1,113 @@
+<div class="login-page">
+  <section class="painel-form">
+    <div class="topo">
+      <img class="logo" src="assets/auth/logo-hweld.png" alt="HWeld" />
+      <span class="linha-topo" aria-hidden="true"></span>
+    </div>
+    <div class="form-col">
+      <h1 class="titulo">Entrar</h1>
+
+      <form class="form" [formGroup]="form" (ngSubmit)="entrar()">
+        @if (expirada()) {
+          <div class="aviso-expirada" role="status">
+            <span class="material-symbols-outlined">schedule</span>
+            <span>Sua sessão expirou. Entre novamente para continuar.</span>
+          </div>
+        }
+        @if (erro()) {
+          <div class="alerta-erro" role="alert">
+            <span class="material-symbols-outlined">error</span>
+            <span>{{ erro() }}</span>
+          </div>
+        }
+
+        <div class="grupo-form">
+          <div class="campos-e-btn">
+            <div class="campos">
+              <div class="campo" [class.invalid]="invalido('email')">
+                <img src="assets/auth/icon-mail.svg" alt="" class="campo-icone" />
+                <input
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  placeholder="Seu e-mail"
+                  autocomplete="username"
+                />
+              </div>
+              @if (invalido('email')) {
+                <p class="campo-erro">Informe um e-mail válido.</p>
+              }
+              <div class="campo" [class.invalid]="invalido('senha')">
+                <img src="assets/auth/icon-lock.svg" alt="" class="campo-icone campo-icone-lock" />
+                <input
+                  id="senha"
+                  type="password"
+                  formControlName="senha"
+                  placeholder="Senha"
+                  autocomplete="current-password"
+                />
+              </div>
+              @if (invalido('senha')) {
+                <p class="campo-erro">Informe sua senha.</p>
+              }
+            </div>
+            <button
+              hwButton
+              size="lg"
+              type="submit"
+              class="btn-entrar"
+              [loading]="enviando()"
+              texto="Entrando…"
+              [disabled]="form.invalid"
+            >
+              Entrar
+            </button>
+          </div>
+          <div class="linha-esqueci">
+            <a class="link-esqueci" routerLink="/atendimento">Esqueceu a senha?</a>
+          </div>
+        </div>
+
+        <div class="grupo-social">
+          <div class="divider">
+            <img class="linha" src="assets/auth/divider-line.svg" alt="" />
+            <span>ou</span>
+            <img class="linha" src="assets/auth/divider-line.svg" alt="" />
+          </div>
+          <div class="social-botoes">
+            <button type="button" class="btn-social" (click)="social('google')">
+              <img src="assets/auth/google.svg" alt="" />
+              Google
+            </button>
+            <button type="button" class="btn-social" (click)="social('apple')">
+              <img src="assets/auth/apple.svg" alt="" />
+              Apple
+            </button>
+          </div>
+          @if (avisoSocial()) {
+            <p class="aviso-social" role="status">{{ avisoSocial() }}</p>
+          }
+        </div>
+      </form>
+
+      <p class="cadastro">
+        Ainda não possui acesso?
+        <a routerLink="/atendimento">Fale com seu consultor</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="painel-visual" aria-hidden="true">
+    <img class="bg" src="assets/auth/login-ilustracao.png" alt="" />
+    <blockquote class="citacao">
+      <img class="aspas" src="assets/auth/quote-mark.svg" alt="" />
+      <div class="citacao-texto">
+        <p>
+          Toda grande obra começa com uma <strong>boa solda</strong> — e o
+          <strong>parceiro certo</strong>.
+        </p>
+        <cite>– Equipe HWeld</cite>
+      </div>
+    </blockquote>
+  </section>
+</div>

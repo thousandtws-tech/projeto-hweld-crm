@@ -1,0 +1,59 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--hw-border);
+  border-radius: var(--hw-radius-sm);
+  background: var(--hw-surface-raised);
+  height: 40px;
+  transition: border-color var(--hw-motion-fast) var(--hw-motion-ease);
+  overflow: hidden;
+}
+:host:hover {
+  border-color: var(--hw-border-input);
+}
+:host:focus-within {
+  border-color: var(--hw-focus-ring);
+  box-shadow: 0 0 0 1px var(--hw-focus-ring);
+}
+.passo {
+  width: 36px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--hw-text-muted);
+  transition: all var(--hw-motion-fast) var(--hw-motion-ease);
+}
+.passo:hover:not(:disabled) {
+  background: var(--hw-surface);
+  color: var(--hw-text);
+}
+.passo:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.passo .material-symbols-outlined {
+  font-size: 18px;
+}
+.num {
+  width: 48px;
+  height: 100%;
+  border: 0;
+  text-align: center;
+  font-family: var(--hw-font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hw-text);
+  background: transparent;
+  outline: none;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.num::-webkit-inner-spin-button,
+.num::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

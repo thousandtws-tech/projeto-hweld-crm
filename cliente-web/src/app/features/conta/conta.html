@@ -1,0 +1,86 @@
+<hw-conta-nav />
+
+<div class="conta-header">
+  <h1>Minha Conta</h1>
+  <span class="subtitulo">Informações corporativas e parâmetros da sua tabela de faturamento</span>
+</div>
+
+@if (perfil(); as p) {
+  <div class="cards-grid">
+    <!-- Card de Contato -->
+    <section class="bloco-card">
+      <div class="bloco-topo">
+        <span class="material-symbols-outlined bloco-icon">account_circle</span>
+        <div>
+          <h2>Contato do Usuário</h2>
+          <span class="bloco-desc">Responsável cadastrado para este acesso</span>
+        </div>
+      </div>
+      <dl class="info-dl">
+        <div>
+          <dt>Nome Completo</dt>
+          <dd>{{ p.contato.nome }}</dd>
+        </div>
+        <div>
+          <dt>E-mail Corporativo</dt>
+          <dd>{{ p.contato.email ?? '—' }}</dd>
+        </div>
+        <div>
+          <dt>Telefone / WhatsApp</dt>
+          <dd>{{ p.contato.telefone ?? '—' }}</dd>
+        </div>
+        <div>
+          <dt>Cargo / Função</dt>
+          <dd>{{ p.contato.cargo ?? '—' }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- Card da Empresa -->
+    <section class="bloco-card">
+      <div class="bloco-topo">
+        <span class="material-symbols-outlined bloco-icon">business</span>
+        <div>
+          <h2>Dados da Empresa</h2>
+          <span class="bloco-desc">Pessoa jurídica vinculada e parâmetros fiscais</span>
+        </div>
+      </div>
+      <dl class="info-dl">
+        <div>
+          <dt>Razão Social</dt>
+          <dd>{{ p.empresa.razao_social }}</dd>
+        </div>
+        <div>
+          <dt>Nome Fantasia</dt>
+          <dd>{{ p.empresa.nome_fantasia ?? '—' }}</dd>
+        </div>
+        <div>
+          <dt>CNPJ</dt>
+          <dd class="hw-numeric">{{ (p.empresa.cnpj ?? '—') | cnpj }}</dd>
+        </div>
+        <div>
+          <dt>Segmento de Atuação</dt>
+          <dd>{{ p.empresa.segmento ?? '—' }}</dd>
+        </div>
+        @if (p.tabela_preco) {
+          <div class="tabela-preco-row">
+            <dt>Tabela Comercial Ativa</dt>
+            <dd>
+              <span class="tabela-chip">{{ p.tabela_preco.nome }}</span>
+            </dd>
+          </div>
+        }
+      </dl>
+    </section>
+  </div>
+
+  <div class="nota-suporte">
+    <span class="material-symbols-outlined">info</span>
+    <span
+      >Para atualizar endereço de faturamento, razão social ou condições de prazo, entre em contato
+      com o seu consultor de vendas.</span
+    >
+  </div>
+} @else {
+  <hw-skeleton style="height: 320px; border-radius: 16px" />
+}

@@ -51,6 +51,7 @@ export const routes: Routes = [
           { campo: 'status', rotulo: 'Status', tipo: 'status' },
         ],
         novaRota: '/crm/empresas/nova', detalhePrefixo: '/crm/empresas',
+        eventos: ['empresa.criada', 'empresa.atualizada', 'empresa.arquivada'],
       }),
       { path: 'crm/empresas/nova', component: EmpresaNovaPage },
       { path: 'crm/empresas/:id', component: Empresa360Page },
@@ -69,6 +70,7 @@ export const routes: Routes = [
         ],
         filtro: statusFiltro(['rascunho', 'enviado', 'em_analise', 'aprovado', 'recusado', 'expirado', 'convertido']),
         detalhePrefixo: '/vendas/orcamentos',
+        eventos: ['orcamento.criado', 'orcamento.status_alterado', 'orcamento.convertido'],
       }),
       { path: 'vendas/orcamentos/:id', component: OrcamentoPage },
       lista('vendas/pedidos', {
@@ -83,7 +85,7 @@ export const routes: Routes = [
         ],
         filtro: statusFiltro(['aguardando_pagamento', 'confirmado', 'em_separacao', 'faturado', 'enviado', 'entregue', 'concluido', 'cancelado']),
         novaRota: '/vendas/pedidos/novo', detalhePrefixo: '/vendas/pedidos',
-        eventos: ['pedido.criado', 'pedido.status_alterado'],
+        eventos: ['pedido.criado', 'pedido.status_alterado', 'pagamento.baixado', 'pagamento.estornado'],
       }),
       { path: 'vendas/pedidos/novo', component: PedidoNovoPage },
       { path: 'vendas/pedidos/:id', component: PedidoDetalhePage },
@@ -101,7 +103,7 @@ export const routes: Routes = [
         ],
         filtro: { campo: 'ativo', rotulo: 'Ativo', opcoes: [{ valor: 'true', rotulo: 'Sim' }, { valor: 'false', rotulo: 'Não' }] },
         novaRota: '/catalogo/produtos/novo', detalhePrefixo: '/catalogo/produtos',
-        eventos: ['catalogo.produtos'],
+        eventos: ['catalogo.produtos', 'estoque.movimentado'],
       }, ['admin', 'estoque', 'vendedor']),
       {
         path: 'catalogo/produtos/novo', canActivate: [perfilGuard('admin', 'estoque', 'vendedor')],
@@ -123,6 +125,7 @@ export const routes: Routes = [
           { campo: 'descricao', rotulo: 'Descrição' },
         ],
         detalhePrefixo: '/catalogo/tabelas-preco',
+        eventos: ['catalogo.precos'],
       }, ['admin', 'vendedor']),
       {
         path: 'catalogo/tabelas-preco/:id', canActivate: [perfilGuard('admin', 'vendedor')],
@@ -145,6 +148,7 @@ export const routes: Routes = [
         ],
         filtro: statusFiltro(['aberta', 'em_andamento', 'aguardando_material', 'concluida', 'cancelada']),
         detalhePrefixo: '/operacao/ordens-servico',
+        eventos: ['os.criada', 'os.status_alterada'],
       }, ['admin', 'tecnico']),
       {
         path: 'operacao/ordens-servico/:id', canActivate: [perfilGuard('admin', 'tecnico')],

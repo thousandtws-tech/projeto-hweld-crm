@@ -1,0 +1,232 @@
+.detalhe-topo {
+  margin-bottom: var(--hw-space-6);
+}
+.link-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--hw-text-muted);
+  text-decoration: none;
+  margin-bottom: var(--hw-space-2);
+  &:hover {
+    color: var(--hw-accent);
+  }
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+}
+.pedido-id-row {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-3);
+  h1 {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 0;
+  }
+}
+
+/* Stepper Minimalista */
+.stepper-box {
+  background: var(--hw-surface-raised);
+  border: 1px solid var(--hw-border);
+  border-radius: var(--hw-radius-md);
+  padding: var(--hw-space-6) var(--hw-space-4);
+  margin-bottom: var(--hw-space-6);
+}
+.stepper {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.stepper li {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  color: var(--hw-text-muted);
+
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: calc(50% + 16px);
+    right: calc(-50% + 16px);
+    height: 2px;
+    background: var(--hw-border);
+    z-index: 1;
+  }
+
+  &.feita:not(:last-child)::after {
+    background: var(--hw-success);
+  }
+}
+.etapa-circulo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--hw-border);
+  background: var(--hw-surface-raised);
+  font-size: 12px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+  color: var(--hw-text-muted);
+}
+.stepper li.feita .etapa-circulo {
+  background: var(--hw-success);
+  border-color: var(--hw-success);
+  color: #ffffff;
+}
+.stepper li.atual .etapa-circulo {
+  background: var(--hw-accent);
+  border-color: var(--hw-accent);
+  color: #ffffff;
+  box-shadow: 0 0 0 3px var(--hw-accent-tint);
+}
+.step-check {
+  font-size: 16px;
+}
+.etapa-nome {
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+}
+.stepper li.atual .etapa-nome {
+  color: var(--hw-accent);
+  font-weight: 700;
+}
+
+.alerta-cancelado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--hw-space-4);
+  background: var(--hw-chip-danger-bg);
+  border-radius: var(--hw-radius-sm);
+  color: var(--hw-danger);
+  font-size: 13.5px;
+  margin-bottom: var(--hw-space-6);
+}
+
+.card-secao {
+  background: var(--hw-surface-raised);
+  border: 1px solid var(--hw-border);
+  border-radius: var(--hw-radius-md);
+  padding: var(--hw-space-5);
+  margin-bottom: var(--hw-space-6);
+  h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 var(--hw-space-4);
+  }
+}
+
+.tabela-wrap {
+  overflow-x: auto;
+}
+.tabela-itens {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--hw-text-muted);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--hw-border);
+  }
+  td {
+    padding: 12px;
+    border-bottom: 1px solid var(--hw-border-subtle);
+  }
+}
+.nome-td {
+  font-weight: 500;
+}
+.sku-td {
+  font-family: var(--hw-font-mono);
+  font-size: 12px;
+  color: var(--hw-text-muted);
+}
+.total-td {
+  font-weight: 700;
+}
+
+.detalhes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--hw-space-6);
+}
+
+.endereco-texto {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  .end-icon {
+    font-size: 22px;
+    color: var(--hw-accent);
+    margin-top: 2px;
+  }
+  .end-corpo {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 13.5px;
+    color: var(--hw-text-muted);
+  }
+  strong {
+    color: var(--hw-text);
+  }
+}
+
+.totais-linhas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hw-space-2);
+}
+.tot-linha {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13.5px;
+  color: var(--hw-text);
+  &.grand {
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+.total-destaque {
+  font-size: 20px;
+  color: var(--hw-accent);
+  font-weight: 800;
+}
+.divisor {
+  height: 1px;
+  background: var(--hw-border);
+  margin: var(--hw-space-2) 0;
+}
+.condicao-nota {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--hw-text-muted);
+  margin-top: var(--hw-space-2);
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .stepper li .etapa-nome {
+    display: none;
+  }
+}

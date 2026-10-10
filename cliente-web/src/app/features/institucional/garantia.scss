@@ -1,0 +1,284 @@
+.institucional-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 36px;
+  align-items: start;
+}
+.institucional-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-width: 0;
+}
+
+.pagina-topo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tag-secao {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+h1 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  margin: 0;
+}
+.pagina-sub {
+  font-size: 14.5px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 65ch;
+}
+
+.secao-tit {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+}
+
+/* Tabela */
+.tabela-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+.garantia-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+
+  th {
+    background: #f8fafc;
+    padding: 14px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: middle;
+
+    strong {
+      display: block;
+      color: #0f172a;
+      font-size: 13.5px;
+    }
+    span {
+      font-size: 11.5px;
+      color: #64748b;
+    }
+  }
+
+  tr:last-child td {
+    border-bottom: 0;
+  }
+}
+.badge-prazo {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #0f172a;
+  white-space: nowrap;
+
+  &.destaque {
+    background: #0f172a;
+    color: #ffffff;
+  }
+  &.muted {
+    color: #64748b;
+    font-weight: 500;
+  }
+}
+
+/* Cobertura */
+.cobertura-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.cobertura-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  ul {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    li {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.45;
+    }
+  }
+
+  &.cobre {
+    border-top: 3px solid #059669;
+    .icon-status {
+      color: #059669;
+    }
+  }
+  &.nao-cobre {
+    border-top: 3px solid #dc2626;
+    .icon-status {
+      color: #dc2626;
+    }
+  }
+}
+.card-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  strong {
+    font-size: 15px;
+    color: #0f172a;
+  }
+  .icon-status {
+    font-size: 22px;
+  }
+}
+
+/* RMA Passos */
+.rma-passos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.rma-passo {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 16px;
+  display: flex;
+  gap: 12px;
+
+  strong {
+    font-size: 13.5px;
+    color: #0f172a;
+    display: block;
+    margin-bottom: 3px;
+  }
+  p {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.4;
+  }
+}
+.rma-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+/* CTA */
+.garantia-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #0f172a;
+  color: #ffffff;
+  border-radius: 14px;
+  padding: 24px 28px;
+  flex-wrap: wrap;
+
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  p {
+    font-size: 13px;
+    color: #94a3b8;
+    margin: 0;
+  }
+}
+.botoes-cta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.btn-acao {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 120ms ease;
+
+  &.primario {
+    background: #ffffff;
+    color: #0f172a;
+    &:hover {
+      background: #f1f5f9;
+    }
+  }
+  &.secundario {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+}
+
+@media (max-width: 860px) {
+  .institucional-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .cobertura-grid {
+    grid-template-columns: 1fr;
+  }
+  .garantia-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .botoes-cta {
+    width: 100%;
+    flex-direction: column;
+  }
+  .btn-acao {
+    width: 100%;
+    justify-content: center;
+  }
+}

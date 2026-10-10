@@ -1,0 +1,16 @@
+# Auditoria de dependências — cargo audit (RustSec).
+# Ignores abaixo têm justificativa documentada e revisão pendente.
+# Revisitar a cada upgrade de actix-web/sqlx.
+
+[advisories]
+ignore = [
+    # rsa 0.9.10 (Marvin timing attack) — puxado por sqlx-mysql via feature
+    # `migrate` do sqlx. O projeto só usa PostgreSQL; o caminho de auth RSA
+    # do MySQL é código morto que nunca executa. Sem fix disponível no crates.io.
+    "RUSTSEC-2023-0071",
+    # h2 0.3.27 (DoS — DATA frames vazios ilimitados) — pinado pelo
+    # actix-http 3.x (actix-web 4). Correção só em h2 >=0.4.16, que exige
+    # actix-web 5 (major bump, fora do P0). Mitigação em produção:
+    # servir atrás de proxy/CDN que termine HTTP/2 (nginx/Cloudflare).
+    "RUSTSEC-2026-0258",
+]

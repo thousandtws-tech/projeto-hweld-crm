@@ -1,0 +1,21 @@
+<div class="sucesso-card">
+  <div class="check-circulo" aria-hidden="true">
+    <span class="material-symbols-outlined">check</span>
+  </div>
+  <h1>Pedido {{ numero() }} Confirmado</h1>
+  <hw-status-chip [status]="'aguardando_pagamento'" />
+  <p class="sucesso-msg">
+    Seu pedido foi registrado no sistema comercial da HWeld. Nossa equipe iniciará a conferência e o
+    faturamento.
+  </p>
+
+  <div class="sucesso-acoes">
+    <a routerLink="/conta/pedidos" hwButton size="lg">
+      <span class="material-symbols-outlined">receipt_long</span>
+      <span>Acompanhar meus pedidos</span>
+    </a>
+    <a routerLink="/" hwButton variant="secondary" size="lg">
+      <span>Voltar ao catálogo</span>
+    </a>
+  </div>
+</div>

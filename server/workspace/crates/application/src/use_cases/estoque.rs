@@ -17,11 +17,13 @@ use crate::erro::{ErroApp, Resultado};
 use crate::ports::catalogo::RepositorioProdutos;
 use crate::ports::estoque::RepositorioEstoque;
 use crate::ports::externos::RegistradorAuditoria;
+use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
 
 pub struct ServicoEstoque {
     estoque: Arc<dyn RepositorioEstoque>,
     produtos: Arc<dyn RepositorioProdutos>,
     audit: Arc<dyn RegistradorAuditoria>,
+    realtime: Arc<dyn NotificadorRealtime>,
 }
 
 impl ServicoEstoque {
@@ -29,11 +31,13 @@ impl ServicoEstoque {
         estoque: Arc<dyn RepositorioEstoque>,
         produtos: Arc<dyn RepositorioProdutos>,
         audit: Arc<dyn RegistradorAuditoria>,
+        realtime: Arc<dyn NotificadorRealtime>,
     ) -> Self {
         Self {
             estoque,
             produtos,
             audit,
+            realtime,
         }
     }
 
@@ -113,6 +117,15 @@ impl ServicoEstoque {
                 }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "estoque.movimentado",
+            Audiencia::Staff,
+            serde_json::json!({
+                "produto_id": movimento.produto_id.valor(),
+                "tipo": movimento.tipo,
+                "quantidade": movimento.quantidade,
+            }),
+        ));
         Ok(movimento)
     }
 }

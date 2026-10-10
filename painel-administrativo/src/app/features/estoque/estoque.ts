@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { DatePipe } from '@angular/common';
 import { EstoqueService, Movimentacao, CatalogoService } from '../../core/servicos';
+import { RealtimeService } from '../../core/realtime';
 import { Produto, SaldoEstoque } from '../../core/models';
 import { ToastService } from '../../shared/ui/toast';
 import { QtyPipe } from '../../core/pipes';
@@ -76,7 +77,17 @@ export class EstoquePage implements OnInit {
   private svc = inject(EstoqueService);
   private catalogo = inject(CatalogoService);
   private toast = inject(ToastService);
+  private rt = inject(RealtimeService);
   private fb = inject(FormBuilder);
+
+  /* Reserva/saída de pedido e baixa por OS também movem estoque — extrato
+   * e alertas revalidam quando qualquer origem movimenta. */
+  private static readonly EVENTOS = [
+    'estoque.movimentado',
+    'pedido.status_alterado',
+    'os.criada',
+    'os.status_alterada',
+  ];
 
   readonly baixos = signal<SaldoEstoque[]>([]);
   readonly movimentacoes = signal<Movimentacao[]>([]);
@@ -91,6 +102,16 @@ export class EstoquePage implements OnInit {
   });
 
   nomeProduto(id: number): string { return this.produtos().find((p) => p.id === id)?.nome ?? `#${id}`; }
+
+  constructor() {
+    effect(() => {
+      const e = this.rt.ultimo();
+      if (e && EstoquePage.EVENTOS.includes(e.tipo)) {
+        this.carregarMovs();
+        this.svc.abaixoDoMinimo().subscribe((p) => this.baixos.set(p.itens));
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.catalogo.produtos({ por_pagina: 500 }).subscribe((p) => this.produtos.set(p.itens));

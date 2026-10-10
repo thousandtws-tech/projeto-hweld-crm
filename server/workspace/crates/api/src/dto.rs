@@ -3,7 +3,7 @@
 //! `Quantidade`) com validação, nunca contornando `::nova`/`.validar()`.
 
 use chrono::{DateTime, NaiveDate, Utc};
-use hweld_application::ports::busca::ConsultaBuscaProdutos;
+use hweld_application::ports::busca::{ConsultaBuscaProdutos, OrdenacaoBusca};
 use hweld_application::use_cases::checkout::CheckoutInput;
 use hweld_application::ErroApp;
 use hweld_domain::acesso::usuario::Perfil;
@@ -571,11 +571,22 @@ impl CheckoutReq {
 
 // ── Pedidos ─────────────────────────────────────────────────────────────────
 
+/// Converte `status=a,b,c` em lista de fases — valor inválido → 422.
+pub fn parse_status_csv(csv: Option<&str>) -> Result<Vec<StatusPedido>, ErroApp> {
+    csv.unwrap_or_default()
+        .split(',')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(|s| s.parse::<StatusPedido>().map_err(ErroApp::from))
+        .collect()
+}
+
 #[derive(Debug, Deserialize, utoipa::ToSchema, utoipa::IntoParams)]
 pub struct QueryPedidos {
     #[serde(flatten)]
     pub pag: QueryPaginacao,
-    pub status: Option<StatusPedido>,
+    /// CSV de status — `status=enviado` ou `status=confirmado,faturado`.
+    pub status: Option<String>,
     pub empresa_id: Option<i64>,
     pub contato_id: Option<i64>,
     pub origem: Option<OrigemPedido>,
@@ -631,7 +642,8 @@ pub struct StatusPedidoReq {
 pub struct QueryPortalPedidos {
     #[serde(flatten)]
     pub pag: QueryPaginacao,
-    pub status: Option<StatusPedido>,
+    /// CSV de status — `status=enviado` ou `status=confirmado,faturado`.
+    pub status: Option<String>,
     /// `true` = só pedidos do próprio contato (padrão: empresa inteira).
     pub so_meus: Option<bool>,
 }
@@ -824,6 +836,8 @@ pub struct QueryBusca {
     pub preco_min: Option<Decimal>,
     #[schema(value_type = String)]
     pub preco_max: Option<Decimal>,
+    /// relevancia | menor_preco | maior_preco | nome_az | recentes
+    pub ordem: Option<String>,
 }
 
 impl QueryBusca {
@@ -843,6 +857,12 @@ impl QueryBusca {
                 .transpose()
                 .map_err(ErroApp::Dominio)?,
             somente_ativos: false,
+            ordenacao: self
+                .ordem
+                .as_deref()
+                .map(|s| s.parse::<OrdenacaoBusca>())
+                .transpose()?
+                .unwrap_or_default(),
             paginacao: self.pag.paginacao()?,
         })
     }

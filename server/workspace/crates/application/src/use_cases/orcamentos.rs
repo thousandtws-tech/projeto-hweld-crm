@@ -19,12 +19,14 @@ use hweld_domain::vendas::pedido::{ItemPedidoNovo, OrigemPedido, Pedido};
 use crate::erro::{ErroApp, Resultado};
 use crate::ports::catalogo::RepositorioProdutos;
 use crate::ports::crm::{FiltroOrcamentos, RepositorioEnderecos, RepositorioOrcamentos};
+use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
 use crate::ports::vendas::NovoPedido;
 
 pub struct ServicoOrcamentos {
     orcamentos: Arc<dyn RepositorioOrcamentos>,
     enderecos: Arc<dyn RepositorioEnderecos>,
     produtos: Arc<dyn RepositorioProdutos>,
+    realtime: Arc<dyn NotificadorRealtime>,
 }
 
 impl ServicoOrcamentos {
@@ -32,11 +34,13 @@ impl ServicoOrcamentos {
         orcamentos: Arc<dyn RepositorioOrcamentos>,
         enderecos: Arc<dyn RepositorioEnderecos>,
         produtos: Arc<dyn RepositorioProdutos>,
+        realtime: Arc<dyn NotificadorRealtime>,
     ) -> Self {
         Self {
             orcamentos,
             enderecos,
             produtos,
+            realtime,
         }
     }
 
@@ -59,7 +63,18 @@ impl ServicoOrcamentos {
     }
 
     pub async fn criar(&self, input: OrcamentoInput) -> Resultado<Orcamento> {
-        self.orcamentos.criar(input.validar()?).await
+        let criado = self.orcamentos.criar(input.validar()?).await?;
+        self.realtime.publicar(EventoRealtime::novo(
+            "orcamento.criado",
+            Audiencia::Empresa(criado.empresa_id.valor()),
+            serde_json::json!({
+                "id": criado.id.valor(),
+                "numero": criado.numero,
+                "empresa_id": criado.empresa_id.valor(),
+                "total": criado.total,
+            }),
+        ));
+        Ok(criado)
     }
 
     /// Edição de itens só com o orçamento em `rascunho` (§7.6 implícito).
@@ -95,7 +110,18 @@ impl ServicoOrcamentos {
     ) -> Resultado<Orcamento> {
         let (orcamento, _) = self.buscar(id).await?;
         orcamento.status.transicionar(proximo)?;
-        self.orcamentos.atualizar_status(id, proximo).await
+        let depois = self.orcamentos.atualizar_status(id, proximo).await?;
+        self.realtime.publicar(EventoRealtime::novo(
+            "orcamento.status_alterado",
+            Audiencia::Empresa(depois.empresa_id.valor()),
+            serde_json::json!({
+                "id": depois.id.valor(),
+                "numero": depois.numero,
+                "de": orcamento.status,
+                "para": depois.status,
+            }),
+        ));
+        Ok(depois)
     }
 
     /// Fluxo B: orçamento aprovado → pedido. Exige endereço fiscal da empresa
@@ -174,6 +200,27 @@ impl ServicoOrcamentos {
                 .collect(),
         };
 
-        self.orcamentos.converter_em_pedido(id, pedido).await
+        let convertido = self.orcamentos.converter_em_pedido(id, pedido).await?;
+        // Conversão gera pedido — alimenta a lista de pedidos do backoffice
+        // e o portal da empresa (mesmo contrato do checkout e-commerce).
+        self.realtime.publicar(EventoRealtime::novo(
+            "pedido.criado",
+            Audiencia::Empresa(convertido.empresa_id.valor()),
+            serde_json::json!({
+                "id": convertido.id.valor(),
+                "numero": convertido.numero,
+                "total": convertido.total,
+                "origem": convertido.origem,
+            }),
+        ));
+        self.realtime.publicar(EventoRealtime::novo(
+            "orcamento.convertido",
+            Audiencia::Empresa(convertido.empresa_id.valor()),
+            serde_json::json!({
+                "id": orcamento.id.valor(),
+                "pedido_id": convertido.id.valor(),
+            }),
+        ));
+        Ok(convertido)
     }
 }

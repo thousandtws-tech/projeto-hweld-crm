@@ -101,7 +101,8 @@ impl utoipa::Modify for SegurancaBearer {
         // Saúde
         saude::health, saude::ready,
         // Autenticação
-        auth::login_staff, auth::login_portal, auth::refresh, auth::logout, auth::trocar_senha,
+        auth::login_staff, auth::login_portal, auth::refresh,
+        auth::logout, auth::trocar_senha,
         // Usuários
         usuarios::listar, usuarios::buscar, usuarios::criar, usuarios::atualizar,
         usuarios::definir_ativo,
@@ -145,8 +146,8 @@ impl utoipa::Modify for SegurancaBearer {
         portal::pedidos, portal::pedido,
         carrinho::atual, carrinho::adicionar, carrinho::atualizar, carrinho::remover,
         carrinho::checkout,
-        // Realtime
-        realtime::stream_staff, realtime::stream_portal,
+        // Realtime — SSE/WebSocket saíram para o motor dedicado (Phoenix);
+        // os endpoints /events/* e /socket não são servidos por esta API.
         // Notificações — sino nos dois contextos
         notificacoes::listar_staff, notificacoes::nao_lidas_staff,
         notificacoes::marcar_lida_staff, notificacoes::ler_todas_staff,

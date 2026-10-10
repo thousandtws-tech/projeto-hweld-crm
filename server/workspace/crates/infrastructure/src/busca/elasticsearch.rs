@@ -2,14 +2,17 @@ use async_trait::async_trait;
 use elasticsearch::auth::Credentials;
 use elasticsearch::http::transport::{SingleNodeConnectionPool, TransportBuilder};
 use elasticsearch::http::{StatusCode, Url};
-use elasticsearch::indices::{IndicesCreateParts, IndicesDeleteParts, IndicesExistsParts};
+use elasticsearch::indices::{
+    IndicesCreateParts, IndicesDeleteParts, IndicesExistsParts, IndicesPutSettingsParts,
+    IndicesRefreshParts,
+};
 use elasticsearch::params::Refresh;
 use elasticsearch::{
     BulkOperation, BulkParts, DeleteParts, Elasticsearch, IndexParts, SearchParts,
 };
 use hweld_application::ports::busca::{
     ConsultaBuscaProdutos, DocumentoProduto, FacetaContagem, Facetas, HitBusca, MotorBusca,
-    ResultadoMotor, SugestaoProduto,
+    OrdenacaoBusca, ResultadoMotor, SugestaoProduto,
 };
 use hweld_application::{ErroApp, Resultado};
 use hweld_domain::shared::id::Id;
@@ -27,22 +30,49 @@ fn erro_es(e: elasticsearch::Error) -> ErroApp {
 fn erro_ser(e: serde_json::Error) -> ErroApp {
     ErroApp::interno(CTX, e)
 }
-
-/// Settings/mappings do índice — criado uma vez no boot.
 fn definicao_indice() -> Value {
     json!({
         "settings": {
             "number_of_shards": 1,
             "number_of_replicas": 0,
             "analysis": {
+                "normalizer": {
+                    "minusc": { "type": "custom", "filter": ["lowercase", "fold_pt"] }
+                },
                 "filter": {
-                    "fold_pt": { "type": "asciifolding", "preserve_original": false }
+                    "fold_pt": { "type": "asciifolding", "preserve_original": false },
+                    "stem_pt": { "type": "stemmer", "language": "brazilian" },
+                    "sinonimos_comercio": {
+                        "type": "synonym_graph",
+                        "synonyms": [
+                            "solda, soldagem",
+                            "eletrodo, vareta",
+                            "mascara de solda, careta de solda",
+                            "maquina de solda, inversora de solda",
+                            "tocha, antorcha",
+                            "epi, equipamento de protecao individual",
+                            "cilindro, botija",
+                            "esmerilhadeira, lixadeira angular"
+                        ]
+                    }
                 },
                 "analyzer": {
                     "texto_pt": {
                         "type": "custom",
                         "tokenizer": "standard",
+                        "filter": ["lowercase", "fold_pt", "stem_pt"]
+                    },
+                    // sem stemmer — alimenta o did-you-mean com palavras
+                    // reais ("eletrodo"), não radicais ("eletrod")
+                    "texto_sugestao": {
+                        "type": "custom",
+                        "tokenizer": "standard",
                         "filter": ["lowercase", "fold_pt"]
+                    },
+                    "texto_pt_busca": {
+                        "type": "custom",
+                        "tokenizer": "standard",
+                        "filter": ["lowercase", "fold_pt", "sinonimos_comercio", "stem_pt"]
                     }
                 }
             }
@@ -50,19 +80,21 @@ fn definicao_indice() -> Value {
         "mappings": {
             "properties": {
                 "produto_id":    { "type": "long" },
-                "sku":           { "type": "keyword" },
+                "sku":           { "type": "keyword", "normalizer": "minusc" },
                 "nome": {
                     "type": "text",
                     "analyzer": "texto_pt",
+                    "search_analyzer": "texto_pt_busca",
                     "fields": {
                         "autocomplete": { "type": "search_as_you_type", "analyzer": "texto_pt" },
+                        "corrigivel":   { "type": "text", "analyzer": "texto_sugestao" },
                         "keyword":      { "type": "keyword", "ignore_above": 256 }
                     }
                 },
-                "descricao":      { "type": "text", "analyzer": "texto_pt" },
+                "descricao":      { "type": "text", "analyzer": "texto_pt", "search_analyzer": "texto_pt_busca" },
                 "categoria_id":   { "type": "long" },
-                "categoria_nome": { "type": "keyword" },
-                "marca":          { "type": "keyword" },
+                "categoria_nome": { "type": "keyword", "normalizer": "minusc" },
+                "marca":          { "type": "keyword", "normalizer": "minusc" },
                 "preco":          { "type": "scaled_float", "scaling_factor": 100 },
                 "ativo":          { "type": "boolean" },
                 "destaque":       { "type": "boolean" },
@@ -73,23 +105,11 @@ fn definicao_indice() -> Value {
 }
 
 fn query_busca(consulta: &ConsultaBuscaProdutos) -> Value {
-    let must = match consulta
+    let q_txt = consulta
         .q
         .as_deref()
         .map(str::trim)
-        .filter(|q| !q.is_empty())
-    {
-        Some(q) => json!({
-            "multi_match": {
-                "query": q,
-                "type": "best_fields",
-                "fields": ["nome^3", "sku^4", "descricao", "marca^2", "categoria_nome^2"],
-                "fuzziness": "AUTO",
-                "prefix_length": 1
-            }
-        }),
-        None => json!({ "match_all": {} }),
-    };
+        .filter(|q| !q.is_empty());
 
     let mut filtros: Vec<Value> = Vec::new();
     if consulta.somente_ativos {
@@ -112,20 +132,103 @@ fn query_busca(consulta: &ConsultaBuscaProdutos) -> Value {
         filtros.push(json!({ "range": { "preco": range } }));
     }
 
-    json!({
+    let consulta_txt = match q_txt {
+        Some(q) => json!({
+            "bool": {
+                "must": [{
+                    "multi_match": {
+                        "query": q,
+                        "type": "best_fields",
+                        "fields": ["nome^3", "sku^4", "descricao", "marca^2", "categoria_nome^2"],
+                        "fuzziness": "AUTO",
+                        "prefix_length": 1,
+                        "minimum_should_match": "75%"
+                    }
+                }],
+                "should": [
+                    { "term": { "sku": { "value": q, "boost": 10 } } },
+                    { "match_phrase": { "nome": { "query": q, "slop": 1, "boost": 4 } } }
+                ],
+                "filter": filtros
+            }
+        }),
+        None => json!({ "bool": { "must": [{ "match_all": {} }], "filter": filtros } }),
+    };
+
+    let consulta_final = json!({
+        "function_score": {
+            "query": consulta_txt,
+            "functions": [
+                { "filter": { "term": { "destaque": true } }, "weight": 1.6 },
+                { "gauss": { "criado_em": { "origin": "now", "scale": "90d", "decay": 0.5 } } }
+            ],
+            "score_mode": "sum",
+            "boost_mode": "multiply"
+        }
+    });
+
+    let sort = match consulta.ordenacao {
+        OrdenacaoBusca::Relevancia => {
+            json!(["_score", { "destaque": "desc" }, { "criado_em": "desc" }])
+        }
+        OrdenacaoBusca::MenorPreco => {
+            json!([{ "preco": "asc" }, { "criado_em": "desc" }])
+        }
+        OrdenacaoBusca::MaiorPreco => {
+            json!([{ "preco": "desc" }, { "criado_em": "desc" }])
+        }
+        OrdenacaoBusca::NomeAZ => {
+            json!([{ "nome.keyword": "asc" }, { "criado_em": "desc" }])
+        }
+        OrdenacaoBusca::Recentes => json!([{ "criado_em": "desc" }]),
+    };
+
+    let mut corpo = json!({
         "track_total_hits": true,
         "from": consulta.paginacao.offset(),
         "size": consulta.paginacao.limite(),
-        "query": { "bool": { "must": [must], "filter": filtros } },
-        // relevância primeiro; destaque e recência desempatam
-        "sort": ["_score", { "destaque": "desc" }, { "criado_em": "desc" }],
+        "query": consulta_final,
+        "sort": sort,
         "_source": false,
         "aggs": {
             "categorias": { "terms": { "field": "categoria_id", "size": 50 } },
             "marcas":     { "terms": { "field": "marca", "size": 50, "missing": "—" } },
             "preco":      { "stats": { "field": "preco" } }
         }
-    })
+    });
+
+    if let Some(q) = q_txt {
+        corpo["suggest"] = json!({
+            "correcao": {
+                "text": q,
+                "term": { "field": "nome.corrigivel", "suggest_mode": "popular", "min_word_length": 4 }
+            }
+        });
+    }
+
+    corpo
+}
+
+fn correcao_sugerida(body: &Value, consulta: &str) -> Option<String> {
+    let entradas = body["suggest"]["correcao"].as_array()?;
+    let mut tokens: Vec<String> = Vec::new();
+    let mut mudou = false;
+    for e in entradas {
+        let original = e["text"].as_str()?;
+        let melhor = e["options"]
+            .as_array()
+            .and_then(|o| o.first())
+            .and_then(|o| o["text"].as_str());
+        match melhor {
+            Some(t) if !t.eq_ignore_ascii_case(original) => {
+                tokens.push(t.to_string());
+                mudou = true;
+            }
+            _ => tokens.push(original.to_string()),
+        }
+    }
+    let sugestao = tokens.join(" ");
+    (mudou && sugestao != consulta).then_some(sugestao)
 }
 
 fn query_sugestoes(prefixo: &str, limite: u32) -> Value {
@@ -179,7 +282,6 @@ pub struct BuscaElastic {
 }
 
 impl BuscaElastic {
-    /// Constrói o cliente — URL validada aqui; auth Basic opcional.
     pub fn novo(config: &ConfigBusca) -> Result<Self, elasticsearch::Error> {
         let url = Url::parse(config.url.as_deref().unwrap_or_default())?;
         let pool = SingleNodeConnectionPool::new(url);
@@ -194,7 +296,6 @@ impl BuscaElastic {
         })
     }
 
-    /// Cria o índice se não existir — idempotente no boot.
     pub async fn garantir_indice(&self) -> Resultado<()> {
         let existe = self
             .client
@@ -216,10 +317,22 @@ impl BuscaElastic {
             .send()
             .await
             .map_err(erro_es)?;
-        // 400 resource_already_exists = criado por outra réplica — ok.
         if res.status_code() != StatusCode::OK && res.status_code() != StatusCode::BAD_REQUEST {
             res.error_for_status_code().map_err(erro_es)?;
         }
+        Ok(())
+    }
+
+    async fn definir_refresh(&self, intervalo: &str) -> Resultado<()> {
+        self.client
+            .indices()
+            .put_settings(IndicesPutSettingsParts::Index(&[self.indice.as_str()]))
+            .body(json!({ "index": { "refresh_interval": intervalo } }))
+            .send()
+            .await
+            .map_err(erro_es)?
+            .error_for_status_code()
+            .map_err(erro_es)?;
         Ok(())
     }
 }
@@ -230,6 +343,9 @@ impl MotorBusca for BuscaElastic {
         let res = self
             .client
             .search(SearchParts::Index(&[self.indice.as_str()]))
+            // filtros/aggs são cacheados por shard — mesma combinação
+            // de facetas reutiliza resultado sem reexecutar a query.
+            .request_cache(true)
             .body(query_busca(consulta))
             .send()
             .await
@@ -265,10 +381,16 @@ impl MotorBusca for BuscaElastic {
                 .and_then(rust_decimal::Decimal::from_f64),
         };
 
+        let correcao = consulta
+            .q
+            .as_deref()
+            .and_then(|q| correcao_sugerida(&body, q));
+
         Ok(ResultadoMotor {
             hits,
             total,
             facetas,
+            correcao,
         })
     }
 
@@ -324,6 +446,9 @@ impl MotorBusca for BuscaElastic {
         if docs.is_empty() {
             return Ok(0);
         }
+
+        self.definir_refresh("-1").await?;
+
         let mut body: Vec<elasticsearch::BulkOperation<Value>> = Vec::with_capacity(docs.len());
         for d in docs {
             body.push(
@@ -332,19 +457,29 @@ impl MotorBusca for BuscaElastic {
                     .into(),
             );
         }
-        let res = self
+        let res_bulk = self
             .client
             .bulk(BulkParts::Index(self.indice.as_str()))
             .body(body)
-            .refresh(Refresh::WaitFor)
+            .send()
+            .await;
+
+        self.definir_refresh("1s").await?;
+        self.client
+            .indices()
+            .refresh(IndicesRefreshParts::Index(&[self.indice.as_str()]))
             .send()
             .await
             .map_err(erro_es)?
             .error_for_status_code()
             .map_err(erro_es)?;
+
+        let res = res_bulk
+            .map_err(erro_es)?
+            .error_for_status_code()
+            .map_err(erro_es)?;
         let res_body: Value = res.json().await.map_err(erro_es)?;
 
-        // Bulk retorna 200 mesmo com itens falhos — conta os que indexaram.
         let mut ok = 0u64;
         for item in res_body["items"].as_array().into_iter().flatten() {
             let status = item["index"]["status"].as_u64().unwrap_or(500);
@@ -374,7 +509,6 @@ impl MotorBusca for BuscaElastic {
             .send()
             .await
             .map_err(erro_es)?;
-        // 404 = já ausente do índice — idempotente por contrato.
         if res.status_code() == StatusCode::NOT_FOUND {
             return Ok(());
         }
@@ -390,7 +524,6 @@ impl MotorBusca for BuscaElastic {
             .send()
             .await
             .map_err(erro_es)?;
-        // 404 = índice nunca existiu — segue para a criação.
         if res.status_code() != StatusCode::NOT_FOUND {
             res.error_for_status_code().map_err(erro_es)?;
         }

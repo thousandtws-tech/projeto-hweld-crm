@@ -5,33 +5,9 @@ import { MatInputModule } from '@angular/material/input';
 
 @Component({
   selector: 'hw-field',
-  standalone: true,
   imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule],
-  template: `
-    <mat-form-field appearance="outline" class="hw-mat-field" [subscriptSizing]="'dynamic'">
-      <mat-label>{{ rotulo() }}</mat-label>
-      <input
-        matInput
-        [id]="id()"
-        [type]="tipo()"
-        [placeholder]="placeholder()"
-        [formControl]="control()"
-        [autocomplete]="autocomplete()"
-      />
-      @if (invalido()) {
-        <mat-error [id]="id() + '-erro'">{{ erro() }}</mat-error>
-      }
-    </mat-form-field>
-  `,
-  styles: `
-    :host {
-      display: block;
-      width: 100%;
-    }
-    .hw-mat-field {
-      width: 100%;
-    }
-  `,
+  templateUrl: './field.html',
+  styleUrl: './field.scss',
 })
 export class HwField {
   control = input.required<FormControl>();

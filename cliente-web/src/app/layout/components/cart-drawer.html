@@ -1,0 +1,87 @@
+<!-- Overlay — clique fecha (padrão drawer de marketplace). -->
+<div class="drawer-overlay" (click)="fechar()" aria-hidden="true"></div>
+
+<!-- Painel lateral -->
+<aside
+  class="drawer-painel"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Mini carrinho de compras"
+  [attr.aria-hidden]="!carrinho.drawerAberto()"
+>
+  <header class="drawer-topo">
+    <div class="drawer-titulo-wrap">
+      <span class="material-symbols-outlined drawer-icone" aria-hidden="true">shopping_cart</span>
+      <h2 class="drawer-titulo">Meu Carrinho</h2>
+      @if (carrinho.totalItens(); as n) {
+        <span class="drawer-count hw-numeric">{{ n }} {{ n === 1 ? 'item' : 'itens' }}</span>
+      }
+    </div>
+    <button type="button" class="drawer-fechar" (click)="fechar()" aria-label="Fechar carrinho">
+      <span class="material-symbols-outlined" aria-hidden="true">close</span>
+    </button>
+  </header>
+
+  @if (carrinho.carrinho()?.itens?.length) {
+    <ul class="drawer-itens">
+      @for (item of carrinho.carrinho()!.itens; track item.produto_id) {
+        <li class="d-item">
+          <div class="d-item-info">
+            <a
+              class="d-item-nome"
+              [routerLink]="['/p', item.produto_id]"
+              (click)="fechar()"
+            >
+              {{ item.produto?.nome ?? 'Produto ' + item.produto_id }}
+            </a>
+            <div class="d-item-metas">
+              @if (item.produto?.sku) {
+                <span class="d-sku hw-numeric">SKU: {{ item.produto?.sku }}</span>
+              }
+              <span class="d-unit hw-numeric">{{ item.preco_unitario | brl }} / un</span>
+            </div>
+            <hw-qty
+              [valor]="num(item.quantidade)"
+              [mudar]="mudar(item.produto_id)"
+              [min]="0"
+            />
+          </div>
+          <div class="d-item-lado">
+            <strong class="d-total hw-numeric">{{ linha(item) | brl }}</strong>
+            <button
+              type="button"
+              class="d-remover"
+              (click)="remover(item.produto_id)"
+              [attr.aria-label]="'Remover ' + (item.produto?.nome ?? 'item')"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">delete_outline</span>
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+
+    <footer class="drawer-rodape">
+      <div class="drawer-subtotal">
+        <span>Subtotal</span>
+        <strong class="hw-numeric">{{ carrinho.subtotal() | brl }}</strong>
+      </div>
+      <span class="drawer-nota">Frete e condição de pagamento no checkout</span>
+      <div class="drawer-ctas">
+        <button hwButton variant="secondary" size="lg" class="cta-ver" (click)="irCarrinho()">
+          Ver carrinho
+        </button>
+        <button hwButton size="lg" class="cta-finalizar" (click)="irCheckout()">
+          Finalizar compra
+        </button>
+      </div>
+    </footer>
+  } @else {
+    <div class="drawer-vazio">
+      <span class="material-symbols-outlined vazio-icone" aria-hidden="true">shopping_cart</span>
+      <h3>Seu carrinho está vazio</h3>
+      <p>Explore o catálogo com os preços da sua tabela.</p>
+      <a routerLink="/" hwButton (click)="fechar()">Explorar catálogo</a>
+    </div>
+  }
+</aside>

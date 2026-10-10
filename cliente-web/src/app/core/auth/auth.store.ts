@@ -15,7 +15,9 @@ interface ClaimsJwt {
 function tipoDoToken(token: string): string | null {
   try {
     const payload = token.split('.')[1];
-    return (JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as ClaimsJwt).tipo ?? null;
+    return (
+      (JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as ClaimsJwt).tipo ?? null
+    );
   } catch {
     return null;
   }
@@ -52,14 +54,32 @@ export class AuthStore {
     const res = await firstValueFrom(
       this.http.post<LoginPortalResp>(`${this.api}/auth/portal/login`, { email, senha }),
     );
+    this.aplicarSessaoPortal(res, email);
+    await this.carregarPerfil();
+  }
+
+  /** Aplica tokens + semeia o perfil com o contato retornado pelo login. */
+  private aplicarSessaoPortal(res: LoginPortalResp, email: string): void {
     this.setTokens(res);
     // O login já traz { id, nome, empresa_id } — semeia o perfil mesmo sem GET /portal/me.
     this.perfil.set({
-      contato: { id: res.contato.id, nome: res.contato.nome, email, telefone: null, cargo: null, is_principal: false },
-      empresa: { id: res.contato.empresa_id, razao_social: '', nome_fantasia: null, cnpj: null, segmento: null },
+      contato: {
+        id: res.contato.id,
+        nome: res.contato.nome,
+        email,
+        telefone: null,
+        cargo: null,
+        is_principal: false,
+      },
+      empresa: {
+        id: res.contato.empresa_id,
+        razao_social: '',
+        nome_fantasia: null,
+        cnpj: null,
+        segmento: null,
+      },
       tabela_preco: null,
     });
-    await this.carregarPerfil();
   }
 
   async carregarPerfil(): Promise<void> {

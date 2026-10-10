@@ -1,0 +1,55 @@
+<section class="duo-section">
+  <div class="duo-grid">
+    <!-- Banner Esquerdo: Corte Plasma Industrial -->
+    <div class="duo-card duo-plasma">
+      <div
+        class="duo-bg"
+        style="
+          background-image: url('https://images.unsplash.com/photo-1585776245991-cf89dd7fc73a?auto=format&fit=crop&w=900&q=80');
+        "
+      ></div>
+      <div class="duo-overlay"></div>
+      <div class="duo-content">
+        <span class="duo-tag">LINHA CORTE CNC</span>
+        <h3 class="duo-title">Sistemas de Corte Plasma de Alta Definição</h3>
+        <p class="duo-desc">
+          Precisão milimétrica em aço carbono, inox e alumínio. Corte rápido com tochas de alta
+          durabilidade e consumíveis de reposição imediata.
+        </p>
+        <div class="duo-meta">
+          <span class="duo-highlight">Corte até 32mm de espessura</span>
+          <a routerLink="/busca" [queryParams]="{ q: 'plasma' }" class="btn-duo">
+            <span>Ver Máquinas Plasma</span>
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Banner Direito: Combos & Kits Serralheiro -->
+    <div class="duo-card duo-combo">
+      <div
+        class="duo-bg"
+        style="
+          background-image: url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=80');
+        "
+      ></div>
+      <div class="duo-overlay"></div>
+      <div class="duo-content">
+        <span class="duo-tag duo-tag-gold">COMBOS PROFISSIONAIS</span>
+        <h3 class="duo-title">Kits Completos para Serralheria & Oficinas</h3>
+        <p class="duo-desc">
+          Leve Máquina Inversora + Máscara Automática + Tocha + Eletrodos com economia garantida de
+          combo e frete unificado para sua empresa.
+        </p>
+        <div class="duo-meta">
+          <span class="duo-highlight">Economia de até R$ 420,00 no combo</span>
+          <a routerLink="/busca" [queryParams]="{ q: 'kit' }" class="btn-duo btn-gold">
+            <span>Montar Meu Kit</span>
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

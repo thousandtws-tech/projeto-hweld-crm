@@ -97,8 +97,14 @@ export interface Carrinho {
 }
 
 export type StatusPedido =
-  | 'aguardando_pagamento' | 'confirmado' | 'em_separacao' | 'faturado'
-  | 'enviado' | 'entregue' | 'concluido' | 'cancelado';
+  | 'aguardando_pagamento'
+  | 'confirmado'
+  | 'em_separacao'
+  | 'faturado'
+  | 'enviado'
+  | 'entregue'
+  | 'concluido'
+  | 'cancelado';
 
 export interface Endereco {
   id: number;
@@ -141,8 +147,21 @@ export interface PedidoDetalhe extends PedidoResumo {
 }
 
 export interface MeuPerfil {
-  contato: { id: number; nome: string; email: string | null; telefone: string | null; cargo: string | null; is_principal: boolean };
-  empresa: { id: number; razao_social: string; nome_fantasia: string | null; cnpj: string | null; segmento: string | null };
+  contato: {
+    id: number;
+    nome: string;
+    email: string | null;
+    telefone: string | null;
+    cargo: string | null;
+    is_principal: boolean;
+  };
+  empresa: {
+    id: number;
+    razao_social: string;
+    nome_fantasia: string | null;
+    cnpj: string | null;
+    segmento: string | null;
+  };
   tabela_preco: { id: number; nome: string } | null;
 }
 
@@ -157,10 +176,13 @@ export interface ResultadoBusca {
   pagina: number;
   total_paginas: number;
   facetas?: {
-    categorias?: { id: number; nome: string; total: number }[];
-    marcas?: { marca: string; total: number }[];
-    preco?: { min: Dinheiro; max: Dinheiro };
+    categorias?: { valor: string; rotulo?: string; contagem: number }[];
+    marcas?: { valor: string; rotulo?: string; contagem: number }[];
+    preco_min?: Dinheiro;
+    preco_max?: Dinheiro;
   };
+  /** "Você quis dizer?" — correção ortográfica sugerida pelo motor. */
+  correcao?: string;
 }
 
 /** Envelope de erro do backend (ErroApp → HTTP). */

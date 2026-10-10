@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { OrdemServico, OsService, CatalogoService, CrmService } from '../../core/servicos';
+import { RealtimeService } from '../../core/realtime';
 import { Produto } from '../../core/models';
 import { ToastService } from '../../shared/ui/toast';
 import { BrlPipe, StatusLabelPipe } from '../../core/pipes';
@@ -86,6 +87,7 @@ export class OsDetalhePage implements OnInit {
   private catalogo = inject(CatalogoService);
   private crm = inject(CrmService);
   private toast = inject(ToastService);
+  private rt = inject(RealtimeService);
   private fb = inject(FormBuilder);
 
   readonly os = signal<OrdemServico | null>(null);
@@ -102,10 +104,24 @@ export class OsDetalhePage implements OnInit {
   empresaNome = (id: number) => this.empresas().get(id) ?? `#${id}`;
   nomeProduto = (id: number) => this.produtos().find((p) => p.id === id)?.nome ?? `#${id}`;
 
+  constructor() {
+    // Transição/consumo feitos por outro técnico revalidam a OS aberta.
+    effect(() => {
+      const e = this.rt.ultimo();
+      if (e && e.tipo.startsWith('os.') && Number(e.dados['id']) === Number(this.route.snapshot.paramMap.get('id'))) {
+        this.carregarOs();
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.catalogo.produtos({ por_pagina: 500 }).subscribe((p) => this.produtos.set(p.itens));
     this.crm.empresas({ por_pagina: 500 }).subscribe((p) =>
       this.empresas.set(new Map(p.itens.map((e) => [e.id, e.nome_fantasia || e.razao_social]))));
+    this.carregarOs();
+  }
+
+  private carregarOs(): void {
     this.svc.buscar(Number(this.route.snapshot.paramMap.get('id'))).subscribe({
       next: (o) => this.os.set(o), error: () => this.erro.set('OS não encontrada.'),
     });

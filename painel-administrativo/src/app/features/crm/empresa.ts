@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbModal, NgbModalModule, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { CrmService, CatalogoService, TabelaPreco } from '../../core/servicos';
+import { RealtimeService } from '../../core/realtime';
 import { Contato, Empresa as EmpresaModel, Oportunidade } from '../../core/models';
 import { ToastService } from '../../shared/ui/toast';
 import { BrlPipe, StatusLabelPipe } from '../../core/pipes';
@@ -243,6 +244,7 @@ export class Empresa360Page implements OnInit {
   private catalogo = inject(CatalogoService);
   private modal = inject(NgbModal);
   private toast = inject(ToastService);
+  private rt = inject(RealtimeService);
   private fb = inject(FormBuilder);
 
   readonly empresa = signal<EmpresaModel | null>(null);
@@ -272,6 +274,17 @@ export class Empresa360Page implements OnInit {
   });
 
   private id(): number { return Number(this.route.snapshot.paramMap.get('id')); }
+
+  constructor() {
+    // empresa.* cobre dados cadastrais, contatos, portal e endereços; scoped por id.
+    effect(() => {
+      const e = this.rt.ultimo();
+      if (e && e.tipo.startsWith('empresa.')
+          && Number(e.dados['id'] ?? e.dados['empresa_id']) === this.id()) {
+        this.carregar();
+      }
+    });
+  }
 
   ngOnInit(): void { this.carregar(); }
 

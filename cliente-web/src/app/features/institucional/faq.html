@@ -1,0 +1,98 @@
+<div class="institucional-layout">
+  <hw-institucional-nav paginaAtual="Central de Ajuda & FAQ" />
+
+  <main class="institucional-conteudo">
+    <header class="pagina-topo">
+      <span class="tag-secao">Dúvidas Frequentes</span>
+      <h1>Central de Ajuda & FAQ</h1>
+      <p class="pagina-sub">
+        Encontre respostas imediatas sobre faturamento para empresas, prazos de entrega, garantias e
+        pedidos no portal.
+      </p>
+
+      <!-- Busca Instantânea no FAQ -->
+      <div class="faq-busca-box">
+        <span class="material-symbols-outlined busca-icone">search</span>
+        <input
+          type="search"
+          [formControl]="buscaCtrl"
+          placeholder="Digite sua dúvida (ex: boleto faturado, prazo, garantia, xml)..."
+          aria-label="Buscar pergunta no FAQ"
+        />
+        @if (buscaCtrl.value) {
+          <button
+            type="button"
+            class="btn-limpar"
+            (click)="buscaCtrl.setValue('')"
+            aria-label="Limpar"
+          >
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
+      </div>
+    </header>
+
+    <!-- Filtros por Categoria -->
+    <div class="categorias-pills">
+      @for (cat of categorias; track cat.id) {
+        <button
+          type="button"
+          class="cat-pill"
+          [class.ativo]="categoriaAtiva() === cat.id"
+          (click)="categoriaAtiva.set(cat.id)"
+        >
+          {{ cat.nome }}
+        </button>
+      }
+    </div>
+
+    <!-- Lista de Perguntas (Acordeão) -->
+    <div class="faq-lista" role="region" aria-label="Lista de dúvidas">
+      @for (item of itensFiltrados(); track item.id) {
+        <div class="faq-item" [class.aberto]="itemAberto() === item.id">
+          <button
+            type="button"
+            class="faq-trigger"
+            (click)="toggle(item.id)"
+            [attr.aria-expanded]="itemAberto() === item.id"
+          >
+            <span class="faq-pergunta">{{ item.pergunta }}</span>
+            <span class="material-symbols-outlined faq-seta" aria-hidden="true">
+              {{ itemAberto() === item.id ? 'remove' : 'add' }}
+            </span>
+          </button>
+          @if (itemAberto() === item.id) {
+            <div class="faq-resposta">
+              <p [innerHTML]="item.resposta"></p>
+            </div>
+          }
+        </div>
+      }
+      @if (itensFiltrados().length === 0) {
+        <div class="faq-vazio">
+          <span class="material-symbols-outlined">help_center</span>
+          <strong>Nenhuma dúvida encontrada para "{{ buscaCtrl.value }}"</strong>
+          <p>Tente outros termos ou entre em contato diretamente com nossa equipe de suporte.</p>
+          <a routerLink="/institucional/atendimento" class="btn-contatar"
+            >Falar com o Atendimento</a
+          >
+        </div>
+      }
+    </div>
+
+    <!-- Box de Dúvidas Não Resolvidas -->
+    <div class="suporte-box">
+      <div class="suporte-esq">
+        <span class="material-symbols-outlined suporte-icon">support_agent</span>
+        <div>
+          <strong>Ainda precisa de ajuda especializada?</strong>
+          <p>
+            Nossa equipe de consultores técnicos e comerciais atende de Segunda a Sexta das 08h às
+            18h.
+          </p>
+        </div>
+      </div>
+      <a routerLink="/institucional/atendimento" class="btn-suporte">Contatar Consultor</a>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,82 @@
+@if (auth.autenticado()) {
+  <button
+    type="button"
+    class="icone-topo-btn"
+    [matMenuTriggerFor]="menuNotifs"
+    matTooltip="Notificações"
+    aria-label="Notificações do portal"
+  >
+    <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+    @if (notifs.naoLidas() > 0) {
+      <span class="badge-contador hw-numeric">
+        {{ notifs.naoLidas() > 99 ? '99+' : notifs.naoLidas() }}
+      </span>
+    }
+  </button>
+
+  <mat-menu #menuNotifs="matMenu" class="notifs-menu-panel" xPosition="before">
+    <div class="notifs-card" (click)="$event.stopPropagation()">
+      <div class="notifs-header">
+        <div class="notifs-title">
+          <strong>Notificações</strong>
+          @if (notifs.naoLidas() > 0) {
+            <span class="notifs-counter">{{ notifs.naoLidas() }} novas</span>
+          }
+        </div>
+        @if (notifs.naoLidas() > 0) {
+          <button
+            type="button"
+            class="btn-marcar-todas"
+            (click)="notifs.marcarTodas()"
+            title="Marcar todas as notificações como lidas"
+          >
+            <span class="material-symbols-outlined">done_all</span>
+            <span>Marcar lidas</span>
+          </button>
+        }
+      </div>
+
+      @if (notifs.itens().length === 0) {
+        <div class="notifs-vazio">
+          <div class="vazio-circulo" aria-hidden="true">
+            <span class="material-symbols-outlined">notifications_none</span>
+          </div>
+          <strong>Tudo em dia!</strong>
+          <p>Você não possui nenhuma notificação pendente no momento.</p>
+        </div>
+      } @else {
+        <div class="notifs-lista">
+          @for (n of notifs.itens(); track n.id) {
+            <button
+              type="button"
+              class="notif-row"
+              [class.nao-lida]="!n.lida_em"
+              (click)="abrirNotif(n)"
+            >
+              <div class="notif-icone-box">
+                <span class="material-symbols-outlined">{{ getIconeNotif(n) }}</span>
+              </div>
+              <div class="notif-corpo">
+                <div class="notif-linha-topo">
+                  <strong class="notif-tit">{{ n.titulo }}</strong>
+                  <span class="notif-data">{{ n.created_at | date: 'dd/MM · HH:mm' }}</span>
+                </div>
+                <p class="notif-msg">{{ n.mensagem | humanizeNotif }}</p>
+              </div>
+              @if (!n.lida_em) {
+                <span class="notif-dot" title="Notificação não lida" aria-hidden="true"></span>
+              }
+            </button>
+          }
+        </div>
+      }
+
+      <div class="notifs-footer">
+        <a routerLink="/conta/pedidos" class="link-ver-pedidos">
+          <span>Acompanhar todos os pedidos</span>
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </a>
+      </div>
+    </div>
+  </mat-menu>
+}

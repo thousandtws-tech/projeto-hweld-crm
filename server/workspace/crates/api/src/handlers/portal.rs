@@ -14,7 +14,6 @@ use hweld_domain::catalogo::categoria::Categoria;
 use hweld_domain::crm::endereco::TipoEndereco;
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::Pagina;
-use hweld_domain::vendas::pedido::StatusPedido;
 
 use crate::dto::{QueryEnderecos, QueryPortalPedidos};
 use crate::estado::AppState;
@@ -122,7 +121,7 @@ pub async fn produto(
     params(
         ("pagina" = Option<u32>, Query),
         ("por_pagina" = Option<u32>, Query),
-        ("status" = Option<StatusPedido>, Query),
+        ("status" = Option<String>, Query, description = "CSV de status"),
         ("so_meus" = Option<bool>, Query, description = "true = só pedidos do contato logado"),
     ),
     responses(
@@ -142,7 +141,7 @@ pub async fn pedidos(
         .pedidos(
             Id::novo(portal.contato_id()),
             q.pag.paginacao()?,
-            q.status,
+            crate::dto::parse_status_csv(q.status.as_deref())?,
             q.so_meus.unwrap_or(false),
         )
         .await?;

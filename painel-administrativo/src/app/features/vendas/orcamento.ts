@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ItemOrcamento, Orcamento, OrcamentosService, CatalogoService, CrmService } from '../../core/servicos';
+import { RealtimeService } from '../../core/realtime';
 import { Produto } from '../../core/models';
 import { ToastService } from '../../shared/ui/toast';
 import { BrlPipe, StatusLabelPipe } from '../../core/pipes';
@@ -114,6 +115,7 @@ export class OrcamentoPage implements OnInit {
   private crm = inject(CrmService);
   private catalogo = inject(CatalogoService);
   private toast = inject(ToastService);
+  private rt = inject(RealtimeService);
   private fb = inject(FormBuilder);
 
   readonly orc = signal<Orcamento | null>(null);
@@ -131,13 +133,26 @@ export class OrcamentoPage implements OnInit {
   transicoes = (status: string) => TRANSICOES[status] ?? [];
   empresaNome = (id: number) => this.empresas().get(id) ?? `#${id}`;
 
+  constructor() {
+    // Outra sessão alterou o orçamento → revalida. Form "dirty" preserva a edição local.
+    effect(() => {
+      const e = this.rt.ultimo();
+      if (e && e.tipo.startsWith('orcamento.') && Number(e.dados['id']) === Number(this.route.snapshot.paramMap.get('id'))) {
+        this.carregar();
+      }
+    });
+  }
+
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
     this.crm.empresas({ por_pagina: 500 }).subscribe((p) =>
       this.empresas.set(new Map(p.itens.map((e) => [e.id, e.nome_fantasia || e.razao_social]))));
     this.catalogo.produtos({ por_pagina: 500, ativo: true }).subscribe((p) => this.produtos.set(p.itens));
-    this.svc.buscar(id).subscribe({
-      next: (o) => { this.orc.set(o); this.preencher(o); },
+    this.carregar();
+  }
+
+  private carregar(): void {
+    this.svc.buscar(Number(this.route.snapshot.paramMap.get('id'))).subscribe({
+      next: (o) => { this.orc.set(o); if (!this.fItens.dirty) this.preencher(o); },
       error: () => this.erro.set('Orçamento não encontrado.'),
     });
   }

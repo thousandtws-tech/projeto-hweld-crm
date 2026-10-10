@@ -12,7 +12,7 @@ const RECONECTAR_PADRAO_MS = 3000;
 const RECONECTAR_MAX_MS = 30_000;
 
 /**
- * Cliente SSE do portal (`/realtime/portal`) — recebe só eventos da própria
+ * Cliente SSE do portal (`{realtimeUrl}/events/portal` — motor Phoenix) — recebe só eventos da própria
  * empresa + públicos (o backend filtra). `EventSource` não envia
  * `Authorization`, então o stream é lido via `fetch` + `ReadableStream`;
  * reconecta honrando o `retry:` do servidor e aborta no logout.
@@ -58,7 +58,7 @@ export class RealtimeService implements OnDestroy {
     const ctrl = new AbortController();
     this.abort = ctrl;
     try {
-      const res = await fetch(`${environment.apiUrl}/realtime/portal`, {
+      const res = await fetch(`${environment.realtimeUrl}/events/portal`, {
         headers: { Authorization: `Bearer ${token}`, Accept: 'text/event-stream' },
         signal: ctrl.signal,
       });
@@ -111,7 +111,10 @@ export class RealtimeService implements OnDestroy {
     }
     if (!dados.length) return;
     try {
-      const parsed = JSON.parse(dados.join('\n')) as { tipo?: string; dados?: Record<string, unknown> };
+      const parsed = JSON.parse(dados.join('\n')) as {
+        tipo?: string;
+        dados?: Record<string, unknown>;
+      };
       const evento: EventoRealtime = { tipo: parsed.tipo ?? tipo, dados: parsed.dados ?? {} };
       this.zone.run(() => {
         this.ultimo.set(evento);

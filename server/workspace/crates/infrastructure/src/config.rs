@@ -28,6 +28,15 @@ pub struct ConfigBusca {
     pub ensure_index: bool,
 }
 
+/// Motor realtime dedicado (Elixir/Phoenix em `server/motor-realtime`).
+/// `token` ausente = motor desligado — eventos são descartados com log.
+#[derive(Debug, Clone)]
+pub struct ConfigMotor {
+    pub url: String,
+    pub token: Option<String>,
+    pub timeout_ms: u64,
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
     pub host: String,
@@ -42,6 +51,7 @@ pub struct Config {
     pub jwt: ConfigJwt,
     pub admin: ConfigAdmin,
     pub busca: ConfigBusca,
+    pub motor: ConfigMotor,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -108,6 +118,11 @@ impl Config {
                 usuario: env("ELASTICSEARCH_USERNAME"),
                 senha: env("ELASTICSEARCH_PASSWORD"),
                 ensure_index: env_parse("ES_ENSURE_INDEX", true)?,
+            },
+            motor: ConfigMotor {
+                url: env("MOTOR_URL").unwrap_or_else(|| "http://localhost:4100".into()),
+                token: env("MOTOR_INGEST_TOKEN"),
+                timeout_ms: env_parse("MOTOR_TIMEOUT_MS", 500u64)?,
             },
         })
     }

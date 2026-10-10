@@ -1,0 +1,220 @@
+<!-- Breadcrumb — contexto de navegação padrão marketplace -->
+<nav class="crumb" aria-label="Caminho de navegação">
+  <a routerLink="/">Início</a>
+  <span class="material-symbols-outlined sep" aria-hidden="true">chevron_right</span>
+  <span class="atual">Busca</span>
+</nav>
+
+@if (resultado(); as r) {
+  <div class="busca-topo">
+    <h1>
+      @if (q()) {
+        {{ r.total }} {{ r.total === 1 ? 'resultado' : 'resultados' }} para
+        <span class="termo">“{{ q() }}”</span>
+      } @else {
+        Todos os produtos
+        <span class="total-secundario">{{ r.total }} itens</span>
+      }
+    </h1>
+
+    <!-- Ordenação — padrão de mercado -->
+    <label class="ordem-wrap">
+      <span class="ordem-label">Ordenar por</span>
+      <select
+        class="ordem-select"
+        [ngModel]="ordem()"
+        (ngModelChange)="mudarOrdem($event)"
+        aria-label="Ordenar resultados por"
+      >
+        @for (o of ordenacoes; track o.valor) {
+          <option [value]="o.valor">{{ o.rotulo }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  <!-- Did-you-mean — correção ortográfica do motor -->
+  @if (r.correcao; as cor) {
+    <p class="voce-quis">
+      Você quis dizer:
+      <a [routerLink]="['/busca']" [queryParams]="{ q: cor }">{{ cor }}</a>
+      ?
+    </p>
+  }
+
+  <!-- Chips de filtros aplicados — removíveis individualmente -->
+  @if (temFiltros()) {
+    <div class="chips-filtros" role="list" aria-label="Filtros aplicados">
+      @if (nomeCategoriaSel(); as nomeCat) {
+        <button type="button" class="chip" role="listitem" (click)="removerCategoria()">
+          {{ nomeCat }}
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      }
+      @if (marcaSel(); as m) {
+        <button type="button" class="chip" role="listitem" (click)="removerMarca()">
+          {{ m }}
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      }
+      @if (precoMinSel() || precoMaxSel()) {
+        <button type="button" class="chip" role="listitem" (click)="limparPreco()">
+          {{ rotuloPreco() }}
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      }
+      <button type="button" class="btn-limpar-filtros" (click)="limparFiltros()">
+        Limpar tudo
+      </button>
+    </div>
+  }
+
+  <div class="layout">
+    <!-- Sidebar de Facetas -->
+    <aside class="facetas" aria-label="Filtros de busca">
+      @if (r.facetas?.categorias?.length) {
+        <div class="grupo-faceta">
+          <h3>Categorias</h3>
+          <div class="itens-faceta">
+            @for (f of r.facetas!.categorias!; track f.valor) {
+              <label class="item-checkbox">
+                <input
+                  type="checkbox"
+                  [checked]="categoriaSel() === +f.valor"
+                  (change)="filtrarCategoria(+f.valor)"
+                />
+                <span class="label-txt">{{ f.rotulo || f.valor }}</span>
+                <span class="count-tag hw-numeric">{{ f.contagem }}</span>
+              </label>
+            }
+          </div>
+        </div>
+      }
+
+      @if (r.facetas?.marcas?.length) {
+        <div class="grupo-faceta">
+          <h3>Marcas</h3>
+          <div class="itens-faceta">
+            @for (f of r.facetas!.marcas!; track f.valor) {
+              <label class="item-checkbox">
+                <input
+                  type="checkbox"
+                  [checked]="marcaSel() === f.valor"
+                  (change)="filtrarMarca(f.valor)"
+                />
+                <span class="label-txt">{{ f.valor }}</span>
+                <span class="count-tag hw-numeric">{{ f.contagem }}</span>
+              </label>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Faixa de preço — facetas devolvem min/max observados -->
+      <div class="grupo-faceta">
+        <h3>Preço</h3>
+        <div class="preco-faixa">
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            class="preco-input hw-numeric"
+            [ngModel]="precoMinDig()"
+            (ngModelChange)="precoMinDig.set($event)"
+            [placeholder]="r.facetas?.preco_min ? 'Min ' + r.facetas!.preco_min : 'Min'"
+            aria-label="Preço mínimo"
+          />
+          <span class="preco-sep">—</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            class="preco-input hw-numeric"
+            [ngModel]="precoMaxDig()"
+            (ngModelChange)="precoMaxDig.set($event)"
+            [placeholder]="r.facetas?.preco_max ? 'Máx ' + r.facetas!.preco_max : 'Máx'"
+            aria-label="Preço máximo"
+            (keyup.enter)="aplicarPreco()"
+          />
+          <button
+            type="button"
+            class="preco-ir"
+            (click)="aplicarPreco()"
+            aria-label="Aplicar faixa de preço"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Grade de Produtos + Paginação -->
+    <div class="conteudo-busca">
+      @if (r.itens.length === 0) {
+        <hw-empty
+          titulo="Nenhum produto encontrado"
+          descricao="Tente usar termos mais genéricos ou limpe os filtros aplicados."
+          icone="search_off"
+        >
+          @if (temFiltros()) {
+            <button type="button" hwButton (click)="limparFiltros()">Limpar filtros</button>
+          }
+        </hw-empty>
+      } @else {
+        <div class="grid">
+          @for (p of r.itens; track p.id) {
+            <hw-product-card [item]="p" />
+          }
+        </div>
+
+        @if (r.total_paginas > 1) {
+          <nav class="paginacao" aria-label="Paginação dos resultados">
+            <button
+              type="button"
+              class="pag-btn"
+              [disabled]="paginaAtual() === 1"
+              (click)="irParaPagina(paginaAtual() - 1)"
+              aria-label="Página anterior"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+            </button>
+            @for (n of paginas(); track n) {
+              <button
+                type="button"
+                class="pag-btn hw-numeric"
+                [class.ativa]="n === paginaAtual()"
+                [attr.aria-current]="n === paginaAtual() ? 'page' : null"
+                (click)="irParaPagina(n)"
+              >
+                {{ n }}
+              </button>
+            }
+            <button
+              type="button"
+              class="pag-btn"
+              [disabled]="paginaAtual() === r.total_paginas"
+              (click)="irParaPagina(paginaAtual() + 1)"
+              aria-label="Próxima página"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+            </button>
+          </nav>
+        }
+      }
+    </div>
+  </div>
+} @else if (esOff()) {
+  <hw-empty
+    titulo="Busca temporariamente indisponível"
+    descricao="Nosso serviço de pesquisa está passando por manutenção. Navegue pelas categorias disponíveis."
+    icone="search_off"
+  >
+    <a routerLink="/" hwButton>Ir para categorias</a>
+  </hw-empty>
+} @else {
+  <div class="grid">
+    @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+      <hw-skeleton style="height: 320px; border-radius: 12px" />
+    }
+  </div>
+}

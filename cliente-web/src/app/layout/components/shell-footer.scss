@@ -1,0 +1,471 @@
+/* -------------------------------------------------------------
+   Rodapé Profissional & Minimalista (Padrão E-commerce Industrial)
+   ------------------------------------------------------------- */
+:host {
+  display: contents;
+}
+
+.rodape {
+  border-top: 1px solid var(--hw-border);
+  background: #f8fafc;
+  margin-top: auto;
+  padding: 48px 0 24px;
+  color: var(--hw-text);
+  font-family: var(--hw-font-sans);
+}
+
+.rodape-container {
+  width: 100%;
+  max-width: var(--hw-content-max);
+  margin: 0 auto;
+  padding: 0 var(--hw-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Grid de 4 Colunas */
+.rodape-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1.2fr 2fr;
+  gap: 40px;
+}
+
+.rodape-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.rodape-tit {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+  text-transform: capitalize;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #0f172a;
+  width: fit-content;
+}
+
+.rodape-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+
+  li a {
+    font-size: 12.5px;
+    color: #475569;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 120ms ease;
+
+    .bullet {
+      font-size: 8px;
+      color: #94a3b8;
+      transition:
+        transform 120ms ease,
+        color 120ms ease;
+    }
+
+    &:hover {
+      color: #0f172a;
+      transform: translateX(2px);
+
+      .bullet {
+        color: #0f172a;
+      }
+    }
+  }
+}
+
+/* Bloco Contatos Televendas / B2B */
+.bloco-contato {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contato-rotulo {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.contato-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f172a;
+  text-decoration: none;
+  font-size: 14.5px;
+  transition: color 120ms ease;
+
+  .contato-icon {
+    font-size: 18px;
+    color: #0f172a;
+  }
+  strong {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  &:hover {
+    color: #1e293b;
+  }
+}
+
+.email-link {
+  font-size: 12.5px;
+  color: #475569;
+  font-weight: 500;
+
+  .contato-icon {
+    font-size: 17px;
+    color: #64748b;
+  }
+
+  &:hover {
+    color: #0f172a;
+    text-decoration: underline;
+  }
+}
+
+.contato-horario {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 4px;
+
+  .icone-relogio {
+    font-size: 15px;
+    color: #94a3b8;
+  }
+}
+
+.mt-bloco {
+  margin-top: 24px;
+}
+
+/* Subcolunas de Categorias */
+.col-dupla {
+  width: 100%;
+}
+
+.subcolunas-cat {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* Seção SEO: Termos Mais Procurados & Marcas */
+.rodape-seo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 0;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.seo-tit {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.seo-termos {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.7;
+  margin: 0;
+
+  a {
+    color: #64748b;
+    text-decoration: none;
+    transition: color 120ms ease;
+
+    &:hover {
+      color: #0f172a;
+      text-decoration: underline;
+    }
+  }
+}
+
+.marcas-bloco {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.marcas-tit {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.marcas-alfabeto {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.letra-link {
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  text-decoration: none;
+  padding: 1px 5px;
+  border-radius: 4px;
+  transition: all 120ms ease;
+
+  &:hover {
+    background: #0f172a;
+    color: #ffffff;
+  }
+}
+
+/* Barra Inferior (Compliance, Dados Legais, Selos) */
+.rodape-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.bottom-links-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+
+  a {
+    color: #475569;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 120ms ease;
+
+    &:hover {
+      color: #0f172a;
+      text-decoration: underline;
+    }
+  }
+  .sep {
+    color: #cbd5e1;
+  }
+}
+
+.bottom-content-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.dados-legais {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-width: 620px;
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.5;
+
+  p {
+    margin: 0;
+  }
+}
+
+.aviso-preco {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.empresa-info {
+  font-weight: 500;
+  color: #475569;
+}
+
+.badges-empresa {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.badge-br {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.redes-sociais {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rede-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  text-transform: lowercase;
+  transition: all 120ms ease;
+
+  &:hover {
+    background: #0f172a;
+    color: #ffffff;
+  }
+
+  &.rede-btn-ig {
+    background: transparent;
+    padding: 0;
+    &:hover {
+      background: transparent;
+      transform: scale(1.15);
+    }
+  }
+}
+
+.rede-custom-img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Coluna de Selos e Certificados */
+.selos-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selos-titulo {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.selos-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.selo-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+
+  .selo-icon {
+    font-size: 20px;
+    color: #0f172a;
+  }
+  .selo-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+
+    strong {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    span {
+      font-size: 9.5px;
+      color: #64748b;
+    }
+  }
+}
+
+.copyright-row {
+  text-align: center;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  .rodape {
+    padding: 32px 0 20px;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .rodape-container {
+    padding: 0 16px;
+    gap: 24px;
+  }
+
+  .rodape-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .subcolunas-cat {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .bottom-content-grid {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .selos-grid {
+    width: 100%;
+  }
+
+  .selo-card {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .marcas-bloco {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bottom-links-row {
+    justify-content: flex-start;
+    gap: 6px;
+  }
+}

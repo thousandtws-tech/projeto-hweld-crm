@@ -18,6 +18,7 @@ use crate::ports::externos::{GatewayFiscal, RegistradorAuditoria};
 use crate::ports::fiscal::{
     FiltroNotasFiscais, NovaNotaFiscal, NovoItemNf, RepositorioNotasFiscais,
 };
+use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
 use crate::ports::vendas::RepositorioPedidos;
 
 pub struct ServicoNotasFiscais {
@@ -25,6 +26,7 @@ pub struct ServicoNotasFiscais {
     pedidos: Arc<dyn RepositorioPedidos>,
     gateway: Arc<dyn GatewayFiscal>,
     audit: Arc<dyn RegistradorAuditoria>,
+    realtime: Arc<dyn NotificadorRealtime>,
 }
 
 impl ServicoNotasFiscais {
@@ -33,12 +35,14 @@ impl ServicoNotasFiscais {
         pedidos: Arc<dyn RepositorioPedidos>,
         gateway: Arc<dyn GatewayFiscal>,
         audit: Arc<dyn RegistradorAuditoria>,
+        realtime: Arc<dyn NotificadorRealtime>,
     ) -> Self {
         Self {
             notas,
             pedidos,
             gateway,
             audit,
+            realtime,
         }
     }
 
@@ -126,6 +130,11 @@ impl ServicoNotasFiscais {
                 serde_json::json!({ "numero": nf.numero, "pedido_id": nf.pedido_id }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "fiscal.nota_emitida",
+            Audiencia::Empresa(nf.empresa_id.valor()),
+            serde_json::json!({ "id": nf.id.valor(), "numero": nf.numero, "pedido_id": nf.pedido_id.valor() }),
+        ));
         Ok(nf)
     }
 
@@ -150,6 +159,11 @@ impl ServicoNotasFiscais {
                 serde_json::json!({ "status": depois.status, "chave_acesso": depois.chave_acesso }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "fiscal.nota_autorizada",
+            Audiencia::Empresa(depois.empresa_id.valor()),
+            serde_json::json!({ "id": depois.id.valor(), "numero": depois.numero, "status": depois.status }),
+        ));
         Ok(depois)
     }
 
@@ -179,6 +193,11 @@ impl ServicoNotasFiscais {
                 serde_json::json!({ "status": depois.status, "motivo": motivo }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "fiscal.nota_cancelada",
+            Audiencia::Empresa(depois.empresa_id.valor()),
+            serde_json::json!({ "id": depois.id.valor(), "numero": depois.numero }),
+        ));
         Ok(depois)
     }
 }

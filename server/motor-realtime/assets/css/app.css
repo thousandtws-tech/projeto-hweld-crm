@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/* Fontes de classes — componentes e LiveViews do projeto. */
+@source "../../lib/motor_realtime_web/**/*.{ex,heex}";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Material Symbols — tamanho consistente nos componentes. */
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+  font-size: 1.25em;
+  line-height: 1;
+}
+
+/* Scrollbars discretas do painel. */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: theme(colors.slate.700) transparent;
+}
+.scroll-slim::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: theme(colors.slate.700);
+  border-radius: 3px;
+}
+
+/* Linha nova no feed — flash sutil. */
+@keyframes linha-nova {
+  from {
+    background: rgb(249 115 22 / 0.12);
+  }
+}
+.linha-nova {
+  animation: linha-nova 900ms ease-out;
+}

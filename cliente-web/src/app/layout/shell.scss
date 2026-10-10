@@ -1,0 +1,21 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--hw-bg);
+}
+
+.conteudo {
+  flex: 1;
+  width: 100%;
+  max-width: var(--hw-content-max);
+  margin: 0 auto;
+  padding: var(--hw-space-8) var(--hw-space-6);
+}
+
+@media (max-width: 768px) {
+  .conteudo {
+    padding: var(--hw-space-4) 14px;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+}

@@ -1,0 +1,343 @@
+<footer class="rodape">
+  <div class="rodape-container">
+    <!-- 1. Grid Principal: 4 Colunas Estruturadas -->
+    <div class="rodape-grid">
+      <!-- Coluna 1: Institucional -->
+      <div class="rodape-col">
+        <h4 class="rodape-tit">Institucional</h4>
+        <ul class="rodape-links">
+          <li>
+            <a routerLink="/institucional/atendimento"
+              ><span class="bullet" aria-hidden="true">▸</span> Atendimento ao Cliente</a
+            >
+          </li>
+          <li>
+            <a routerLink="/institucional/faq"
+              ><span class="bullet" aria-hidden="true">▸</span> Central de Ajuda & FAQ</a
+            >
+          </li>
+          <li>
+            <a routerLink="/institucional/trocas-e-devolucoes"
+              ><span class="bullet" aria-hidden="true">▸</span> Trocas e Devoluções</a
+            >
+          </li>
+          <li>
+            <a routerLink="/conta"><span class="bullet" aria-hidden="true">▸</span> Minha Conta</a>
+          </li>
+          <li>
+            <a routerLink="/conta/pedidos"
+              ><span class="bullet" aria-hidden="true">▸</span> Acompanhe seus pedidos</a
+            >
+          </li>
+          <li>
+            <a routerLink="/institucional/faq"
+              ><span class="bullet" aria-hidden="true">▸</span> Prazos e Condições de Entrega</a
+            >
+          </li>
+          <li>
+            <a routerLink="/institucional/faq"
+              ><span class="bullet" aria-hidden="true">▸</span> Formas de Pagamento & Faturamento</a
+            >
+          </li>
+          <li>
+            <a routerLink="/institucional/privacidade"
+              ><span class="bullet" aria-hidden="true">▸</span> LGPD & Privacidade</a
+            >
+          </li>
+          <li>
+            <a routerLink="/institucional/garantia"
+              ><span class="bullet" aria-hidden="true">▸</span> Garantia Técnica de Equipamentos</a
+            >
+          </li>
+        </ul>
+      </div>
+
+      <!-- Coluna 2: Televendas & Vendas Corporativas -->
+      <div class="rodape-col">
+        <h4 class="rodape-tit">Televendas</h4>
+        <div class="bloco-contato">
+          <span class="contato-rotulo">Todas as localidades</span>
+          <a href="tel:1135089979" class="contato-link">
+            <span class="material-symbols-outlined contato-icon" aria-hidden="true">call</span>
+            <strong class="hw-numeric">(11) 3508-9979</strong>
+          </a>
+        </div>
+
+        <h4 class="rodape-tit mt-bloco">Vendas corporativas</h4>
+        <div class="bloco-contato">
+          <span class="contato-rotulo">Grandes Contas & Cotações Especiais</span>
+          <a href="tel:1131856786" class="contato-link">
+            <span class="material-symbols-outlined contato-icon" aria-hidden="true">call</span>
+            <strong class="hw-numeric">(11) 3185-6786</strong>
+          </a>
+          <a href="mailto:corporativo@hweld.com.br" class="contato-link email-link">
+            <span class="material-symbols-outlined contato-icon" aria-hidden="true">mail</span>
+            <span>corporativo&#64;hweld.com.br</span>
+          </a>
+          <div class="contato-horario">
+            <span class="material-symbols-outlined icone-relogio" aria-hidden="true">schedule</span>
+            <span>Seg. a Sex. das 08h às 18h</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coluna 3 & 4: Categorias Principais (Grid Duplo) -->
+      <div class="rodape-col col-dupla">
+        <h4 class="rodape-tit">Veja todas as categorias</h4>
+        <div class="subcolunas-cat">
+          <ul class="rodape-links">
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'maquina' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Máquinas e Inversoras de Solda</a
+              >
+            </li>
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'mig' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Equipamentos MIG / MAG</a
+              >
+            </li>
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'tig' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Inversoras TIG Industriais</a
+              >
+            </li>
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'plasma' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Corte Plasma & CNC</a
+              >
+            </li>
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'arame' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Arames Tubulares e Sólidos</a
+              >
+            </li>
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'eletrodo' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Eletrodos Revestidos</a
+              >
+            </li>
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'tocha' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Tochas MIG, TIG e Plasma</a
+              >
+            </li>
+          </ul>
+          <ul class="rodape-links">
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'regulador' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Reguladores e Fluxômetros</a
+              >
+            </li>
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'mascara' }"
+                ><span class="bullet" aria-hidden="true">▸</span> EPIs e Máscaras de
+                Autoescurecimento</a
+              >
+            </li>
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'abrasivo' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Abrasivos e Discos de Desbaste</a
+              >
+            </li>
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'compressor' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Compressores e Rede Pneumática</a
+              >
+            </li>
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'pecas' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Consumíveis & Bicos de Contato</a
+              >
+            </li>
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'quimico' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Anti-respingo e Químicos</a
+              >
+            </li>
+            <li>
+              <a routerLink="/busca" [queryParams]="{ q: 'automacao' }"
+                ><span class="bullet" aria-hidden="true">▸</span> Automação e Posicionadores</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Seção SEO: Termos Mais Procurados & Navegue pelas Marcas -->
+    <div class="rodape-seo">
+      <div class="seo-bloco">
+        <strong class="seo-tit">Termos mais procurados</strong>
+        <p class="seo-termos">
+          <a routerLink="/busca" [queryParams]="{ q: 'inversora de solda' }">inversora de solda</a>
+          · <a routerLink="/busca" [queryParams]="{ q: 'arame mig 0.8mm' }">arame mig 0.8mm</a> ·
+          <a routerLink="/busca" [queryParams]="{ q: 'tocha tig refrigerada' }"
+            >tocha tig refrigerada</a
+          >
+          ·
+          <a routerLink="/busca" [queryParams]="{ q: 'mascara de solda automatica' }"
+            >máscara de solda automática</a
+          >
+          ·
+          <a routerLink="/busca" [queryParams]="{ q: 'maquina mig sem gas' }"
+            >máquina mig sem gás</a
+          >
+          · <a routerLink="/busca" [queryParams]="{ q: 'eletrodo e6013' }">eletrodo e6013</a> ·
+          <a routerLink="/busca" [queryParams]="{ q: 'regulador de gas argonio' }"
+            >regulador de gás argônio</a
+          >
+          ·
+          <a routerLink="/busca" [queryParams]="{ q: 'bico de contato m6' }">bico de contato m6</a>
+          ·
+          <a routerLink="/busca" [queryParams]="{ q: 'cabo terra e alicate' }"
+            >cabo terra e alicate</a
+          >
+          ·
+          <a routerLink="/busca" [queryParams]="{ q: 'disco de corte fino' }"
+            >disco de corte fino</a
+          >
+          ·
+          <a routerLink="/busca" [queryParams]="{ q: 'compressor de ar industrial' }"
+            >compressor de ar industrial</a
+          >
+          · <a routerLink="/busca" [queryParams]="{ q: 'avental de raspa' }">avental de raspa</a> ·
+          <a routerLink="/busca" [queryParams]="{ q: 'tocha plasma' }">tocha plasma</a> ·
+          <a routerLink="/busca" [queryParams]="{ q: 'consumiveis de solda' }"
+            >consumíveis de solda</a
+          >
+        </p>
+      </div>
+
+      <div class="seo-bloco marcas-bloco">
+        <strong class="marcas-tit">Navegue pelas Marcas:</strong>
+        <div class="marcas-alfabeto">
+          @for (letra of alfabeto; track letra) {
+            <a [routerLink]="['/busca']" [queryParams]="{ q: letra }" class="letra-link">{{
+              letra
+            }}</a>
+          }
+        </div>
+      </div>
+    </div>
+
+    <mat-divider />
+
+    <!-- 3. Barra Inferior de Compliance, Dados Cadastrais e Certificações -->
+    <div class="rodape-bottom">
+      <!-- Links Rápidos Horizontais -->
+      <div class="bottom-links-row">
+        <a routerLink="/institucional/atendimento">Atendimento</a>
+        <span class="sep">·</span>
+        <a routerLink="/institucional/faq">Central de ajuda</a>
+        <span class="sep">·</span>
+        <a routerLink="/institucional/trocas-e-devolucoes">Troca e Devolução</a>
+        <span class="sep">·</span>
+        <a routerLink="/institucional/atendimento">Quem somos</a>
+        <span class="sep">·</span>
+        <a routerLink="/institucional/privacidade">Segurança & LGPD</a>
+        <span class="sep">·</span>
+        <a routerLink="/institucional/garantia">Garantia Técnica</a>
+      </div>
+
+      <div class="bottom-content-grid">
+        <!-- Dados Cadastrais & Empresa -->
+        <div class="dados-legais">
+          <p class="aviso-preco">
+            Em caso de divergência de preços no portal, o valor válido é o da finalização no
+            Carrinho de Compras.
+          </p>
+          <p class="empresa-info">
+            Razão Social: HWeld Tecnologia em Soldagem S.A. · CNPJ: 12.345.678/0001-90 · IE:
+            123.456.789.110
+          </p>
+          <p class="empresa-endereco">
+            Matriz: Av. Industrial, 1500 - Distrito Industrial - São Paulo/SP - CEP 01310-100
+          </p>
+
+          <div class="badges-empresa">
+            <span class="badge-br">
+              <span class="bandeira-emoji" aria-hidden="true">🇧🇷</span>
+              <span>EMPRESA 100% BRASILEIRA</span>
+            </span>
+            <div class="redes-sociais" aria-label="Redes sociais oficiais">
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noopener"
+                class="rede-btn"
+                title="LinkedIn"
+                ><span class="rede-txt">in</span></a
+              >
+              <a
+                href="https://youtube.com"
+                target="_blank"
+                rel="noopener"
+                class="rede-btn"
+                title="YouTube"
+                ><span class="rede-txt">yt</span></a
+              >
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener"
+                class="rede-btn rede-btn-ig"
+                title="Instagram"
+                ><img src="assets/icons/icon-instagram.png" alt="Instagram" class="rede-custom-img"
+              /></a>
+              <a
+                href="https://wa.me/551135089979"
+                target="_blank"
+                rel="noopener"
+                class="rede-btn"
+                title="WhatsApp"
+                ><span class="rede-txt">wa</span></a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Certificados & Selos de Confiança -->
+        <div class="selos-col">
+          <span class="selos-titulo">CERTIFICADOS & SEGURANÇA</span>
+          <div class="selos-grid">
+            <div class="selo-card">
+              <span class="material-symbols-outlined selo-icon" aria-hidden="true"
+                >verified_user</span
+              >
+              <div class="selo-info">
+                <strong>Site Seguro</strong>
+                <span>Criptografia 256-bit</span>
+              </div>
+            </div>
+
+            <div class="selo-card">
+              <span class="material-symbols-outlined selo-icon" aria-hidden="true"
+                >workspace_premium</span
+              >
+              <div class="selo-info">
+                <strong>ISO 9001</strong>
+                <span>Qualidade Certificada</span>
+              </div>
+            </div>
+
+            <div class="selo-card">
+              <span class="material-symbols-outlined selo-icon" aria-hidden="true">thumb_up</span>
+              <div class="selo-info">
+                <strong>Reclame Aqui</strong>
+                <span>Empresa Verificada</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Copyright Final -->
+      <div class="copyright-row">
+        <span
+          >Copyright © 2020-2026 HWeld Tecnologia em Soldagem S.A. - Todos os direitos
+          reservados.</span
+        >
+      </div>
+    </div>
+  </div>
+</footer>

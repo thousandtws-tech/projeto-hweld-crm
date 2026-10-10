@@ -1,0 +1,41 @@
+<div class="strip-breakout">
+  <div class="strip-container">
+    <div class="strip-decor-circle circle-1"></div>
+    <div class="strip-decor-circle circle-2"></div>
+
+    <div class="strip-left">
+      <div class="strip-badge-wrap">
+        <span class="pulsing-dot"></span>
+        <span class="strip-badge">CAMPANHA INDUSTRIAL 2026</span>
+      </div>
+      <h2 class="strip-title">Semana da Indústria & Serralheria HWeld</h2>
+      <p class="strip-subtitle">
+        Equipamentos industriais de alto ciclo com até <strong>40% OFF</strong> e faturamento em até
+        35 DDL para CNPJ aprovado.
+      </p>
+    </div>
+
+    <div class="strip-right">
+      <!-- Bloco do Cupom com Cópia Interativa -->
+      <div class="coupon-box">
+        <span class="coupon-label">USE O CUPOM NO CHECKOUT:</span>
+        <div class="coupon-pill" (click)="copiarCupom()" role="button" tabindex="0">
+          <span class="coupon-code">HWELDPRO10</span>
+          <button type="button" class="btn-copy" aria-label="Copiar cupom">
+            <span class="material-symbols-outlined" aria-hidden="true">
+              {{ copiado() ? 'check' : 'content_copy' }}
+            </span>
+            <span>{{ copiado() ? 'Copiado!' : 'Copiar' }}</span>
+          </button>
+        </div>
+        <span class="coupon-hint">Válido para compras faturadas e à vista</span>
+      </div>
+
+      <!-- Botão CTA Principal -->
+      <a routerLink="/busca" class="btn-strip-cta">
+        <span>Acessar Todas as Ofertas</span>
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+      </a>
+    </div>
+  </div>
+</div>

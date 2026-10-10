@@ -1,0 +1,84 @@
+<!-- Slider Pro Nativo com Swiper + GSAP + Parallax -->
+<hw-slider-pro />
+
+<!-- Barra de Benefícios & Vantagens B2B -->
+<hw-trust-bar />
+
+<!-- Grid Visual de Categorias Populares -->
+<hw-category-grid />
+
+<!-- Seção de Produtos em Destaque (Posicionado no Meio) -->
+<section class="secao-catalogo">
+  <div class="secao-topo">
+    <div>
+      <span class="secao-tag">OFERTAS SELECIONADAS</span>
+      <h2>Produtos em Destaque</h2>
+      <p class="secao-sub">Os itens mais solicitados na sua categoria de operação industrial</p>
+    </div>
+    <a routerLink="/busca" class="ver-tudo-btn">
+      <span>Ver catálogo completo</span>
+      <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+    </a>
+  </div>
+
+  @if (carregando()) {
+    <div class="grid">
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <hw-skeleton style="height: 320px; border-radius: 12px" />
+      }
+    </div>
+  } @else if (itens().length === 0) {
+    <hw-empty
+      titulo="Nenhum destaque no momento"
+      descricao="Navegue pelas categorias completas ou utilize a busca acima."
+      icone="category"
+    />
+  } @else {
+    <div class="grid">
+      @for (p of itens(); track p.id) {
+        <hw-product-card [item]="p" />
+      }
+    </div>
+  }
+</section>
+
+<!-- Trio de Banners Promocionais (3 Containers Lado a Lado) -->
+<hw-trio-banners />
+
+<!-- Slider de Marcas Parceiras (Navegue por marcas - Padrão Loja Virtual) -->
+<hw-brands-slider />
+
+<!-- Banner Faixa Full-Bleed (Semana da Indústria + Cupom Interativo) -->
+<hw-strip-banner />
+
+<!-- Duo de Banners Promocionais (2 Banners Largos Split 50/50) -->
+<hw-duo-banners />
+
+<!-- Segunda Vitrine: Mais Vendidos & Reposição Rápida -->
+@if (maisVendidos().length > 0) {
+  <section class="secao-catalogo">
+    <div class="secao-topo">
+      <div>
+        <span class="secao-tag tag-azul">ALTA ROTATIVIDADE</span>
+        <h2>Mais Vendidos & Suprimentos Essenciais</h2>
+        <p class="secao-sub">Itens de consumo contínuo para manter sua operação sem interrupções</p>
+      </div>
+      <a routerLink="/busca" class="ver-tudo-btn">
+        <span>Explorar mais</span>
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+      </a>
+    </div>
+
+    <div class="grid">
+      @for (p of maisVendidos(); track p.id) {
+        <hw-product-card [item]="p" />
+      }
+    </div>
+  </section>
+}
+
+<!-- Banner Institucional B2B (Soluções Corporativas & Faturamento CNPJ) -->
+<hw-corporate-banner />
+
+<!-- Banner Newsletter & Tabela VIP de Preços -->
+<hw-newsletter-banner />

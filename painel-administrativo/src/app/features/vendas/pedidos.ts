@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CrmService, CatalogoService, PedidosService } from '../../core/servicos';
+import { RealtimeService } from '../../core/realtime';
 import { Pedido, Produto } from '../../core/models';
 import { ToastService } from '../../shared/ui/toast';
 import { BrlPipe, StatusLabelPipe } from '../../core/pipes';
@@ -107,14 +108,31 @@ export class PedidoDetalhePage implements OnInit {
   private route = inject(ActivatedRoute);
   private svc = inject(PedidosService);
   private toast = inject(ToastService);
+  private rt = inject(RealtimeService);
   readonly pedido = signal<PedidoDetalhe | null>(null);
   readonly erro = signal<string | null>(null);
   readonly steps = STEPS;
   readonly transicoes = (s: string) => TRANSICOES[s] ?? [];
   readonly idx = (s: string) => Math.max(0, STEPS.indexOf(s));
 
+  constructor() {
+    // Transição feita por outro usuário (ou pelo próprio portal) revalida a tela.
+    effect(() => {
+      const e = this.rt.ultimo();
+      const id = Number(this.route.snapshot.paramMap.get('id'));
+      if (e && ['pedido.status_alterado', 'pagamento.baixado', 'pagamento.estornado'].includes(e.tipo)
+          && Number(e.dados['id'] ?? e.dados['pedido_id']) === id) {
+        this.carregar(id);
+      }
+    });
+  }
+
   ngOnInit(): void {
-    this.svc.detalhe(Number(this.route.snapshot.paramMap.get('id'))).subscribe({
+    this.carregar(Number(this.route.snapshot.paramMap.get('id')));
+  }
+
+  private carregar(id: number): void {
+    this.svc.detalhe(id).subscribe({
       next: (p) => this.pedido.set(p),
       error: () => this.erro.set('Pedido não encontrado.'),
     });

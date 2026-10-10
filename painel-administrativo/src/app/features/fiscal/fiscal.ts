@@ -1,7 +1,8 @@
-import { Component, OnInit, TemplateRef, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, TemplateRef, effect, inject, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FiscalService, NotaFiscal } from '../../core/servicos';
+import { RealtimeService } from '../../core/realtime';
 import { ToastService } from '../../shared/ui/toast';
 import { StatusLabelPipe } from '../../core/pipes';
 
@@ -66,6 +67,7 @@ export class FiscalPage implements OnInit {
   private svc = inject(FiscalService);
   private modal = inject(NgbModal);
   private toast = inject(ToastService);
+  private rt = inject(RealtimeService);
   private fb = inject(FormBuilder);
 
   readonly notas = signal<NotaFiscal[]>([]);
@@ -74,6 +76,13 @@ export class FiscalPage implements OnInit {
 
   readonly fEmitir = this.fb.group({ pedido_id: [null as number | null, Validators.required] });
   readonly fCancelar = this.fb.group({ motivo: ['', Validators.required] });
+
+  constructor() {
+    effect(() => {
+      const e = this.rt.ultimo();
+      if (e && e.tipo.startsWith('fiscal.')) this.carregar();
+    });
+  }
 
   ngOnInit(): void { this.carregar(); }
   carregar(): void { this.svc.listar({ por_pagina: 50 }).subscribe((p) => this.notas.set(p.itens)); }

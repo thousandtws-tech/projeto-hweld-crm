@@ -1,0 +1,23 @@
+<nav class="conta-nav" aria-label="Navegação da conta">
+  <a
+    routerLink="/conta"
+    routerLinkActive="atual"
+    [routerLinkActiveOptions]="{ exact: true }"
+    class="nav-item"
+  >
+    <span class="material-symbols-outlined">person</span>
+    <span>Dados Cadastrais</span>
+  </a>
+  <a routerLink="/conta/pedidos" routerLinkActive="atual" class="nav-item">
+    <span class="material-symbols-outlined">receipt_long</span>
+    <span>Meus Pedidos</span>
+  </a>
+  <a routerLink="/conta/seguranca" routerLinkActive="atual" class="nav-item">
+    <span class="material-symbols-outlined">lock</span>
+    <span>Segurança</span>
+  </a>
+  <button type="button" class="nav-sair" (click)="sair()">
+    <span class="material-symbols-outlined">logout</span>
+    <span>Sair da conta</span>
+  </button>
+</nav>

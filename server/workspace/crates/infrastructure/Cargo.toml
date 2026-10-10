@@ -20,6 +20,7 @@ rust_decimal.workspace = true
 rust_decimal_macros.workspace = true
 sqlx.workspace = true
 elasticsearch.workspace = true
+reqwest.workspace = true
 argon2.workspace = true
 jsonwebtoken.workspace = true
 rand.workspace = true

@@ -15,5 +15,5 @@ pub use busca::BuscaElastic;
 pub use config::{Config, ErroConfig};
 pub use fiscal::GatewayFiscalStub;
 pub use persistence::{conectar, MIGRATOR};
-pub use realtime::BroadcasterRealtime;
+pub use realtime::HttpRealtime;
 pub use seguranca::{EmissorJwt, HasherArgon2};

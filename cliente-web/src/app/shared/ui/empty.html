@@ -1,0 +1,12 @@
+<div class="vazio">
+  <div class="icone-box">
+    <span class="material-symbols-outlined icone" aria-hidden="true">{{ resolveIcone() }}</span>
+  </div>
+  <strong>{{ titulo() }}</strong>
+  @if (descricao()) {
+    <p>{{ descricao() }}</p>
+  }
+  <div class="acoes">
+    <ng-content />
+  </div>
+</div>

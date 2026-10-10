@@ -1,0 +1,30 @@
+<a class="card" [routerLink]="['/p', item().id + '-' + item().slug]" mat-ripple>
+  <div class="thumb-container">
+    @if (imagem(); as img) {
+      <img [src]="img" [alt]="item().nome" class="thumb-img" loading="lazy" />
+    } @else {
+      <div class="sem-img">
+        <span class="material-symbols-outlined sem-img-icone" aria-hidden="true">inventory_2</span>
+      </div>
+    }
+    @if (item().marca) {
+      <span class="badge-marca">{{ item().marca }}</span>
+    }
+  </div>
+
+  <div class="card-corpo">
+    <div class="meta-row">
+      <span class="sku hw-numeric">{{ item().sku }}</span>
+      <span class="status-dot ativo" title="Catálogo ativo"></span>
+    </div>
+
+    <h3 class="nome" [title]="item().nome">{{ item().nome }}</h3>
+
+    <div class="card-footer">
+      <hw-price [valor]="item().preco_efetivo ?? item().preco_venda" [tabela]="'Preço PJ'" />
+      <span class="btn-detalhes" aria-hidden="true">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </span>
+    </div>
+  </div>
+</a>

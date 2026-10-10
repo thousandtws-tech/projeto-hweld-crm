@@ -1,9 +1,3 @@
-//! `estoque_saldos` + `estoque_movimentacoes` — Fluxo D do modelo.
-//!
-//! Movimentações são a fonte da verdade (imutáveis); `estoque_saldos` é uma
-//! projeção derivada — aqui implementada como fold funcional puro, e no
-//! Postgres atualizada na mesma transação do movimento (§7.4).
-
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::Serialize;
@@ -17,8 +11,6 @@ use crate::shared::id::Id;
 use crate::vendas::pedido::Pedido;
 
 enum_str! {
-    /// Direção do movimento dada pelo tipo — quantidade sempre positiva,
-    /// exceto `ajuste` que é assinado (correção ±).
     pub enum TipoMovimentacao {
         Entrada = "entrada",
         Saida = "saida",
@@ -29,7 +21,6 @@ enum_str! {
 }
 
 impl TipoMovimentacao {
-    /// Delta aplicado a (disponível, reservado) — função pura de transição.
     fn delta(self, qtd: Decimal) -> (Decimal, Decimal) {
         match self {
             Self::Entrada => (qtd, Decimal::ZERO),
@@ -40,13 +31,11 @@ impl TipoMovimentacao {
         }
     }
 
-    /// `ajuste` é o único tipo que admite quantidade negativa.
     pub fn exige_quantidade_positiva(self) -> bool {
         !matches!(self, Self::Ajuste)
     }
 }
 
-/// Saldo materializado — 1:1 com produto. Nunca escrito diretamente (§7.4).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, utoipa::ToSchema)]
 pub struct EstoqueSaldo {
     pub produto_id: Id<Produto>,
@@ -65,13 +54,10 @@ impl EstoqueSaldo {
         }
     }
 
-    /// Físico em estoque = disponível + reservado.
     pub fn fisico(self) -> Decimal {
         self.quantidade_disponivel + self.quantidade_reservada
     }
 
-    /// Aplica um movimento — transição pura que preserva a invariante
-    /// `disponível ≥ 0 ∧ reservado ≥ 0` (falha em vez de corromper).
     pub fn aplicar(self, tipo: TipoMovimentacao, quantidade: Decimal) -> Result<Self, ErroDominio> {
         let (d_disp, d_res) = tipo.delta(quantidade);
         let disp = self.quantidade_disponivel + d_disp;
@@ -98,8 +84,6 @@ impl EstoqueSaldo {
         })
     }
 
-    /// Deriva o saldo a partir do histórico — fold puro sobre movimentações.
-    /// Útil para auditoria/verificação da projeção materializada.
     pub fn derivar<'a>(
         produto_id: Id<Produto>,
         movimentacoes: impl IntoIterator<Item = &'a EstoqueMovimentacao>,
@@ -112,7 +96,6 @@ impl EstoqueSaldo {
     }
 }
 
-/// Movimentação imutável — correções se fazem via estorno (§7.2).
 #[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct EstoqueMovimentacao {
     pub id: Id<EstoqueMovimentacao>,
@@ -131,7 +114,6 @@ pub struct EstoqueMovimentacao {
     pub created_at: DateTime<Utc>,
 }
 
-/// Comando de movimentação — o que a aplicação pede ao repositório.
 #[derive(Debug, Clone)]
 pub struct MovimentacaoCmd {
     pub produto_id: Id<Produto>,

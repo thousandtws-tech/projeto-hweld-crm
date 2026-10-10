@@ -1,11 +1,17 @@
-import { Component, OnInit, TemplateRef, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, TemplateRef, effect, inject, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FinanceiroService, Pagamento } from '../../core/servicos';
+import { RealtimeService } from '../../core/realtime';
 import { Caixa } from '../../core/models';
 import { ToastService } from '../../shared/ui/toast';
 import { BrlPipe, StatusLabelPipe } from '../../core/pipes';
 import { DatePipe } from '@angular/common';
+
+/** Prefixo de evento que afeta a grade de parcelas. */
+const EV_PAGAMENTO = ['pagamento.parcelas', 'pagamento.baixado', 'pagamento.estornado'];
+/** Eventos que movem o caixa — baixa/estorno de parcela lança recebimento/estorno. */
+const EV_CAIXA = [...EV_PAGAMENTO, 'caixa.aberto', 'caixa.movimento', 'caixa.fechado'];
 
 interface MovCaixa { id: number; tipo: string; valor: string; descricao: string | null; created_at: string }
 
@@ -87,6 +93,7 @@ export class PagamentosPage implements OnInit {
   private svc = inject(FinanceiroService);
   private modal = inject(NgbModal);
   private toast = inject(ToastService);
+  private rt = inject(RealtimeService);
   private fb = inject(FormBuilder);
 
   readonly pagamentos = signal<Pagamento[]>([]);
@@ -106,6 +113,13 @@ export class PagamentosPage implements OnInit {
     observacao: [''],
   });
   readonly fEstorno = this.fb.group({ motivo: ['', Validators.required] });
+
+  constructor() {
+    effect(() => {
+      const e = this.rt.ultimo();
+      if (e && EV_PAGAMENTO.includes(e.tipo)) this.carregar();
+    });
+  }
 
   ngOnInit(): void { this.carregar(); }
   carregar(): void { this.svc.pagamentos({ por_pagina: 50 }).subscribe((p) => this.pagamentos.set(p.itens)); }
@@ -207,6 +221,7 @@ export class CaixaPage implements OnInit {
   private svc = inject(FinanceiroService);
   private modal = inject(NgbModal);
   private toast = inject(ToastService);
+  private rt = inject(RealtimeService);
   private fb = inject(FormBuilder);
 
   readonly caixa = signal<Caixa | null>(null);
@@ -219,6 +234,13 @@ export class CaixaPage implements OnInit {
     tipo: ['suprimento', Validators.required], valor: ['', Validators.required], descricao: [''],
   });
   readonly fFechar = this.fb.group({ valor_informado: ['', Validators.required] });
+
+  constructor() {
+    effect(() => {
+      const e = this.rt.ultimo();
+      if (e && EV_CAIXA.includes(e.tipo)) this.carregar();
+    });
+  }
 
   ngOnInit(): void { this.carregar(); }
   carregar(): void {

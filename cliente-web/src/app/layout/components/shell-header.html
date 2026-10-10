@@ -1,0 +1,69 @@
+<header class="topo">
+  <div class="topo-container">
+    <!-- Logo Brand HWeld -->
+    <a routerLink="/" class="logo" aria-label="HWeld Portal B2B - Página inicial">
+      <span class="logo-txt">HWELD</span>
+    </a>
+
+    <hw-categories-menu />
+    <hw-cep-popover />
+    <hw-search-box />
+
+    <!-- Ações do Cabeçalho Padrão Loja Virtual -->
+    <div class="acoes">
+      <!-- Televendas / Contato B2B -->
+      <a href="tel:1135089979" class="header-item-btn televendas-btn" aria-label="Televendas HWeld">
+        <span class="material-symbols-outlined header-item-icone" aria-hidden="true"
+          >headset_mic</span
+        >
+        <div class="header-item-txt">
+          <span class="header-item-sub">Televendas</span>
+          <strong class="header-item-tit hw-numeric">(11) 3508-9979</strong>
+        </div>
+      </a>
+
+      <!-- Meus Pedidos -->
+      <a routerLink="/conta/pedidos" class="header-item-btn pedidos-btn" aria-label="Meus Pedidos">
+        <img
+          src="assets/icons/icon-cart-check.png"
+          alt=""
+          class="header-custom-icone"
+          aria-hidden="true"
+        />
+        <div class="header-item-txt">
+          <span class="header-item-sub">Meus</span>
+          <strong class="header-item-tit">Pedidos</strong>
+        </div>
+      </a>
+
+      <hw-account-menu />
+
+      <hw-notifications-menu />
+
+      <!-- Botão do Carrinho — abre o mini-cart drawer (padrão marketplace) -->
+      <button
+        type="button"
+        class="header-item-btn carrinho-btn"
+        matTooltip="Ver carrinho de compras"
+        aria-label="Abrir carrinho de compras"
+        [attr.aria-expanded]="carrinho.drawerAberto()"
+        (click)="carrinho.abrirDrawer()"
+      >
+        <div class="icone-carrinho-wrap">
+          <span class="material-symbols-outlined header-item-icone" aria-hidden="true"
+            >shopping_cart</span
+          >
+          @if (carrinho.totalItens() > 0) {
+            <span class="badge-contador hw-numeric">
+              {{ carrinho.totalItens() > 99 ? '99+' : carrinho.totalItens() }}
+            </span>
+          }
+        </div>
+        <div class="header-item-txt header-carrinho-txt">
+          <span class="header-item-sub">Meu</span>
+          <strong class="header-item-tit">Carrinho</strong>
+        </div>
+      </button>
+    </div>
+  </div>
+</header>

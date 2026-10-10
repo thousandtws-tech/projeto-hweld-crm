@@ -1,12 +1,38 @@
 //! Registro de rotas — `/api/v1` para o backoffice (staff) e
 //! `/api/v1/portal` para o B2B (contatos). Saúde fora do escopo versionado.
 
+use std::sync::OnceLock;
+
+use actix_governor::{
+    governor::middleware::StateInformationMiddleware, Governor, GovernorConfig,
+    GovernorConfigBuilder, PeerIpKeyExtractor,
+};
 use actix_web::web;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::docs::ApiDoc;
 use crate::handlers::*;
+
+// O App factory do Actix roda uma vez por worker — o limiter precisa ser
+// criado fora do factory (Arc interno) senão cada thread teria sua própria
+// cota e o rate limit nunca dispararia.
+type ConfigLimiteAuth = GovernorConfig<PeerIpKeyExtractor, StateInformationMiddleware>;
+
+fn limite_auth() -> Governor<PeerIpKeyExtractor, StateInformationMiddleware> {
+    static CONFIG: OnceLock<ConfigLimiteAuth> = OnceLock::new();
+    Governor::new(CONFIG.get_or_init(|| {
+        // Token-bucket por IP: burst 10, recarga ~6s. Login/troca de senha
+        // ficam caros demais para força bruta, e a recarga curta não trava
+        // refresh de token legítimo nem redes compartilhando IP de saída.
+        GovernorConfigBuilder::default()
+            .seconds_per_request(6)
+            .burst_size(10)
+            .use_headers()
+            .finish()
+            .expect("config de rate limit inválida")
+    }))
+}
 
 pub fn configurar(cfg: &mut web::ServiceConfig) {
     // Swagger UI self-hosted — spec gerada do código (nunca diverge das rotas).
@@ -16,12 +42,17 @@ pub fn configurar(cfg: &mut web::ServiceConfig) {
 
     cfg.service(saude::health).service(saude::ready).service(
         web::scope("/api/v1")
-            // Auth — staff e portal com contextos de token distintos.
-            .service(auth::login_staff)
-            .service(auth::login_portal)
-            .service(auth::refresh)
-            .service(auth::logout)
-            .service(auth::trocar_senha)
+            // Auth — escopo único (prefixos duplicados criam rota morta)
+            // com rate limit por IP (anti brute-force, OWASP A07).
+            .service(
+                web::scope("/auth")
+                    .wrap(limite_auth())
+                    .service(auth::login_staff)
+                    .service(auth::login_portal)
+                    .service(auth::refresh)
+                    .service(auth::logout)
+                    .service(auth::trocar_senha),
+            )
             // Usuários (admin).
             .service(usuarios::listar)
             .service(usuarios::buscar)
@@ -139,9 +170,6 @@ pub fn configurar(cfg: &mut web::ServiceConfig) {
             .service(notificacoes::listar_portal)
             .service(notificacoes::nao_lidas_portal)
             .service(notificacoes::marcar_lida_portal)
-            .service(notificacoes::ler_todas_portal)
-            // Realtime SSE — um stream por contexto de token.
-            .service(realtime::stream_staff)
-            .service(realtime::stream_portal),
+            .service(notificacoes::ler_todas_portal),
     );
 }

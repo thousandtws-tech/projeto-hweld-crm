@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CatalogoService, Categoria, TabelaPreco } from '../../core/servicos';
+import { RealtimeService } from '../../core/realtime';
 import { Produto } from '../../core/models';
 import { ToastService } from '../../shared/ui/toast';
 import { BrlPipe } from '../../core/pipes';
@@ -168,6 +169,7 @@ export class CategoriasPage implements OnInit {
   private svc = inject(CatalogoService);
   private modal = inject(NgbModal);
   private toast = inject(ToastService);
+  private rt = inject(RealtimeService);
   private fb = inject(FormBuilder);
 
   readonly todas = signal<Categoria[]>([]);
@@ -180,6 +182,13 @@ export class CategoriasPage implements OnInit {
 
   raizes(): Categoria[] { return this.todas().filter((c) => !c.categoria_pai_id).sort((a, b) => a.ordem - b.ordem); }
   filhos(id: number): Categoria[] { return this.todas().filter((c) => c.categoria_pai_id === id).sort((a, b) => a.ordem - b.ordem); }
+
+  constructor() {
+    effect(() => {
+      const e = this.rt.ultimo();
+      if (e?.tipo === 'catalogo.categorias') this.carregar();
+    });
+  }
 
   ngOnInit(): void { this.carregar(); }
   carregar(): void { this.svc.categorias().subscribe((p) => this.todas.set(p)); }
@@ -246,6 +255,7 @@ export class TabelaPrecoPage implements OnInit {
   private route = inject(ActivatedRoute);
   private svc = inject(CatalogoService);
   private toast = inject(ToastService);
+  private rt = inject(RealtimeService);
   private fb = inject(FormBuilder);
 
   readonly tabela = signal<TabelaPreco | null>(null);
@@ -255,9 +265,20 @@ export class TabelaPrecoPage implements OnInit {
   nomeProduto(id: number): string { return this.produtos().find((p) => p.id === id)?.nome ?? `#${id}`; }
   private id(): number { return Number(this.route.snapshot.paramMap.get('id')); }
 
+  constructor() {
+    effect(() => {
+      const e = this.rt.ultimo();
+      if (e?.tipo === 'catalogo.precos') this.carregarTabela();
+    });
+  }
+
   ngOnInit(): void {
-    this.svc.tabela(this.id()).subscribe((t) => this.tabela.set(t));
+    this.carregarTabela();
     this.svc.produtos({ por_pagina: 500, ativo: true }).subscribe((p) => this.produtos.set(p.itens));
+  }
+
+  private carregarTabela(): void {
+    this.svc.tabela(this.id()).subscribe((t) => this.tabela.set(t));
   }
 
   definir(): void {

@@ -17,18 +17,25 @@ use rust_decimal::Decimal;
 use crate::erro::{ErroApp, Resultado};
 use crate::ports::catalogo::RepositorioProdutos;
 use crate::ports::operacao::{FiltroOrdensServico, RepositorioOrdensServico};
+use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
 
 pub struct ServicoOrdensServico {
     ordens: Arc<dyn RepositorioOrdensServico>,
     produtos: Arc<dyn RepositorioProdutos>,
+    realtime: Arc<dyn NotificadorRealtime>,
 }
 
 impl ServicoOrdensServico {
     pub fn novo(
         ordens: Arc<dyn RepositorioOrdensServico>,
         produtos: Arc<dyn RepositorioProdutos>,
+        realtime: Arc<dyn NotificadorRealtime>,
     ) -> Self {
-        Self { ordens, produtos }
+        Self {
+            ordens,
+            produtos,
+            realtime,
+        }
     }
 
     pub async fn buscar(
@@ -58,7 +65,13 @@ impl ServicoOrdensServico {
         input: OrdemServicoInput,
         ator: Option<Id<Usuario>>,
     ) -> Resultado<OrdemServico> {
-        self.ordens.criar(input.validar()?, ator).await
+        let criada = self.ordens.criar(input.validar()?, ator).await?;
+        self.realtime.publicar(EventoRealtime::novo(
+            "os.criada",
+            Audiencia::Staff,
+            serde_json::json!({ "id": criada.id.valor(), "numero": criada.numero }),
+        ));
+        Ok(criada)
     }
 
     /// Consome material na OS — baixa o estoque na mesma transação.
@@ -115,8 +128,20 @@ impl ServicoOrdensServico {
             .await?
             .ok_or_else(|| ErroApp::nao_encontrado("ordem_servico", id))?;
         os.status.transicionar(proximo)?;
-        self.ordens
+        let depois = self
+            .ordens
             .transicionar(id, proximo, ator, observacao.as_deref())
-            .await
+            .await?;
+        self.realtime.publicar(EventoRealtime::novo(
+            "os.status_alterada",
+            Audiencia::Staff,
+            serde_json::json!({
+                "id": depois.id.valor(),
+                "numero": depois.numero,
+                "de": os.status,
+                "para": depois.status,
+            }),
+        ));
+        Ok(depois)
     }
 }

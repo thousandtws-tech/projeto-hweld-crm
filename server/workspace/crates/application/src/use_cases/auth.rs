@@ -10,7 +10,9 @@ use tracing::instrument;
 use crate::erro::{ErroApp, Resultado};
 use crate::ports::acesso::RepositorioUsuarios;
 use crate::ports::crm::RepositorioContatos;
-use crate::ports::seguranca::{EmissorTokens, HasherSenha, ParTokens, SujeitoToken, TipoSujeito};
+use crate::ports::seguranca::{
+    EmissorTokens, HasherSenha, ParTokens, SujeitoToken, TipoSujeito,
+};
 
 const HASH_DUMMY: &str = "$argon2id$v=19$m=19456,t=2,p=1$c29tZXNhbHRzb21lc2FsdA$abcdefghijklmnopqrstuvwxyz0123456789abcd";
 

@@ -12,6 +12,5 @@ pub mod orcamentos;
 pub mod ordens;
 pub mod pedidos;
 pub mod portal;
-pub mod realtime;
 pub mod saude;
 pub mod usuarios;

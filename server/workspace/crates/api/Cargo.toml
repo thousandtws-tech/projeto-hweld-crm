@@ -17,7 +17,6 @@ serde_json.workspace = true
 thiserror.workspace = true
 futures.workspace = true
 tokio.workspace = true
-tokio-stream.workspace = true
 uuid.workspace = true
 chrono.workspace = true
 rust_decimal.workspace = true
@@ -26,3 +25,4 @@ tracing-actix-web.workspace = true
 sqlx.workspace = true
 utoipa-swagger-ui = { version = "9.0.2", features = ["actix-web"] }
 utoipa = { version = "5.5.0", features = ["actix_extras", "chrono", "uuid", "decimal"] }
+actix-governor = "0.10.0"

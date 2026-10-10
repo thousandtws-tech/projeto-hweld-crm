@@ -1,6 +1,3 @@
-//! `notas_fiscais` + `nota_fiscal_itens` — emissão de NF (§4.16).
-//! `autorizada` só vira `cancelada` via evento fiscal; motivo obrigatório (§7.3).
-
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
@@ -31,8 +28,6 @@ enum_str! {
 }
 
 impl StatusNotaFiscal {
-    /// `autorizada` → `cancelada` é a única saída pós-autorização (evento fiscal).
-    /// `rejeitada` volta a rascunho para correção.
     pub fn transicionar(self, proximo: Self) -> Result<Self, ErroDominio> {
         use StatusNotaFiscal::*;
         let ok = matches!(

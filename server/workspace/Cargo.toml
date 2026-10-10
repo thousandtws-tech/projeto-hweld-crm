@@ -33,6 +33,12 @@ async-trait = "0.1"
 # Search — cliente oficial (linha ES 8.x; só há releases alpha)
 elasticsearch = "=8.19.0-alpha.1"
 
+# HTTP client — publica eventos no motor realtime (Elixir/Phoenix)
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "rustls-tls",
+] }
+
 # Persistence
 sqlx = { version = "0.8", default-features = false, features = [
     "postgres",

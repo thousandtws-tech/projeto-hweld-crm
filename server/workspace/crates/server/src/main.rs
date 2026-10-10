@@ -2,7 +2,7 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use actix_cors::Cors;
-use actix_web::middleware::Logger;
+use actix_web::middleware::{DefaultHeaders, Logger};
 use actix_web::{web, App, HttpServer};
 use hweld_api::rotas;
 use hweld_api::AppState;
@@ -36,8 +36,8 @@ use hweld_infrastructure::persistence::{
     RepositorioPedidosPg, RepositorioProdutosPg, RepositorioTabelasPrecoPg, RepositorioUsuariosPg,
 };
 use hweld_infrastructure::{
-    conectar, BroadcasterRealtime, BuscaElastic, Config, EmissorJwt, GatewayFiscalStub,
-    HasherArgon2, MIGRATOR,
+    conectar, BuscaElastic, Config, EmissorJwt, GatewayFiscalStub, HasherArgon2, HttpRealtime,
+    MIGRATOR,
 };
 use sqlx::PgPool;
 use tracing_actix_web::TracingLogger;
@@ -106,6 +106,21 @@ async fn executar() -> anyhow::Result<()> {
             .app_data(dados.clone())
             .app_data(dados_pool.clone())
             .wrap(cors)
+            // Headers de segurança (OWASP Secure Headers) — CSP liberal o
+            // suficiente para o Swagger UI self-hosted continuar operando.
+            .wrap(
+                DefaultHeaders::new()
+                    .add(("X-Content-Type-Options", "nosniff"))
+                    .add(("X-Frame-Options", "DENY"))
+                    .add(("Referrer-Policy", "strict-origin-when-cross-origin"))
+                    .add(("Permissions-Policy", "camera=(), microphone=(), geolocation=()"))
+                    .add((
+                        "Content-Security-Policy",
+                        "default-src 'self'; script-src 'self' 'unsafe-inline'; \
+                         style-src 'self' 'unsafe-inline'; img-src 'self' data:; \
+                         frame-ancestors 'none'",
+                    )),
+            )
             .wrap(TracingLogger::default())
             .wrap(Logger::default())
             .configure(rotas::configurar)
@@ -214,10 +229,8 @@ fn montar_estado(
         Arc::new(EmissorJwt::novo(&config.jwt, pool.clone()));
     let gateway_fiscal = Arc::new(GatewayFiscalStub::novo());
     let audit = Arc::new(RegistradorAuditoriaPg::novo(pool.clone()));
-    // Barramento realtime — mesmo Arc serve publisher (use cases) e
-    // assinantes (handlers SSE).
-    let realtime = Arc::new(BroadcasterRealtime::novo());
-    // Inbox persistente — fan-out por destinatário + evento `notificacao.nova`.
+    // Motor realtime dedicado (Phoenix) — publicação HTTP fire-and-forget.
+    let realtime = Arc::new(HttpRealtime::novo(&config.motor));
     let notificacoes = Arc::new(ServicoNotificacoes::novo(
         notificacoes_repo,
         usuarios_repo.clone(),
@@ -234,7 +247,7 @@ fn montar_estado(
             tokens,
         ),
         usuarios: ServicoUsuarios::novo(usuarios_repo, hasher.clone(), audit.clone()),
-        empresas: ServicoEmpresas::novo(empresas_repo.clone(), audit.clone()),
+        empresas: ServicoEmpresas::novo(empresas_repo.clone(), audit.clone(), realtime.clone()),
         contatos: ServicoContatos::novo(
             contatos_repo.clone(),
             empresas_repo.clone(),
@@ -253,6 +266,7 @@ fn montar_estado(
             orcamentos_repo,
             enderecos_repo.clone(),
             produtos_repo.clone(),
+            realtime.clone(),
         ),
         categorias: ServicoCategorias::novo(categorias_repo.clone(), realtime.clone()),
         produtos: ServicoProdutos::novo(
@@ -301,23 +315,29 @@ fn montar_estado(
             realtime.clone(),
             notificacoes.clone(),
         ),
-        estoque: ServicoEstoque::novo(estoque_repo, produtos_repo.clone(), audit.clone()),
-        ordens: ServicoOrdensServico::novo(ordens_repo, produtos_repo.clone()),
+        estoque: ServicoEstoque::novo(
+            estoque_repo,
+            produtos_repo.clone(),
+            audit.clone(),
+            realtime.clone(),
+        ),
+        ordens: ServicoOrdensServico::novo(ordens_repo, produtos_repo.clone(), realtime.clone()),
         notas_fiscais: ServicoNotasFiscais::novo(
             notas_repo,
             pedidos_repo.clone(),
             gateway_fiscal,
             audit.clone(),
+            realtime.clone(),
         ),
         pagamentos: ServicoPagamentos::novo(
             pagamentos_repo,
             pedidos_repo,
             formas_repo,
             audit.clone(),
+            realtime.clone(),
         ),
-        caixas: ServicoCaixas::novo(caixas_repo, audit.clone()),
+        caixas: ServicoCaixas::novo(caixas_repo, audit.clone(), realtime.clone()),
         auditoria: ServicoAuditoria::novo(auditoria_repo),
-        realtime,
         notificacoes,
         busca: motor_busca.map(|motor| {
             ServicoBusca::novo(

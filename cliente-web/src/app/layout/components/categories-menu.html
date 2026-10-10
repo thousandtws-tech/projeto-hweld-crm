@@ -1,0 +1,70 @@
+@if (variant() === 'mobile') {
+  <button
+    type="button"
+    class="mobile-nav-item"
+    [matMenuTriggerFor]="menuCategorias"
+    aria-label="Abrir menu de categorias"
+  >
+    <span class="material-symbols-outlined" aria-hidden="true">grid_view</span>
+    <span>Categorias</span>
+  </button>
+} @else {
+  <nav class="cats" aria-label="Categorias">
+    <button
+      type="button"
+      class="cats-trigger"
+      [matMenuTriggerFor]="menuCategorias"
+      aria-label="Abrir menu de categorias"
+      aria-haspopup="true"
+    >
+      <span class="material-symbols-outlined icone-grade" aria-hidden="true">grid_view</span>
+      <span class="cats-label">Categorias</span>
+      <span class="material-symbols-outlined icone-seta" aria-hidden="true">expand_more</span>
+    </button>
+  </nav>
+}
+
+<mat-menu #menuCategorias="matMenu" class="mega-menu-panel" xPosition="after">
+  <!-- Coluna única de departamentos -->
+  <div class="mega-conteudo" (click)="$event.stopPropagation()">
+    <ul class="rail" role="menu" aria-label="Departamentos">
+      <li class="rail-titulo">Departamentos</li>
+      @for (cat of store.categoriasRaiz(); track cat.id) {
+        <li>
+          <a
+            role="menuitem"
+            class="rail-item"
+            [routerLink]="['/c', cat.id + '-' + cat.slug]"
+          >
+            <span class="rail-icone-chip" aria-hidden="true">
+              <span class="material-symbols-outlined rail-icone">{{ icone(cat) }}</span>
+            </span>
+            <span class="rail-nome">{{ cat.nome }}</span>
+            <span class="material-symbols-outlined rail-seta" aria-hidden="true"
+              >chevron_right</span
+            >
+          </a>
+          <!-- Mobile: filhas inline sob a raiz (lista única, padrão Amazon app) -->
+          @if (store.filhasDe(cat.id).length) {
+            <ul class="subs-mobile">
+              @for (sub of store.filhasDe(cat.id); track sub.id) {
+                <li>
+                  <a [routerLink]="['/c', sub.id + '-' + sub.slug]">{{ sub.nome }}</a>
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+      @if (store.categoriasRaiz().length === 0) {
+        <li class="mega-vazio">Nenhuma categoria disponível no momento.</li>
+      }
+      <li class="rail-rodape">
+        <a routerLink="/" class="rail-tudo">
+          <span class="material-symbols-outlined" aria-hidden="true">apps</span>
+          Ver catálogo completo
+        </a>
+      </li>
+    </ul>
+  </div>
+</mat-menu>

@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { DashboardService } from '../../core/servicos';
+import { RealtimeService } from '../../core/realtime';
 import { Oportunidade, Pedido } from '../../core/models';
 import { BrlPipe, StatusLabelPipe } from '../../core/pipes';
 
@@ -140,11 +141,37 @@ const ESTAGIOS = ['lead', 'qualificacao', 'proposta', 'negociacao'] as const;
 })
 export class DashboardPage implements OnInit {
   private svc = inject(DashboardService);
+  private rt = inject(RealtimeService);
   readonly carregando = signal(true);
   readonly stats = signal<Stat[]>([]);
   readonly pedidos = signal<Pedido[]>([]);
   readonly pipeline = signal<Oportunidade[]>([]);
   readonly estagios = ESTAGIOS;
+
+  /** Eventos que afetam os KPIs — qualquer um dispara revalidação silenciosa. */
+  private static readonly EVENTOS = [
+    'pedido.criado',
+    'pedido.status_alterado',
+    'orcamento.criado',
+    'orcamento.status_alterado',
+    'orcamento.convertido',
+    'oportunidade.estagio',
+    'empresa.criada',
+    'empresa.atualizada',
+    'empresa.arquivada',
+    'catalogo.produtos',
+    'estoque.movimentado',
+    'pagamento.baixado',
+    'pagamento.estornado',
+  ];
+
+  constructor() {
+    // KPIs ao vivo — evento da loja/backoffice reconcilia o painel via REST.
+    effect(() => {
+      const e = this.rt.ultimo();
+      if (e && DashboardPage.EVENTOS.includes(e.tipo)) this.carregar();
+    });
+  }
 
   contar(est: string): number {
     return this.pipeline().filter((o) => o.estagio === est).length;
@@ -155,6 +182,10 @@ export class DashboardPage implements OnInit {
   }
 
   ngOnInit(): void {
+    this.carregar();
+  }
+
+  private carregar(): void {
     const vazio = of({ itens: [] as never[], total: 0, pagina: 1, por_pagina: 0, total_paginas: 0 });
     forkJoin({
       pedidos: this.svc.pedidosRecentes().pipe(catchError(() => vazio)),

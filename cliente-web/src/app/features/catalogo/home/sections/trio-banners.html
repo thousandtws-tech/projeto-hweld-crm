@@ -1,0 +1,78 @@
+<section class="trio-section">
+  <div class="trio-grid">
+    <!-- Banner 1: Máquinas de Solda -->
+    <div class="promo-card card-orange">
+      <div
+        class="card-bg"
+        style="
+          background-image: url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80');
+        "
+      ></div>
+      <div class="card-overlay"></div>
+      <div class="card-content">
+        <span class="card-badge badge-orange">ATÉ 35% OFF</span>
+        <h3 class="card-title">Inversoras Industriais IGBT</h3>
+        <p class="card-desc">
+          Arc Force, Hot Start e bivolt automático para alta produtividade em serralheria.
+        </p>
+        <div class="card-footer">
+          <span class="card-price">A partir de <strong>R$ 689,90</strong></span>
+          <a routerLink="/busca" [queryParams]="{ q: 'inversora' }" class="btn-card btn-orange">
+            <span>Ver Ofertas</span>
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Banner 2: EPIs & Proteção -->
+    <div class="promo-card card-cyan">
+      <div
+        class="card-bg"
+        style="
+          background-image: url('https://images.unsplash.com/photo-1508873535684-277a3cbcc4e8?auto=format&fit=crop&w=800&q=80');
+        "
+      ></div>
+      <div class="card-overlay"></div>
+      <div class="card-content">
+        <span class="card-badge badge-cyan">PROTEÇÃO CERTIFICADA</span>
+        <h3 class="card-title">Máscaras de Auto-Escurecimento</h3>
+        <p class="card-desc">
+          Filtro True Color DIN 9-13, 4 sensores e máxima ergonomia com CA ativo.
+        </p>
+        <div class="card-footer">
+          <span class="card-price">Parcele em até <strong>10x sem juros</strong></span>
+          <a routerLink="/busca" [queryParams]="{ q: 'mascara' }" class="btn-card btn-cyan">
+            <span>Conferir Linha</span>
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Banner 3: Consumíveis em Lote -->
+    <div class="promo-card card-blue">
+      <div
+        class="card-bg"
+        style="
+          background-image: url('https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80');
+        "
+      ></div>
+      <div class="card-overlay"></div>
+      <div class="card-content">
+        <span class="card-badge badge-blue">FATURAMENTO B2B</span>
+        <h3 class="card-title">Arames MIG & Eletrodos E7018</h3>
+        <p class="card-desc">
+          Caixas fechadas e bobinas de 15kg com desconto progressivo para CNPJ.
+        </p>
+        <div class="card-footer">
+          <span class="card-price">Preço direto de <strong>distribuidora</strong></span>
+          <a routerLink="/busca" [queryParams]="{ q: 'eletrodo' }" class="btn-card btn-blue">
+            <span>Comprar Lote</span>
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

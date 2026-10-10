@@ -1,0 +1,6 @@
+@if (loading()) {
+  <mat-spinner diameter="18" strokeWidth="2.5" class="hw-btn-spinner" aria-hidden="true" />
+  <span class="sr">{{ texto() }}</span>
+} @else {
+  <ng-content />
+}

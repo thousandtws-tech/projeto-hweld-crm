@@ -40,6 +40,7 @@ fn servico(state: &AppState) -> Resposta<&ServicoBusca> {
         ("marca" = Option<String>, Query),
         ("preco_min" = Option<String>, Query, description = "decimal como string"),
         ("preco_max" = Option<String>, Query, description = "decimal como string"),
+        ("ordem" = Option<String>, Query, description = "relevancia|menor_preco|maior_preco|nome_az|recentes"),
     ),
     responses(
         (status = 200, body = BuscaPaginada<ItemBuscaPortal>),

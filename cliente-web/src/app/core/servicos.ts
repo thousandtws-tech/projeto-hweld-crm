@@ -3,9 +3,18 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
-  Carrinho, Categoria, Endereco, ItemCatalogoPortal, MeuPerfil,
-  Pagina, PedidoDetalhe, PedidoResumo, ProdutoPortal, ResultadoBusca,
-  StatusPedido, SugestaoBusca,
+  Carrinho,
+  Categoria,
+  Endereco,
+  ItemCatalogoPortal,
+  MeuPerfil,
+  Pagina,
+  PedidoDetalhe,
+  PedidoResumo,
+  ProdutoPortal,
+  ResultadoBusca,
+  StatusPedido,
+  SugestaoBusca,
 } from './models';
 
 const api = environment.apiUrl;
@@ -15,14 +24,24 @@ const api = environment.apiUrl;
 export class CatalogoService {
   private http = inject(HttpClient);
 
-  listar(filtro: { pagina?: number; por_pagina?: number; categoria_id?: number; busca?: string; destaque?: boolean } = {}) {
+  listar(
+    filtro: {
+      pagina?: number;
+      por_pagina?: number;
+      categoria_id?: number;
+      busca?: string;
+      destaque?: boolean;
+    } = {},
+  ) {
     let params = new HttpParams();
     if (filtro.pagina) params = params.set('pagina', filtro.pagina);
     if (filtro.por_pagina) params = params.set('por_pagina', filtro.por_pagina);
     if (filtro.categoria_id) params = params.set('categoria_id', filtro.categoria_id);
     if (filtro.busca) params = params.set('busca', filtro.busca);
     if (filtro.destaque !== undefined) params = params.set('destaque', filtro.destaque);
-    return firstValueFrom(this.http.get<Pagina<ItemCatalogoPortal>>(`${api}/portal/catalogo`, { params }));
+    return firstValueFrom(
+      this.http.get<Pagina<ItemCatalogoPortal>>(`${api}/portal/catalogo`, { params }),
+    );
   }
 
   /** PDP — endpoint `GET /portal/produtos/{id}` (gap G5 do backend-gaps.md). */
@@ -41,26 +60,60 @@ export class CatalogoService {
 export class BuscaService {
   private http = inject(HttpClient);
 
-  buscar(q: string, filtro: { pagina?: number; categoria_id?: number; marca?: string; preco_min?: string; preco_max?: string } = {}) {
+  buscar(
+    q: string,
+    filtro: {
+      pagina?: number;
+      categoria_id?: number;
+      marca?: string;
+      preco_min?: string;
+      preco_max?: string;
+      ordem?: string;
+    } = {},
+  ) {
     let params = new HttpParams().set('q', q);
     for (const [k, v] of Object.entries(filtro)) {
       if (v !== undefined && v !== null && v !== '') params = params.set(k, String(v));
     }
-    return firstValueFrom(this.http.get<ResultadoBusca>(`${api}/portal/busca/produtos`, { params }));
+    return firstValueFrom(
+      this.http.get<ResultadoBusca>(`${api}/portal/busca/produtos`, { params }),
+    );
   }
 
   sugestoes(q: string) {
     const params = new HttpParams().set('q', q).set('limite', 8);
-    return firstValueFrom(this.http.get<SugestaoBusca[]>(`${api}/portal/busca/sugestoes`, { params }));
+    return firstValueFrom(
+      this.http.get<SugestaoBusca[]>(`${api}/portal/busca/sugestoes`, { params }),
+    );
   }
 }
 
-/** Carrinho do contato — uuid público no backend, itens com snapshot de preço. */
+/** Carrinho do contato — uuid público no backend, itens com snapshot de preço.
+ *  Também mantém o estado do mini-cart drawer (padrão marketplace). */
 @Injectable({ providedIn: 'root' })
 export class CarrinhoService {
   private http = inject(HttpClient);
   readonly carrinho = signal<Carrinho | null>(null);
   readonly totalItens = () => this.carrinho()?.itens?.length ?? 0;
+
+  /** Mini-cart lateral (drawer) — padrão Mercado Livre/Amazon. */
+  readonly drawerAberto = signal(false);
+
+  /** Soma das linhas (qtd × preço unitário) — compartilhada por página e drawer. */
+  readonly subtotal = () =>
+    (this.carrinho()?.itens ?? [])
+      .reduce((acc, i) => acc + Number(i.quantidade) * Number(i.preco_unitario), 0)
+      .toFixed(2);
+
+  abrirDrawer(): void {
+    // Revalida o carrinho ao abrir — estado sempre fresco (evita item fantasma).
+    this.atual().catch(() => {});
+    this.drawerAberto.set(true);
+  }
+
+  fecharDrawer(): void {
+    this.drawerAberto.set(false);
+  }
 
   async atual(): Promise<Carrinho> {
     const c = await firstValueFrom(this.http.get<Carrinho>(`${api}/portal/carrinho`));
@@ -69,12 +122,22 @@ export class CarrinhoService {
   }
 
   async adicionar(produto_id: number, quantidade: number): Promise<Carrinho> {
-    await firstValueFrom(this.http.post(`${api}/portal/carrinho/itens`, { produto_id, quantidade }));
+    // Backend desserializa Decimal via serde-str — quantidade vai como string.
+    await firstValueFrom(
+      this.http.post(`${api}/portal/carrinho/itens`, {
+        produto_id,
+        quantidade: String(quantidade),
+      }),
+    );
     return this.atual();
   }
 
   async atualizarItem(produto_id: number, quantidade: number): Promise<Carrinho> {
-    await firstValueFrom(this.http.put(`${api}/portal/carrinho/itens/${produto_id}`, { quantidade }));
+    await firstValueFrom(
+      this.http.put(`${api}/portal/carrinho/itens/${produto_id}`, {
+        quantidade: String(quantidade),
+      }),
+    );
     return this.atual();
   }
 
@@ -83,8 +146,15 @@ export class CarrinhoService {
     return this.atual();
   }
 
-  async checkout(input: { endereco_faturamento_id: number; endereco_entrega_id: number; condicao_pagamento?: string; observacoes?: string }): Promise<PedidoDetalhe> {
-    const pedido = await firstValueFrom(this.http.post<PedidoDetalhe>(`${api}/portal/checkout`, input));
+  async checkout(input: {
+    endereco_faturamento_id: number;
+    endereco_entrega_id: number;
+    condicao_pagamento?: string;
+    observacoes?: string;
+  }): Promise<PedidoDetalhe> {
+    const pedido = await firstValueFrom(
+      this.http.post<PedidoDetalhe>(`${api}/portal/checkout`, input),
+    );
     await this.atual();
     return pedido;
   }
@@ -104,10 +174,10 @@ export class ContaService {
     return firstValueFrom(this.http.get<Endereco[]>(`${api}/portal/enderecos`, { params }));
   }
 
-  pedidos(filtro: { pagina?: number; status?: StatusPedido } = {}) {
+  pedidos(filtro: { pagina?: number; status?: StatusPedido[] } = {}) {
     let params = new HttpParams();
     if (filtro.pagina) params = params.set('pagina', filtro.pagina);
-    if (filtro.status) params = params.set('status', filtro.status);
+    if (filtro.status?.length) params = params.set('status', filtro.status.join(','));
     return firstValueFrom(this.http.get<Pagina<PedidoResumo>>(`${api}/portal/pedidos`, { params }));
   }
 

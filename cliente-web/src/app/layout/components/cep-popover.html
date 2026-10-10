@@ -1,0 +1,66 @@
+<!-- Enviar para: CEP Popover (Desktop) -->
+<button
+  type="button"
+  class="header-item-btn cep-btn cep-desktop-btn"
+  [matMenuTriggerFor]="menuCep"
+  aria-label="Informar CEP de entrega"
+>
+  <img src="assets/icons/icon-map-pin.png" alt="" class="header-custom-icone" aria-hidden="true" />
+  <div class="header-item-txt">
+    <span class="header-item-sub">Enviar para:</span>
+    <strong class="header-item-tit">{{ cep() ? cep() : 'Informe o CEP' }}</strong>
+  </div>
+</button>
+
+<mat-menu #menuCep="matMenu" class="cep-menu-panel" xPosition="after">
+  <div class="cep-popover-card" (click)="$event.stopPropagation()">
+    <div class="cep-popover-header">
+      <img src="assets/icons/icon-map-pin.png" alt="" class="cep-pin-custom" aria-hidden="true" />
+      <div class="cep-popover-titulos">
+        <strong>Onde quer receber suas compras?</strong>
+        <p>Informe o CEP para consultar prazos de entrega e frete.</p>
+      </div>
+    </div>
+    <div class="cep-form-row">
+      <input
+        type="text"
+        class="cep-input hw-numeric"
+        placeholder="00000-000"
+        maxlength="9"
+        [value]="cep()"
+        #inputCep
+        (keydown.enter)="aplicarCep(inputCep.value)"
+      />
+      <button type="button" class="btn-salvar-cep" (click)="aplicarCep(inputCep.value)">
+        Salvar
+      </button>
+    </div>
+    @if (cep()) {
+      <div class="cep-status-bar">
+        <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+        <span
+          >CEP ativo: <strong>{{ cep() }}</strong></span
+        >
+      </div>
+    }
+  </div>
+</mat-menu>
+<!-- Faixa Slim de Entrega / CEP (Mobile <= 768px / 430px) -->
+<button
+  type="button"
+  class="cep-mobile-strip"
+  [matMenuTriggerFor]="menuCep"
+  aria-label="Informar CEP de entrega"
+>
+  <div class="cep-mobile-esq">
+    <img
+      src="assets/icons/icon-map-pin.png"
+      alt=""
+      class="cep-mobile-custom-pin"
+      aria-hidden="true"
+    />
+    <span class="cep-mobile-label">Enviar para:</span>
+    <strong class="cep-mobile-val hw-numeric">{{ cep() ? cep() : 'Informe seu CEP' }}</strong>
+  </div>
+  <span class="material-symbols-outlined cep-mobile-seta" aria-hidden="true">chevron_right</span>
+</button>

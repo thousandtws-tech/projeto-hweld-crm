@@ -52,7 +52,7 @@ fn tokens_resp(p: &hweld_application::ports::seguranca::ParTokens) -> TokensResp
         (status = 401, description = "credenciais inválidas"),
     ),
 )]
-#[post("/auth/staff/login")]
+#[post("/staff/login")]
 pub async fn login_staff(
     state: web::Data<AppState>,
     req: HttpRequest,
@@ -74,7 +74,7 @@ pub async fn login_staff(
         (status = 401, description = "credenciais inválidas"),
     ),
 )]
-#[post("/auth/portal/login")]
+#[post("/portal/login")]
 pub async fn login_portal(
     state: web::Data<AppState>,
     req: HttpRequest,
@@ -104,7 +104,7 @@ pub async fn login_portal(
         (status = 401, description = "refresh token inválido/expirado/revogado"),
     ),
 )]
-#[post("/auth/refresh")]
+#[post("/refresh")]
 pub async fn refresh(
     state: web::Data<AppState>,
     body: web::Json<RefreshReq>,
@@ -121,7 +121,7 @@ pub async fn refresh(
     request_body = RefreshReq,
     responses((status = 204, description = "sessão encerrada")),
 )]
-#[post("/auth/logout")]
+#[post("/logout")]
 pub async fn logout(
     state: web::Data<AppState>,
     body: web::Json<RefreshReq>,
@@ -143,7 +143,7 @@ pub async fn logout(
     ),
     security(("bearer_auth" = [])),
 )]
-#[post("/auth/senha")]
+#[post("/senha")]
 pub async fn trocar_senha(
     state: web::Data<AppState>,
     staff: AuthStaff,

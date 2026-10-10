@@ -1,0 +1,45 @@
+@use '../layout-shared';
+
+:host {
+  display: contents;
+}
+
+.conta-btn .avatar-iniciais {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .conta-btn {
+    padding: 4px;
+    min-width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+  }
+
+  .conta-btn .header-item-txt,
+  .conta-btn .seta-sub {
+    display: none;
+  }
+
+  .conta-btn .avatar-iniciais {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .conta-btn .header-item-icone {
+    font-size: 22px;
+  }
+}

@@ -1,0 +1,42 @@
+<section class="news-section">
+  <div class="news-content">
+    <div class="news-left">
+      <div class="news-icon-wrap">
+        <span class="material-symbols-outlined" aria-hidden="true">mark_email_unread</span>
+      </div>
+      <div class="news-texts">
+        <h3>Receba Tabela B2B & Ofertas Exclusivas</h3>
+        <p>
+          Cadastre o e-mail da sua empresa para receber lançamentos, cupons e condições de fábrica
+          antecipadas.
+        </p>
+      </div>
+    </div>
+
+    <div class="news-right">
+      @if (inscrito()) {
+        <div class="news-sucesso">
+          <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+          <span>E-mail cadastrado com sucesso! Em breve você receberá nossas ofertas.</span>
+        </div>
+      } @else {
+        <form (submit)="inscrever($event)" class="news-form">
+          <div class="input-wrap">
+            <span class="material-symbols-outlined input-icon" aria-hidden="true">mail</span>
+            <input
+              type="email"
+              [(ngModel)]="email"
+              name="email"
+              placeholder="Digite o e-mail da sua empresa"
+              required
+            />
+          </div>
+          <button type="submit" class="btn-news">
+            <span>Inscrever-se</span>
+            <span class="material-symbols-outlined" aria-hidden="true">send</span>
+          </button>
+        </form>
+      }
+    </div>
+  </div>
+</section>

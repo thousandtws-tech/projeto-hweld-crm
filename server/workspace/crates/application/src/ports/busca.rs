@@ -13,7 +13,9 @@ use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use serde::Serialize;
 
-use crate::erro::Resultado;
+use hweld_domain::shared::erro::ErroDominio;
+
+use crate::erro::{ErroApp, Resultado};
 
 /// Documento indexado — só o que a busca precisa, desnormalizado.
 /// `categoria_nome`/`marca` vão como keyword para facetas; `preco` é
@@ -56,6 +58,37 @@ impl DocumentoProduto {
     }
 }
 
+/// Ordenação dos resultados — `Relevancia` usa `_score` do motor
+/// desempatado por destaque/recência; as demais são ordens de
+/// marketplace aplicadas sobre campos keyword do índice.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum OrdenacaoBusca {
+    #[default]
+    Relevancia,
+    MenorPreco,
+    MaiorPreco,
+    NomeAZ,
+    Recentes,
+}
+
+impl std::str::FromStr for OrdenacaoBusca {
+    type Err = ErroApp;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "relevancia" => Ok(Self::Relevancia),
+            "menor_preco" => Ok(Self::MenorPreco),
+            "maior_preco" => Ok(Self::MaiorPreco),
+            "nome_az" => Ok(Self::NomeAZ),
+            "recentes" => Ok(Self::Recentes),
+            _ => Err(ErroApp::Dominio(ErroDominio::ValorInvalido {
+                campo: "ordem",
+                mensagem: format!("ordenacao desconhecida: '{s}'"),
+            })),
+        }
+    }
+}
+
 /// Consulta de busca do catálogo — texto livre + filtros/facetas.
 #[derive(Debug, Clone, Default)]
 pub struct ConsultaBuscaProdutos {
@@ -66,6 +99,7 @@ pub struct ConsultaBuscaProdutos {
     pub preco_min: Option<Dinheiro>,
     pub preco_max: Option<Dinheiro>,
     pub somente_ativos: bool,
+    pub ordenacao: OrdenacaoBusca,
     pub paginacao: Paginacao,
 }
 
@@ -108,6 +142,9 @@ pub struct ResultadoMotor {
     pub hits: Vec<HitBusca>,
     pub total: i64,
     pub facetas: Facetas,
+    /// "Você quis dizer?" — termo corrigido pelo suggester do motor,
+    /// `Some` só quando difere do texto consultado.
+    pub correcao: Option<String>,
 }
 
 /// Sugestão de autocomplete — leve, para dropdowns de "digite e ache".

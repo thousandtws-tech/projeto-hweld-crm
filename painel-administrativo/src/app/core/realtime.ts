@@ -12,7 +12,7 @@ const RECONECTAR_PADRAO_MS = 3000;
 const RECONECTAR_MAX_MS = 30_000;
 
 /**
- * Cliente SSE do backoffice (`/realtime/staff`). `EventSource` não envia
+ * Cliente SSE do backoffice (`{realtimeUrl}/events/staff` — motor Phoenix). `EventSource` não envia
  * `Authorization`, então o stream é lido via `fetch` + `ReadableStream`.
  * Reconecta honrando o `retry:` do servidor (com teto) e aborta no logout.
  */
@@ -57,7 +57,7 @@ export class RealtimeService implements OnDestroy {
     const ctrl = new AbortController();
     this.abort = ctrl;
     try {
-      const res = await fetch(`${environment.apiUrl}/realtime/staff`, {
+      const res = await fetch(`${environment.realtimeUrl}/events/staff`, {
         headers: { Authorization: `Bearer ${token}`, Accept: 'text/event-stream' },
         signal: ctrl.signal,
       });

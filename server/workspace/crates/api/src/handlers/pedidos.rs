@@ -8,7 +8,7 @@ use hweld_domain::acesso::usuario::Perfil;
 use hweld_domain::crm::orcamento::calcular_totais;
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::Pagina;
-use hweld_domain::vendas::pedido::{OrigemPedido, Pedido, PedidoItem, StatusPedido};
+use hweld_domain::vendas::pedido::{OrigemPedido, Pedido, PedidoItem};
 use hweld_domain::Dinheiro;
 use serde::Serialize;
 
@@ -32,7 +32,7 @@ pub struct PedidoDetalhe {
     params(
         ("pagina" = Option<u32>, Query),
         ("por_pagina" = Option<u32>, Query),
-        ("status" = Option<StatusPedido>, Query),
+        ("status" = Option<String>, Query, description = "CSV de status"),
         ("empresa_id" = Option<i64>, Query),
         ("contato_id" = Option<i64>, Query),
         ("origem" = Option<OrigemPedido>, Query),
@@ -54,7 +54,7 @@ pub async fn listar(
         .listar(
             q.pag.paginacao()?,
             FiltroPedidos {
-                status: q.status,
+                statuses: crate::dto::parse_status_csv(q.status.as_deref())?,
                 empresa_id: q.empresa_id.map(Id::novo),
                 contato_id: q.contato_id.map(Id::novo),
                 origem: q.origem,

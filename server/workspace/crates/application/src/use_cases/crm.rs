@@ -26,14 +26,20 @@ use crate::ports::seguranca::HasherSenha;
 pub struct ServicoEmpresas {
     empresas: Arc<dyn RepositorioEmpresas>,
     audit: Arc<dyn RegistradorAuditoria>,
+    realtime: Arc<dyn NotificadorRealtime>,
 }
 
 impl ServicoEmpresas {
     pub fn novo(
         empresas: Arc<dyn RepositorioEmpresas>,
         audit: Arc<dyn RegistradorAuditoria>,
+        realtime: Arc<dyn NotificadorRealtime>,
     ) -> Self {
-        Self { empresas, audit }
+        Self {
+            empresas,
+            audit,
+            realtime,
+        }
     }
 
     pub async fn buscar(&self, id: Id<Empresa>) -> Resultado<Empresa> {
@@ -74,6 +80,11 @@ impl ServicoEmpresas {
                 serde_json::json!({ "razao_social": empresa.razao_social, "cnpj": empresa.cnpj }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "empresa.criada",
+            Audiencia::Staff,
+            serde_json::json!({ "id": empresa.id.valor(), "razao_social": empresa.razao_social }),
+        ));
         Ok(empresa)
     }
 
@@ -95,6 +106,11 @@ impl ServicoEmpresas {
                 serde_json::json!(depois),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "empresa.atualizada",
+            Audiencia::Staff,
+            serde_json::json!({ "id": depois.id.valor() }),
+        ));
         Ok(depois)
     }
 
@@ -109,6 +125,11 @@ impl ServicoEmpresas {
                 serde_json::json!(antes),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "empresa.arquivada",
+            Audiencia::Staff,
+            serde_json::json!({ "id": id.valor() }),
+        ));
         Ok(())
     }
 }

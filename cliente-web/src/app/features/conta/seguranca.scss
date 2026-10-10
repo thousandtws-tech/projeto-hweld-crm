@@ -1,0 +1,41 @@
+.conta-header {
+  margin-bottom: var(--hw-space-6);
+  h1 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px;
+  }
+  .subtitulo {
+    font-size: 13.5px;
+    color: var(--hw-text-muted);
+  }
+}
+.cartao-seguranca {
+  background: var(--hw-surface-raised);
+  border: 1px solid var(--hw-border);
+  border-radius: var(--hw-radius-md);
+  padding: var(--hw-space-6);
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--hw-space-4);
+  h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--hw-text);
+  }
+}
+.campos-troca {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hw-space-3);
+}
+.btn-salvar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}

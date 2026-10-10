@@ -1,0 +1,124 @@
+<hw-conta-nav />
+
+@if (carregando()) {
+  <hw-skeleton style="height: 480px; border-radius: 16px" />
+} @else if (!pedido()) {
+  <hw-empty
+    titulo="Pedido não encontrado"
+    descricao="Verifique o número do pedido ou fale com seu vendedor."
+    icone="help_outline"
+  >
+    <a routerLink="/conta/pedidos" class="link-voltar">Voltar para meus pedidos</a>
+  </hw-empty>
+} @else {
+  @let p = pedido()!;
+  <div class="detalhe-topo">
+    <a routerLink="/conta/pedidos" class="link-voltar">
+      <span class="material-symbols-outlined">arrow_back</span>
+      <span>Voltar aos pedidos</span>
+    </a>
+    <div class="pedido-id-row">
+      <h1>Pedido {{ p.numero }}</h1>
+      <hw-status-chip [status]="p.status" />
+    </div>
+  </div>
+
+  <!-- Stepper de Progresso do Pedido -->
+  <div class="stepper-box">
+    <ol class="stepper" aria-label="Progresso do status">
+      @for (etapa of etapas; track etapa; let i = $index) {
+        <li
+          [class]="classeEtapa(i)"
+          [attr.aria-current]="i === indiceAtual(p.status) ? 'step' : null"
+        >
+          <span class="etapa-circulo">
+            @if (isFeita(i)) {
+              <span class="material-symbols-outlined step-check">check</span>
+            } @else {
+              <span>{{ i + 1 }}</span>
+            }
+          </span>
+          <span class="etapa-nome">{{ etapa }}</span>
+        </li>
+      }
+    </ol>
+  </div>
+
+  @if (p.status === 'cancelado') {
+    <div class="alerta-cancelado" role="status">
+      <span class="material-symbols-outlined">cancel</span>
+      <span>Este pedido foi cancelado no sistema comercial.</span>
+    </div>
+  }
+
+  <!-- Tabela de Itens Faturados -->
+  <section class="card-secao">
+    <h2>Itens do Pedido</h2>
+    <div class="tabela-wrap">
+      <table class="tabela-itens">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>SKU</th>
+            <th>Qtd</th>
+            <th>Preço Unit.</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (i of p.itens; track i.sku) {
+            <tr>
+              <td class="nome-td">{{ i.descricao }}</td>
+              <td class="hw-numeric sku-td">{{ i.sku }}</td>
+              <td class="hw-numeric">{{ i.quantidade | qty }}</td>
+              <td class="hw-numeric">{{ i.preco_unitario | brl }}</td>
+              <td class="hw-numeric total-td">{{ i.total | brl }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Grade de Totais e Logística -->
+  <div class="detalhes-grid">
+    <section class="card-secao">
+      <h2>Informações de Entrega</h2>
+      <div class="endereco-texto">
+        <span class="material-symbols-outlined end-icon">location_on</span>
+        <div class="end-corpo">
+          <strong>{{ p.endereco_entrega.logradouro }}, {{ p.endereco_entrega.numero }}</strong>
+          <span
+            >{{ p.endereco_entrega.bairro }} — {{ p.endereco_entrega.cidade }}/{{
+              p.endereco_entrega.uf
+            }}</span
+          >
+          <span>CEP: {{ p.endereco_entrega.cep }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card-secao">
+      <h2>Totais e Condição</h2>
+      <div class="totais-linhas">
+        <div class="tot-linha">
+          <span>Subtotal dos itens</span><span class="hw-numeric">{{ p.subtotal | brl }}</span>
+        </div>
+        <div class="tot-linha">
+          <span>Frete</span><span class="hw-numeric">{{ p.frete | brl }}</span>
+        </div>
+        <div class="divisor"></div>
+        <div class="tot-linha grand">
+          <span>Total Faturado</span
+          ><strong class="hw-numeric total-destaque">{{ p.total | brl }}</strong>
+        </div>
+        @if (p.condicao_pagamento) {
+          <div class="condicao-nota">
+            <span class="material-symbols-outlined">payments</span>
+            <span>Condição: {{ p.condicao_pagamento }}</span>
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+}

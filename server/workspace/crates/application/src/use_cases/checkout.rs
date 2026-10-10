@@ -104,6 +104,24 @@ impl ServicoCheckout {
             itens.iter().map(|i| i.produto_id).collect();
         let produtos = self.produtos.buscar_por_ids(&produto_ids).await?;
 
+        // Revalidação no checkout (padrão marketplace): produto desativado ou
+        // removido entre o add-to-cart e a conversão não pode entrar no pedido
+        // — nem com descrição vazia. Falha com a lista dos itens indisponíveis.
+        let indisponiveis: Vec<String> = itens
+            .iter()
+            .filter_map(|i| match produtos.iter().find(|p| p.id == i.produto_id) {
+                Some(p) if p.visivel_no_catalogo() => None,
+                Some(p) => Some(p.nome.clone()),
+                None => Some(format!("produto {}", i.produto_id.valor())),
+            })
+            .collect();
+        if !indisponiveis.is_empty() {
+            return Err(ErroApp::conflito(format!(
+                "itens indisponíveis no catálogo: {} — remova-os do carrinho para continuar",
+                indisponiveis.join(", ")
+            )));
+        }
+
         let itens_pedido: Vec<ItemPedidoNovo> = itens
             .iter()
             .map(|i| {

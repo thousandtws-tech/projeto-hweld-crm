@@ -1,0 +1,14 @@
+<mat-form-field appearance="outline" class="hw-mat-field" [subscriptSizing]="'dynamic'">
+  <mat-label>{{ rotulo() }}</mat-label>
+  <input
+    matInput
+    [id]="id()"
+    [type]="tipo()"
+    [placeholder]="placeholder()"
+    [formControl]="control()"
+    [autocomplete]="autocomplete()"
+  />
+  @if (invalido()) {
+    <mat-error [id]="id() + '-erro'">{{ erro() }}</mat-error>
+  }
+</mat-form-field>

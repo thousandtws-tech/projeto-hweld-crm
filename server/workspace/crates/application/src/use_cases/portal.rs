@@ -262,7 +262,7 @@ impl ServicoPortal {
         &self,
         contato_id: Id<Contato>,
         paginacao: Paginacao,
-        status: Option<StatusPedido>,
+        statuses: Vec<StatusPedido>,
         so_meus: bool,
     ) -> Resultado<Pagina<PedidoResumoPortal>> {
         let contato = self.contato(contato_id).await?;
@@ -271,7 +271,7 @@ impl ServicoPortal {
             .listar(
                 paginacao,
                 FiltroPedidos {
-                    status,
+                    statuses,
                     empresa_id: Some(contato.empresa_id),
                     contato_id: so_meus.then_some(contato.id),
                     origem: None,

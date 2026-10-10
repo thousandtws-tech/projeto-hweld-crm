@@ -64,9 +64,9 @@ export class NotificacoesService {
   /** Clica numa notificação: marca lida e navega para o alvo interno. */
   async abrir(n: Notificacao): Promise<void> {
     if (!n.lida_em) {
-      await firstValueFrom(
-        this.http.post(`${api}/portal/notificacoes/${n.id}/lida`, {}),
-      ).catch(() => {});
+      await firstValueFrom(this.http.post(`${api}/portal/notificacoes/${n.id}/lida`, {})).catch(
+        () => {},
+      );
       this.naoLidas.update((v) => Math.max(0, v - 1));
       this.itens.update((l) =>
         l.map((x) => (x.id === n.id ? { ...x, lida_em: new Date().toISOString() } : x)),
@@ -76,10 +76,12 @@ export class NotificacoesService {
   }
 
   async marcarTodas(): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${api}/portal/notificacoes/ler-todas`, {}),
-    ).catch(() => {});
+    await firstValueFrom(this.http.post(`${api}/portal/notificacoes/ler-todas`, {})).catch(
+      () => {},
+    );
     this.naoLidas.set(0);
-    this.itens.update((l) => l.map((x) => ({ ...x, lida_em: x.lida_em ?? new Date().toISOString() })));
+    this.itens.update((l) =>
+      l.map((x) => ({ ...x, lida_em: x.lida_em ?? new Date().toISOString() })),
+    );
   }
 }

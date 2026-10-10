@@ -27,7 +27,9 @@ function requisitarRefresh(auth: AuthStore): Subject<boolean> {
 }
 
 const isAuthCall = (url: string) =>
-  url.includes('/auth/login') || url.includes('/auth/portal/login') || url.includes('/auth/refresh');
+  url.includes('/auth/login') ||
+  url.includes('/auth/portal/login') ||
+  url.includes('/auth/refresh');
 
 /**
  * Anexa `Authorization: Bearer <access>`; em 401 tenta refresh uma vez
@@ -38,9 +40,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthStore);
   const router = inject(Router);
   const token = auth.accessToken();
-  const authReq = token && !isAuthCall(req.url)
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
+  const authReq =
+    token && !isAuthCall(req.url)
+      ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+      : req;
 
   return next(authReq).pipe(
     catchError((err: unknown) => {

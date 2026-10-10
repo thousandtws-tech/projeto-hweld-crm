@@ -86,7 +86,9 @@ pub trait RepositorioCarrinhos: Send + Sync {
 
 #[derive(Debug, Clone, Default)]
 pub struct FiltroPedidos {
-    pub status: Option<StatusPedido>,
+    /// Lista de status — viabiliza filtros por fase de entrega
+    /// (ex.: "a caminho" = enviado; "em preparação" = confirmado..faturado).
+    pub statuses: Vec<StatusPedido>,
     pub empresa_id: Option<Id<Empresa>>,
     pub contato_id: Option<Id<Contato>>,
     pub origem: Option<OrigemPedido>,

@@ -1,0 +1,68 @@
+<!-- Breadcrumb Superior -->
+<nav class="breadcrumb" aria-label="Navegação estrutural">
+  <a routerLink="/" class="crumb-link">Início</a>
+  <span class="crumb-sep">/</span>
+  <span class="crumb-atual">{{ paginaAtual() }}</span>
+</nav>
+
+<!-- Navegação em Abas Horizontais para Mobile (<= 860px) -->
+<nav class="nav-mobile-tabs" aria-label="Menu institucional mobile">
+  <a routerLink="/institucional/atendimento" routerLinkActive="ativo" class="tab-chip">
+    <span class="material-symbols-outlined" aria-hidden="true">support_agent</span>
+    <span>Atendimento</span>
+  </a>
+  <a routerLink="/institucional/faq" routerLinkActive="ativo" class="tab-chip">
+    <span class="material-symbols-outlined" aria-hidden="true">help_outline</span>
+    <span>Central de Ajuda</span>
+  </a>
+  <a routerLink="/institucional/trocas-e-devolucoes" routerLinkActive="ativo" class="tab-chip">
+    <span class="material-symbols-outlined" aria-hidden="true">sync_alt</span>
+    <span>Trocas & Devoluções</span>
+  </a>
+  <a routerLink="/institucional/garantia" routerLinkActive="ativo" class="tab-chip">
+    <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+    <span>Garantia Técnica</span>
+  </a>
+  <a routerLink="/institucional/privacidade" routerLinkActive="ativo" class="tab-chip">
+    <span class="material-symbols-outlined" aria-hidden="true">security</span>
+    <span>LGPD & Privacidade</span>
+  </a>
+</nav>
+
+<!-- Barra Lateral para Desktop (> 860px) -->
+<aside class="sidebar-desktop">
+  <div class="sidebar-card">
+    <h3 class="sidebar-tit">Central Institucional</h3>
+    <nav class="sidebar-nav">
+      <a routerLink="/institucional/atendimento" routerLinkActive="ativo" class="nav-item">
+        <span class="material-symbols-outlined" aria-hidden="true">support_agent</span>
+        <span>Atendimento ao Cliente</span>
+      </a>
+      <a routerLink="/institucional/faq" routerLinkActive="ativo" class="nav-item">
+        <span class="material-symbols-outlined" aria-hidden="true">help_outline</span>
+        <span>Central de Ajuda & FAQ</span>
+      </a>
+      <a routerLink="/institucional/trocas-e-devolucoes" routerLinkActive="ativo" class="nav-item">
+        <span class="material-symbols-outlined" aria-hidden="true">sync_alt</span>
+        <span>Trocas e Devoluções</span>
+      </a>
+      <a routerLink="/institucional/garantia" routerLinkActive="ativo" class="nav-item">
+        <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+        <span>Garantia de Equipamentos</span>
+      </a>
+      <a routerLink="/institucional/privacidade" routerLinkActive="ativo" class="nav-item">
+        <span class="material-symbols-outlined" aria-hidden="true">security</span>
+        <span>LGPD & Privacidade</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-contato">
+      <span class="contato-tit">Televendas Corporativo</span>
+      <a href="tel:1135089979" class="contato-tel hw-numeric">
+        <span class="material-symbols-outlined" aria-hidden="true">call</span>
+        <span>(11) 3508-9979</span>
+      </a>
+      <span class="contato-horario">Seg. a Sex. das 08h às 18h</span>
+    </div>
+  </div>
+</aside>

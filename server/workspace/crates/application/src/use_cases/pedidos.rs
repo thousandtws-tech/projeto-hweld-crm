@@ -83,6 +83,17 @@ impl ServicoPedidos {
                 serde_json::json!({ "numero": criado.numero, "total": criado.total }),
             ))
             .await;
+        // Mesmo evento do checkout — a lista de pedidos reconcilia igual.
+        self.realtime.publicar(EventoRealtime::novo(
+            "pedido.criado",
+            Audiencia::Empresa(criado.empresa_id.valor()),
+            serde_json::json!({
+                "id": criado.id.valor(),
+                "numero": criado.numero,
+                "total": criado.total,
+                "origem": criado.origem,
+            }),
+        ));
         Ok(criado)
     }
 
