@@ -11,7 +11,13 @@
 >
   <header class="drawer-topo">
     <div class="drawer-titulo-wrap">
-      <span class="material-symbols-outlined drawer-icone" aria-hidden="true">shopping_cart</span>
+      <!-- ÍCONE ANTIGO DO CARRINHO (COMENTADO E GUARDADO)
+          <span class="material-symbols-outlined header-item-icone" aria-hidden="true">shopping_cart</span>
+          -->
+
+          <!-- NOVO ÍCONE USANDO A SUA IMAGEM BAIXADA -->
+          <img src="assets/header/icons/icon-carrinho-compras.png" alt="Carrinho de compras" class="header-item-icone">
+
       <h2 class="drawer-titulo">Meu Carrinho</h2>
       @if (carrinho.totalItens(); as n) {
         <span class="drawer-count hw-numeric">{{ n }} {{ n === 1 ? 'item' : 'itens' }}</span>
