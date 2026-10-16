@@ -1,0 +1,253 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-lime: var(--lime);
+  --color-lime-soft: var(--lime-soft);
+  --color-brand-red: #d92546;
+  --color-brand-pink: #d9486e;
+  --color-brand-navy: #26488c;
+  --color-brand-blue: #88abf2;
+  --color-brand-sky: #a0c4f2;
+  --color-brand-ice: #f2f2f2;
+  --color-brand-charcoal: #272728;
+}
+
+:root {
+  --radius: 1rem;
+  /* ── HWeld — paleta oficial (ASEF v1.0) ────────────────────
+     vermelho #D92546 · rosa #D9486E · azul #26488C
+     azul claro #88ABF2 / #A0C4F2 · gelo #F2F2F2 · carvão #272728 */
+  --brand-red: #d92546;
+  --brand-pink: #d9486e;
+  --brand-navy: #26488c;
+  --brand-blue: #88abf2;
+  --brand-sky: #a0c4f2;
+  --brand-ice: #f2f2f2;
+  --brand-charcoal: #272728;
+  --background: #f2f2f2;
+  --foreground: #272728;
+  --card: #ffffff;
+  --card-foreground: #272728;
+  --popover: #ffffff;
+  --popover-foreground: #272728;
+  --primary: #26488c;
+  --primary-foreground: #ffffff;
+  --secondary: #eaeef6;
+  --secondary-foreground: #272728;
+  --muted: #eaeef6;
+  --muted-foreground: #5b6472;
+  --accent: #a0c4f2;
+  --accent-foreground: #26488c;
+  --destructive: #d92546;
+  --destructive-foreground: #ffffff;
+  --success: #26488c;
+  --success-foreground: #ffffff;
+  --warning: #d9486e;
+  --warning-foreground: #ffffff;
+  --border: #dee3ec;
+  --input: #dee3ec;
+  --ring: #26488c;
+  /* ação primária herdada do tema finpay = azul da marca */
+  --lime: #26488c;
+  --lime-soft: #a0c4f2;
+  --pill-warn-bg: rgb(217 72 110 / 0.14);
+  --pill-warn-fg: #d9486e;
+  --pill-danger-bg: rgb(217 37 70 / 0.14);
+  --pill-danger-fg: #d92546;
+  --pill-info-bg: rgb(160 196 242 / 0.35);
+  --pill-info-fg: #26488c;
+  --promo: #26488c;
+  --promo-foreground: #ffffff;
+  /* sombras em camadas com matiz azul da marca — elevam sem sujar */
+  --shadow-card: 0 1px 2px rgb(38 72 140 / 0.05), 0 10px 28px -12px rgb(38 72 140 / 0.14);
+  --shadow-pop: 0 2px 6px rgb(38 72 140 / 0.08), 0 20px 44px -16px rgb(38 72 140 / 0.22);
+}
+
+.dark {
+  /* fundo derivado do carvão #272728 → card elevado → hover: hierarquia clara */
+  --brand-red: #d92546;
+  --brand-pink: #d9486e;
+  --brand-navy: #26488c;
+  --brand-blue: #88abf2;
+  --brand-sky: #a0c4f2;
+  --brand-ice: #f2f2f2;
+  --brand-charcoal: #272728;
+  --background: #1d1d1e;
+  --foreground: #f2f2f2;
+  --card: #272728;
+  --card-foreground: #f2f2f2;
+  --popover: #272728;
+  --popover-foreground: #f2f2f2;
+  /* azul claro da marca brilha no escuro; texto carvão por cima */
+  --primary: #88abf2;
+  --primary-foreground: #272728;
+  --secondary: #323234;
+  --secondary-foreground: #f2f2f2;
+  --muted: #323234;
+  --muted-foreground: #a0c4f2;
+  --accent: #26488c;
+  --accent-foreground: #a0c4f2;
+  --destructive: #d92546;
+  --destructive-foreground: #f2f2f2;
+  --success: #88abf2;
+  --success-foreground: #272728;
+  --warning: #d9486e;
+  --warning-foreground: #f2f2f2;
+  --border: #38383a;
+  --input: #38383a;
+  --ring: #88abf2;
+  --lime: #88abf2;
+  --lime-soft: #26488c;
+  --pill-warn-bg: rgb(217 72 110 / 0.22);
+  --pill-warn-fg: #d9486e;
+  --pill-danger-bg: rgb(217 37 70 / 0.24);
+  --pill-danger-fg: #d92546;
+  --pill-info-bg: rgb(136 171 242 / 0.2);
+  --pill-info-fg: #a0c4f2;
+  --promo: #26488c;
+  --promo-foreground: #f2f2f2;
+  /* no escuro, elevação vem de sombra mais densa */
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 28px -12px rgb(0 0 0 / 0.5);
+  --shadow-pop: 0 2px 8px rgb(0 0 0 / 0.45), 0 24px 48px -16px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  * {
+    border-color: var(--color-border);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  html,
+  body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* react-kanban-kit — adapta ao design system (dark/light via tokens).
+   A lib usa `.rkk-column-outer .rkk-column` (especificidade 0,2,0) e injeta
+   o <style> depois do nosso — por isso os overrides precisam de 0,3,0+. */
+.rkk-board.rkk-root {
+  gap: 12px;
+  padding-bottom: 6px;
+}
+.rkk-board .rkk-column-outer .rkk-column,
+.rkk-board .rkk-column-outer .rkk-column .rkk-column-header {
+  background-color: transparent;
+}
+.rkk-board .rkk-column-outer .rkk-column {
+  padding: 0;
+  gap: 0;
+  border-radius: 1.5rem;
+}
+.rkk-board .rkk-column-outer .rkk-column .rkk-column-wrapper {
+  gap: 0;
+}
+.rkk-board .rkk-column-outer .rkk-column .rkk-column-header {
+  height: auto;
+  margin-bottom: 0;
+  padding: 0;
+}
+.rkk-board .rkk-column-outer .rkk-column .rkk-column-content-list {
+  scrollbar-width: none;
+  padding-top: 2px;
+}
+.rkk-board .rkk-column-outer .rkk-column .rkk-column-content-list::-webkit-scrollbar {
+  display: none;
+}
+.rkk-board .rkk-card-shadow,
+.rkk-board .rkk-column-shadow {
+  background-color: color-mix(in srgb, var(--primary) 10%, var(--secondary));
+  border: 1.5px dashed var(--primary);
+  border-radius: 1rem;
+  transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rkk-board .rkk-column-outer {
+  min-width: 272px;
+  max-width: none;
+  flex: 1 0 272px;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rkk-board .rkk-card-outer {
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rkk-board .rkk-card-inner {
+  transition:
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 150ms ease;
+}
