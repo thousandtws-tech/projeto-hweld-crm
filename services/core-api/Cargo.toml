@@ -1,0 +1,94 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/domain",
+    "crates/application",
+    "crates/infrastructure",
+    "crates/api",
+    "crates/server",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "Proprietary"
+
+[workspace.dependencies]
+hweld-domain = { path = "crates/domain" }
+hweld-application = { path = "crates/application" }
+hweld-infrastructure = { path = "crates/infrastructure" }
+hweld-api = { path = "crates/api" }
+
+# Web
+actix-web = "4"
+actix-cors = "0.7"
+
+# Async
+tokio = { version = "1", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["sync", "time"] }
+futures = "0.3"
+async-trait = "0.1"
+
+# Search — cliente oficial (linha ES 8.x; só há releases alpha)
+elasticsearch = "=8.19.0-alpha.1"
+
+# HTTP client — publica eventos no motor realtime (Elixir/Phoenix)
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "rustls-tls",
+    "blocking",
+] }
+
+# Persistence
+sqlx = { version = "0.8", default-features = false, features = [
+    "postgres",
+    "runtime-tokio-rustls",
+    "macros",
+    "uuid",
+    "chrono",
+    "rust_decimal",
+    "json",
+    "migrate",
+] }
+
+# Domain primitives
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+rust_decimal = { version = "1", features = ["serde-str"] }
+rust_decimal_macros = "1"
+
+# Security
+argon2 = "0.5"
+jsonwebtoken = "9"
+rand = "0.9"
+sha2 = "0.10"
+hex = "0.4"
+
+# User-Agent parsing (sessões/dispositivos)
+woothee = "0.13"
+
+# Observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tracing-actix-web = "0.7"
+opentelemetry = "0.30"
+opentelemetry_sdk = "0.30"
+opentelemetry-otlp = { version = "0.30", features = [
+    "trace",
+    "metrics",
+    "http-proto",
+    "reqwest-blocking-client",
+] }
+tracing-opentelemetry = "0.31"
+
+# Config
+dotenvy = "0.15"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+panic = "abort"

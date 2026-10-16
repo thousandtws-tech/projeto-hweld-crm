@@ -1,0 +1,22 @@
+[package]
+name = "hweld-application"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "HWeld application layer: use cases, ports (traits), DTOs. Depends only on domain."
+
+[dependencies]
+hweld-domain.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+async-trait.workspace = true
+futures.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+rust_decimal.workspace = true
+tracing.workspace = true
+sha2.workspace = true
+hex.workspace = true
+utoipa = "5.5.0"

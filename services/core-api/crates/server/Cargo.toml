@@ -1,0 +1,29 @@
+[package]
+name = "hweld-server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "HWeld bootstrap binary: config, DI wiring, migrations, HTTP server."
+
+[[bin]]
+name = "hweld-server"
+path = "src/main.rs"
+
+[dependencies]
+hweld-domain.workspace = true
+hweld-application.workspace = true
+hweld-infrastructure.workspace = true
+hweld-api.workspace = true
+actix-web.workspace = true
+actix-cors.workspace = true
+serde.workspace = true
+tokio.workspace = true
+sqlx.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tracing-actix-web.workspace = true
+dotenvy.workspace = true
+anyhow = "1.0.104"
+tracing-opentelemetry.workspace = true
+opentelemetry.workspace = true
