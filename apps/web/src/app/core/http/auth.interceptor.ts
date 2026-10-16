@@ -26,28 +26,51 @@ function requisitarRefresh(auth: AuthStore): Subject<boolean> {
   return refreshEmAndamento;
 }
 
+const GUEST_SID_KEY = 'hweld.guest.sid';
+
+function obterGuestSessionId(): string {
+  try {
+    let sid = localStorage.getItem(GUEST_SID_KEY);
+    if (!sid) {
+      sid =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      localStorage.setItem(GUEST_SID_KEY, sid);
+    }
+    return sid;
+  } catch {
+    return 'guest-local';
+  }
+}
+
 const isAuthCall = (url: string) =>
   url.includes('/auth/login') ||
   url.includes('/auth/portal/login') ||
   url.includes('/auth/refresh');
 
 /**
- * Anexa `Authorization: Bearer <access>`; em 401 tenta refresh uma vez
- * (fila compartilhada) e repete a requisição. Se o refresh falhar, a sessão
- * morreu — redireciona para login com estado `expired`.
+ * Anexa `Authorization: Bearer <access>` (se logado) e `X-Session-Id` (carrinho de convidado).
+ * Em 401 quando havia sessão autenticada, tenta refresh uma vez e repete a requisição.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthStore);
   const router = inject(Router);
   const token = auth.accessToken();
-  const authReq =
-    token && !isAuthCall(req.url)
-      ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-      : req;
+  const headers: Record<string, string> = { 'X-Session-Id': obterGuestSessionId() };
+  if (token && !isAuthCall(req.url)) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const authReq = req.clone({ setHeaders: headers });
 
   return next(authReq).pipe(
     catchError((err: unknown) => {
-      if (!(err instanceof HttpErrorResponse) || err.status !== 401 || isAuthCall(req.url)) {
+      if (
+        !(err instanceof HttpErrorResponse) ||
+        err.status !== 401 ||
+        isAuthCall(req.url) ||
+        !token
+      ) {
         return throwError(() => err);
       }
       return requisitarRefresh(auth).pipe(
@@ -57,7 +80,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             return throwError(() => err);
           }
           const novo = auth.accessToken();
-          return next(novo ? req.clone({ setHeaders: { Authorization: `Bearer ${novo}` } }) : req);
+          return next(
+            novo
+              ? req.clone({
+                  setHeaders: { ...headers, Authorization: `Bearer ${novo}` },
+                })
+              : authReq,
+          );
         }),
       );
     }),

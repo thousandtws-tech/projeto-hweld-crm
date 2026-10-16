@@ -11,7 +11,7 @@ use hweld_domain::catalogo::categoria::Categoria;
 use hweld_domain::catalogo::tabela_preco::TabelaPreco;
 use hweld_domain::crm::contato::Contato;
 use hweld_domain::crm::empresa::Empresa;
-use hweld_domain::crm::endereco::{Endereco, TipoEndereco};
+use hweld_domain::crm::endereco::{Endereco, EnderecoInput, TipoEndereco};
 use hweld_domain::shared::dinheiro::{Dinheiro, Quantidade};
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::{Pagina, Paginacao};
@@ -239,7 +239,7 @@ impl ServicoPortal {
         })
     }
 
-    /// G2 — endereços da empresa do contato (read-only na v1).
+    /// G2 — endereços da empresa do contato.
     pub async fn enderecos(
         &self,
         contato_id: Id<Contato>,
@@ -253,6 +253,19 @@ impl ServicoPortal {
             .into_iter()
             .map(Into::into)
             .collect())
+    }
+
+    /// Cadastra novo endereço para a empresa do contato autenticado (self-service no checkout/conta).
+    pub async fn criar_endereco(
+        &self,
+        contato_id: Id<Contato>,
+        mut input: EnderecoInput,
+    ) -> Resultado<EnderecoPortal> {
+        let empresa_id = self.empresa_do_contato(contato_id).await?;
+        input.empresa_id = empresa_id;
+        let validado = input.validar().map_err(ErroApp::Dominio)?;
+        let criado = self.enderecos.criar(validado).await?;
+        Ok(criado.into())
     }
 
     /// G3 — pedidos da empresa inteira (decisão de produto: visão B2B por

@@ -102,7 +102,7 @@ impl RepositorioNotificacoes for RepositorioNotificacoesPg {
     ) -> Resultado<Pagina<Notificacao>> {
         let (col, id) = escopo(destino);
         let (total,): (i64,) = sqlx::query_as(&format!(
-            "SELECT COUNT(*) FROM notificacoes WHERE {col} = $1"
+            "SELECT COUNT(*) FROM notificacoes WHERE {col} = $1 AND lida_em IS NULL"
         ))
         .bind(id)
         .fetch_one(&self.pool)
@@ -110,8 +110,8 @@ impl RepositorioNotificacoes for RepositorioNotificacoesPg {
         .map_err(erro_db(CTX))?;
 
         let rows = sqlx::query_as::<_, NotificacaoRow>(&format!(
-            "SELECT {COLS} FROM notificacoes WHERE {col} = $1 \
-             ORDER BY (lida_em IS NULL) DESC, created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT {COLS} FROM notificacoes WHERE {col} = $1 AND lida_em IS NULL \
+             ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         ))
         .bind(id)
         .bind(paginacao.limite())
@@ -177,6 +177,32 @@ impl RepositorioNotificacoes for RepositorioNotificacoesPg {
         .execute(&self.pool)
         .await
         .map_err(erro_db(CTX))?;
+        Ok(res.rows_affected())
+    }
+
+    async fn remover(&self, id: Id<Notificacao>, destino: DestinoNotificacao) -> Resultado<()> {
+        let (col, dono) = escopo(destino);
+        let res = sqlx::query(&format!(
+            "DELETE FROM notificacoes WHERE id = $1 AND {col} = $2"
+        ))
+        .bind(id.valor())
+        .bind(dono)
+        .execute(&self.pool)
+        .await
+        .map_err(erro_db(CTX))?;
+        if res.rows_affected() == 0 {
+            return Err(ErroApp::nao_encontrado("notificacao", id));
+        }
+        Ok(())
+    }
+
+    async fn remover_todas(&self, destino: DestinoNotificacao) -> Resultado<u64> {
+        let (col, dono) = escopo(destino);
+        let res = sqlx::query(&format!("DELETE FROM notificacoes WHERE {col} = $1"))
+            .bind(dono)
+            .execute(&self.pool)
+            .await
+            .map_err(erro_db(CTX))?;
         Ok(res.rows_affected())
     }
 }

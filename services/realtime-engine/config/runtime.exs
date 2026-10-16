@@ -29,12 +29,12 @@ end
 
 # ---------------------------------------------------------------------------
 # Segredos e integração — lidos de env em qualquer ambiente. Fora de prod,
-# cai para o `.env` do backend Rust (`server/workspace/.env`) como fonte
+# cai para o `.env` do backend Rust (`services/core-api/.env`) como fonte
 # única do JWT_SECRET e do token de ingest — sem segredo duplicado no repo.
 # ---------------------------------------------------------------------------
 
 dotenv = fn chave ->
-  path = Path.expand("../../workspace/.env", __DIR__)
+  path = Path.expand("../../core-api/.env", __DIR__)
 
   if File.exists?(path) do
     path

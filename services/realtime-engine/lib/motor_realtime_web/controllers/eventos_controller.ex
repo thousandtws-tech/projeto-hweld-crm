@@ -21,6 +21,13 @@ defmodule MotorRealtimeWeb.EventosController do
   # Cap de mailbox: >512 eventos pendentes = consumidor lento demais.
   @max_queue 512
 
+  @doc "GET /events/publico — visitantes da vitrine pública escutam eventos de catálogo/estoque."
+  def publico(conn, _params) do
+    Barramento.assinar(Barramento.topico_todos())
+    Logger.info("SSE público conectado")
+    stream(assign(conn, :sujeito_id, 0), :publico)
+  end
+
   @doc "GET /events/staff — backoffice escuta todos os eventos."
   def staff(conn, _params) do
     Barramento.assinar(Barramento.topico_staff())

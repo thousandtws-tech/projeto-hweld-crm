@@ -71,9 +71,10 @@ export interface Produto {
   destaque: boolean;
 }
 
-/** Item do catálogo do portal: produto + preço já resolvido pela tabela da empresa. */
+/** Item do catálogo do portal: produto + preço já resolvido pela tabela da empresa + galeria. */
 export interface ItemCatalogoPortal extends Produto {
   preco_efetivo: Dinheiro;
+  imagens?: ProdutoImagem[];
 }
 
 export interface ProdutoPortal extends ItemCatalogoPortal {
@@ -86,7 +87,7 @@ export interface CarrinhoItem {
   produto_id: number;
   quantidade: Quantidade;
   preco_unitario: Dinheiro;
-  produto?: { nome: string; sku: string; slug: string };
+  produto?: { nome: string; sku: string; slug: string; imagem_url?: string | null };
 }
 
 export interface Carrinho {

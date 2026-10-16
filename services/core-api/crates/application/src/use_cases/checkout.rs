@@ -162,7 +162,7 @@ impl ServicoCheckout {
         };
 
         let pedido = self.pedidos.criar_de_carrinho(pedido, carrinho.id).await?;
-        // Realtime: pedido novo do e-commerce — staff + portal da empresa.
+        // Realtime: pedido novo do e-commerce + oportunidade automática no funil CRM.
         self.realtime.publicar(EventoRealtime::novo(
             "pedido.criado",
             Audiencia::Empresa(pedido.empresa_id.valor()),
@@ -171,6 +171,14 @@ impl ServicoCheckout {
                 "numero": pedido.numero,
                 "total": pedido.total,
                 "origem": pedido.origem,
+            }),
+        ));
+        self.realtime.publicar(EventoRealtime::novo(
+            "oportunidade.estagio",
+            Audiencia::Staff,
+            serde_json::json!({
+                "pedido_id": pedido.id.valor(),
+                "para": "negociacao",
             }),
         ));
         // Inbox persistente — sino do backoffice + portal da empresa.

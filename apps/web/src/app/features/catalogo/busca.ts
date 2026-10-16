@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { BuscaService } from '../../core/servicos';
+import { RealtimeService } from '../../core/realtime';
 import { HwProductCard } from '../../shared/ui/product-card';
 import { HwEmpty } from '../../shared/ui/empty';
 import { HwSkeleton } from '../../shared/ui/skeleton';
@@ -29,6 +30,7 @@ export class BuscaPage implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private busca = inject(BuscaService);
+  private rt = inject(RealtimeService);
 
   readonly ordenacoes = ORDENACOES;
 
@@ -47,6 +49,22 @@ export class BuscaPage implements OnInit {
   precoMinDig = signal('');
   precoMaxDig = signal('');
 
+  constructor() {
+    // Catálogo mudou (produto, categoria, preço) → reroda a query atual sem
+    // piscar skeleton — o resultado velho fica até o novo chegar.
+    effect(() => {
+      const e = this.rt.ultimo();
+      // untracked: `resultado` muda dentro de `executar` — sem isso o effect se
+      // re-dispararia a cada resposta (loop de refetch). E só reconcilia depois
+      // que a primeira busca carregou.
+      if (e?.tipo.startsWith('catalogo.')) {
+        untracked(() => {
+          if (this.resultado() !== null) this.executar(true);
+        });
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((p) => {
       this.q.set(p.get('q') ?? '');
@@ -63,8 +81,8 @@ export class BuscaPage implements OnInit {
     });
   }
 
-  executar(): void {
-    this.resultado.set(null);
+  executar(silencioso = false): void {
+    if (!silencioso) this.resultado.set(null);
     this.esOff.set(false);
     this.busca
       .buscar(this.q(), {
@@ -146,10 +164,9 @@ export class BuscaPage implements OnInit {
     const total = this.resultado()?.total_paginas ?? 0;
     const atual = this.paginaAtual();
     const inicio = Math.max(1, Math.min(atual - 2, total - 4));
-    return Array.from(
-      { length: Math.min(5, total) },
-      (_, i) => inicio + i,
-    ).filter((n) => n <= total);
+    return Array.from({ length: Math.min(5, total) }, (_, i) => inicio + i).filter(
+      (n) => n <= total,
+    );
   }
 
   rotuloPreco(): string {

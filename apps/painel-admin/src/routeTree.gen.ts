@@ -24,6 +24,7 @@ import { Route as FinanceiroPagamentosRouteImport } from './routes/financeiro/pa
 import { Route as FiscalConfiguracaoRouteImport } from './routes/fiscal/configuracao'
 import { Route as FiscalNotasRouteImport } from './routes/fiscal/notas'
 import { Route as CatalogoCategoriasIndexRouteImport } from './routes/catalogo/categorias/index'
+import { Route as CatalogoCmsIndexRouteImport } from './routes/catalogo/cms/index'
 import { Route as CatalogoProdutosIndexRouteImport } from './routes/catalogo/produtos/index'
 import { Route as CatalogoProdutosIdRouteImport } from './routes/catalogo/produtos/$id'
 import { Route as CatalogoProdutosNovoRouteImport } from './routes/catalogo/produtos/novo'
@@ -113,6 +114,11 @@ const FiscalNotasRoute = FiscalNotasRouteImport.update({
 const CatalogoCategoriasIndexRoute = CatalogoCategoriasIndexRouteImport.update({
   id: '/catalogo/categorias/',
   path: '/catalogo/categorias/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogoCmsIndexRoute = CatalogoCmsIndexRouteImport.update({
+  id: '/catalogo/cms/',
+  path: '/catalogo/cms/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CatalogoProdutosIndexRoute = CatalogoProdutosIndexRouteImport.update({
@@ -218,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/vendas/pedidos/$id': typeof VendasPedidosIdRoute
   '/vendas/pedidos/novo': typeof VendasPedidosNovoRoute
   '/catalogo/categorias/': typeof CatalogoCategoriasIndexRoute
+  '/catalogo/cms/': typeof CatalogoCmsIndexRoute
   '/catalogo/produtos/': typeof CatalogoProdutosIndexRoute
   '/catalogo/tabelas-preco/': typeof CatalogoTabelasPrecoIndexRoute
   '/crm/empresas/': typeof CrmEmpresasIndexRoute
@@ -250,6 +257,7 @@ export interface FileRoutesByTo {
   '/vendas/pedidos/$id': typeof VendasPedidosIdRoute
   '/vendas/pedidos/novo': typeof VendasPedidosNovoRoute
   '/catalogo/categorias': typeof CatalogoCategoriasIndexRoute
+  '/catalogo/cms': typeof CatalogoCmsIndexRoute
   '/catalogo/produtos': typeof CatalogoProdutosIndexRoute
   '/catalogo/tabelas-preco': typeof CatalogoTabelasPrecoIndexRoute
   '/crm/empresas': typeof CrmEmpresasIndexRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/vendas/pedidos/$id': typeof VendasPedidosIdRoute
   '/vendas/pedidos/novo': typeof VendasPedidosNovoRoute
   '/catalogo/categorias/': typeof CatalogoCategoriasIndexRoute
+  '/catalogo/cms/': typeof CatalogoCmsIndexRoute
   '/catalogo/produtos/': typeof CatalogoProdutosIndexRoute
   '/catalogo/tabelas-preco/': typeof CatalogoTabelasPrecoIndexRoute
   '/crm/empresas/': typeof CrmEmpresasIndexRoute
@@ -317,6 +326,7 @@ export interface FileRouteTypes {
     | '/vendas/pedidos/$id'
     | '/vendas/pedidos/novo'
     | '/catalogo/categorias/'
+    | '/catalogo/cms/'
     | '/catalogo/produtos/'
     | '/catalogo/tabelas-preco/'
     | '/crm/empresas/'
@@ -349,6 +359,7 @@ export interface FileRouteTypes {
     | '/vendas/pedidos/$id'
     | '/vendas/pedidos/novo'
     | '/catalogo/categorias'
+    | '/catalogo/cms'
     | '/catalogo/produtos'
     | '/catalogo/tabelas-preco'
     | '/crm/empresas'
@@ -381,6 +392,7 @@ export interface FileRouteTypes {
     | '/vendas/pedidos/$id'
     | '/vendas/pedidos/novo'
     | '/catalogo/categorias/'
+    | '/catalogo/cms/'
     | '/catalogo/produtos/'
     | '/catalogo/tabelas-preco/'
     | '/crm/empresas/'
@@ -414,6 +426,7 @@ export interface RootRouteChildren {
   VendasPedidosIdRoute: typeof VendasPedidosIdRoute
   VendasPedidosNovoRoute: typeof VendasPedidosNovoRoute
   CatalogoCategoriasIndexRoute: typeof CatalogoCategoriasIndexRoute
+  CatalogoCmsIndexRoute: typeof CatalogoCmsIndexRoute
   CatalogoProdutosIndexRoute: typeof CatalogoProdutosIndexRoute
   CatalogoTabelasPrecoIndexRoute: typeof CatalogoTabelasPrecoIndexRoute
   CrmEmpresasIndexRoute: typeof CrmEmpresasIndexRoute
@@ -527,6 +540,13 @@ declare module '@tanstack/react-router' {
       path: '/catalogo/categorias'
       fullPath: '/catalogo/categorias/'
       preLoaderRoute: typeof CatalogoCategoriasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalogo/cms/': {
+      id: '/catalogo/cms/'
+      path: '/catalogo/cms'
+      fullPath: '/catalogo/cms/'
+      preLoaderRoute: typeof CatalogoCmsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/catalogo/produtos/': {
@@ -662,6 +682,7 @@ const rootRouteChildren: RootRouteChildren = {
   VendasPedidosIdRoute: VendasPedidosIdRoute,
   VendasPedidosNovoRoute: VendasPedidosNovoRoute,
   CatalogoCategoriasIndexRoute: CatalogoCategoriasIndexRoute,
+  CatalogoCmsIndexRoute: CatalogoCmsIndexRoute,
   CatalogoProdutosIndexRoute: CatalogoProdutosIndexRoute,
   CatalogoTabelasPrecoIndexRoute: CatalogoTabelasPrecoIndexRoute,
   CrmEmpresasIndexRoute: CrmEmpresasIndexRoute,

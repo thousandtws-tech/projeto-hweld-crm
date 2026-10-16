@@ -152,6 +152,94 @@ impl RepositorioCategorias for RepositorioCategoriasPg {
         Ok(())
     }
 
+    async fn remover(&self, id: Id<Categoria>) -> Resultado<()> {
+        let mut tx = self.pool.begin().await.map_err(erro_db(CTX_CAT))?;
+
+        let cat = sqlx::query_as::<_, CategoriaRow>(&format!(
+            "SELECT {CAT_COLS} FROM categorias WHERE id = $1"
+        ))
+        .bind(id.valor())
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(erro_db(CTX_CAT))?
+        .ok_or_else(|| hweld_application::ErroApp::nao_encontrado("categoria", id))?;
+
+        // Se a categoria possui um pai, transfere produtos vinculados para o pai.
+        if let Some(pai_id) = cat.categoria_pai_id {
+            sqlx::query("UPDATE produtos SET categoria_id = $2, updated_at = now() WHERE categoria_id = $1")
+                .bind(id.valor())
+                .bind(pai_id)
+                .execute(&mut *tx)
+                .await
+                .map_err(erro_db(CTX_CAT))?;
+        } else {
+            // Categoria raiz: remove produtos já arquivados que não tenham vínculos de venda/estoque
+            let _ = sqlx::query(
+                "DELETE FROM produtos WHERE categoria_id = $1 AND deleted_at IS NOT NULL \
+                 AND NOT EXISTS (SELECT 1 FROM pedido_itens pi WHERE pi.produto_id = produtos.id) \
+                 AND NOT EXISTS (SELECT 1 FROM orcamento_itens oi WHERE oi.produto_id = produtos.id) \
+                 AND NOT EXISTS (SELECT 1 FROM os_itens osi WHERE osi.produto_id = produtos.id) \
+                 AND NOT EXISTS (SELECT 1 FROM nota_fiscal_itens nfi WHERE nfi.produto_id = produtos.id)",
+            )
+            .bind(id.valor())
+            .execute(&mut *tx)
+            .await;
+
+            let (ativos,): (i64,) = sqlx::query_as(
+                "SELECT COUNT(*) FROM produtos WHERE categoria_id = $1 AND deleted_at IS NULL",
+            )
+            .bind(id.valor())
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(erro_db(CTX_CAT))?;
+
+            if ativos > 0 {
+                return Err(hweld_application::ErroApp::conflito(format!(
+                    "Não é possível excluir a categoria '{}' pois há {} produto(s) ativo(s) vinculado(s). Exclua ou mova os produtos primeiro.",
+                    cat.nome, ativos
+                )));
+            }
+
+            // Se sobraram produtos arquivados com histórico, tenta mover para outra categoria existente
+            let outra_cat: Option<i64> = sqlx::query_scalar(
+                "SELECT id FROM categorias WHERE id <> $1 ORDER BY ativa DESC, id ASC LIMIT 1",
+            )
+            .bind(id.valor())
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(erro_db(CTX_CAT))?;
+
+            if let Some(outra_id) = outra_cat {
+                sqlx::query("UPDATE produtos SET categoria_id = $2 WHERE categoria_id = $1")
+                    .bind(id.valor())
+                    .bind(outra_id)
+                    .execute(&mut *tx)
+                    .await
+                    .map_err(erro_db(CTX_CAT))?;
+            }
+        }
+
+        // Promove subcategorias diretas para o pai da categoria removida (ou raiz se era raiz)
+        sqlx::query(
+            "UPDATE categorias SET categoria_pai_id = $2, updated_at = now() WHERE categoria_pai_id = $1",
+        )
+        .bind(id.valor())
+        .bind(cat.categoria_pai_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(erro_db(CTX_CAT))?;
+
+        sqlx::query("DELETE FROM categorias WHERE id = $1")
+            .bind(id.valor())
+            .execute(&mut *tx)
+            .await
+            .map_err(erro_db(CTX_CAT))?;
+
+        tx.commit().await.map_err(erro_db(CTX_CAT))?;
+        invalidar_listas();
+        Ok(())
+    }
+
     /// Caminhamento iterativo na árvore — `ancestral` é pai/avo/... de `id`?
     /// O grafo é pequeno (categorias), então um laço por nível basta.
     async fn eh_descendente(&self, id: Id<Categoria>, ancestral: Id<Categoria>) -> Resultado<bool> {
@@ -356,10 +444,14 @@ impl RepositorioProdutos for RepositorioProdutosPg {
             "SELECT {PROD_COLS} FROM produtos WHERE deleted_at IS NULL"
         ));
         push_filtro_produtos(&mut qb, &filtro);
-        qb.push(" ORDER BY nome LIMIT ")
-            .push_bind(paginacao.limite())
-            .push(" OFFSET ")
-            .push_bind(paginacao.offset());
+        qb.push(
+            " ORDER BY destaque DESC, \
+             EXISTS(SELECT 1 FROM produto_imagens pi WHERE pi.produto_id = produtos.id) DESC, \
+             nome LIMIT ",
+        )
+        .push_bind(paginacao.limite())
+        .push(" OFFSET ")
+        .push_bind(paginacao.offset());
         let (total_res, rows_res) = tokio::join!(
             count_qb.build_query_as::<(i64,)>().fetch_one(&self.pool),
             qb.build_query_as::<ProdutoRow>().fetch_all(&self.pool),
@@ -408,6 +500,15 @@ impl RepositorioProdutos for RepositorioProdutosPg {
         .fetch_one(&self.pool)
         .await
         .map_err(erro_db(CTX_PROD))?;
+
+        let _ = sqlx::query(
+            "INSERT INTO estoque_saldos (produto_id, quantidade_disponivel, quantidade_reservada) \
+             VALUES ($1, 100, 0) ON CONFLICT (produto_id) DO NOTHING",
+        )
+        .bind(row.id)
+        .execute(&self.pool)
+        .await;
+
         invalidar_listas();
         Ok(Produto::from(row))
     }
@@ -450,20 +551,49 @@ impl RepositorioProdutos for RepositorioProdutosPg {
     }
 
     async fn arquivar(&self, id: Id<Produto>) -> Resultado<()> {
-        sqlx::query("UPDATE produtos SET deleted_at = now(), updated_at = now() WHERE id = $1")
-            .bind(id.valor())
-            .execute(&self.pool)
-            .await
-            .map_err(erro_db(CTX_PROD))?;
+        // Libera sku e slug originais no soft-delete para permitir recadastro com o mesmo código
+        sqlx::query(
+            "UPDATE produtos \
+             SET deleted_at = now(), \
+                 ativo = FALSE, \
+                 sku = LEFT(sku, 40) || '__del_' || id::text, \
+                 slug = LEFT(slug, 190) || '-del-' || id::text, \
+                 updated_at = now() \
+             WHERE id = $1 AND deleted_at IS NULL",
+        )
+        .bind(id.valor())
+        .execute(&self.pool)
+        .await
+        .map_err(erro_db(CTX_PROD))?;
         invalidar_listas();
         Ok(())
     }
 
     async fn listar_imagens(&self, produto_id: Id<Produto>) -> Resultado<Vec<ProdutoImagem>> {
         let rows = sqlx::query_as::<_, ProdutoImagemRow>(&format!(
-            "SELECT {IMG_COLS} FROM produto_imagens WHERE produto_id = $1 ORDER BY ordem, id"
+            "SELECT {IMG_COLS} FROM produto_imagens WHERE produto_id = $1 ORDER BY is_principal DESC, ordem, id"
         ))
         .bind(produto_id.valor())
+        .fetch_all(&self.pool)
+        .await
+        .map_err(erro_db(CTX_PROD))?;
+        Ok(rows.into_iter().map(ProdutoImagem::from).collect())
+    }
+
+    async fn listar_imagens_por_produtos(
+        &self,
+        produto_ids: &[Id<Produto>],
+    ) -> Resultado<Vec<ProdutoImagem>> {
+        if produto_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let ids: Vec<i64> = produto_ids.iter().map(|i| i.valor()).collect();
+        let rows = sqlx::query_as::<_, ProdutoImagemRow>(&format!(
+            "SELECT {IMG_COLS} FROM produto_imagens \
+             WHERE produto_id = ANY($1) \
+             ORDER BY produto_id, is_principal DESC, ordem, id"
+        ))
+        .bind(ids)
         .fetch_all(&self.pool)
         .await
         .map_err(erro_db(CTX_PROD))?;
@@ -552,8 +682,18 @@ impl RepositorioProdutos for RepositorioProdutosPg {
 
 fn push_filtro_produtos<'a>(qb: &mut QueryBuilder<'a, Postgres>, filtro: &'a FiltroProdutos) {
     if let Some(categoria_id) = filtro.categoria_id {
-        qb.push(" AND categoria_id = ")
-            .push_bind(categoria_id.valor());
+        qb.push(
+            " AND categoria_id IN ( \
+               WITH RECURSIVE arvore_cat AS ( \
+                 SELECT id FROM categorias WHERE id = ",
+        )
+        .push_bind(categoria_id.valor())
+        .push(
+            " UNION ALL \
+               SELECT c.id FROM categorias c \
+               INNER JOIN arvore_cat a ON c.categoria_pai_id = a.id \
+             ) SELECT id FROM arvore_cat )",
+        );
     }
     if let Some(ativo) = filtro.ativo {
         qb.push(" AND ativo = ").push_bind(ativo);

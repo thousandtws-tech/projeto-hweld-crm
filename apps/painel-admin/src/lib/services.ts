@@ -174,6 +174,11 @@ export const catalogoService = {
   criarCategoria: (b: unknown) => api.post<import("./models").Categoria>("categorias", b),
   atualizarCategoria: (id: number, b: unknown) =>
     api.patch<import("./models").Categoria>("categorias", id, b),
+  excluirCategoria: (id: number) => api.del("categorias", id),
+
+  obterCms: () => api.getRecurso<import("./models").CmsLoja>("cms"),
+  salvarCms: (b: import("./models").CmsLoja) =>
+    api.putRecurso<import("./models").CmsLoja>("cms", b),
 
   tabelas: (f: Filtros = {}) => api.lista<TabelaPreco>("tabelas-preco", f),
   /** Desempacota `TabelaDetalhe { tabela, itens }` retornado por `GET /tabelas-preco/{id}`. */
@@ -342,6 +347,7 @@ export const notificacoesService = {
   listar: (f: Filtros = {}) => api.lista<Notificacao>("notificacoes", f),
   marcarLida: (id: number) => api.postAcao<void>("notificacoes", id, "lida"),
   marcarTodas: () => api.post("notificacoes/ler-todas", {}),
+  remover: (id: number) => api.del<void>("notificacoes", id),
 };
 
 /** Troca a própria senha — 422 = senha atual incorreta. */

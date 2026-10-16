@@ -97,6 +97,7 @@ pub fn configurar(cfg: &mut web::ServiceConfig) {
             .service(catalogo::listar_categorias)
             .service(catalogo::criar_categoria)
             .service(catalogo::atualizar_categoria)
+            .service(catalogo::excluir_categoria)
             .service(catalogo::listar_produtos)
             .service(catalogo::buscar_produto)
             .service(catalogo::criar_produto)
@@ -114,6 +115,9 @@ pub fn configurar(cfg: &mut web::ServiceConfig) {
             .service(catalogo::remover_imagem)
             .service(catalogo::upload_midia)
             .service(catalogo::servir_midia)
+            .service(catalogo::obter_cms_staff)
+            .service(catalogo::salvar_cms_staff)
+            .service(catalogo::obter_cms_publico)
             // Pedidos.
             .service(pedidos::listar)
             .service(pedidos::buscar)
@@ -161,9 +165,12 @@ pub fn configurar(cfg: &mut web::ServiceConfig) {
             .service(notificacoes::nao_lidas_staff)
             .service(notificacoes::marcar_lida_staff)
             .service(notificacoes::ler_todas_staff)
+            .service(notificacoes::remover_staff)
+            .service(notificacoes::limpar_todas_staff)
             // Portal B2B — mesmo escopo, extrator `AuthPortal` valida o contexto.
             .service(portal::me)
             .service(portal::enderecos)
+            .service(portal::criar_endereco)
             .service(portal::categorias)
             .service(portal::produto)
             .service(portal::pedidos)
@@ -180,6 +187,8 @@ pub fn configurar(cfg: &mut web::ServiceConfig) {
             .service(notificacoes::listar_portal)
             .service(notificacoes::nao_lidas_portal)
             .service(notificacoes::marcar_lida_portal)
-            .service(notificacoes::ler_todas_portal),
+            .service(notificacoes::ler_todas_portal)
+            .service(notificacoes::remover_portal)
+            .service(notificacoes::limpar_todas_portal),
     );
 }

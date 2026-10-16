@@ -164,14 +164,14 @@ assets/                 → app.js (LiveSocket) + app.css (Tailwind v4)
 | `DATABASE_URL` | dev: `.env` do backend | Postgrex (resolver contato→empresa) |
 | `CORS_ORIGINS` | `localhost:4210,4200,4300` | SPAs autorizados no preflight |
 
-Em dev, `runtime.exs` carrega segredos de `server/workspace/.env` — **fonte
+Em dev, `runtime.exs` carrega segredos de `services/core-api/.env` — **fonte
 única**, nada duplicado. Em prod, envs são obrigatórias (boot falha sem
 `JWT_SECRET`/`MOTOR_INGEST_TOKEN`).
 
 ## Rodar
 
 ```bash
-cd server/motor-realtime
+cd services/realtime-engine
 
 mix deps.get
 mix phx.server          # http://localhost:4100
@@ -205,6 +205,7 @@ curl -X POST http://localhost:4100/ingest \
 | OS | `os.criada`, `os.status_alterada` |
 | CRM | `empresa.criada`, `empresa.atualizada`, `empresa.arquivada`, `oportunidade.estagio` |
 | Catálogo | `catalogo.produtos`, `catalogo.categorias`, `catalogo.precos` |
+| Admin | `usuario.criado`, `usuario.atualizado`, `usuario.ativo_alterado` |
 | Notificações | `notificacao.nova` |
 
 ## Limites e evolução

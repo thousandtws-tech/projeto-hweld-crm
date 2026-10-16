@@ -74,6 +74,18 @@ impl ServicoNotificacoes {
         self.notificacoes.marcar_todas_lidas(destino).await
     }
 
+    pub async fn remover(
+        &self,
+        id: Id<Notificacao>,
+        destino: DestinoNotificacao,
+    ) -> Resultado<()> {
+        self.notificacoes.remover(id, destino).await
+    }
+
+    pub async fn remover_todas(&self, destino: DestinoNotificacao) -> Resultado<u64> {
+        self.notificacoes.remover_todas(destino).await
+    }
+
     // ── Escrita (fan-out) ────────────────────────────────────────────────────
 
     /// Persiste uma linha — falha individual é logada e não propaga.

@@ -119,11 +119,10 @@ impl ServicoEstoque {
             .await;
         self.realtime.publicar(EventoRealtime::novo(
             "estoque.movimentado",
-            Audiencia::Staff,
+            Audiencia::Todos,
             serde_json::json!({
                 "produto_id": movimento.produto_id.valor(),
                 "tipo": movimento.tipo,
-                "quantidade": movimento.quantidade,
             }),
         ));
         Ok(movimento)

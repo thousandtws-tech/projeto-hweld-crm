@@ -54,4 +54,10 @@ pub trait RepositorioNotificacoes: Send + Sync {
 
     /// Marca todas do destinatário — retorna quantas mudaram de estado.
     async fn marcar_todas_lidas(&self, destino: DestinoNotificacao) -> Resultado<u64>;
+
+    /// Remove uma notificação do destinatário.
+    async fn remover(&self, id: Id<Notificacao>, destino: DestinoNotificacao) -> Resultado<()>;
+
+    /// Remove todas as notificações do destinatário.
+    async fn remover_todas(&self, destino: DestinoNotificacao) -> Resultado<u64>;
 }

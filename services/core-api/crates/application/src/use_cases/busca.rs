@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use hweld_domain::catalogo::preco::preco_efetivo;
-use hweld_domain::catalogo::produto::Produto;
+use hweld_domain::catalogo::produto::{Produto, ProdutoImagem};
 use hweld_domain::crm::empresa::Empresa;
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::Paginacao;
@@ -45,12 +45,13 @@ pub struct ItemBuscaStaff {
 }
 
 /// Item de busca do portal — `ProdutoPortal` sanitizado (sem `preco_custo`,
-/// `estoque_minimo`, `controla_estoque`) + `preco_efetivo` B2B + score.
+/// `estoque_minimo`, `controla_estoque`) + `preco_efetivo` B2B + imagens + score.
 #[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct ItemBuscaPortal {
     #[serde(flatten)]
     pub produto: crate::use_cases::catalogo::ProdutoPortal,
     pub preco_efetivo: hweld_domain::Dinheiro,
+    pub imagens: Vec<ProdutoImagem>,
     pub score: f64,
 }
 
@@ -107,28 +108,38 @@ impl ServicoBusca {
         ))
     }
 
-    /// Busca do portal B2B — apenas produtos visíveis na vitrine, com o
-    /// `preco_efetivo` da empresa do contato (tabela dedicada ou venda).
+    /// Busca do portal (pública ou B2B) — apenas produtos visíveis na vitrine, com o
+    /// `preco_efetivo` da empresa do contato (quando autenticado) ou preço de venda padrão.
     pub async fn buscar_portal(
         &self,
-        empresa_id: Id<Empresa>,
+        empresa_id: Option<Id<Empresa>>,
         mut consulta: ConsultaBuscaProdutos,
     ) -> Resultado<BuscaPaginada<ItemBuscaPortal>> {
-        let empresa = self
-            .empresas
-            .buscar_por_id(empresa_id)
-            .await?
-            .filter(|e| e.deleted_at.is_none())
-            .ok_or_else(|| ErroApp::nao_encontrado("empresa", empresa_id))?;
+        let tabela = if let Some(empresa_id) = empresa_id {
+            let empresa = self
+                .empresas
+                .buscar_por_id(empresa_id)
+                .await?
+                .filter(|e| e.deleted_at.is_none())
+                .ok_or_else(|| ErroApp::nao_encontrado("empresa", empresa_id))?;
+            match empresa.tabela_preco_id {
+                Some(_) => self.tabelas.tabela_da_empresa(empresa_id).await?,
+                None => None,
+            }
+        } else {
+            None
+        };
 
         consulta.somente_ativos = true;
         let resultado = self.motor.buscar_produtos(&consulta).await?;
         let produtos = self.hidratar(&resultado.hits).await?;
 
-        let tabela = match empresa.tabela_preco_id {
-            Some(_) => self.tabelas.tabela_da_empresa(empresa_id).await?,
-            None => None,
-        };
+        let ids: Vec<Id<Produto>> = produtos.keys().copied().collect();
+        let todas_imagens = self.produtos.listar_imagens_por_produtos(&ids).await?;
+        let mut mapa_imagens: HashMap<Id<Produto>, Vec<ProdutoImagem>> = HashMap::new();
+        for img in todas_imagens {
+            mapa_imagens.entry(img.produto_id).or_default().push(img);
+        }
 
         let itens = resultado
             .hits
@@ -144,6 +155,7 @@ impl ServicoBusca {
                 Some(ItemBuscaPortal {
                     preco_efetivo: preco_efetivo(p, tabela.as_ref().map(|(t, _)| t), item_tabela),
                     produto: crate::use_cases::catalogo::ProdutoPortal::from(p.clone()),
+                    imagens: mapa_imagens.remove(&p.id).unwrap_or_default(),
                     score: h.score,
                 })
             })

@@ -70,6 +70,10 @@ defmodule MotorRealtimeWeb.Router do
   end
 
   scope "/events", MotorRealtimeWeb do
+    get "/publico", EventosController, :publico
+  end
+
+  scope "/events", MotorRealtimeWeb do
     pipe_through :staff
 
     get "/staff", EventosController, :staff

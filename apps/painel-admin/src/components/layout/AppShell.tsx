@@ -3,6 +3,7 @@ import {
   Bell,
   Boxes,
   Building2,
+  Check,
   ChevronDown,
   ChevronRight,
   Coins,
@@ -72,6 +73,12 @@ const NAV: NavSection[] = [
         label: "Tabelas de preço",
         icon: Tags,
         perfis: ["admin", "vendedor"],
+      },
+      {
+        to: "/catalogo/cms",
+        label: "CMS da Loja (Banners & Marcas)",
+        icon: LayoutDashboard,
+        perfis: ["admin", "estoque", "vendedor"],
       },
     ],
   },
@@ -143,6 +150,7 @@ const MAPA_ROTAS: Record<string, { secao: string; label: string; parentTo?: stri
   },
   "/catalogo/categorias": { secao: "Catálogo", label: "Categorias" },
   "/catalogo/tabelas-preco": { secao: "Catálogo", label: "Tabelas de preço" },
+  "/catalogo/cms": { secao: "Catálogo", label: "CMS da Loja (Banners & Marcas)" },
   "/estoque": { secao: "Operação", label: "Estoque" },
   "/operacao/ordens-servico": { secao: "Operação", label: "Ordens de serviço" },
   "/fiscal/notas": { secao: "Operação", label: "Notas fiscais" },
@@ -289,7 +297,7 @@ function Panel({ children, onClose }: { children: ReactNode; onClose: () => void
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-border bg-card p-2.5 shadow-[var(--shadow-pop)]">
+      <div className="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-border bg-white p-2.5 shadow-[var(--shadow-pop)]">
         {children}
       </div>
     </>
@@ -324,37 +332,38 @@ function Sino() {
         <Panel onClose={() => setAberto(false)}>
           <div className="flex items-center justify-between border-b border-border/60 px-2.5 pt-1 pb-2">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Notificações
+              Notificações {svc.naoLidas > 0 ? `(${svc.naoLidas})` : ""}
             </span>
-            {svc.naoLidas > 0 && (
+            {svc.itens.length > 0 && (
               <button
                 type="button"
                 onClick={() => void svc.marcarTodas()}
                 className="text-xs font-medium text-primary hover:underline"
               >
-                Marcar todas lidas
+                Limpar todas
               </button>
             )}
           </div>
           <ul className="mt-1 max-h-80 space-y-0.5 overflow-y-auto scrollbar-none">
             {svc.itens.length === 0 && (
               <li className="py-6 text-center text-xs text-muted-foreground">
-                Nenhuma notificação.
+                Tudo em dia! Nenhuma notificação pendente.
               </li>
             )}
             {svc.itens.map((n) => (
-              <li key={n.id}>
+              <li
+                key={n.id}
+                className="flex items-start gap-1 rounded-xl bg-secondary/40 px-2 py-2 transition hover:bg-secondary"
+              >
                 <button
                   type="button"
                   onClick={() => {
                     setAberto(false);
                     void svc.abrir(n);
                   }}
-                  className={`flex w-full items-start gap-2.5 rounded-xl px-2.5 py-2 text-left transition hover:bg-secondary ${!n.lida_em ? "bg-secondary/40" : ""}`}
+                  className="flex min-w-0 flex-1 items-start gap-2.5 text-left"
                 >
-                  <span
-                    className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${!n.lida_em ? "bg-primary" : "bg-transparent"}`}
-                  />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-semibold text-foreground">
                       {n.titulo}
@@ -366,6 +375,18 @@ function Sino() {
                       {fmtDataHora(n.created_at)}
                     </span>
                   </span>
+                </button>
+                <button
+                  type="button"
+                  title="Marcar como lida e remover"
+                  aria-label="Marcar como lida e remover"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void svc.dispensar(n.id);
+                  }}
+                  className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600"
+                >
+                  <Check className="h-3.5 w-3.5" />
                 </button>
               </li>
             ))}

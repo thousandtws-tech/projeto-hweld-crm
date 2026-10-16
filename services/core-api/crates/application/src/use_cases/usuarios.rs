@@ -10,6 +10,7 @@ use hweld_domain::shared::paginacao::{Pagina, Paginacao};
 use crate::erro::{ErroApp, Resultado};
 use crate::ports::acesso::{AtualizarUsuario, FiltroUsuarios, RepositorioUsuarios};
 use crate::ports::externos::RegistradorAuditoria;
+use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
 use crate::ports::seguranca::HasherSenha;
 
 const ENTIDADE: &str = "usuarios";
@@ -18,6 +19,7 @@ pub struct ServicoUsuarios {
     usuarios: Arc<dyn RepositorioUsuarios>,
     hasher: Arc<dyn HasherSenha>,
     audit: Arc<dyn RegistradorAuditoria>,
+    realtime: Arc<dyn NotificadorRealtime>,
 }
 
 impl ServicoUsuarios {
@@ -25,11 +27,13 @@ impl ServicoUsuarios {
         usuarios: Arc<dyn RepositorioUsuarios>,
         hasher: Arc<dyn HasherSenha>,
         audit: Arc<dyn RegistradorAuditoria>,
+        realtime: Arc<dyn NotificadorRealtime>,
     ) -> Self {
         Self {
             usuarios,
             hasher,
             audit,
+            realtime,
         }
     }
 
@@ -73,6 +77,12 @@ impl ServicoUsuarios {
                 serde_json::json!({ "email": usuario.email, "perfil": usuario.perfil }),
             ))
             .await;
+        // Gestão de usuários é interna — só o backoffice reconcilia a lista.
+        self.realtime.publicar(EventoRealtime::novo(
+            "usuario.criado",
+            Audiencia::Staff,
+            serde_json::json!({ "id": usuario.id.valor(), "perfil": usuario.perfil }),
+        ));
         Ok(usuario)
     }
 
@@ -93,6 +103,11 @@ impl ServicoUsuarios {
                 serde_json::json!({ "nome": depois.nome, "email": depois.email, "perfil": depois.perfil }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "usuario.atualizado",
+            Audiencia::Staff,
+            serde_json::json!({ "id": depois.id.valor() }),
+        ));
         Ok(depois)
     }
 
@@ -113,6 +128,11 @@ impl ServicoUsuarios {
                 serde_json::json!({ "ativo": ativo }),
             ))
             .await;
+        self.realtime.publicar(EventoRealtime::novo(
+            "usuario.ativo_alterado",
+            Audiencia::Staff,
+            serde_json::json!({ "id": id.valor(), "ativo": ativo }),
+        ));
         Ok(())
     }
 }

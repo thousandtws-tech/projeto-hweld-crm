@@ -20,6 +20,7 @@ pub trait RepositorioCategorias: Send + Sync {
     async fn criar(&self, input: CategoriaInput) -> Resultado<Categoria>;
     async fn atualizar(&self, id: Id<Categoria>, input: CategoriaInput) -> Resultado<Categoria>;
     async fn definir_ativa(&self, id: Id<Categoria>, ativa: bool) -> Resultado<()>;
+    async fn remover(&self, id: Id<Categoria>) -> Resultado<()>;
     async fn eh_descendente(&self, id: Id<Categoria>, ancestral: Id<Categoria>) -> Resultado<bool>;
 }
 
@@ -48,6 +49,16 @@ pub trait RepositorioProdutos: Send + Sync {
     async fn arquivar(&self, id: Id<Produto>) -> Resultado<()>;
 
     async fn listar_imagens(&self, produto_id: Id<Produto>) -> Resultado<Vec<ProdutoImagem>>;
+    async fn listar_imagens_por_produtos(
+        &self,
+        produto_ids: &[Id<Produto>],
+    ) -> Resultado<Vec<ProdutoImagem>> {
+        let mut todas = Vec::new();
+        for &id in produto_ids {
+            todas.extend(self.listar_imagens(id).await?);
+        }
+        Ok(todas)
+    }
     async fn adicionar_imagem(
         &self,
         produto_id: Id<Produto>,

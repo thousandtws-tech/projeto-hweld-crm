@@ -409,3 +409,58 @@ export interface ConfigFiscal {
   pendencias: string[];
   updated_at: string;
 }
+
+export interface MarcaCms {
+  id: string;
+  nome: string;
+  logo: string;
+  ativa: boolean;
+}
+
+export interface SlideBannerCms {
+  id: string;
+  badge: string;
+  title: string;
+  subtitle: string;
+  price: string;
+  button_text: string;
+  button_link: string;
+  bg_image: string;
+  image_mobile: string;
+  product_image: string;
+  classe: string;
+  ativo: boolean;
+}
+
+export interface CardTrioCms {
+  id: string;
+  badge: string;
+  titulo: string;
+  descricao: string;
+  preco_destaque: string;
+  botao_texto: string;
+  botao_link: string;
+  imagem_url: string;
+  cor: "orange" | "cyan" | "blue" | string;
+  ativo: boolean;
+}
+
+export interface CardDuoCms {
+  id: string;
+  tag: string;
+  titulo: string;
+  descricao: string;
+  destaque: string;
+  botao_texto: string;
+  botao_link: string;
+  imagem_url: string;
+  estilo: "plasma" | "combo" | string;
+  ativo: boolean;
+}
+
+export interface CmsLoja {
+  marcas: MarcaCms[];
+  slides: SlideBannerCms[];
+  trio_banners: CardTrioCms[];
+  duo_banners: CardDuoCms[];
+}

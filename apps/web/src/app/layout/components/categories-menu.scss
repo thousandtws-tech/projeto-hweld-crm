@@ -106,28 +106,58 @@
     transition: opacity var(--hw-motion-fast) var(--hw-motion-ease);
   }
   .rail-icone-chip {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
     flex-shrink: 0;
     display: grid;
     place-items: center;
-    border-radius: 8px;
+    border-radius: 50%;
     background: var(--hw-surface);
     border: 1px solid var(--hw-border);
+    overflow: hidden;
     transition: all var(--hw-motion-fast) var(--hw-motion-ease);
+
+    &.chip-sub {
+      width: 28px;
+      height: 28px;
+    }
+
+    &.com-img {
+      background: #fff;
+      padding: 0;
+    }
+  }
+  .rail-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 50%;
   }
   .rail-icone {
     font-size: 17px;
     color: var(--hw-text-muted);
     transition: color var(--hw-motion-fast) var(--hw-motion-ease);
   }
-  .rail-nome {
+  .rail-texto {
     flex: 1;
     min-width: 0;
-    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .rail-nome {
+    font-weight: 600;
     line-height: 1.25;
-    /* Nome completo — quebra em 2 linhas em vez de truncar */
     overflow-wrap: break-word;
+  }
+  .rail-desc {
+    font-size: 11.5px;
+    color: var(--hw-text-muted);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .rail-seta {
     font-size: 18px;
@@ -144,10 +174,14 @@
     &::before {
       opacity: 1;
     }
-    .rail-icone-chip {
+    .rail-icone-chip:not(.com-img) {
       background: var(--hw-accent);
       border-color: var(--hw-accent);
       box-shadow: 0 2px 8px rgba(29, 79, 216, 0.3);
+    }
+    .rail-icone-chip.com-img {
+      border-color: var(--hw-accent);
+      box-shadow: 0 2px 8px rgba(29, 79, 216, 0.22);
     }
     .rail-icone {
       color: var(--hw-on-accent);
@@ -186,9 +220,21 @@
   padding: var(--hw-space-4);
 }
 
-/* Filhas inline — só mobile (lista única), escondidas no flyout desktop */
-.subs-mobile {
-  display: none;
+/* Subcategorias na árvore (desktop e mobile) */
+.subs-arvore {
+  list-style: none;
+  margin: 2px 0 4px 22px;
+  padding: 0 0 0 8px;
+  border-left: 1.5px solid var(--hw-border-subtle);
+
+  &.nivel-3 {
+    margin-left: 18px;
+  }
+}
+
+.sub-item {
+  padding: 5px var(--hw-space-3);
+  font-size: 13px;
 }
 
 @media (max-width: 768px) {
@@ -200,22 +246,6 @@
   }
   .rail-item .rail-seta {
     opacity: 1;
-  }
-  .subs-mobile {
-    display: block;
-    list-style: none;
-    margin: 0;
-    padding: 0 0 4px 44px;
-    a {
-      display: block;
-      font-size: 13px;
-      color: var(--hw-text-muted);
-      text-decoration: none;
-      padding: 6px 0;
-      &:hover {
-        color: var(--hw-accent);
-      }
-    }
   }
 }
 

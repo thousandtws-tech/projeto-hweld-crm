@@ -37,15 +37,39 @@
     <ul class="itens">
       @for (item of carrinho()!.itens; track item.produto_id) {
         <li class="item-card">
-          <div class="item-info">
-            <a class="item-nome" [routerLink]="['/p', item.produto_id]">
-              {{ item.produto?.nome ?? 'Produto ' + item.produto_id }}
-            </a>
-            <div class="item-metas">
-              @if (item.produto?.sku) {
-                <span class="sku-tag hw-numeric">SKU: {{ item.produto?.sku }}</span>
-              }
-              <span class="unit-tag hw-numeric">{{ item.preco_unitario | brl }} / un</span>
+          <div class="item-info" style="display: flex; align-items: center; gap: 14px">
+            @if (item.produto?.imagem_url; as imgUrl) {
+              <img
+                [src]="imgUrl"
+                [alt]="item.produto?.nome ?? ''"
+                style="
+                  width: 56px;
+                  height: 56px;
+                  border-radius: 10px;
+                  object-fit: contain;
+                  background: #fff;
+                  border: 1px solid var(--hw-border);
+                  padding: 4px;
+                  flex-shrink: 0;
+                "
+              />
+            }
+            <div>
+              <a
+                class="item-nome"
+                [routerLink]="[
+                  '/p',
+                  item.produto?.slug ? item.produto_id + '-' + item.produto!.slug : item.produto_id
+                ]"
+              >
+                {{ item.produto?.nome ?? 'Produto ' + item.produto_id }}
+              </a>
+              <div class="item-metas">
+                @if (item.produto?.sku) {
+                  <span class="sku-tag hw-numeric">SKU: {{ item.produto?.sku }}</span>
+                }
+                <span class="unit-tag hw-numeric">{{ item.preco_unitario | brl }} / un</span>
+              </div>
             </div>
           </div>
 

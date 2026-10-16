@@ -101,6 +101,41 @@ impl FromRequest for AuthPortal {
     }
 }
 
+/// Extrator híbrido para loja pública + B2B:
+/// - Se houver `Authorization: Bearer <token>` válido de portal, resolve `Some(AuthPortal)`.
+/// - Se não houver token (visitante público), resolve `None` sem retornar 401.
+/// - Também extrai `session_id` do header `X-Session-Id` para o carrinho de visitante (`DonoCarrinho::Convidado`).
+pub struct AuthPortalOpcional {
+    pub portal: Option<AuthPortal>,
+    pub session_id: String,
+}
+
+impl AuthPortalOpcional {
+    pub fn contato_id(&self) -> Option<i64> {
+        self.portal.as_ref().map(|p| p.contato_id())
+    }
+}
+
+impl FromRequest for AuthPortalOpcional {
+    type Error = ErroHttp;
+    type Future = Ready<Result<Self, Self::Error>>;
+
+    fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
+        let portal = extrair_token(req, TipoSujeito::Portal)
+            .ok()
+            .map(|(s, sid)| AuthPortal(s, sid));
+        let session_id = req
+            .headers()
+            .get("x-session-id")
+            .and_then(|h| h.to_str().ok())
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty() && s.len() <= 120)
+            .or_else(|| ip_cliente(req).map(|ip| format!("guest-{ip}")))
+            .unwrap_or_else(|| "guest-anon".to_string());
+        ready(Ok(AuthPortalOpcional { portal, session_id }))
+    }
+}
+
 /// Helper para montar `Id<T>` tipado a partir do sujeito.
 pub fn id_de<T>(sujeito: &SujeitoToken) -> hweld_domain::shared::id::Id<T> {
     hweld_domain::shared::id::Id::novo(sujeito.id)

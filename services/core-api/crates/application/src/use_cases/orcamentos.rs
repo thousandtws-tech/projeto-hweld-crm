@@ -137,6 +137,13 @@ impl ServicoOrcamentos {
                 "para": depois.status,
             }),
         ));
+        if let Some(op_id) = depois.oportunidade_id {
+            self.realtime.publicar(EventoRealtime::novo(
+                "oportunidade.estagio",
+                Audiencia::Staff,
+                serde_json::json!({ "id": op_id.valor(), "orcamento_id": depois.id.valor() }),
+            ));
+        }
         Ok(depois)
     }
 

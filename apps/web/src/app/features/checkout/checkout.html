@@ -22,64 +22,214 @@
   >
     <a routerLink="/carrinho" hwButton size="lg">Ir para o carrinho</a>
   </hw-empty>
-} @else if (semEnderecos()) {
-  <hw-empty
-    titulo="Endereço não cadastrado"
-    icone="location_on"
-    descricao="Sua empresa ainda não possui endereço de cobrança ou entrega cadastrado. Entre em contato com seu vendedor para homologar o cadastro antes de prosseguir."
-  />
 } @else {
   <form class="layout" [formGroup]="form" (ngSubmit)="confirmar()">
     <div class="passos">
-      <!-- Passo 1: Faturamento -->
-      <section class="passo-card">
-        <div class="passo-header">
-          <span class="passo-numero">1</span>
-          <div>
-            <h2>Endereço de Faturamento (Cobrança)</h2>
-            <span class="passo-desc">Endereço vinculado ao CNPJ onde a NFe será emitida</span>
+      <!-- Formulário Inline de Novo Endereço com Busca Automática por CEP (Padrão Marketplace) -->
+      @if (semEnderecos() || mostrandoFormEndereco()) {
+        <section class="passo-card form-endereco-card" [formGroup]="enderecoForm">
+          <div class="passo-header">
+            <span class="passo-numero destaque-cep">
+              <span class="material-symbols-outlined" style="font-size: 16px">add_location_alt</span>
+            </span>
+            <div style="flex: 1">
+              <h2>
+                {{
+                  semEnderecos()
+                    ? 'Cadastre o Endereço de Entrega e Faturamento'
+                    : 'Adicionar Novo Endereço'
+                }}
+              </h2>
+              <span class="passo-desc">
+                Digite o CEP para preencher automaticamente logradouro, bairro, cidade e UF
+              </span>
+            </div>
+            @if (!semEnderecos()) {
+              <button
+                type="button"
+                class="btn-fechar-end"
+                (click)="mostrandoFormEndereco.set(false)"
+              >
+                Cancelar
+              </button>
+            }
           </div>
-        </div>
 
-        <div class="enderecos-grid" role="radiogroup" aria-label="Endereço de faturamento">
-          @for (e of enderecosFaturamento(); track e.id) {
-            <label class="endereco-card" [class.sel]="form.controls.faturamento.value === e.id">
-              <div class="radio-indicator">
-                <input type="radio" formControlName="faturamento" [value]="e.id" />
-                <span class="radio-circulo" aria-hidden="true"></span>
+          <div class="cep-grid">
+            <div class="campo-bloco cep-col">
+              <label class="campo-label" for="end-cep">CEP *</label>
+              <div class="cep-input-wrap">
+                <input
+                  id="end-cep"
+                  type="text"
+                  class="campo-input hw-numeric"
+                  formControlName="cep"
+                  maxlength="9"
+                  placeholder="00000-000"
+                  (input)="aoDigitarCep()"
+                />
+                @if (buscandoCep()) {
+                  <span class="cep-status">Buscando…</span>
+                } @else if (cepLocalizado()) {
+                  <span class="cep-status ok">✓ CEP localizado</span>
+                }
               </div>
-              <div class="endereco-detalhes">
-                <ng-container *ngTemplateOutlet="enderecoTpl; context: { $implicit: e }" />
-              </div>
-            </label>
-          }
-        </div>
-      </section>
+            </div>
 
-      <!-- Passo 2: Entrega -->
-      <section class="passo-card">
-        <div class="passo-header">
-          <span class="passo-numero">2</span>
-          <div>
-            <h2>Endereço de Entrega</h2>
-            <span class="passo-desc">Local físico para descarregamento das mercadorias</span>
+            <div class="campo-bloco rua-col">
+              <label class="campo-label" for="end-rua">Logradouro / Rua / Avenida *</label>
+              <input
+                id="end-rua"
+                type="text"
+                class="campo-input"
+                formControlName="logradouro"
+                placeholder="Ex.: Av. Industrial"
+              />
+            </div>
+
+            <div class="campo-bloco num-col">
+              <label class="campo-label" for="end-num">Número *</label>
+              <input
+                id="end-num"
+                type="text"
+                class="campo-input"
+                formControlName="numero"
+                placeholder="Ex.: 1200"
+              />
+            </div>
+
+            <div class="campo-bloco comp-col">
+              <label class="campo-label" for="end-comp">Complemento / Galpão / Doca</label>
+              <input
+                id="end-comp"
+                type="text"
+                class="campo-input"
+                formControlName="complemento"
+                placeholder="Ex.: Galpão 4 · Doca B"
+              />
+            </div>
+
+            <div class="campo-bloco bairro-col">
+              <label class="campo-label" for="end-bairro">Bairro / Distrito Industrial *</label>
+              <input
+                id="end-bairro"
+                type="text"
+                class="campo-input"
+                formControlName="bairro"
+                placeholder="Ex.: Distrito Industrial"
+              />
+            </div>
+
+            <div class="campo-bloco cidade-col">
+              <label class="campo-label" for="end-cidade">Cidade *</label>
+              <input
+                id="end-cidade"
+                type="text"
+                class="campo-input"
+                formControlName="cidade"
+                placeholder="Ex.: São Paulo"
+              />
+            </div>
+
+            <div class="campo-bloco uf-col">
+              <label class="campo-label" for="end-uf">UF *</label>
+              <input
+                id="end-uf"
+                type="text"
+                class="campo-input"
+                formControlName="uf"
+                maxlength="2"
+                placeholder="SP"
+                style="text-transform: uppercase"
+              />
+            </div>
           </div>
-        </div>
 
-        <div class="enderecos-grid" role="radiogroup" aria-label="Endereço de entrega">
-          @for (e of enderecosEntrega(); track e.id) {
-            <label class="endereco-card" [class.sel]="form.controls.entrega.value === e.id">
-              <div class="radio-indicator">
-                <input type="radio" formControlName="entrega" [value]="e.id" />
-                <span class="radio-circulo" aria-hidden="true"></span>
-              </div>
-              <div class="endereco-detalhes">
-                <ng-container *ngTemplateOutlet="enderecoTpl; context: { $implicit: e }" />
-              </div>
+          <div class="end-opcoes-rodape">
+            <label class="check-ambos">
+              <input type="checkbox" formControlName="usarParaAmbos" />
+              <span>Usar este endereço tanto para Faturamento (NF-e) quanto para Entrega</span>
             </label>
-          }
-        </div>
-      </section>
+
+            <button
+              hwButton
+              type="button"
+              [loading]="salvandoEndereco()"
+              texto="Salvando endereço…"
+              (click)="salvarEndereco()"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">check</span>
+              <span>Salvar endereço e usar no pedido</span>
+            </button>
+          </div>
+        </section>
+      }
+
+      @if (!semEnderecos()) {
+        <!-- Passo 1: Faturamento -->
+        <section class="passo-card">
+          <div class="passo-header">
+            <span class="passo-numero">1</span>
+            <div style="flex: 1">
+              <h2>Endereço de Faturamento (Cobrança)</h2>
+              <span class="passo-desc">Endereço vinculado ao CNPJ onde a NFe será emitida</span>
+            </div>
+            <button
+              type="button"
+              class="btn-novo-end"
+              (click)="abrirNovoEndereco('fiscal')"
+            >
+              + Novo endereço
+            </button>
+          </div>
+
+          <div class="enderecos-grid" role="radiogroup" aria-label="Endereço de faturamento">
+            @for (e of enderecosFaturamento(); track e.id) {
+              <label class="endereco-card" [class.sel]="form.controls.faturamento.value === e.id">
+                <div class="radio-indicator">
+                  <input type="radio" formControlName="faturamento" [value]="e.id" />
+                  <span class="radio-circulo" aria-hidden="true"></span>
+                </div>
+                <div class="endereco-detalhes">
+                  <ng-container *ngTemplateOutlet="enderecoTpl; context: { $implicit: e }" />
+                </div>
+              </label>
+            }
+          </div>
+        </section>
+
+        <!-- Passo 2: Entrega -->
+        <section class="passo-card">
+          <div class="passo-header">
+            <span class="passo-numero">2</span>
+            <div style="flex: 1">
+              <h2>Endereço de Entrega</h2>
+              <span class="passo-desc">Local físico para descarregamento das mercadorias</span>
+            </div>
+            <button
+              type="button"
+              class="btn-novo-end"
+              (click)="abrirNovoEndereco('entrega')"
+            >
+              + Novo endereço
+            </button>
+          </div>
+
+          <div class="enderecos-grid" role="radiogroup" aria-label="Endereço de entrega">
+            @for (e of enderecosEntrega(); track e.id) {
+              <label class="endereco-card" [class.sel]="form.controls.entrega.value === e.id">
+                <div class="radio-indicator">
+                  <input type="radio" formControlName="entrega" [value]="e.id" />
+                  <span class="radio-circulo" aria-hidden="true"></span>
+                </div>
+                <div class="endereco-detalhes">
+                  <ng-container *ngTemplateOutlet="enderecoTpl; context: { $implicit: e }" />
+                </div>
+              </label>
+            }
+          </div>
+        </section>
+      }
 
       <!-- Passo 3: Condição de Pagamento -->
       <section class="passo-card">

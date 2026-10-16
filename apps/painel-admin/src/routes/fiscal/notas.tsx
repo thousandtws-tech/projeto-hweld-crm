@@ -62,7 +62,8 @@ function FiscalPage() {
   }, [carregar]);
 
   useRealtimeEvent(
-    (t) => t.startsWith("nf.") || t === "pedido.status_alterado" || t === "fiscal.configuracao",
+    (t) =>
+      t.startsWith("fiscal.nota_") || t === "pedido.status_alterado" || t === "fiscal.configuracao",
     () => {
       void carregar(true);
       void carregarConfig();

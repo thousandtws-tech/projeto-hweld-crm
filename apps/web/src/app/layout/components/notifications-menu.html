@@ -23,15 +23,15 @@
             <span class="notifs-counter">{{ notifs.naoLidas() }} novas</span>
           }
         </div>
-        @if (notifs.naoLidas() > 0) {
+        @if (notifs.itens().length > 0) {
           <button
             type="button"
             class="btn-marcar-todas"
             (click)="notifs.marcarTodas()"
-            title="Marcar todas as notificações como lidas"
+            title="Marcar todas como lidas e limpar lista"
           >
             <span class="material-symbols-outlined">done_all</span>
-            <span>Marcar lidas</span>
+            <span>Limpar todas</span>
           </button>
         }
       </div>
@@ -47,12 +47,7 @@
       } @else {
         <div class="notifs-lista">
           @for (n of notifs.itens(); track n.id) {
-            <button
-              type="button"
-              class="notif-row"
-              [class.nao-lida]="!n.lida_em"
-              (click)="abrirNotif(n)"
-            >
+            <div class="notif-row nao-lida" (click)="abrirNotif(n)" role="button" tabindex="0">
               <div class="notif-icone-box">
                 <span class="material-symbols-outlined">{{ getIconeNotif(n) }}</span>
               </div>
@@ -63,10 +58,16 @@
                 </div>
                 <p class="notif-msg">{{ n.mensagem | humanizeNotif }}</p>
               </div>
-              @if (!n.lida_em) {
-                <span class="notif-dot" title="Notificação não lida" aria-hidden="true"></span>
-              }
-            </button>
+              <button
+                type="button"
+                class="notif-dispensar-btn"
+                title="Marcar como lida e remover"
+                aria-label="Marcar como lida e remover"
+                (click)="dispensarNotif(n.id, $event)"
+              >
+                <span class="material-symbols-outlined">check</span>
+              </button>
+            </div>
           }
         </div>
       }

@@ -77,9 +77,20 @@ const EVENTOS = [
   "empresa.atualizada",
   "empresa.arquivada",
   "catalogo.produtos",
+  "catalogo.categorias",
+  "catalogo.precos",
   "estoque.movimentado",
+  "pagamento.parcelas",
   "pagamento.baixado",
   "pagamento.estornado",
+  "caixa.aberto",
+  "caixa.movimento",
+  "caixa.fechado",
+  "os.criada",
+  "os.status_alterada",
+  "fiscal.nota_emitida",
+  "fiscal.nota_autorizada",
+  "fiscal.nota_cancelada",
 ];
 
 const PAGINA_VAZIA: Pagina<never> = {
