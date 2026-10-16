@@ -30,6 +30,7 @@
 }
 
 /* Brand Logo */
+
 .logo {
   display: flex;
   align-items: center;
@@ -37,7 +38,15 @@
   text-decoration: none;
   user-select: none;
   flex-shrink: 0;
+
+  img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    display: block;
+  }
 }
+
 
 .logo-txt {
   font-family: var(--hw-font-sans);

@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080/api/v1',
+  apiUrl: 'https://mug-easiness-backlog.ngrok-free.dev/api/v1',
   realtimeUrl: 'http://localhost:4100',
 };

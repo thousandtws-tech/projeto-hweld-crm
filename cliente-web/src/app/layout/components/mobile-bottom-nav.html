@@ -6,7 +6,13 @@
     class="mobile-nav-item"
     aria-label="Ir para a página inicial"
   >
-    <span class="material-symbols-outlined" aria-hidden="true">home</span>
+    <!-- Código antigo comentado -->
+    <!-- <span class="material-symbols-outlined" aria-hidden="true">home</span> -->
+
+    <!-- Novo ícone com link para a página inicial -->
+    <a href="index.html">
+    <img src="assets/header/icons/icon-home.png" alt="Página Inicial" class="header-item-icone">
+    </a>
     <span>Início</span>
   </a>
 
@@ -19,7 +25,7 @@
     aria-label="Ver meus pedidos"
   >
     <img
-      src="assets/icons/icon-cart-check.png"
+      src="assets/header/icons/icon-pedido.png"
       alt=""
       class="mob-custom-icone"
       aria-hidden="true"
@@ -34,7 +40,7 @@
     aria-label="Minha conta"
   >
     <img
-      src="assets/icons/icon-user-account.png"
+      src="assets/header/icons/icon-usuario.png"
       alt=""
       class="mob-custom-icone"
       aria-hidden="true"
@@ -48,8 +54,16 @@
     aria-label="Abrir carrinho de compras"
     (click)="carrinho.abrirDrawer()"
   >
+        <!-- Código antigo comentado -->
+    <!-- <span class="material-symbols-outlined" aria-hidden="true">shopping_cart</span> -->
+
+    <!-- Novo ícone do carrinho com o link configurado -->
+    <a href="carrinho.html">
+        <img src="assets/header/icons/icon-carrinho-compras.png" alt="Carrinho de compras" class="header-item-icone">
+    </a>
+
     <div class="mob-cart-icone-wrap">
-      <span class="material-symbols-outlined" aria-hidden="true">shopping_cart</span>
+      
       @if (carrinho.totalItens() > 0) {
         <span class="badge-contador hw-numeric">
           {{ carrinho.totalItens() > 99 ? '99+' : carrinho.totalItens() }}

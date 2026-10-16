@@ -5,7 +5,7 @@
   [matMenuTriggerFor]="menuCep"
   aria-label="Informar CEP de entrega"
 >
-  <img src="assets/icons/icon-map-pin.png" alt="" class="header-custom-icone" aria-hidden="true" />
+  <img src="assets/header/icons/icon-map.png" alt="" class="header-custom-icone" aria-hidden="true" />
   <div class="header-item-txt">
     <span class="header-item-sub">Enviar para:</span>
     <strong class="header-item-tit">{{ cep() ? cep() : 'Informe o CEP' }}</strong>
@@ -15,7 +15,7 @@
 <mat-menu #menuCep="matMenu" class="cep-menu-panel" xPosition="after">
   <div class="cep-popover-card" (click)="$event.stopPropagation()">
     <div class="cep-popover-header">
-      <img src="assets/icons/icon-map-pin.png" alt="" class="cep-pin-custom" aria-hidden="true" />
+      <img src="assets/header/icons/icon-map.png" alt="" class="cep-pin-custom" aria-hidden="true" />
       <div class="cep-popover-titulos">
         <strong>Onde quer receber suas compras?</strong>
         <p>Informe o CEP para consultar prazos de entrega e frete.</p>
@@ -54,7 +54,7 @@
 >
   <div class="cep-mobile-esq">
     <img
-      src="assets/icons/icon-map-pin.png"
+      src="assets/header/icons/icon-map.png"
       alt=""
       class="cep-mobile-custom-pin"
       aria-hidden="true"
