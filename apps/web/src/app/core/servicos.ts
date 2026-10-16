@@ -174,6 +174,20 @@ export class ContaService {
     return firstValueFrom(this.http.get<Endereco[]>(`${api}/portal/enderecos`, { params }));
   }
 
+  criarEndereco(input: {
+    tipo?: string;
+    cep: string;
+    logradouro?: string | null;
+    numero?: string | null;
+    complemento?: string | null;
+    bairro?: string | null;
+    cidade: string;
+    uf: string;
+    principal?: boolean;
+  }) {
+    return firstValueFrom(this.http.post<Endereco>(`${api}/portal/enderecos`, input));
+  }
+
   pedidos(filtro: { pagina?: number; status?: StatusPedido[] } = {}) {
     let params = new HttpParams();
     if (filtro.pagina) params = params.set('pagina', filtro.pagina);

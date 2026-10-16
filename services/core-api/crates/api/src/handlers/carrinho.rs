@@ -9,29 +9,41 @@ use hweld_domain::shared::id::Id;
 
 use crate::dto::{CheckoutReq, ItemCarrinhoReq};
 use crate::estado::AppState;
-use crate::extratores::AuthPortal;
+use crate::extratores::{AuthPortal, AuthPortalOpcional};
 
-async fn dono(state: &AppState, portal: &AuthPortal) -> Resposta<DonoCarrinho> {
-    let contato = state.contatos.buscar(Id::novo(portal.contato_id())).await?;
-    Ok(DonoCarrinho::Contato {
-        contato_id: contato.id,
-        empresa_id: Some(contato.empresa_id),
+async fn dono(state: &AppState, portal: &AuthPortalOpcional) -> Resposta<DonoCarrinho> {
+    if let Some(cid) = portal.contato_id() {
+        if let Ok(contato) = state.contatos.buscar(Id::novo(cid)).await {
+            let dono_contato = DonoCarrinho::Contato {
+                contato_id: contato.id,
+                empresa_id: Some(contato.empresa_id),
+            };
+            let _ = state
+                .carrinho
+                .mesclar_convidado(&portal.session_id, &dono_contato)
+                .await;
+            return Ok(dono_contato);
+        }
+    }
+    Ok(DonoCarrinho::Convidado {
+        session_id: portal.session_id.clone(),
     })
 }
 
-/// Carrinho atual do contato autenticado (itens + total).
+/// Carrinho atual do contato autenticado ou visitante público (itens + total).
 #[utoipa::path(
     get,
     path = "/api/v1/portal/carrinho",
     tag = "Portal B2B",
     responses(
         (status = 200, body = CarrinhoDetalhe),
-        (status = 401, description = "não autenticado"),
     ),
-    security(("bearer_auth" = [])),
 )]
 #[get("/portal/carrinho")]
-pub async fn atual(state: web::Data<AppState>, portal: AuthPortal) -> Resposta<HttpResponse> {
+pub async fn atual(
+    state: web::Data<AppState>,
+    portal: AuthPortalOpcional,
+) -> Resposta<HttpResponse> {
     let detalhe = state.carrinho.atual(&dono(&state, &portal).await?).await?;
     Ok(HttpResponse::Ok().json(detalhe))
 }
@@ -47,12 +59,11 @@ pub async fn atual(state: web::Data<AppState>, portal: AuthPortal) -> Resposta<H
         (status = 404, description = "produto não encontrado"),
         (status = 422, description = "produto inativo"),
     ),
-    security(("bearer_auth" = [])),
 )]
 #[post("/portal/carrinho/itens")]
 pub async fn adicionar(
     state: web::Data<AppState>,
-    portal: AuthPortal,
+    portal: AuthPortalOpcional,
     body: web::Json<ItemCarrinhoReq>,
 ) -> Resposta<HttpResponse> {
     let detalhe = state
@@ -77,12 +88,11 @@ pub async fn adicionar(
         (status = 200, body = CarrinhoDetalhe),
         (status = 404, description = "item não encontrado"),
     ),
-    security(("bearer_auth" = [])),
 )]
 #[put("/portal/carrinho/itens/{produto_id}")]
 pub async fn atualizar(
     state: web::Data<AppState>,
-    portal: AuthPortal,
+    portal: AuthPortalOpcional,
     produto_id: web::Path<i64>,
     body: web::Json<ItemCarrinhoReq>,
 ) -> Resposta<HttpResponse> {
@@ -107,12 +117,11 @@ pub async fn atualizar(
         (status = 200, body = CarrinhoDetalhe),
         (status = 404, description = "item não encontrado"),
     ),
-    security(("bearer_auth" = [])),
 )]
 #[delete("/portal/carrinho/itens/{produto_id}")]
 pub async fn remover(
     state: web::Data<AppState>,
-    portal: AuthPortal,
+    portal: AuthPortalOpcional,
     produto_id: web::Path<i64>,
 ) -> Resposta<HttpResponse> {
     let detalhe = state

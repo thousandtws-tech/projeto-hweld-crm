@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import type { LogAuditoria } from "@/lib/models";
 import { auditoriaService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
+import { useRealtimeEvent } from "@/lib/use-realtime";
 
 export const Route = createFileRoute("/auditoria")({
   beforeLoad: exigePerfil("admin"),
@@ -16,9 +17,28 @@ function AuditoriaPage() {
   const [logs, setLogs] = useState<LogAuditoria[]>([]);
   const [aberto, setAberto] = useState<number | null>(null);
 
-  useEffect(() => {
-    auditoriaService.listar({ por_pagina: 100 }).then((p) => setLogs(p.itens));
+  const carregar = useCallback(() => {
+    auditoriaService
+      .listar({ por_pagina: 100 })
+      .then((p) => setLogs(p.itens))
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
+
+  // Toda mutação de domínio grava uma linha de auditoria — qualquer evento do
+  // barramento é motivo de reconciliação. Debounce coalesce rajadas (ex.: um
+  // checkout que dispara pedido + estoque + pagamento vira um único GET).
+  const debRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useRealtimeEvent(
+    () => true,
+    () => {
+      if (debRef.current) clearTimeout(debRef.current);
+      debRef.current = setTimeout(carregar, 400);
+    },
+  );
 
   return (
     <AppShell>

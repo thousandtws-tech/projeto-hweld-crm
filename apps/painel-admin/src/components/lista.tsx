@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Plus, RefreshCw, Search } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { api, ApiError, type Filtros } from "@/lib/api";
 import { brl, fmtData, qty, statusLabel } from "@/lib/format";
@@ -28,6 +29,12 @@ export interface ListaCfg {
   detalhePrefixo?: string;
   /** tipos de evento realtime que disparam reload (ex.: ['pedido.criado']). */
   eventos?: string[];
+  /** habilita botão de exclusão por linha (`DELETE /{recurso}/{id}`). */
+  excluir?: {
+    rotulo?: string;
+    campoNome?: string;
+    fn?: (id: number | string, linha: Record<string, unknown>) => Promise<void>;
+  };
 }
 
 type Linha = Record<string, unknown>;
@@ -94,6 +101,29 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
   const [busca, setBusca] = useState("");
   const [buscaDebounced, setBuscaDebounced] = useState("");
   const [filtroValor, setFiltroValor] = useState("");
+  const [excluindoId, setExcluindoId] = useState<number | string | null>(null);
+
+  const aoExcluir = async (e: React.MouseEvent, linha: Linha) => {
+    e.stopPropagation();
+    if (!cfg.excluir || excluindoId !== null) return;
+    const id = (linha["id"] as number | string | undefined) ?? idDe(linha);
+    const nome = String(linha[cfg.excluir.campoNome ?? "nome"] ?? linha["sku"] ?? `#${id}`);
+    if (!window.confirm(`Deseja realmente excluir "${nome}"?`)) return;
+    setExcluindoId(id);
+    try {
+      if (cfg.excluir.fn) {
+        await cfg.excluir.fn(id, linha);
+      } else {
+        await api.del(cfg.recurso, id);
+      }
+      toast.success(`"${nome}" excluído.`);
+      void carregar(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao excluir registro.");
+    } finally {
+      setExcluindoId(null);
+    }
+  };
 
   // debounce 350ms — igual ao FormControl + debounceTime do legado
   const debRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -208,6 +238,7 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
                     {c.rotulo}
                   </th>
                 ))}
+                {cfg.excluir && <th className="px-4 py-3 text-right font-semibold">Ações</th>}
               </tr>
             </thead>
             <tbody>
@@ -219,31 +250,57 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
                         <span className="block h-4 w-2/3 animate-pulse rounded bg-secondary" />
                       </td>
                     ))}
+                    {cfg.excluir && (
+                      <td className="px-4 py-3.5 text-right">
+                        <span className="ml-auto block h-4 w-16 animate-pulse rounded bg-secondary" />
+                      </td>
+                    )}
                   </tr>
                 ))
               ) : pagina && pagina.itens.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={cfg.colunas.length}
+                    colSpan={cfg.colunas.length + (cfg.excluir ? 1 : 0)}
                     className="px-4 py-10 text-center text-muted-foreground"
                   >
                     Nenhum registro.
                   </td>
                 </tr>
               ) : (
-                pagina?.itens.map((linha) => (
-                  <tr
-                    key={idDe(linha)}
-                    onClick={() => detalhe && navigate({ to: `${detalhe}/${idDe(linha)}` as "/" })}
-                    className={`border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40 ${detalhe ? "cursor-pointer" : ""}`}
-                  >
-                    {cfg.colunas.map((c) => (
-                      <td key={c.campo} className="px-4 py-3">
-                        <Celula linha={linha} c={c} />
-                      </td>
-                    ))}
-                  </tr>
-                ))
+                pagina?.itens.map((linha) => {
+                  const id = (linha["id"] as number | string | undefined) ?? idDe(linha);
+                  const excluindo = excluindoId === id;
+                  return (
+                    <tr
+                      key={idDe(linha)}
+                      onClick={() => detalhe && navigate({ to: `${detalhe}/${idDe(linha)}` as "/" })}
+                      className={`border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40 ${detalhe ? "cursor-pointer" : ""}`}
+                    >
+                      {cfg.colunas.map((c) => (
+                        <td key={c.campo} className="px-4 py-3">
+                          <Celula linha={linha} c={c} />
+                        </td>
+                      ))}
+                      {cfg.excluir && (
+                        <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            disabled={excluindo}
+                            onClick={(e) => void aoExcluir(e, linha)}
+                            className="inline-flex items-center gap-1 rounded-full border border-[#D92546]/30 bg-card px-2.5 py-1 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10 disabled:opacity-50"
+                          >
+                            {excluindo ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                            {cfg.excluir.rotulo ?? "Excluir"}
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

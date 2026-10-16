@@ -32,6 +32,7 @@ export const Route = createFileRoute("/catalogo/produtos/")({
           novaRota: "/catalogo/produtos/novo",
           detalhePrefixo: "/catalogo/produtos",
           eventos: ["catalogo.produtos", "estoque.movimentado"],
+          excluir: { rotulo: "Excluir", campoNome: "nome" },
         }}
       />
     </AppShell>

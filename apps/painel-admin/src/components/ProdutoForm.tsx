@@ -8,7 +8,7 @@ import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
 import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { processarEEnviarImagem } from "@/lib/midia";
 import type { Categoria, Produto, ProdutoImagem } from "@/lib/models";
-import { catalogoService } from "@/lib/services";
+import { catalogoService, estoqueService } from "@/lib/services";
 
 const vazio = {
   sku: "",
@@ -55,7 +55,10 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
   const [produtoId, setProdutoId] = useState<number | undefined>(undefined);
 
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [marcasCms, setMarcasCms] = useState<string[]>([]);
   const [f, setF] = useState<Form>(vazio);
+  const [estoqueDisponivel, setEstoqueDisponivel] = useState<string>("100");
+  const [saldoOriginal, setSaldoOriginal] = useState<number>(100);
   const [salvando, setSalvando] = useState(false);
 
   // Galeria de Imagens (capa principal + sub-imagens)
@@ -101,9 +104,24 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
 
   useEffect(() => {
     catalogoService.categorias().then(setCategorias);
+    catalogoService
+      .obterCms()
+      .then((c) => setMarcasCms(c.marcas.filter((m) => m.ativa).map((m) => m.nome)))
+      .catch(() => {});
     if (produtoRef) {
       catalogoService.produto(produtoRef).then((p: Produto) => {
         setProdutoId(p.id);
+        estoqueService
+          .saldo(p.id)
+          .then((s) => {
+            const disp = Number(s.quantidade_disponivel ?? 0);
+            setSaldoOriginal(disp);
+            setEstoqueDisponivel(String(disp));
+          })
+          .catch(() => {
+            setSaldoOriginal(0);
+            setEstoqueDisponivel("0");
+          });
         // Canonicalização: URL com id numérico vira public_id (UUID mascarado).
         if (produtoRef !== p.public_id) {
           void navigate({
@@ -332,10 +350,14 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
         destaque: f.destaque,
       };
 
+      let idAlvo = produtoId;
+      let baseEstoque = saldoOriginal;
       if (edicao && produtoId) {
         await catalogoService.atualizarProduto(produtoId, body);
       } else {
         const criado = await catalogoService.criarProduto(body);
+        idAlvo = criado.id;
+        baseEstoque = 100; // saldo inicial padrão gravado no INSERT
         // Salva todas as imagens que já foram adicionadas durante a criação do produto
         let falhasImagens = 0;
         for (let i = 0; i < galeria.length; i++) {
@@ -357,6 +379,23 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
           );
         }
       }
+
+      if (idAlvo && estoqueDisponivel.trim() !== "") {
+        const desejado = Number(estoqueDisponivel);
+        const delta = desejado - baseEstoque;
+        if (Number.isFinite(desejado) && Math.abs(delta) >= 0.001) {
+          try {
+            await estoqueService.lancar({
+              produto_id: idAlvo,
+              tipo: delta > 0 ? "entrada" : "ajuste",
+              quantidade: delta.toFixed(3),
+              motivo: "Saldo definido no cadastro do produto",
+            });
+          } catch {
+            toast.warning("Produto salvo, mas não foi possível ajustar o saldo de estoque.");
+          }
+        }
+      }
       toast.success("Produto salvo com sucesso.");
       navigate({ to: "/catalogo/produtos" });
     } catch (err) {
@@ -368,12 +407,13 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
 
   const arquivar = async () => {
     if (!produtoId) return;
+    if (!window.confirm(`Deseja realmente excluir o produto "${f.nome || f.sku}"?`)) return;
     try {
       await catalogoService.arquivarProduto(produtoId);
-      toast.success("Produto arquivado.");
+      toast.success("Produto excluído.");
       navigate({ to: "/catalogo/produtos" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao arquivar produto.");
+      toast.error(err instanceof Error ? err.message : "Falha ao excluir produto.");
     }
   };
 
@@ -392,7 +432,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
               onClick={() => void arquivar()}
               className="inline-flex items-center gap-1.5 rounded-full border border-[#D92546]/30 px-4 py-1.5 text-xs font-semibold text-[#D92546] hover:bg-[#D92546]/10"
             >
-              <Trash2 className="h-3.5 w-3.5" /> Arquivar produto
+              <Trash2 className="h-3.5 w-3.5" /> Excluir produto
             </button>
           )
         }
@@ -623,7 +663,20 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                   </select>
                 </FormField>
                 <FormField label="Marca">
-                  <input className={fieldClass} value={f.marca} onChange={set("marca")} />
+                  <>
+                    <input
+                      className={fieldClass}
+                      list="lista-marcas-cms"
+                      placeholder="Selecione ou digite…"
+                      value={f.marca}
+                      onChange={set("marca")}
+                    />
+                    <datalist id="lista-marcas-cms">
+                      {marcasCms.map((nomeMarca) => (
+                        <option key={nomeMarca} value={nomeMarca} />
+                      ))}
+                    </datalist>
+                  </>
                 </FormField>
                 <FormField label="Unidade (kg, cx, un…)">
                   <input
@@ -638,7 +691,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
 
             <SectionCard>
               <h2 className="mb-4 text-sm font-semibold">Comercial & Estoque</h2>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <FormField label="Preço de venda (R$) *">
                   <input
                     className={fieldClass}
@@ -660,6 +713,16 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                     onChange={set("preco_custo")}
                   />
                 </FormField>
+                <FormField label="Estoque disponível (saldo)">
+                  <input
+                    className={fieldClass}
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={estoqueDisponivel}
+                    onChange={(e) => setEstoqueDisponivel(e.target.value)}
+                  />
+                </FormField>
                 <FormField label="Estoque mínimo">
                   <input
                     className={fieldClass}
@@ -671,7 +734,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                   />
                 </FormField>
 
-                <div className="flex flex-wrap items-center gap-5 pt-1 sm:col-span-3">
+                <div className="flex flex-wrap items-center gap-5 pt-1 sm:col-span-2 lg:col-span-4">
                   {(
                     [
                       ["ativo", "Ativo no catálogo"],

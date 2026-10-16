@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CarrinhoService } from '../../core/servicos';
+import { RealtimeService } from '../../core/realtime';
 import { Carrinho } from '../../core/models';
 import { BrlPipe } from '../../core/pipes';
 import { HwButton } from '../../shared/ui/button';
@@ -20,15 +21,35 @@ export class CarrinhoPage implements OnInit {
   private svc = inject(CarrinhoService);
   private toast = inject(ToastService);
   private router = inject(Router);
+  private rt = inject(RealtimeService);
 
   carrinho = signal<Carrinho | null>(null);
   carregando = signal(true);
 
+  constructor() {
+    // Admin mudou preço/produto → o carrinho revalida no servidor (preco_unitario
+    // é sempre do lado do backend). Silencioso: sem skeleton, sem toast.
+    effect(() => {
+      const e = this.rt.ultimo();
+      if (e?.tipo === 'catalogo.precos' || e?.tipo === 'catalogo.produtos') {
+        untracked(() => this.recarregar());
+      }
+    });
+  }
+
   ngOnInit(): void {
+    this.recarregar(true);
+  }
+
+  /** `inicial`: falha mostra estado vazio; no refetch realtime falha mantém o
+   *  carrinho atual na tela (próximo evento tenta de novo). */
+  private recarregar(inicial = false): void {
     this.svc
       .atual()
       .then((c) => this.carrinho.set(c))
-      .catch(() => this.carrinho.set(null))
+      .catch(() => {
+        if (inicial) this.carrinho.set(null);
+      })
       .finally(() => this.carregando.set(false));
   }
 

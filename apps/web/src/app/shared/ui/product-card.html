@@ -1,7 +1,13 @@
 <a class="card" [routerLink]="['/p', item().id + '-' + item().slug]" mat-ripple>
   <div class="thumb-container">
     @if (imagem(); as img) {
-      <img [src]="img" [alt]="item().nome" class="thumb-img" loading="lazy" />
+      <img
+        [src]="img"
+        [alt]="item().nome"
+        class="thumb-img"
+        loading="lazy"
+        (error)="onImgError()"
+      />
     } @else {
       <div class="sem-img">
         <span class="material-symbols-outlined sem-img-icone" aria-hidden="true">inventory_2</span>

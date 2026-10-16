@@ -10,7 +10,7 @@ use serde::Serialize;
 use crate::dto::{QueryBusca, QuerySugestoes};
 use crate::erro::{ErroHttp, Resposta};
 use crate::estado::AppState;
-use crate::extratores::{AuthPortal, AuthStaff};
+use crate::extratores::{AuthPortalOpcional, AuthStaff};
 
 const PODE_REINDEXAR: &[Perfil] = &[Perfil::Admin];
 
@@ -52,12 +52,20 @@ fn servico(state: &AppState) -> Resposta<&ServicoBusca> {
 #[get("/portal/busca/produtos")]
 pub async fn buscar_portal(
     state: web::Data<AppState>,
-    portal: AuthPortal,
+    portal: AuthPortalOpcional,
     q: web::Query<QueryBusca>,
 ) -> Resposta<HttpResponse> {
-    let contato = state.contatos.buscar(Id::novo(portal.contato_id())).await?;
+    let empresa_id = match portal.contato_id() {
+        Some(cid) => state
+            .contatos
+            .buscar(Id::novo(cid))
+            .await
+            .ok()
+            .map(|c| c.empresa_id),
+        None => None,
+    };
     let pagina = servico(&state)?
-        .buscar_portal(contato.empresa_id, q.consulta()?)
+        .buscar_portal(empresa_id, q.consulta()?)
         .await?;
     Ok(HttpResponse::Ok().json(pagina))
 }
@@ -75,12 +83,11 @@ pub async fn buscar_portal(
         (status = 200, body = Vec<SugestaoProduto>),
         (status = 503, description = "motor de busca não configurado"),
     ),
-    security(("bearer_auth" = [])),
 )]
 #[get("/portal/busca/sugestoes")]
 pub async fn sugerir_portal(
     state: web::Data<AppState>,
-    _portal: AuthPortal,
+    _portal: AuthPortalOpcional,
     q: web::Query<QuerySugestoes>,
 ) -> Resposta<HttpResponse> {
     let sugestoes = servico(&state)?

@@ -101,6 +101,7 @@ async fn executar() -> anyhow::Result<()> {
                 .allowed_headers(vec![
                     actix_web::http::header::AUTHORIZATION,
                     actix_web::http::header::CONTENT_TYPE,
+                    actix_web::http::header::HeaderName::from_static("x-session-id"),
                 ])
                 .max_age(3600);
             for origem in &cors_origins {
@@ -286,7 +287,12 @@ fn montar_estado(
             tokens,
             sessoes,
         ),
-        usuarios: ServicoUsuarios::novo(usuarios_repo, hasher.clone(), audit.clone()),
+        usuarios: ServicoUsuarios::novo(
+            usuarios_repo,
+            hasher.clone(),
+            audit.clone(),
+            realtime.clone(),
+        ),
         empresas: ServicoEmpresas::novo(empresas_repo.clone(), audit.clone(), realtime.clone()),
         contatos: ServicoContatos::novo(
             contatos_repo.clone(),

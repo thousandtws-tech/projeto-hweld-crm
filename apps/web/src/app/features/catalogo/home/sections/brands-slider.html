@@ -6,7 +6,7 @@
   <div class="marcas-slider-wrapper">
     <div #brandsSwiperRef class="swiper marcas-swiper">
       <div class="swiper-wrapper">
-        @for (m of marcas; track m.id) {
+        @for (m of marcas(); track m.id) {
           <div class="swiper-slide marca-slide">
             <a
               [routerLink]="['/busca']"
@@ -14,7 +14,11 @@
               class="marca-card"
               [title]="'Ver produtos ' + m.nome"
             >
-              <img [src]="m.logo" [alt]="m.nome" class="marca-logo" loading="lazy" />
+              @if (m.logo) {
+                <img [src]="m.logo" [alt]="m.nome" class="marca-logo" loading="lazy" />
+              } @else {
+                <span style="font-weight: 800; font-size: 14px; color: #0f172a">{{ m.nome }}</span>
+              }
             </a>
           </div>
         }

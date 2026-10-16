@@ -37,7 +37,7 @@ export class Shell implements OnInit {
   ngOnInit(): void {
     if (this.auth.autenticado()) {
       void this.auth.carregarPerfil();
-      void this.carrinho.atual().catch(() => {});
     }
+    void this.carrinho.atual().catch(() => {});
   }
 }

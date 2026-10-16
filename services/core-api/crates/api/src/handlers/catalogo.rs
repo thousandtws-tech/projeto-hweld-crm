@@ -2,7 +2,7 @@
 //! precificado do portal B2B (contato autenticado).
 
 use crate::erro::Resposta;
-use actix_web::{delete, get, patch, post, web, HttpResponse};
+use actix_web::{delete, get, patch, post, put, web, HttpResponse};
 use hweld_application::ports::catalogo::FiltroProdutos;
 use hweld_application::use_cases::catalogo::ItemCatalogoPortal;
 use hweld_domain::acesso::usuario::Perfil;
@@ -11,14 +11,14 @@ use hweld_domain::catalogo::produto::{Produto, ProdutoImagem};
 use hweld_domain::catalogo::tabela_preco::{TabelaPreco, TabelaPrecoItem};
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::Pagina;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::dto::{
     AtualizarImagemProdutoReq, CategoriaReq, ImagemProdutoReq, PrecoItemReq, ProdutoReq,
     QueryCategorias, QueryProdutos, QueryTabelas, TabelaPrecoReq,
 };
 use crate::estado::AppState;
-use crate::extratores::{AuthPortal, AuthStaff};
+use crate::extratores::{AuthPortalOpcional, AuthStaff};
 use actix_web::HttpRequest;
 
 const CATALOGO: &[Perfil] = &[Perfil::Admin, Perfil::Estoque, Perfil::Vendedor];
@@ -134,6 +134,33 @@ pub async fn atualizar_categoria(
         }
     }
     Ok(HttpResponse::Ok().json(cat))
+}
+
+/// Remove categoria (promove subcategorias e valida produtos vinculados).
+#[utoipa::path(
+    delete,
+    path = "/api/v1/categorias/{id}",
+    tag = "Catálogo",
+    params(("id" = i64, Path, description = "id da categoria")),
+    responses(
+        (status = 204, description = "categoria removida"),
+        (status = 404, description = "categoria não encontrada"),
+        (status = 409, description = "categoria possui produtos ativos vinculados"),
+    ),
+    security(("bearer_auth" = [])),
+)]
+#[delete("/categorias/{id}")]
+pub async fn excluir_categoria(
+    state: web::Data<AppState>,
+    staff: AuthStaff,
+    id: web::Path<i64>,
+) -> Resposta<HttpResponse> {
+    staff.exige(CATALOGO)?;
+    let removida = state.categorias.remover(Id::novo(*id)).await?;
+    if let Some(img) = removida.imagem_url.as_deref() {
+        descartar_arquivo_midia(img).await;
+    }
+    Ok(HttpResponse::NoContent().finish())
 }
 
 // ── Produtos ────────────────────────────────────────────────────────────────
@@ -558,6 +585,255 @@ pub async fn servir_midia(arquivo: web::Path<String>) -> Resposta<HttpResponse> 
         .body(bytes))
 }
 
+// ── CMS da Loja (Banners, Marcas & Vitrine) ─────────────────────────────────
+
+const CMS_ARQUIVO: &str = "uploads/cms_loja.json";
+
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct MarcaCms {
+    pub id: String,
+    pub nome: String,
+    pub logo: String,
+    #[serde(default = "default_true")]
+    pub ativa: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct SlideBannerCms {
+    pub id: String,
+    #[serde(default)]
+    pub badge: String,
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub subtitle: String,
+    #[serde(default)]
+    pub price: String,
+    #[serde(default)]
+    pub button_text: String,
+    #[serde(default)]
+    pub button_link: String,
+    pub bg_image: String,
+    #[serde(default)]
+    pub image_mobile: String,
+    #[serde(default)]
+    pub product_image: String,
+    #[serde(default)]
+    pub classe: String,
+    #[serde(default = "default_true")]
+    pub ativo: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct CardTrioCms {
+    pub id: String,
+    pub badge: String,
+    pub titulo: String,
+    pub descricao: String,
+    pub preco_destaque: String,
+    pub botao_texto: String,
+    pub botao_link: String,
+    pub imagem_url: String,
+    pub cor: String, // "orange" | "cyan" | "blue"
+    #[serde(default = "default_true")]
+    pub ativo: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct CardDuoCms {
+    pub id: String,
+    pub tag: String,
+    pub titulo: String,
+    pub descricao: String,
+    pub destaque: String,
+    pub botao_texto: String,
+    pub botao_link: String,
+    pub imagem_url: String,
+    pub estilo: String, // "plasma" | "combo"
+    #[serde(default = "default_true")]
+    pub ativo: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct CmsLoja {
+    pub marcas: Vec<MarcaCms>,
+    pub slides: Vec<SlideBannerCms>,
+    pub trio_banners: Vec<CardTrioCms>,
+    pub duo_banners: Vec<CardDuoCms>,
+}
+
+fn cms_padrao() -> CmsLoja {
+    CmsLoja {
+        marcas: vec![
+            MarcaCms { id: "esab".into(), nome: "ESAB".into(), logo: "assets/brands/esab.svg".into(), ativa: true },
+            MarcaCms { id: "miller".into(), nome: "Miller Electric".into(), logo: "assets/brands/miller.svg".into(), ativa: true },
+            MarcaCms { id: "lincoln".into(), nome: "Lincoln Electric".into(), logo: "assets/brands/lincoln-electric.svg".into(), ativa: true },
+            MarcaCms { id: "boxer".into(), nome: "Boxer Soldas".into(), logo: "assets/brands/boxer.svg".into(), ativa: true },
+            MarcaCms { id: "balmer".into(), nome: "Balmer".into(), logo: "assets/brands/balmer.svg".into(), ativa: true },
+            MarcaCms { id: "bambozzi".into(), nome: "Bambozzi".into(), logo: "assets/brands/bambozzi.svg".into(), ativa: true },
+            MarcaCms { id: "norton".into(), nome: "Norton Abrasivos".into(), logo: "assets/brands/norton.svg".into(), ativa: true },
+            MarcaCms { id: "carbografite".into(), nome: "Carbografite".into(), logo: "assets/brands/carbografite.svg".into(), ativa: true },
+            MarcaCms { id: "black-decker".into(), nome: "BLACK+DECKER".into(), logo: "assets/brands/black-decker.png".into(), ativa: true },
+            MarcaCms { id: "garthen".into(), nome: "Garthen".into(), logo: "assets/brands/garthen.png".into(), ativa: true },
+            MarcaCms { id: "motomil".into(), nome: "MOTOMIL".into(), logo: "assets/brands/motomil.png".into(), ativa: true },
+            MarcaCms { id: "pressure".into(), nome: "Pressure".into(), logo: "assets/brands/pressure.png".into(), ativa: true },
+            MarcaCms { id: "paletrans".into(), nome: "Paletrans".into(), logo: "assets/brands/paletrans.png".into(), ativa: true },
+        ],
+        slides: vec![
+            SlideBannerCms {
+                id: "ferramentas-eletricas".into(),
+                badge: "".into(),
+                title: "".into(),
+                subtitle: "".into(),
+                price: "".into(),
+                button_text: "".into(),
+                button_link: "/busca".into(),
+                bg_image: "assets/header/banner/icons/fundo.1.png".into(),
+                image_mobile: "assets/header/banner/icons/fundo.1-mobile.png".into(),
+                product_image: "".into(),
+                classe: "slide-ferramentas".into(),
+                ativo: true,
+            },
+            SlideBannerCms {
+                id: "soldagem".into(),
+                badge: "LINHA DE SOLDAGEM".into(),
+                title: "Equipamentos de Soldagem".into(),
+                subtitle: "Soluções e equipamentos para trabalhos de soldagem com qualidade e precisão.".into(),
+                price: "".into(),
+                button_text: "Ver produtos".into(),
+                button_link: "/busca".into(),
+                bg_image: "assets/header/banner/icons/fundo.2.png".into(),
+                image_mobile: "assets/header/banner/icons/fundo.2-mobile.png".into(),
+                product_image: "assets/header/banner/icons/soldagem-produto.png".into(),
+                classe: "slide-soldagem".into(),
+                ativo: true,
+            },
+        ],
+        trio_banners: vec![
+            CardTrioCms {
+                id: "trio-1".into(),
+                badge: "ATÉ 35% OFF".into(),
+                titulo: "Inversoras Industriais IGBT".into(),
+                descricao: "Arc Force, Hot Start e bivolt automático para alta produtividade em serralheria.".into(),
+                preco_destaque: "A partir de R$ 689,90".into(),
+                botao_texto: "Ver Ofertas".into(),
+                botao_link: "/busca?q=inversora".into(),
+                imagem_url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80".into(),
+                cor: "orange".into(),
+                ativo: true,
+            },
+            CardTrioCms {
+                id: "trio-2".into(),
+                badge: "PROTEÇÃO CERTIFICADA".into(),
+                titulo: "Máscaras de Auto-Escurecimento".into(),
+                descricao: "Filtro True Color DIN 9-13, 4 sensores e máxima ergonomia com CA ativo.".into(),
+                preco_destaque: "Parcele em até 10x sem juros".into(),
+                botao_texto: "Conferir Linha".into(),
+                botao_link: "/busca?q=mascara".into(),
+                imagem_url: "https://images.unsplash.com/photo-1508873535684-277a3cbcc4e8?auto=format&fit=crop&w=800&q=80".into(),
+                cor: "cyan".into(),
+                ativo: true,
+            },
+            CardTrioCms {
+                id: "trio-3".into(),
+                badge: "FATURAMENTO B2B".into(),
+                titulo: "Arames MIG & Eletrodos E7018".into(),
+                descricao: "Caixas fechadas e bobinas de 15kg com desconto progressivo para CNPJ.".into(),
+                preco_destaque: "Preço direto de distribuidora".into(),
+                botao_texto: "Comprar Lote".into(),
+                botao_link: "/busca?q=eletrodo".into(),
+                imagem_url: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80".into(),
+                cor: "blue".into(),
+                ativo: true,
+            },
+        ],
+        duo_banners: vec![
+            CardDuoCms {
+                id: "duo-1".into(),
+                tag: "LINHA CORTE CNC".into(),
+                titulo: "Sistemas de Corte Plasma de Alta Definição".into(),
+                descricao: "Precisão milimétrica em aço carbono, inox e alumínio. Corte rápido com tochas de alta durabilidade e consumíveis de reposição imediata.".into(),
+                destaque: "Corte até 32mm de espessura".into(),
+                botao_texto: "Ver Máquinas Plasma".into(),
+                botao_link: "/busca?q=plasma".into(),
+                imagem_url: "https://images.unsplash.com/photo-1585776245991-cf89dd7fc73a?auto=format&fit=crop&w=900&q=80".into(),
+                estilo: "plasma".into(),
+                ativo: true,
+            },
+            CardDuoCms {
+                id: "duo-2".into(),
+                tag: "COMBOS PROFISSIONAIS".into(),
+                titulo: "Kits Completos para Serralheria & Oficinas".into(),
+                descricao: "Leve Máquina Inversora + Máscara Automática + Tocha + Eletrodos com economia garantida de combo e frete unificado para sua empresa.".into(),
+                destaque: "Economia de até R$ 420,00 no combo".into(),
+                botao_texto: "Montar Meu Kit".into(),
+                botao_link: "/busca?q=kit".into(),
+                imagem_url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=80".into(),
+                estilo: "combo".into(),
+                ativo: true,
+            },
+        ],
+    }
+}
+
+async fn carregar_cms_disco() -> CmsLoja {
+    if let Ok(bytes) = tokio::fs::read(CMS_ARQUIVO).await {
+        if let Ok(cms) = serde_json::from_slice::<CmsLoja>(&bytes) {
+            return cms;
+        }
+    }
+    let padrao = cms_padrao();
+    let _ = tokio::fs::create_dir_all("uploads").await;
+    if let Ok(json) = serde_json::to_vec_pretty(&padrao) {
+        let _ = tokio::fs::write(CMS_ARQUIVO, json).await;
+    }
+    padrao
+}
+
+async fn salvar_cms_disco(cms: &CmsLoja) -> Result<(), hweld_application::ErroApp> {
+    tokio::fs::create_dir_all("uploads")
+        .await
+        .map_err(|e| hweld_application::ErroApp::interno("cms_dir", e))?;
+    let json = serde_json::to_vec_pretty(cms)
+        .map_err(|e| hweld_application::ErroApp::interno("cms_json", e))?;
+    tokio::fs::write(CMS_ARQUIVO, json)
+        .await
+        .map_err(|e| hweld_application::ErroApp::interno("cms_write", e))?;
+    Ok(())
+}
+
+/// Retorna a configuração completa do CMS da loja (público para o portal web).
+#[get("/portal/cms")]
+pub async fn obter_cms_publico() -> Resposta<HttpResponse> {
+    let cms = carregar_cms_disco().await;
+    Ok(HttpResponse::Ok().json(cms))
+}
+
+/// Retorna a configuração completa do CMS da loja (painel admin).
+#[get("/cms")]
+pub async fn obter_cms_staff(_staff: AuthStaff) -> Resposta<HttpResponse> {
+    let cms = carregar_cms_disco().await;
+    Ok(HttpResponse::Ok().json(cms))
+}
+
+/// Atualiza o CMS da loja (marcas, banners topo, trio e duo) e publica em tempo real.
+#[put("/cms")]
+pub async fn salvar_cms_staff(
+    state: web::Data<AppState>,
+    staff: AuthStaff,
+    body: web::Json<CmsLoja>,
+) -> Resposta<HttpResponse> {
+    staff.exige(CATALOGO)?;
+    let cms = body.into_inner();
+    salvar_cms_disco(&cms).await?;
+    state.categorias.publicar_cms_atualizado();
+    Ok(HttpResponse::Ok().json(cms))
+}
+
 // ── Tabelas de preço ────────────────────────────────────────────────────────
 
 /// Lista tabelas de preço B2B.
@@ -746,14 +1022,22 @@ pub async fn remover_item_tabela(
 #[get("/portal/catalogo")]
 pub async fn catalogo_portal(
     state: web::Data<AppState>,
-    portal: AuthPortal,
+    portal: AuthPortalOpcional,
     q: web::Query<QueryProdutos>,
 ) -> Resposta<HttpResponse> {
-    let contato = state.contatos.buscar(Id::novo(portal.contato_id())).await?;
+    let empresa_id = match portal.contato_id() {
+        Some(cid) => state
+            .contatos
+            .buscar(Id::novo(cid))
+            .await
+            .ok()
+            .map(|c| c.empresa_id),
+        None => None,
+    };
     let pagina = state
         .catalogo_portal
         .catalogo(
-            contato.empresa_id,
+            empresa_id,
             q.pag.paginacao()?,
             FiltroProdutos {
                 categoria_id: q.categoria_id.map(Id::novo),

@@ -233,6 +233,38 @@ impl EnderecoReq {
     }
 }
 
+/// Criação de endereço pelo próprio cliente no portal (empresa_id é resolvido pelo token).
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct EnderecoPortalReq {
+    pub tipo: Option<TipoEndereco>,
+    pub logradouro: Option<String>,
+    pub numero: Option<String>,
+    pub complemento: Option<String>,
+    pub bairro: Option<String>,
+    pub cidade: String,
+    pub uf: String,
+    pub cep: String,
+    pub principal: Option<bool>,
+}
+
+impl EnderecoPortalReq {
+    pub fn input(self, empresa_id: Id<hweld_domain::crm::empresa::Empresa>) -> EnderecoInput {
+        EnderecoInput {
+            empresa_id,
+            tipo: self.tipo.unwrap_or(TipoEndereco::Entrega),
+            logradouro: self.logradouro,
+            numero: self.numero,
+            complemento: self.complemento,
+            bairro: self.bairro,
+            cidade: self.cidade,
+            uf: self.uf,
+            cep: self.cep,
+            pais: Some("Brasil".to_string()),
+            principal: self.principal.unwrap_or(true),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, utoipa::ToSchema, utoipa::IntoParams)]
 pub struct QueryEnderecos {
     pub tipo: Option<TipoEndereco>,

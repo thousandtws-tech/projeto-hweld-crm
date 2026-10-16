@@ -1,15 +1,14 @@
 <div class="slider-full-bleed">
   <div #swiperRef class="swiper pro-swiper">
     <div class="swiper-wrapper">
-      @for (s of slides; track s.id; let idx = $index) {
+      @for (s of slides(); track s.id; let idx = $index) {
         <div class="swiper-slide slide-card {{ s.classe }}" [attr.data-slide-index]="idx">
-          <!-- Banner de Fundo Original Colorido com Efeito Parallax -->
+          <!-- Banner de Fundo Auto-Ajustado 100% (Sem Corte nas Bordas) -->
           <div
               class="slide-bg"
-              [class.slide-bg-mobile]="s.imageMobile"
-              [style.background-image]="'url(' + s.bgImage + ')'"
-              [style.--mobile-bg]="s.imageMobile ? 'url(' + s.imageMobile + ')' : null"
-              data-swiper-parallax="-25%"
+              [class.slide-bg-mobile]="s.image_mobile"
+              [style.background-image]="'url(' + s.bg_image + ')'"
+              [style.--mobile-bg]="s.image_mobile ? 'url(' + s.image_mobile + ')' : null"
           ></div>
         
           <!-- Conteúdo do Banner (100% Contido e Alinhado) -->
@@ -76,11 +75,6 @@
           </div>
         </div>
       }
-    </div>
-
-    <!-- Barra Inferior de Paginação em Linhas Dinâmicas (Centralizada e Limpa) -->
-    <div class="pro-controls-bar">
-      <div class="swiper-pagination pro-pagination"></div>
     </div>
   </div>
 </div>

@@ -34,7 +34,7 @@
 
   <!-- Layout PDP Principal -->
   <div class="pdp-layout">
-    <!-- Coluna da Galeria -->
+    <!-- Coluna da Galeria (Padrão Amazon / Mercado Livre com Hover-to-Preview e Setas) -->
     <div class="galeria-col">
       <div
         class="principal-box"
@@ -42,38 +42,70 @@
         (mousemove)="onZoomMove($event)"
         (mouseleave)="zoom.set(null)"
       >
+        @if (p.destaque) {
+          <span class="badge-destaque-palco">
+            <span class="material-symbols-outlined" aria-hidden="true">bolt</span>
+            OFERTA EM DESTAQUE
+          </span>
+        }
+
         @if (imgAtiva(); as img) {
           <img
             class="img-principal"
             [src]="img.url"
             [alt]="img.alt_text ?? p.nome"
             [style.transform-origin]="zoom() ? zoom()!.x + '% ' + zoom()!.y + '%' : null"
+            (error)="aoFalharImg(img.id)"
           />
         } @else {
           <div class="sem-img">
             <span class="material-symbols-outlined sem-img-icone">inventory_2</span>
           </div>
         }
+
+        @if (imagensGaleria().length > 1) {
+          <button
+            type="button"
+            class="galeria-nav prev"
+            (click)="anteriorImg($event)"
+            aria-label="Foto anterior"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+          </button>
+          <button
+            type="button"
+            class="galeria-nav next"
+            (click)="proximaImg($event)"
+            aria-label="Próxima foto"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </button>
+          <span class="galeria-contador hw-numeric">
+            {{ indiceImgAtiva() + 1 }} / {{ imagensGaleria().length }}
+          </span>
+        }
       </div>
 
-      @if (p.imagens.length > 1) {
+      @if (imagensGaleria().length > 1) {
         <div class="thumbs-row">
-          @for (img of p.imagens; track img.id) {
+          @for (img of imagensGaleria(); track img.id; let idx = $index) {
             <button
               type="button"
               class="thumb-btn"
               [class.ativa]="img.id === imgAtiva()?.id"
+              (mouseenter)="imgAtiva.set(img)"
+              (focus)="imgAtiva.set(img)"
               (click)="imgAtiva.set(img)"
-              [attr.aria-label]="'Visualizar foto ' + img.ordem"
+              [attr.aria-label]="'Visualizar foto ' + (idx + 1)"
             >
-              <img [src]="img.url" [alt]="img.alt_text ?? ''" />
+              <img [src]="img.url" [alt]="img.alt_text ?? ''" (error)="aoFalharImg(img.id)" />
             </button>
           }
         </div>
       }
     </div>
 
-    <!-- Coluna de Informações e Compra -->
+    <!-- Coluna de Informações e Compra (Buy Box B2B) -->
     <div class="info-col">
       <div class="tags-row">
         <span class="sku-badge hw-numeric">SKU: {{ p.sku }}</span>
@@ -82,7 +114,7 @@
         }
         <span class="status-badge" [class.indisponivel]="!p.disponivel">
           <span class="dot" aria-hidden="true"></span>
-          {{ p.disponivel ? 'Pronta entrega' : 'Sob consulta' }}
+          {{ p.disponivel ? 'Pronta entrega · Envio imediato' : 'Sob encomenda · Lote programado' }}
         </span>
       </div>
 
@@ -106,7 +138,7 @@
         <p class="descricao-curta">{{ p.descricao_curta }}</p>
       }
 
-      <!-- Caixa de Preço B2B -->
+      <!-- Caixa de Preço B2B (Padrão Grandes Lojas Virtuais) -->
       <div class="preco-card">
         <div class="preco-header">
           <span class="preco-label">Preço da sua tabela cadastrada</span>
@@ -115,9 +147,31 @@
             matTooltip="Preço líquido calculado para o CNPJ da sua empresa"
             >info</span
           >
+          @if (descontoTabelaPct() > 0) {
+            <span class="badge-desconto-pj">-{{ descontoTabelaPct() }}% TABELA PJ</span>
+          }
         </div>
-        <hw-price class="hw-price-lg" [valor]="p.preco_efetivo" />
-        <span class="preco-aviso">Faturamento em até 28/56 dias conforme cadastro aprovado</span>
+
+        <div class="preco-principal-row">
+          <hw-price class="hw-price-lg" [valor]="p.preco_efetivo" />
+          @if (descontoTabelaPct() > 0) {
+            <span class="preco-lista-riscado">De <hw-price [valor]="p.preco_venda" /></span>
+          }
+        </div>
+
+        <div class="condicoes-b2b">
+          @if (precoPix(); as pix) {
+            <div class="condicao-pix">
+              <span class="material-symbols-outlined" aria-hidden="true">payments</span>
+              <span>
+                <strong><hw-price [valor]="pix" /></strong> à vista no PIX corporativo (5% de desconto)
+              </span>
+            </div>
+          }
+          <span class="preco-aviso">
+            Ou faturamento em até 28/56 dias no boleto PJ conforme cadastro aprovado
+          </span>
+        </div>
       </div>
 
       <!-- Entrega — endereço de entrega cadastrado da empresa -->
@@ -126,16 +180,23 @@
           <span class="material-symbols-outlined" aria-hidden="true">local_shipping</span>
           <div class="entrega-info">
             <strong>Entrega para {{ end.cidade }}/{{ end.uf }}</strong>
-            <span>CEP {{ end.cep }} · prazo e frete confirmados no faturamento</span>
+            <span>CEP {{ end.cep }} · expedição industrial prioritária</span>
           </div>
         </div>
       }
 
-      <!-- Ações de Compra -->
+      <!-- Ações de Compra + Atalhos de Lote Industrial -->
       <div class="compra-row">
         <div class="stepper-wrap">
-          <span class="compra-label">Quantidade ({{ p.unidade_medida ?? 'UN' }}):</span>
+          <span class="compra-label">Quantidade ({{ p.unidade_medida ?? 'un' }}):</span>
           <hw-qty [valor]="qtd()" [decimal]="usaDecimal(p.unidade_medida)" [mudar]="setQtd" />
+          <div class="lotes-rapidos" aria-label="Atalhos de lote">
+            @for (lote of [5, 10, 25]; track lote) {
+              <button type="button" class="lote-chip" (click)="somarLote(lote)">
+                +{{ lote }}
+              </button>
+            }
+          </div>
           @if (subtotal(); as total) {
             <span class="subtotal">
               Total: <hw-price [valor]="total" />
@@ -150,10 +211,9 @@
             class="btn-comprar"
             [loading]="adicionando()"
             texto="Processando…"
-            [disabled]="!p.disponivel"
             (click)="comprarAgora()"
           >
-            Comprar agora
+            {{ p.disponivel ? 'Comprar agora' : 'Encomendar agora' }}
           </button>
           <button
             hwButton
@@ -162,11 +222,10 @@
             class="btn-adicionar"
             [loading]="adicionando()"
             texto="Adicionando ao carrinho…"
-            [disabled]="!p.disponivel"
             (click)="adicionar()"
           >
             <span class="material-symbols-outlined" aria-hidden="true">add_shopping_cart</span>
-            {{ p.disponivel ? 'Adicionar ao carrinho' : 'Item indisponível' }}
+            {{ p.disponivel ? 'Adicionar ao carrinho' : 'Adicionar sob encomenda' }}
           </button>
         </div>
       </div>
@@ -174,7 +233,9 @@
       @if (!p.disponivel) {
         <div class="aviso-estoque" role="status">
           <span class="material-symbols-outlined">schedule</span>
-          <span>Lote em reposição. Entre em contato com seu vendedor para reserva antecipada.</span>
+          <span>
+            Item em produção/reposição programada. Seu pedido entra na fila prioritária de faturamento.
+          </span>
         </div>
       }
 
@@ -262,7 +323,7 @@
   </section>
 
   <!-- Cross-sell estilo ML — rails horizontais com navegação por setas -->
-  @if (relacionados().length >= 3) {
+  @if (relacionados().length >= 1) {
     <hw-rail
       titulo="Quem compra, também leva"
       [verTodos]="['/busca']"
@@ -274,7 +335,7 @@
     </hw-rail>
   }
 
-  @if (mesmaMarca().length >= 2) {
+  @if (mesmaMarca().length >= 1) {
     <hw-rail
       [titulo]="'Mais de ' + p.marca"
       [verTodos]="['/busca']"
@@ -286,7 +347,7 @@
     </hw-rail>
   }
 
-  @if (destaques().length >= 3) {
+  @if (destaques().length >= 1) {
     <hw-rail titulo="Destaques do catálogo" [verTodos]="['/busca']">
       @for (item of destaques(); track item.id) {
         <hw-product-card [item]="item" />
@@ -299,7 +360,7 @@
     <div class="buybar-info">
       <hw-price [valor]="p.preco_efetivo" />
       <span class="buybar-status" [class.off]="!p.disponivel">
-        {{ p.disponivel ? 'Pronta entrega' : 'Sob consulta' }}
+        {{ p.disponivel ? 'Pronta entrega' : 'Sob encomenda' }}
       </span>
     </div>
     <button
@@ -307,11 +368,10 @@
       class="buybar-btn"
       [loading]="adicionando()"
       texto="Adicionando…"
-      [disabled]="!p.disponivel"
       (click)="comprarAgora()"
     >
       <span class="material-symbols-outlined" aria-hidden="true">add_shopping_cart</span>
-      Comprar
+      {{ p.disponivel ? 'Comprar' : 'Encomendar' }}
     </button>
   </div>
 }

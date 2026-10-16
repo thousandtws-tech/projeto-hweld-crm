@@ -141,8 +141,43 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
   transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cat-banner-card.cat-cadastrada {
+  background: #0f172a;
+  .cat-banner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    padding: 0;
+  }
+}
+.cat-banner-overlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 24px 16px 12px;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0) 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+}
+.cat-banner-nome {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+.cat-banner-desc {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .cat-banner-card:hover .cat-banner-img {
   transform: scale(1.05);

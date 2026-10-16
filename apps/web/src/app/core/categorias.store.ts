@@ -1,6 +1,7 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { AuthStore } from './auth/auth.store';
 import { CatalogoService } from './servicos';
+import { RealtimeService } from './realtime';
 import { Categoria } from './models';
 
 /**
@@ -12,19 +13,34 @@ import { Categoria } from './models';
 export class CategoriasStore {
   private catalogo = inject(CatalogoService);
   private auth = inject(AuthStore);
+  private realtime = inject(RealtimeService);
 
   private _categorias = signal<Categoria[]>([]);
   private carregamentoIniciado = false;
 
   readonly categorias = this._categorias.asReadonly();
-  readonly categoriasRaiz = computed(() => this._categorias().filter((c) => !c.categoria_pai_id));
+  /** Raízes = sem pai OU órfãs (pai inativo/ausente na lista — não podem sumir do menu). */
+  readonly categoriasRaiz = computed(() => {
+    const todas = this._categorias();
+    const ids = new Set(todas.map((c) => c.id));
+    return todas.filter((c) => !c.categoria_pai_id || !ids.has(c.categoria_pai_id));
+  });
+
+  constructor() {
+    effect(() => {
+      if (this.realtime.ultimo()?.tipo === 'catalogo.categorias') {
+        this.carregamentoIniciado = false;
+        this.carregar();
+      }
+    });
+  }
 
   filhasDe(id: number): Categoria[] {
     return this._categorias().filter((c) => c.categoria_pai_id === id);
   }
 
   carregar(): void {
-    if (this.carregamentoIniciado || !this.auth.autenticado()) return;
+    if (this.carregamentoIniciado) return;
     this.carregamentoIniciado = true;
     this.catalogo
       .categorias()

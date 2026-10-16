@@ -25,9 +25,11 @@ export function useNotificacoes() {
         notificacoesService.listar({ por_pagina: 15 }),
       ]);
       setNaoLidas(count.total);
-      // Mescla por id — evento retransmitido nunca duplica linha.
+      // Mescla por id e mantém apenas notificações não lidas na bandeja (Inbox Zero)
       const vistos = new Set<number>();
-      setItens(pagina.itens.filter((n) => !vistos.has(n.id) && vistos.add(n.id)));
+      setItens(
+        pagina.itens.filter((n) => !n.lida_em && !vistos.has(n.id) && vistos.add(n.id)),
+      );
     } catch {
       /* sem badge melhor que badge errado — mantém o último estado */
     } finally {
@@ -51,26 +53,40 @@ export function useNotificacoes() {
   // Push: notificação nova → badge e lista revalidam no servidor.
   useRealtimeEvent(["notificacao.nova"], () => void atualizar());
 
-  /** Clica numa notificação: marca lida e navega para o alvo interno. */
+  /** Marca como lida e remove automaticamente da bandeja do sino. */
+  const dispensar = useCallback(async (id: number) => {
+    setItens((l) => {
+      const alvo = l.find((x) => x.id === id);
+      if (alvo && !alvo.lida_em) {
+        setNaoLidas((v) => Math.max(0, v - 1));
+      }
+      return l.filter((x) => x.id !== id);
+    });
+    await notificacoesService.marcarLida(id).catch(() => {});
+  }, []);
+
+  /** Clica numa notificação: marca como lida, remove da bandeja e navega direto para o registro. */
   const abrir = useCallback(
     async (n: Notificacao) => {
-      if (!n.lida_em) {
-        await notificacoesService.marcarLida(n.id).catch(() => {});
-        setNaoLidas((v) => Math.max(0, v - 1));
-        setItens((l) =>
-          l.map((x) => (x.id === n.id ? { ...x, lida_em: new Date().toISOString() } : x)),
-        );
-      }
+      void dispensar(n.id);
       if (n.link?.startsWith("/")) navigate({ to: n.link });
     },
-    [navigate],
+    [dispensar, navigate],
   );
 
   const marcarTodas = useCallback(async () => {
-    await notificacoesService.marcarTodas().catch(() => {});
     setNaoLidas(0);
-    setItens((l) => l.map((x) => ({ ...x, lida_em: x.lida_em ?? new Date().toISOString() })));
+    setItens([]);
+    await notificacoesService.marcarTodas().catch(() => {});
   }, []);
 
-  return { naoLidas, itens, carregando, atualizar, abrir, marcarTodas };
+  return {
+    naoLidas,
+    itens,
+    carregando,
+    atualizar,
+    abrir,
+    dispensar,
+    marcarTodas,
+  };
 }

@@ -675,6 +675,26 @@ impl RepositorioPedidos for RepositorioPedidosPg {
             .await
             .map_err(erro_db(CTX_PED))?;
         tx.commit().await.map_err(erro_db(CTX_PED))?;
+
+        // Automação CRM (pós-commit): pedido originado no e-commerce gera automaticamente oportunidade no funil
+        let _ = sqlx::query(
+            "INSERT INTO oportunidades \
+             (empresa_id, contato_id, responsavel_id, titulo, descricao, origem, estagio, valor_estimado, data_prevista_fechamento) \
+             VALUES ( \
+               $1, $2, \
+               (SELECT id FROM usuarios ORDER BY ativo DESC, id ASC LIMIT 1), \
+               'Pedido E-commerce ' || $3, \
+               'Oportunidade gerada automaticamente a partir do checkout da loja web (' || $3 || ').', \
+               'ecommerce', 'negociacao', $4, CURRENT_DATE \
+             )",
+        )
+        .bind(salvo.empresa_id.valor())
+        .bind(salvo.contato_id.valor())
+        .bind(&salvo.numero)
+        .bind(salvo.total.valor())
+        .execute(&self.pool)
+        .await;
+
         invalidar_listas();
         Ok(salvo)
     }
@@ -707,6 +727,32 @@ impl RepositorioPedidos for RepositorioPedidosPg {
         .map_err(erro_db(CTX_PED))?;
         let pedido = map_pedido(row)?;
         tx.commit().await.map_err(erro_db(CTX_PED))?;
+
+        // Automação CRM (pós-commit): sincroniza oportunidade vinculada ao pedido e-commerce
+        match novo.as_str() {
+            "confirmado" | "faturado" | "concluido" => {
+                let _ = sqlx::query(
+                    "UPDATE oportunidades SET estagio = 'ganha', motivo_perda = NULL, updated_at = now() \
+                     WHERE empresa_id = $1 AND titulo = ('Pedido E-commerce ' || $2)",
+                )
+                .bind(pedido.empresa_id.valor())
+                .bind(&pedido.numero)
+                .execute(&self.pool)
+                .await;
+            }
+            "cancelado" => {
+                let _ = sqlx::query(
+                    "UPDATE oportunidades SET estagio = 'perdida', motivo_perda = 'Pedido cancelado', updated_at = now() \
+                     WHERE empresa_id = $1 AND titulo = ('Pedido E-commerce ' || $2)",
+                )
+                .bind(pedido.empresa_id.valor())
+                .bind(&pedido.numero)
+                .execute(&self.pool)
+                .await;
+            }
+            _ => {}
+        }
+
         invalidar_listas();
         Ok(pedido)
     }

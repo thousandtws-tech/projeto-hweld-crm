@@ -2,7 +2,7 @@
 //! Escopo sempre resolvido do token (staff→usuario_id, portal→contato_id):
 //! ninguém lê nem marca notificação de outro destinatário.
 
-use actix_web::{get, post, web, HttpResponse};
+use actix_web::{delete, get, post, web, HttpResponse};
 use hweld_domain::notificacao::DestinoNotificacao;
 use hweld_domain::shared::id::Id;
 use serde::Serialize;
@@ -119,6 +119,56 @@ pub async fn ler_todas_staff(
     Ok(HttpResponse::Ok().json(serde_json::json!({ "atualizadas": atualizadas })))
 }
 
+/// Remove uma notificação do usuário staff.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/notificacoes/{id}",
+    tag = "Notificações",
+    params(("id" = i64, Path)),
+    responses(
+        (status = 204, description = "notificação removida"),
+        (status = 404, description = "notificação não encontrada"),
+    ),
+    security(("bearer_auth" = [])),
+)]
+#[delete("/notificacoes/{id}")]
+pub async fn remover_staff(
+    state: web::Data<AppState>,
+    staff: AuthStaff,
+    id: web::Path<i64>,
+) -> Resposta<HttpResponse> {
+    state
+        .notificacoes
+        .remover(
+            Id::novo(id.into_inner()),
+            DestinoNotificacao::Staff(id_de(&staff.0)),
+        )
+        .await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+/// Remove todas as notificações do usuário staff.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/notificacoes",
+    tag = "Notificações",
+    responses(
+        (status = 200, description = "notificações removidas"),
+    ),
+    security(("bearer_auth" = [])),
+)]
+#[delete("/notificacoes")]
+pub async fn limpar_todas_staff(
+    state: web::Data<AppState>,
+    staff: AuthStaff,
+) -> Resposta<HttpResponse> {
+    let removidas = state
+        .notificacoes
+        .remover_todas(DestinoNotificacao::Staff(id_de(&staff.0)))
+        .await?;
+    Ok(HttpResponse::Ok().json(serde_json::json!({ "removidas": removidas })))
+}
+
 // ── Portal B2B ───────────────────────────────────────────────────────────────
 
 /// Inbox do contato do portal — paginado, não lidas primeiro.
@@ -222,4 +272,54 @@ pub async fn ler_todas_portal(
         .marcar_todas(DestinoNotificacao::Portal(Id::novo(portal.contato_id())))
         .await?;
     Ok(HttpResponse::Ok().json(serde_json::json!({ "atualizadas": atualizadas })))
+}
+
+/// Remove uma notificação do contato do portal.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/portal/notificacoes/{id}",
+    tag = "Portal B2B",
+    params(("id" = i64, Path)),
+    responses(
+        (status = 204, description = "notificação removida"),
+        (status = 404, description = "notificação não encontrada"),
+    ),
+    security(("bearer_auth" = [])),
+)]
+#[delete("/portal/notificacoes/{id}")]
+pub async fn remover_portal(
+    state: web::Data<AppState>,
+    portal: AuthPortal,
+    id: web::Path<i64>,
+) -> Resposta<HttpResponse> {
+    state
+        .notificacoes
+        .remover(
+            Id::novo(id.into_inner()),
+            DestinoNotificacao::Portal(Id::novo(portal.contato_id())),
+        )
+        .await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+/// Remove todas as notificações do contato do portal.
+#[utoipa::path(
+    delete,
+    path = "/api/v1/portal/notificacoes",
+    tag = "Portal B2B",
+    responses(
+        (status = 200, description = "notificações removidas"),
+    ),
+    security(("bearer_auth" = [])),
+)]
+#[delete("/portal/notificacoes")]
+pub async fn limpar_todas_portal(
+    state: web::Data<AppState>,
+    portal: AuthPortal,
+) -> Resposta<HttpResponse> {
+    let removidas = state
+        .notificacoes
+        .remover_todas(DestinoNotificacao::Portal(Id::novo(portal.contato_id())))
+        .await?;
+    Ok(HttpResponse::Ok().json(serde_json::json!({ "removidas": removidas })))
 }

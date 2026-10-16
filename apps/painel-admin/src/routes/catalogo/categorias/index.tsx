@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ImagePlus, Loader2, Plus, RefreshCw, X } from "lucide-react";
+import { ImagePlus, Loader2, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -7,7 +7,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { exigePerfil } from "@/lib/guards";
-import { processarEEnviarImagem } from "@/lib/midia";
+import { processarEEnviarComPreset } from "@/lib/midia";
 import type { Categoria } from "@/lib/models";
 import { catalogoService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
@@ -26,6 +26,7 @@ function CategoriasPage() {
   const [editando, setEditando] = useState<Categoria | null>(null);
   const [enviandoImg, setEnviandoImg] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [excluindoId, setExcluindoId] = useState<number | null>(null);
 
   const [f, setF] = useState({
     nome: "",
@@ -53,9 +54,28 @@ function CategoriasPage() {
 
   useRealtimeEvent(["catalogo.categorias"], () => void carregar(true));
 
-  const raizes = todas.filter((c) => !c.categoria_pai_id).sort((a, b) => a.ordem - b.ordem);
+  const idsExistentes = new Set(todas.map((c) => c.id));
+  const raizes = todas
+    .filter((c) => !c.categoria_pai_id || !idsExistentes.has(c.categoria_pai_id))
+    .sort((a, b) => a.ordem - b.ordem);
   const filhos = (id: number) =>
     todas.filter((c) => c.categoria_pai_id === id).sort((a, b) => a.ordem - b.ordem);
+
+  const excluir = async (c: Categoria) => {
+    if (excluindoId !== null) return;
+    if (!window.confirm(`Deseja realmente excluir a categoria "${c.nome}"?`)) return;
+    setExcluindoId(c.id);
+    try {
+      await catalogoService.excluirCategoria(c.id);
+      if (editando?.id === c.id) setOpen(false);
+      void carregar(true);
+      toast.success(`Categoria "${c.nome}" excluída.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao excluir categoria.");
+    } finally {
+      setExcluindoId(null);
+    }
+  };
 
   const abrir = (c?: Categoria, paiId?: number) => {
     setEditando(c ?? null);
@@ -75,9 +95,9 @@ function CategoriasPage() {
     if (!file) return;
     setEnviandoImg(true);
     try {
-      const url = await processarEEnviarImagem(file, 900, 0.85);
+      const url = await processarEEnviarComPreset(file, "categoria");
       setF((p) => ({ ...p, imagem_url: url }));
-      toast.success("Imagem da categoria carregada.");
+      toast.success("Imagem da categoria auto-ajustada (800×480px) e carregada!");
     } catch {
       toast.error("Não foi possível processar a imagem.");
     } finally {
@@ -163,6 +183,19 @@ function CategoriasPage() {
               className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium hover:bg-secondary"
             >
               Editar
+            </button>
+            <button
+              type="button"
+              disabled={excluindoId === c.id}
+              onClick={() => void excluir(c)}
+              className="inline-flex items-center gap-1 rounded-full border border-[#D92546]/30 bg-card px-2.5 py-1 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10 disabled:opacity-50"
+            >
+              {excluindoId === c.id ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5" />
+              )}
+              Excluir
             </button>
           </div>
         </div>

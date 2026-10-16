@@ -33,8 +33,9 @@ export class RealtimeService implements OnDestroy {
 
   constructor() {
     effect(() => {
-      if (this.auth.autenticado()) void this.conectar();
-      else this.desconectar();
+      // Reconecta quando o estado de autenticação muda (alterna entre /events/publico e /events/portal)
+      this.auth.autenticado();
+      void this.conectar();
     });
   }
 
@@ -53,13 +54,15 @@ export class RealtimeService implements OnDestroy {
   private async conectar(): Promise<void> {
     this.desconectar();
     const token = this.auth.accessToken();
-    if (!token) return;
+    const endpoint = token ? 'events/portal' : 'events/publico';
+    const headers: Record<string, string> = { Accept: 'text/event-stream' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const ctrl = new AbortController();
     this.abort = ctrl;
     try {
-      const res = await fetch(`${environment.realtimeUrl}/events/portal`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: 'text/event-stream' },
+      const res = await fetch(`${environment.realtimeUrl}/${endpoint}`, {
+        headers,
         signal: ctrl.signal,
       });
       if (!res.ok || !res.body) throw new Error(`SSE ${res.status}`);
@@ -71,7 +74,7 @@ export class RealtimeService implements OnDestroy {
     } finally {
       this.conectado.set(false);
     }
-    if (!ctrl.signal.aborted && this.auth.autenticado()) {
+    if (!ctrl.signal.aborted) {
       this.timer = setTimeout(() => void this.conectar(), this.retryMs);
       this.retryMs = Math.min(this.retryMs * 2, RECONECTAR_MAX_MS);
     }

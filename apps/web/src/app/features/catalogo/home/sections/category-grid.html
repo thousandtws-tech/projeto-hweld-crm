@@ -32,9 +32,14 @@
   <!-- Carrossel Swiper com Banners das Categorias (Apenas Imagem) -->
   <div #catSwiperRef class="swiper cat-swiper">
     <div class="swiper-wrapper">
-      @for (c of categorias; track c.id) {
+      @for (c of categorias(); track c.id) {
         <div class="swiper-slide cat-slide">
-          <a [routerLink]="c.link" class="cat-banner-card" [title]="c.nome">
+          <a
+            [routerLink]="c.link"
+            class="cat-banner-card"
+            [class.cat-cadastrada]="c.cadastrada"
+            [title]="c.nome"
+          >
             <img [src]="c.imagem" [alt]="c.nome" class="cat-banner-img" loading="lazy" />
           </a>
         </div>

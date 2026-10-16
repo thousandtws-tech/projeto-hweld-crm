@@ -1298,6 +1298,23 @@ impl RepositorioOrcamentos for RepositorioOrcamentosPg {
 
         inserir_itens_orcamento_tx(&mut tx, orcamento.id, &input.itens).await?;
         tx.commit().await.map_err(erro_db(CTX_ORC))?;
+
+        // Automação CRM (pós-commit): ao criar orçamento vinculado a uma oportunidade em lead/qualificação,
+        // avança automaticamente a oportunidade para o estágio 'proposta' e atualiza valor_estimado.
+        if let Some(op_id) = input.oportunidade_id {
+            let _ = sqlx::query(
+                "UPDATE oportunidades \
+                 SET estagio = CASE WHEN estagio IN ('lead', 'qualificacao') THEN 'proposta' ELSE estagio END, \
+                     valor_estimado = $2, \
+                     updated_at = now() \
+                 WHERE id = $1",
+            )
+            .bind(op_id.valor())
+            .bind(totais.total.valor())
+            .execute(&self.pool)
+            .await;
+        }
+
         invalidar_listas();
         Ok(orcamento)
     }
@@ -1356,6 +1373,39 @@ impl RepositorioOrcamentos for RepositorioOrcamentosPg {
         .await
         .map_err(erro_db(CTX_ORC))?;
         let orcamento = map_orcamento(row)?;
+
+        // Automação CRM: sincroniza estágio da oportunidade conforme avanço do orçamento
+        if let Some(op_id) = orcamento.oportunidade_id {
+            match status.as_str() {
+                "enviado" | "em_analise" => {
+                    let _ = sqlx::query(
+                        "UPDATE oportunidades SET estagio = 'negociacao', updated_at = now() \
+                         WHERE id = $1 AND estagio NOT IN ('ganha', 'perdida')",
+                    )
+                    .bind(op_id.valor())
+                    .execute(&self.pool)
+                    .await;
+                }
+                "aprovado" | "convertido" => {
+                    let _ = sqlx::query(
+                        "UPDATE oportunidades SET estagio = 'ganha', motivo_perda = NULL, updated_at = now() WHERE id = $1",
+                    )
+                    .bind(op_id.valor())
+                    .execute(&self.pool)
+                    .await;
+                }
+                "rejeitado" => {
+                    let _ = sqlx::query(
+                        "UPDATE oportunidades SET estagio = 'perdida', motivo_perda = COALESCE(motivo_perda, 'Orçamento rejeitado pelo cliente'), updated_at = now() WHERE id = $1",
+                    )
+                    .bind(op_id.valor())
+                    .execute(&self.pool)
+                    .await;
+                }
+                _ => {}
+            }
+        }
+
         invalidar_listas();
         Ok(orcamento)
     }
@@ -1421,6 +1471,15 @@ impl RepositorioOrcamentos for RepositorioOrcamentosPg {
         .await
         .map_err(erro_db(CTX_ORC))?;
         tx.commit().await.map_err(erro_db(CTX_ORC))?;
+
+        let _ = sqlx::query(
+            "UPDATE oportunidades SET estagio = 'ganha', motivo_perda = NULL, updated_at = now() \
+             WHERE id = (SELECT oportunidade_id FROM orcamentos WHERE id = $1)",
+        )
+        .bind(orcamento_id.valor())
+        .execute(&self.pool)
+        .await;
+
         invalidar_listas();
         Ok(salvo)
     }

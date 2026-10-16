@@ -79,6 +79,25 @@ impl ServicoCategorias {
         Ok(atualizada)
     }
 
+    pub async fn remover(&self, id: Id<Categoria>) -> Resultado<Categoria> {
+        let existente = self.buscar(id).await?;
+        self.categorias.remover(id).await?;
+        self.realtime.publicar(EventoRealtime::novo(
+            "catalogo.categorias",
+            Audiencia::Todos,
+            serde_json::json!({ "id": id.valor(), "removida": true }),
+        ));
+        Ok(existente)
+    }
+
+    pub fn publicar_cms_atualizado(&self) {
+        self.realtime.publicar(EventoRealtime::novo(
+            "cms.atualizado",
+            Audiencia::Todos,
+            serde_json::json!({ "ts": Utc::now().timestamp_millis() }),
+        ));
+    }
+
     async fn garantir_pai(
         &self,
         pai: Option<Id<Categoria>>,
@@ -497,6 +516,7 @@ pub struct ItemCatalogoPortal {
     #[serde(flatten)]
     pub produto: ProdutoPortal,
     pub preco_efetivo: Dinheiro,
+    pub imagens: Vec<ProdutoImagem>,
 }
 
 /// PDP do portal — item precificado + galeria + disponibilidade binária
@@ -505,7 +525,6 @@ pub struct ItemCatalogoPortal {
 pub struct ProdutoDetalhePortal {
     #[serde(flatten)]
     pub item: ItemCatalogoPortal,
-    pub imagens: Vec<ProdutoImagem>,
     pub disponivel: bool,
 }
 
@@ -531,11 +550,14 @@ impl ServicoCatalogoPortal {
         }
     }
 
-    /// Tabela de preço vigente da empresa (None = preço de venda padrão).
+    /// Tabela de preço vigente da empresa (None = visitante público ou preço de venda padrão).
     async fn tabela_da_empresa(
         &self,
-        empresa_id: Id<Empresa>,
+        empresa_id: Option<Id<Empresa>>,
     ) -> Resultado<Option<(TabelaPreco, Vec<TabelaPrecoItem>)>> {
+        let Some(empresa_id) = empresa_id else {
+            return Ok(None);
+        };
         let empresa = self
             .empresas
             .buscar_por_id(empresa_id)
@@ -551,6 +573,7 @@ impl ServicoCatalogoPortal {
     fn item_com_preco(
         produto: Produto,
         tabela: &Option<(TabelaPreco, Vec<TabelaPrecoItem>)>,
+        imagens: Vec<ProdutoImagem>,
     ) -> ItemCatalogoPortal {
         let item = tabela
             .as_ref()
@@ -558,12 +581,13 @@ impl ServicoCatalogoPortal {
         ItemCatalogoPortal {
             preco_efetivo: preco_efetivo(&produto, tabela.as_ref().map(|(t, _)| t), item),
             produto: produto.into(),
+            imagens,
         }
     }
 
     pub async fn catalogo(
         &self,
-        empresa_id: Id<Empresa>,
+        empresa_id: Option<Id<Empresa>>,
         paginacao: Paginacao,
         filtro: FiltroProdutos,
     ) -> Resultado<Pagina<ItemCatalogoPortal>> {
@@ -578,10 +602,20 @@ impl ServicoCatalogoPortal {
                 },
             )
             .await?;
+        let ids: Vec<Id<Produto>> = pagina.itens.iter().map(|p| p.id).collect();
+        let todas_imagens = self.produtos.listar_imagens_por_produtos(&ids).await?;
+        let mut mapa_imagens: std::collections::HashMap<Id<Produto>, Vec<ProdutoImagem>> =
+            std::collections::HashMap::new();
+        for img in todas_imagens {
+            mapa_imagens.entry(img.produto_id).or_default().push(img);
+        }
         let itens = pagina
             .itens
             .into_iter()
-            .map(|p| Self::item_com_preco(p, &tabela))
+            .map(|p| {
+                let imgs = mapa_imagens.remove(&p.id).unwrap_or_default();
+                Self::item_com_preco(p, &tabela, imgs)
+            })
             .collect();
 
         Ok(Pagina::nova(itens, pagina.total, paginacao))
@@ -592,7 +626,7 @@ impl ServicoCatalogoPortal {
     /// 404 para inexistente, inativo ou deletado — sem distinguir o caso.
     pub async fn produto(
         &self,
-        empresa_id: Id<Empresa>,
+        empresa_id: Option<Id<Empresa>>,
         referencia: &str,
     ) -> Resultado<ProdutoDetalhePortal> {
         let prefixo = referencia.split('-').next().unwrap_or("");
@@ -611,11 +645,7 @@ impl ServicoCatalogoPortal {
         } else {
             true
         };
-        let item = Self::item_com_preco(produto, &tabela);
-        Ok(ProdutoDetalhePortal {
-            item,
-            imagens,
-            disponivel,
-        })
+        let item = Self::item_com_preco(produto, &tabela, imagens);
+        Ok(ProdutoDetalhePortal { item, disponivel })
     }
 }

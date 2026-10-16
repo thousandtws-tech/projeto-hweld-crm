@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use hweld_domain::catalogo::preco::preco_efetivo;
@@ -14,10 +15,25 @@ use crate::ports::catalogo::{RepositorioProdutos, RepositorioTabelasPreco};
 use crate::ports::vendas::{DonoCarrinho, RepositorioCarrinhos};
 
 #[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
+pub struct ResumoProdutoCarrinho {
+    pub nome: String,
+    pub sku: String,
+    pub slug: String,
+    pub imagem_url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
+pub struct CarrinhoItemDetalhe {
+    #[serde(flatten)]
+    pub item: CarrinhoItem,
+    pub produto: Option<ResumoProdutoCarrinho>,
+}
+
+#[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct CarrinhoDetalhe {
     #[serde(flatten)]
     pub carrinho: Carrinho,
-    pub itens: Vec<CarrinhoItem>,
+    pub itens: Vec<CarrinhoItemDetalhe>,
     pub total: Dinheiro,
 }
 
@@ -41,13 +57,72 @@ impl ServicoCarrinho {
     }
 
     async fn hidratar(&self, carrinho: Carrinho) -> Resultado<CarrinhoDetalhe> {
-        let itens = self.carrinhos.itens(carrinho.id).await?;
-        let total = total_carrinho(&itens);
+        let itens_crus = self.carrinhos.itens(carrinho.id).await?;
+        let total = total_carrinho(&itens_crus);
+        let ids: Vec<Id<Produto>> = itens_crus.iter().map(|i| i.produto_id).collect();
+        let produtos_lista = self.produtos.buscar_por_ids(&ids).await.unwrap_or_default();
+        let imagens_lista = self
+            .produtos
+            .listar_imagens_por_produtos(&ids)
+            .await
+            .unwrap_or_default();
+
+        let mapa_prod: HashMap<Id<Produto>, Produto> =
+            produtos_lista.into_iter().map(|p| (p.id, p)).collect();
+        let mut mapa_img: HashMap<Id<Produto>, String> = HashMap::new();
+        for img in imagens_lista {
+            mapa_img.entry(img.produto_id).or_insert(img.url);
+        }
+
+        let itens = itens_crus
+            .into_iter()
+            .map(|item| {
+                let prod = mapa_prod.get(&item.produto_id).map(|p| ResumoProdutoCarrinho {
+                    nome: p.nome.clone(),
+                    sku: p.sku.clone(),
+                    slug: p.slug.clone(),
+                    imagem_url: mapa_img.get(&p.id).cloned(),
+                });
+                CarrinhoItemDetalhe {
+                    item,
+                    produto: prod,
+                }
+            })
+            .collect();
+
         Ok(CarrinhoDetalhe {
             carrinho,
             itens,
             total,
         })
+    }
+
+    /// Mescla itens de um carrinho de convidado (`session_id`) no carrinho do contato ao logar.
+    pub async fn mesclar_convidado(
+        &self,
+        session_id: &str,
+        dono_contato: &DonoCarrinho,
+    ) -> Resultado<()> {
+        if session_id.is_empty() {
+            return Ok(());
+        }
+        let dono_guest = DonoCarrinho::Convidado {
+            session_id: session_id.to_string(),
+        };
+        let Ok(c_guest) = self.carrinhos.obter_ou_criar(&dono_guest).await else {
+            return Ok(());
+        };
+        let itens_guest = self.carrinhos.itens(c_guest.id).await.unwrap_or_default();
+        if itens_guest.is_empty() {
+            return Ok(());
+        }
+        for i in itens_guest {
+            let _ = self
+                .adicionar_item(dono_contato, i.produto_id, i.quantidade.valor())
+                .await;
+            let _ = self.carrinhos.remover_item(c_guest.id, i.produto_id).await;
+        }
+        Ok(())
     }
 
     pub async fn atual(&self, dono: &DonoCarrinho) -> Resultado<CarrinhoDetalhe> {

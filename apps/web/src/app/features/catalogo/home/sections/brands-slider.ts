@@ -1,7 +1,17 @@
-import { Component, ElementRef, OnDestroy, ViewChild, afterNextRender } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  afterNextRender,
+  effect,
+  inject,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import Swiper from 'swiper';
 import { Autoplay, Navigation, A11y } from 'swiper/modules';
+import { CmsStore } from '../../../../core/cms.store';
 
 @Component({
   selector: 'hw-brands-slider',
@@ -9,82 +19,31 @@ import { Autoplay, Navigation, A11y } from 'swiper/modules';
   templateUrl: './brands-slider.html',
   styleUrl: './brands-slider.scss',
 })
-export class HwBrandsSlider implements OnDestroy {
+export class HwBrandsSlider implements OnInit, OnDestroy {
   @ViewChild('brandsSwiperRef') brandsSwiperRef?: ElementRef<HTMLElement>;
   private swiperInstance: Swiper | null = null;
+  readonly cms = inject(CmsStore);
 
-  readonly marcas = [
-    {
-      id: 'black-decker',
-      nome: 'BLACK+DECKER',
-      logo: 'assets/brands/black-decker.png',
-    },
-    {
-      id: 'garthen',
-      nome: 'Garthen',
-      logo: 'assets/brands/garthen.png',
-    },
-    {
-      id: 'motomil',
-      nome: 'MOTOMIL',
-      logo: 'assets/brands/motomil.png',
-    },
-    {
-      id: 'pressure',
-      nome: 'Pressure',
-      logo: 'assets/brands/pressure.png',
-    },
-    {
-      id: 'paletrans',
-      nome: 'Paletrans',
-      logo: 'assets/brands/paletrans.png',
-    },
-    {
-      id: 'esab',
-      nome: 'ESAB',
-      logo: 'assets/brands/esab.svg',
-    },
-    {
-      id: 'miller',
-      nome: 'Miller Electric',
-      logo: 'assets/brands/miller.svg',
-    },
-    {
-      id: 'lincoln',
-      nome: 'Lincoln Electric',
-      logo: 'assets/brands/lincoln-electric.svg',
-    },
-    {
-      id: 'boxer',
-      nome: 'Boxer Soldas',
-      logo: 'assets/brands/boxer.svg',
-    },
-    {
-      id: 'balmer',
-      nome: 'Balmer',
-      logo: 'assets/brands/balmer.svg',
-    },
-    {
-      id: 'bambozzi',
-      nome: 'Bambozzi',
-      logo: 'assets/brands/bambozzi.svg',
-    },
-    {
-      id: 'norton',
-      nome: 'Norton Abrasivos',
-      logo: 'assets/brands/norton.svg',
-    },
-    {
-      id: 'carbografite',
-      nome: 'Carbografite',
-      logo: 'assets/brands/carbografite.svg',
-    },
-  ];
+  readonly marcas = this.cms.marcas;
 
   constructor() {
     afterNextRender(() => {
       this.initSwiper();
     });
+    effect(() => {
+      this.marcas();
+      setTimeout(() => {
+        if (this.swiperInstance) {
+          this.swiperInstance.destroy(true, true);
+          this.swiperInstance = null;
+        }
+        this.initSwiper();
+      }, 0);
+    });
+  }
+
+  ngOnInit(): void {
+    this.cms.carregar();
   }
 
   ngOnDestroy(): void {

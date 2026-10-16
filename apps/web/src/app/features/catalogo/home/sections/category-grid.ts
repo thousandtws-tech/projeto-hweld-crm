@@ -1,7 +1,27 @@
-import { Component, ElementRef, OnDestroy, ViewChild, afterNextRender } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  afterNextRender,
+  computed,
+  effect,
+  inject,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import Swiper from 'swiper';
 import { Autoplay, Navigation, A11y } from 'swiper/modules';
+import { CategoriasStore } from '../../../../core/categorias.store';
+
+export interface ItemCategoriaVitrine {
+  id: string;
+  nome: string;
+  descricao?: string | null;
+  link: string;
+  imagem: string;
+  cadastrada?: boolean;
+}
 
 /** Slider Contínuo Automático de Categorias Populares (Padrão E-commerce Swiper) */
 @Component({
@@ -10,11 +30,12 @@ import { Autoplay, Navigation, A11y } from 'swiper/modules';
   templateUrl: './category-grid.html',
   styleUrl: './category-grid.scss',
 })
-export class HwCategoryGrid implements OnDestroy {
+export class HwCategoryGrid implements OnInit, OnDestroy {
   @ViewChild('catSwiperRef') catSwiperRef?: ElementRef<HTMLElement>;
   private swiperInstance: Swiper | null = null;
+  private categoriasStore = inject(CategoriasStore);
 
-  readonly categorias = [
+  private readonly categoriasPadrao: ItemCategoriaVitrine[] = [
     {
       id: 'maquinas',
       nome: 'Máquinas de Solda',
@@ -71,40 +92,51 @@ export class HwCategoryGrid implements OnDestroy {
       imagem:
         'https://images.unsplash.com/photo-1618090584176-7132b9911657?auto=format&fit=crop&w=800&q=80',
     },
-    {
-      id: 'seguranca',
-      nome: 'Segurança do Trabalho',
-      link: '/busca?q=seguranca',
-      imagem:
-        'https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      id: 'automacao',
-      nome: 'Automação & Robótica',
-      link: '/busca?q=automacao',
-      imagem:
-        'https://images.unsplash.com/photo-1581092162384-8987c1d64718?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      id: 'estruturas',
-      nome: 'Caldeiraria & Estruturas',
-      link: '/busca?q=solda',
-      imagem:
-        'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      id: 'oficina',
-      nome: 'Usinagem & Fixação',
-      link: '/busca?q=usinagem',
-      imagem:
-        'https://images.unsplash.com/photo-1581093588401-fbb62a02f120?auto=format&fit=crop&w=800&q=80',
-    },
   ];
+
+  /**
+   * Algoritmo de vitrine de categorias:
+   * Se houver categorias reais cadastradas no admin com imagem, exibe apenas elas.
+   * Caso contrário, exibe as categorias industriais padrão como fallback.
+   */
+  readonly categorias = computed<ItemCategoriaVitrine[]>(() => {
+    const reaisComImg: ItemCategoriaVitrine[] = [...this.categoriasStore.categorias()]
+      .filter((c) => Boolean(c.imagem_url?.trim()))
+      .sort(
+        (a, b) =>
+          Number(Boolean(a.categoria_pai_id)) - Number(Boolean(b.categoria_pai_id)) ||
+          a.ordem - b.ordem ||
+          a.id - b.id,
+      )
+      .map((c) => ({
+        id: `cat-${c.id}`,
+        nome: c.nome,
+        descricao: c.descricao,
+        link: `/c/${c.id}-${c.slug}`,
+        imagem: c.imagem_url!,
+        cadastrada: true,
+      }));
+    return reaisComImg.length > 0 ? reaisComImg : this.categoriasPadrao;
+  });
 
   constructor() {
     afterNextRender(() => {
       this.initSwiper();
     });
+    effect(() => {
+      this.categorias();
+      setTimeout(() => {
+        if (this.swiperInstance) {
+          this.swiperInstance.destroy(true, true);
+          this.swiperInstance = null;
+        }
+        this.initSwiper();
+      }, 0);
+    });
+  }
+
+  ngOnInit(): void {
+    this.categoriasStore.carregar();
   }
 
   ngOnDestroy(): void {

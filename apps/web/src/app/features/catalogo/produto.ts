@@ -1,10 +1,21 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CatalogoService, CarrinhoService, ContaService } from '../../core/servicos';
+import { AuthStore } from '../../core/auth/auth.store';
 import { CategoriasStore } from '../../core/categorias.store';
+import { RealtimeService } from '../../core/realtime';
 import { Endereco, ItemCatalogoPortal, ProdutoPortal } from '../../core/models';
 import { QtyPipe } from '../../core/pipes';
 import { HwButton } from '../../shared/ui/button';
@@ -42,8 +53,10 @@ export class ProdutoPage implements OnInit, OnDestroy {
   private catalogo = inject(CatalogoService);
   private carrinho = inject(CarrinhoService);
   private conta = inject(ContaService);
+  private auth = inject(AuthStore);
   private categorias = inject(CategoriasStore);
   private toast = inject(ToastService);
+  private rt = inject(RealtimeService);
 
   produto = signal<ProdutoPortal | null>(null);
 
@@ -58,6 +71,7 @@ export class ProdutoPage implements OnInit, OnDestroy {
   adicionando = signal(false);
   qtd = signal(1);
   imgAtiva = signal<ProdutoPortal['imagens'][number] | null>(null);
+  imgsFalhadas = signal<Set<number>>(new Set());
   relacionados = signal<ItemCatalogoPortal[]>([]);
   mesmaMarca = signal<ItemCatalogoPortal[]>([]);
   destaques = signal<ItemCatalogoPortal[]>([]);
@@ -66,6 +80,27 @@ export class ProdutoPage implements OnInit, OnDestroy {
   zoom = signal<{ x: number; y: number } | null>(null);
   private copiadoTimer?: ReturnType<typeof setTimeout>;
 
+  /** Galeria ordenada (capa principal primeiro, depois ordem) e filtrada contra URLs quebradas. */
+  imagensGaleria = computed(() => {
+    const p = this.produto();
+    if (!p?.imagens?.length) return [];
+    const falhas = this.imgsFalhadas();
+    return [...p.imagens]
+      .filter((i) => Boolean(i.url?.trim()) && !falhas.has(i.id))
+      .sort(
+        (a, b) =>
+          Number(b.is_principal) - Number(a.is_principal) || a.ordem - b.ordem || a.id - b.id,
+      );
+  });
+
+  indiceImgAtiva = computed(() => {
+    const lista = this.imagensGaleria();
+    const ativa = this.imgAtiva();
+    if (!ativa || lista.length === 0) return 0;
+    const idx = lista.findIndex((i) => i.id === ativa.id);
+    return idx >= 0 ? idx : 0;
+  });
+
   /** Subtotal dinâmico (preço da tabela × quantidade) — display only. */
   subtotal = computed(() => {
     const p = this.produto();
@@ -73,16 +108,91 @@ export class ProdutoPage implements OnInit, OnDestroy {
     return (Number(p.preco_efetivo) * this.qtd()).toFixed(2);
   });
 
-  setQtd = (v: number) => this.qtd.set(v);
+  /** Preço unitário com condição à vista no PIX (5% de desconto corporativo). */
+  precoPix = computed(() => {
+    const p = this.produto();
+    if (!p) return null;
+    return (Number(p.preco_efetivo) * 0.95).toFixed(2);
+  });
+
+  /** Percentual de desconto da tabela PJ em relação ao preço de lista padrão. */
+  descontoTabelaPct = computed(() => {
+    const p = this.produto();
+    if (!p) return 0;
+    const venda = Number(p.preco_venda);
+    const efetivo = Number(p.preco_efetivo);
+    if (!venda || efetivo >= venda) return 0;
+    return Math.round(((venda - efetivo) / venda) * 100);
+  });
+
+  setQtd = (v: number) => this.qtd.set(Math.max(1, v));
+
+  somarLote(delta: number): void {
+    this.qtd.update((atual) => Math.max(1, Number((atual + delta).toFixed(3))));
+  }
+
+  anteriorImg(e?: Event): void {
+    e?.stopPropagation();
+    const lista = this.imagensGaleria();
+    if (lista.length <= 1) return;
+    const novoIdx = (this.indiceImgAtiva() - 1 + lista.length) % lista.length;
+    this.imgAtiva.set(lista[novoIdx]);
+  }
+
+  proximaImg(e?: Event): void {
+    e?.stopPropagation();
+    const lista = this.imagensGaleria();
+    if (lista.length <= 1) return;
+    const novoIdx = (this.indiceImgAtiva() + 1) % lista.length;
+    this.imgAtiva.set(lista[novoIdx]);
+  }
+
+  aoFalharImg(imgId: number): void {
+    this.imgsFalhadas.update((setAtual) => {
+      const novo = new Set(setAtual);
+      novo.add(imgId);
+      return novo;
+    });
+    const restantes = this.imagensGaleria();
+    if (this.imgAtiva()?.id === imgId) {
+      this.imgAtiva.set(restantes[0] ?? null);
+    }
+  }
+
+  constructor() {
+    // Preço, ficha e disponibilidade sobem ao vivo: reconcilia quando o evento
+    // é do produto em tela (catalogo.produtos, catalogo.precos ou estoque.movimentado).
+    effect(() => {
+      const e = this.rt.ultimo();
+      const p = untracked(this.produto);
+      if (!e || !p) return;
+      const alvo =
+        e.tipo === 'catalogo.precos' || e.tipo === 'estoque.movimentado'
+          ? Number(e.dados['produto_id'])
+          : Number(e.dados['id']);
+      if (
+        (e.tipo === 'catalogo.produtos' ||
+          e.tipo === 'catalogo.precos' ||
+          e.tipo === 'estoque.movimentado') &&
+        alvo === p.id
+      ) {
+        this.recarregarProduto(p.id);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.categorias.carregar();
-    this.conta
-      .enderecos()
-      .then((ends) =>
-        this.entrega.set(ends.find((e) => e.tipo === 'entrega') ?? ends.find((e) => e.principal) ?? null),
-      )
-      .catch(() => {});
+    if (this.auth.autenticado()) {
+      this.conta
+        .enderecos()
+        .then((ends) =>
+          this.entrega.set(
+            ends.find((e) => e.tipo === 'entrega') ?? ends.find((e) => e.principal) ?? null,
+          ),
+        )
+        .catch(() => {});
+    }
     this.route.paramMap.subscribe((params) => {
       const idSlug = params.get('idslug') ?? '';
       const id = Number(idSlug.split('-')[0]);
@@ -95,6 +205,7 @@ export class ProdutoPage implements OnInit, OnDestroy {
       // e volta ao topo — sem isso galeria/quantidade vazam entre PDPs.
       this.produto.set(null);
       this.imgAtiva.set(null);
+      this.imgsFalhadas.set(new Set());
       this.relacionados.set([]);
       this.mesmaMarca.set([]);
       this.destaques.set([]);
@@ -107,7 +218,8 @@ export class ProdutoPage implements OnInit, OnDestroy {
         .produto(id)
         .then((p) => {
           this.produto.set(p);
-          this.imgAtiva.set(p.imagens.find((i) => i.is_principal) ?? p.imagens[0] ?? null);
+          const galeria = this.imagensGaleria();
+          this.imgAtiva.set(galeria[0] ?? null);
           this.carregarRelacionados(p);
         })
         .catch(() => this.erro.set(true))
@@ -119,42 +231,61 @@ export class ProdutoPage implements OnInit, OnDestroy {
     if (this.copiadoTimer) clearTimeout(this.copiadoTimer);
   }
 
-  /** Cross-sell estilo ML — rails paralelos. Categoria com poucos itens é
-   *  completada com o restante do catálogo (nunca rail quase vazia). */
-  private carregarRelacionados(p: ProdutoPortal): void {
+  /** Refetch silencioso do produto em tela (preço, ficha, imagens) — sem
+   *  skeleton e sem tocar nos rails de cross-sell. */
+  private recarregarProduto(id: number): void {
     this.catalogo
-      .listar({ categoria_id: p.categoria_id, por_pagina: 13 })
-      .then(async (pagina) => {
-        let itens = pagina.itens.filter((i) => i.id !== p.id);
-        // Categoria esparsa → completa com o catálogo geral (dedup por id).
-        if (itens.length < 8) {
-          const geral = await this.catalogo
-            .listar({ por_pagina: 25 })
-            .catch(() => ({ itens: [] as ItemCatalogoPortal[], total: 0, pagina: 1, por_pagina: 25 }));
-          const ids = new Set(itens.map((i) => i.id).concat(p.id));
-          itens = itens.concat(geral.itens.filter((i) => !ids.has(i.id)));
-        }
-        this.relacionados.set(itens.slice(0, 12));
+      .produto(id)
+      .then((p) => {
+        this.produto.set(p);
+        const galeria = this.imagensGaleria();
+        const atual = this.imgAtiva();
+        this.imgAtiva.set(
+          (atual && galeria.find((i) => i.id === atual.id)) ?? galeria[0] ?? null,
+        );
       })
       .catch(() => {});
+  }
 
-    if (p.marca) {
-      const marca = p.marca;
-      this.catalogo
-        .listar({ busca: marca, por_pagina: 10 })
-        .then((pagina) =>
-          this.mesmaMarca.set(
-            pagina.itens.filter((i) => i.id !== p.id && i.marca === marca).slice(0, 8),
-          ),
-        )
-        .catch(() => {});
-    }
+  /**
+   * Algoritmo de Recomendação & Cross-Sell por Afinidade (Amazon / Mercado Livre):
+   * Pontua candidatos combinando imagem válida (+1000), mesma categoria (+400),
+   * mesma marca (+300), proximidade de faixa de preço (±40% -> +150) e destaque (+200).
+   */
+  private carregarRelacionados(p: ProdutoPortal): void {
+    const precoAlvo = Number(p.preco_efetivo) || 1;
+    const scoreAfinidade = (c: ItemCatalogoPortal): number => {
+      let s = 0;
+      if (c.imagens?.some((i) => Boolean(i.url?.trim()))) s += 1000;
+      if (c.categoria_id === p.categoria_id) s += 400;
+      if (p.marca && c.marca && c.marca.toLowerCase() === p.marca.toLowerCase()) s += 300;
+      const ratio = Number(c.preco_efetivo) / precoAlvo;
+      if (ratio >= 0.6 && ratio <= 1.4) s += 150;
+      if (c.destaque) s += 200;
+      return s;
+    };
 
     this.catalogo
-      .listar({ destaque: true, por_pagina: 13 })
-      .then((pagina) =>
-        this.destaques.set(pagina.itens.filter((i) => i.id !== p.id).slice(0, 12)),
-      )
+      .listar({ por_pagina: 50, pagina: 1 })
+      .then((pagina) => {
+        const candidatos = pagina.itens
+          .filter((i) => i.id !== p.id)
+          .sort((a, b) => scoreAfinidade(b) - scoreAfinidade(a) || b.id - a.id);
+
+        this.relacionados.set(candidatos.slice(0, 12));
+
+        if (p.marca) {
+          const marcaLower = p.marca.toLowerCase();
+          this.mesmaMarca.set(
+            candidatos.filter((i) => i.marca?.toLowerCase() === marcaLower).slice(0, 8),
+          );
+        }
+
+        const destaquesPool = candidatos.filter((i) => i.destaque);
+        this.destaques.set(
+          (destaquesPool.length >= 2 ? destaquesPool : candidatos).slice(0, 12),
+        );
+      })
       .catch(() => {});
   }
 

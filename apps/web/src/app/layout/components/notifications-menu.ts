@@ -1,14 +1,14 @@
-import { Component, inject } from '@angular/core';
+import { Component, ViewChild, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthStore } from '../../core/auth/auth.store';
 import { NotificacoesService } from '../../core/notificacoes';
 import { Notificacao } from '../../core/models';
 import { HumanizeNotifPipe } from '../../core/pipes';
 
-/** Sino de notificações do cabeçalho com lista em `mat-menu`. */
+/** Sino de notificações do cabeçalho com Inbox Zero + Modal de Detalhes. */
 @Component({
   selector: 'hw-notifications-menu',
   imports: [RouterLink, MatMenuModule, MatTooltipModule, DatePipe, HumanizeNotifPipe],
@@ -16,11 +16,17 @@ import { HumanizeNotifPipe } from '../../core/pipes';
   styleUrl: './notifications-menu.scss',
 })
 export class HwNotificationsMenu {
+  @ViewChild(MatMenuTrigger) menuTrigger?: MatMenuTrigger;
   readonly auth = inject(AuthStore);
   readonly notifs = inject(NotificacoesService);
 
   abrirNotif(n: Notificacao): void {
+    this.menuTrigger?.closeMenu();
     void this.notifs.abrir(n);
+  }
+
+  dispensarNotif(id: number, e: Event): void {
+    void this.notifs.dispensar(id, e);
   }
 
   getIconeNotif(n: Notificacao): string {

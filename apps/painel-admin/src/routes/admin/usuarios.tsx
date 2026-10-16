@@ -8,6 +8,7 @@ import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialo
 import type { Usuario } from "@/lib/models";
 import { usuariosService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
+import { useRealtimeEvent } from "@/lib/use-realtime";
 
 export const Route = createFileRoute("/admin/usuarios")({
   beforeLoad: exigePerfil("admin"),
@@ -26,6 +27,12 @@ function UsuariosPage() {
   }, []);
 
   useEffect(() => carregar(), [carregar]);
+
+  // Outro admin mexeu em usuários → lista reconcilia sem refresh.
+  useRealtimeEvent(
+    (t) => t.startsWith("usuario."),
+    () => carregar(),
+  );
 
   const abrir = (u?: Usuario) => {
     setEditando(u ?? null);

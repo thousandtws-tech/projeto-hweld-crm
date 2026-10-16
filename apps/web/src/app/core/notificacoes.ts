@@ -53,7 +53,9 @@ export class NotificacoesService {
       ]);
       this.naoLidas.set(count.total);
       const vistos = new Set<number>();
-      this.itens.set(pagina.itens.filter((n) => !vistos.has(n.id) && vistos.add(n.id)));
+      this.itens.set(
+        pagina.itens.filter((n) => !n.lida_em && !vistos.has(n.id) && vistos.add(n.id)),
+      );
     } catch {
       /* sem badge melhor que badge errado — mantém o último estado */
     } finally {
@@ -61,27 +63,36 @@ export class NotificacoesService {
     }
   }
 
-  /** Clica numa notificação: marca lida e navega para o alvo interno. */
+  /**
+   * Clicar na notificação: marca como lida, remove automaticamente da lista
+   * e navega direto para o destino (ex.: página do pedido).
+   */
   async abrir(n: Notificacao): Promise<void> {
-    if (!n.lida_em) {
-      await firstValueFrom(this.http.post(`${api}/portal/notificacoes/${n.id}/lida`, {})).catch(
-        () => {},
-      );
-      this.naoLidas.update((v) => Math.max(0, v - 1));
-      this.itens.update((l) =>
-        l.map((x) => (x.id === n.id ? { ...x, lida_em: new Date().toISOString() } : x)),
-      );
+    void this.dispensar(n.id);
+    if (n.link?.startsWith('/')) {
+      void this.router.navigateByUrl(n.link);
     }
-    if (n.link?.startsWith('/')) void this.router.navigateByUrl(n.link);
   }
 
-  async marcarTodas(): Promise<void> {
-    await firstValueFrom(this.http.post(`${api}/portal/notificacoes/ler-todas`, {})).catch(
+  /** Marca como lida e remove imediatamente da lista do sino (sem navegar). */
+  async dispensar(id: number, event?: Event): Promise<void> {
+    event?.stopPropagation();
+    const alvo = this.itens().find((x) => x.id === id);
+    this.itens.update((l) => l.filter((x) => x.id !== id));
+    if (alvo && !alvo.lida_em) {
+      this.naoLidas.update((v) => Math.max(0, v - 1));
+    }
+    await firstValueFrom(this.http.post(`${api}/portal/notificacoes/${id}/lida`, {})).catch(
       () => {},
     );
+  }
+
+  /** Marca todas como lidas e remove todas da lista automaticamente. */
+  async marcarTodas(): Promise<void> {
     this.naoLidas.set(0);
-    this.itens.update((l) =>
-      l.map((x) => ({ ...x, lida_em: x.lida_em ?? new Date().toISOString() })),
+    this.itens.set([]);
+    await firstValueFrom(this.http.post(`${api}/portal/notificacoes/ler-todas`, {})).catch(
+      () => {},
     );
   }
 }

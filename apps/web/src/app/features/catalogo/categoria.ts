@@ -1,8 +1,9 @@
-import { Component, OnInit, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CatalogoService } from '../../core/servicos';
+import { CategoriasStore } from '../../core/categorias.store';
 import { RealtimeService } from '../../core/realtime';
-import { ItemCatalogoPortal, Pagina } from '../../core/models';
+import { Categoria, ItemCatalogoPortal, Pagina } from '../../core/models';
 import { HwProductCard } from '../../shared/ui/product-card';
 import { HwEmpty } from '../../shared/ui/empty';
 import { HwSkeleton } from '../../shared/ui/skeleton';
@@ -16,34 +17,59 @@ import { HwSkeleton } from '../../shared/ui/skeleton';
 export class CategoriaPage implements OnInit {
   private route = inject(ActivatedRoute);
   private catalogo = inject(CatalogoService);
+  private categoriasStore = inject(CategoriasStore);
   private rt = inject(RealtimeService);
   pagina = signal<Pagina<ItemCatalogoPortal> | null>(null);
   carregando = signal(true);
-  nome = signal('');
-  private categoriaId = 0;
+  private slugFallback = signal('');
+  private categoriaIdSig = signal(0);
+
+  readonly categoriaAtual = computed<Categoria | null>(
+    () => this.categoriasStore.categorias().find((c) => c.id === this.categoriaIdSig()) ?? null,
+  );
+
+  readonly categoriaPai = computed<Categoria | null>(() => {
+    const paiId = this.categoriaAtual()?.categoria_pai_id;
+    if (!paiId) return null;
+    return this.categoriasStore.categorias().find((c) => c.id === paiId) ?? null;
+  });
+
+  readonly subcategorias = computed<Categoria[]>(() =>
+    this.categoriasStore.filhasDe(this.categoriaIdSig()),
+  );
+
+  readonly nome = computed(() => this.categoriaAtual()?.nome || this.slugFallback());
 
   constructor() {
     effect(() => {
       const e = this.rt.ultimo();
-      if (e?.tipo.startsWith('catalogo.')) this.ir(this.pagina()?.pagina ?? 1);
+      if (e?.tipo.startsWith('catalogo.')) {
+        untracked(() => this.ir(this.pagina()?.pagina ?? 1, true));
+      }
     });
   }
 
   ngOnInit(): void {
+    this.categoriasStore.carregar();
     this.route.paramMap.subscribe((params) => {
       const idSlug = params.get('idslug') ?? '';
-      this.categoriaId = Number(idSlug.split('-')[0]);
-      this.nome.set(idSlug.split('-').slice(1).join(' '));
-      this.ir(1);
+      const id = Number(idSlug.split('-')[0]);
+      this.categoriaIdSig.set(Number.isFinite(id) ? id : 0);
+      this.slugFallback.set(idSlug.split('-').slice(1).join(' '));
+      this.ir(1, false);
     });
   }
 
-  ir(pagina: number): void {
-    this.carregando.set(true);
+  ir(pagina: number, silencioso = false): void {
+    if (!silencioso) {
+      this.carregando.set(true);
+    }
     this.catalogo
-      .listar({ categoria_id: this.categoriaId, pagina, por_pagina: 24 })
+      .listar({ categoria_id: this.categoriaIdSig(), pagina, por_pagina: 24 })
       .then((p) => this.pagina.set(p))
-      .catch(() => this.pagina.set(null))
+      .catch(() => {
+        if (!silencioso) this.pagina.set(null);
+      })
       .finally(() => this.carregando.set(false));
   }
 

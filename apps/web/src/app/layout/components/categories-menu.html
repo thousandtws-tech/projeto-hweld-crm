@@ -5,12 +5,7 @@
     [matMenuTriggerFor]="menuCategorias"
     aria-label="Abrir menu de categorias"
   >
-    <!-- Código antigo comentado -->
-    <!-- <span class="material-symbols-outlined" aria-hidden="true">grid_view</span> -->
-    <!-- Novo ícone de categorias com o link configurado -->
-    <a href="categorias.html">
-    <!-- <img src="#" alt="Categorias" class="header-item-icone"> -->
-    </a>
+    <span class="material-symbols-outlined" aria-hidden="true">grid_view</span>
     <span>Categorias</span>
   </button>
 } @else {
@@ -22,12 +17,7 @@
       aria-label="Abrir menu de categorias"
       aria-haspopup="true"
     >
-      <!-- Código antigo comentado -->
-      <!-- <span class="material-symbols-outlined" aria-hidden="true">grid_view</span> -->
-      <!-- Novo ícone de categorias com o link configurado -->
-      <a href="categorias.html">
-      <!-- <img src="assets/header/icons/icon-categoria.png" alt="Categorias" class="header-item-icone"> -->
-      </a>
+      <span class="material-symbols-outlined icone-grade" aria-hidden="true">grid_view</span>
       <span class="cats-label">Categorias</span>
       <span class="material-symbols-outlined icone-seta" aria-hidden="true">expand_more</span>
     </button>
@@ -35,31 +25,112 @@
 }
 
 <mat-menu #menuCategorias="matMenu" class="mega-menu-panel" xPosition="after">
-  <!-- Coluna única de departamentos -->
-  <div class="mega-conteudo" (click)="$event.stopPropagation()">
+  <!-- Árvore de departamentos e subcategorias com imagens -->
+  <div class="mega-conteudo">
     <ul class="rail" role="menu" aria-label="Departamentos">
       <li class="rail-titulo">Departamentos</li>
       @for (cat of store.categoriasRaiz(); track cat.id) {
-        <li>
+        <li class="rail-grupo">
           <a
             role="menuitem"
             class="rail-item"
             [routerLink]="['/c', cat.id + '-' + cat.slug]"
           >
-            <span class="rail-icone-chip" aria-hidden="true">
-              <span class="material-symbols-outlined rail-icone">{{ icone(cat) }}</span>
+            <span class="rail-icone-chip" [class.com-img]="!!cat.imagem_url" aria-hidden="true">
+              @if (cat.imagem_url) {
+                <img [src]="cat.imagem_url" [alt]="cat.nome" class="rail-thumb" loading="lazy" />
+              } @else {
+                <span class="material-symbols-outlined rail-icone">{{ icone(cat) }}</span>
+              }
             </span>
-            <span class="rail-nome">{{ cat.nome }}</span>
+            <span class="rail-texto">
+              <span class="rail-nome">{{ cat.nome }}</span>
+              @if (cat.descricao) {
+                <span class="rail-desc">{{ cat.descricao }}</span>
+              }
+            </span>
             <span class="material-symbols-outlined rail-seta" aria-hidden="true"
               >chevron_right</span
             >
           </a>
-          <!-- Mobile: filhas inline sob a raiz (lista única, padrão Amazon app) -->
+
           @if (store.filhasDe(cat.id).length) {
-            <ul class="subs-mobile">
+            <ul class="subs-arvore">
               @for (sub of store.filhasDe(cat.id); track sub.id) {
                 <li>
-                  <a [routerLink]="['/c', sub.id + '-' + sub.slug]">{{ sub.nome }}</a>
+                  <a
+                    role="menuitem"
+                    class="rail-item sub-item"
+                    [routerLink]="['/c', sub.id + '-' + sub.slug]"
+                  >
+                    <span
+                      class="rail-icone-chip chip-sub"
+                      [class.com-img]="!!sub.imagem_url"
+                      aria-hidden="true"
+                    >
+                      @if (sub.imagem_url) {
+                        <img
+                          [src]="sub.imagem_url"
+                          [alt]="sub.nome"
+                          class="rail-thumb"
+                          loading="lazy"
+                        />
+                      } @else {
+                        <span class="material-symbols-outlined rail-icone">{{ icone(sub) }}</span>
+                      }
+                    </span>
+                    <span class="rail-texto">
+                      <span class="rail-nome">{{ sub.nome }}</span>
+                      @if (sub.descricao) {
+                        <span class="rail-desc">{{ sub.descricao }}</span>
+                      }
+                    </span>
+                    <span class="material-symbols-outlined rail-seta" aria-hidden="true"
+                      >chevron_right</span
+                    >
+                  </a>
+
+                  @if (store.filhasDe(sub.id).length) {
+                    <ul class="subs-arvore nivel-3">
+                      @for (neta of store.filhasDe(sub.id); track neta.id) {
+                        <li>
+                          <a
+                            role="menuitem"
+                            class="rail-item sub-item neta-item"
+                            [routerLink]="['/c', neta.id + '-' + neta.slug]"
+                          >
+                            <span
+                              class="rail-icone-chip chip-sub"
+                              [class.com-img]="!!neta.imagem_url"
+                              aria-hidden="true"
+                            >
+                              @if (neta.imagem_url) {
+                                <img
+                                  [src]="neta.imagem_url"
+                                  [alt]="neta.nome"
+                                  class="rail-thumb"
+                                  loading="lazy"
+                                />
+                              } @else {
+                                <span class="material-symbols-outlined rail-icone">{{
+                                  icone(neta)
+                                }}</span>
+                              }
+                            </span>
+                            <span class="rail-texto">
+                              <span class="rail-nome">{{ neta.nome }}</span>
+                              @if (neta.descricao) {
+                                <span class="rail-desc">{{ neta.descricao }}</span>
+                              }
+                            </span>
+                            <span class="material-symbols-outlined rail-seta" aria-hidden="true"
+                              >chevron_right</span
+                            >
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  }
                 </li>
               }
             </ul>
@@ -70,7 +141,7 @@
         <li class="mega-vazio">Nenhuma categoria disponível no momento.</li>
       }
       <li class="rail-rodape">
-        <a routerLink="/" class="rail-tudo">
+        <a routerLink="/busca" class="rail-tudo">
           <span class="material-symbols-outlined" aria-hidden="true">apps</span>
           Ver catálogo completo
         </a>

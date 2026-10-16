@@ -32,10 +32,29 @@
     <ul class="drawer-itens">
       @for (item of carrinho.carrinho()!.itens; track item.produto_id) {
         <li class="d-item">
+          @if (item.produto?.imagem_url; as imgUrl) {
+            <img
+              [src]="imgUrl"
+              [alt]="item.produto?.nome ?? ''"
+              style="
+                width: 48px;
+                height: 48px;
+                border-radius: 8px;
+                object-fit: contain;
+                background: #fff;
+                border: 1px solid var(--hw-border);
+                padding: 3px;
+                flex-shrink: 0;
+              "
+            />
+          }
           <div class="d-item-info">
             <a
               class="d-item-nome"
-              [routerLink]="['/p', item.produto_id]"
+              [routerLink]="[
+                '/p',
+                item.produto?.slug ? item.produto_id + '-' + item.produto!.slug : item.produto_id
+              ]"
               (click)="fechar()"
             >
               {{ item.produto?.nome ?? 'Produto ' + item.produto_id }}

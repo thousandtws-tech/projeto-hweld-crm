@@ -5,7 +5,7 @@
 //! é sempre 404, nunca 403 (não revela existência do recurso alheio).
 
 use crate::erro::Resposta;
-use actix_web::{get, web, HttpResponse};
+use actix_web::{get, post, web, HttpResponse};
 use hweld_application::use_cases::catalogo::ProdutoDetalhePortal;
 use hweld_application::use_cases::portal::{
     EnderecoPortal, MeuPerfilPortal, PedidoDetalhePortal, PedidoResumoPortal,
@@ -15,9 +15,9 @@ use hweld_domain::crm::endereco::TipoEndereco;
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::Pagina;
 
-use crate::dto::{QueryEnderecos, QueryPortalPedidos};
+use crate::dto::{EnderecoPortalReq, QueryEnderecos, QueryPortalPedidos};
 use crate::estado::AppState;
-use crate::extratores::AuthPortal;
+use crate::extratores::{AuthPortal, AuthPortalOpcional};
 
 /// Perfil do contato autenticado + empresa + tabela de preço vigente.
 #[utoipa::path(
@@ -61,28 +61,54 @@ pub async fn enderecos(
     Ok(HttpResponse::Ok().json(lista))
 }
 
-/// Categorias ativas — lista flat ordenada; o front monta a árvore.
+/// Cadastra endereço da empresa do contato autenticado (self-service no checkout/minha conta).
+#[utoipa::path(
+    post,
+    path = "/api/v1/portal/enderecos",
+    tag = "Portal B2B",
+    request_body = EnderecoPortalReq,
+    responses(
+        (status = 201, body = EnderecoPortal),
+        (status = 400, description = "dados inválidos"),
+        (status = 401, description = "não autenticado"),
+    ),
+    security(("bearer_auth" = [])),
+)]
+#[post("/portal/enderecos")]
+pub async fn criar_endereco(
+    state: web::Data<AppState>,
+    portal: AuthPortal,
+    body: web::Json<EnderecoPortalReq>,
+) -> Resposta<HttpResponse> {
+    let contato_id = Id::novo(portal.contato_id());
+    let empresa_id = state.portal.empresa_do_contato(contato_id).await?;
+    let criado = state
+        .portal
+        .criar_endereco(contato_id, body.into_inner().input(empresa_id))
+        .await?;
+    Ok(HttpResponse::Created().json(criado))
+}
+
+/// Categorias ativas — lista flat ordenada (pública); o front monta a árvore.
 #[utoipa::path(
     get,
     path = "/api/v1/portal/categorias",
     tag = "Portal B2B",
     responses(
         (status = 200, body = Vec<Categoria>),
-        (status = 401, description = "não autenticado"),
     ),
-    security(("bearer_auth" = [])),
 )]
 #[get("/portal/categorias")]
-pub async fn categorias(state: web::Data<AppState>, portal: AuthPortal) -> Resposta<HttpResponse> {
-    let lista = state
-        .portal
-        .categorias(Id::novo(portal.contato_id()))
-        .await?;
+pub async fn categorias(
+    state: web::Data<AppState>,
+    _portal: AuthPortalOpcional,
+) -> Resposta<HttpResponse> {
+    let lista = state.categorias.listar(true).await?;
     Ok(HttpResponse::Ok().json(lista))
 }
 
-/// Detalhe do produto (PDP) — preço efetivo da empresa, imagens e
-/// disponibilidade binária. Aceita `{id}`, `{id}-{slug}` ou `{slug}`.
+/// Detalhe do produto (PDP) — preço efetivo da empresa (se autenticado) ou
+/// preço de venda público, imagens e disponibilidade binária.
 #[utoipa::path(
     get,
     path = "/api/v1/portal/produtos/{referencia}",
@@ -90,21 +116,19 @@ pub async fn categorias(state: web::Data<AppState>, portal: AuthPortal) -> Respo
     params(("referencia" = String, Path, description = "id, id-slug ou slug do produto")),
     responses(
         (status = 200, body = ProdutoDetalhePortal),
-        (status = 401, description = "não autenticado"),
         (status = 404, description = "produto inexistente ou inativo"),
     ),
-    security(("bearer_auth" = [])),
 )]
 #[get("/portal/produtos/{referencia}")]
 pub async fn produto(
     state: web::Data<AppState>,
-    portal: AuthPortal,
+    portal: AuthPortalOpcional,
     referencia: web::Path<String>,
 ) -> Resposta<HttpResponse> {
-    let empresa_id = state
-        .portal
-        .empresa_do_contato(Id::novo(portal.contato_id()))
-        .await?;
+    let empresa_id = match portal.contato_id() {
+        Some(cid) => state.portal.empresa_do_contato(Id::novo(cid)).await.ok(),
+        None => None,
+    };
     let produto = state
         .catalogo_portal
         .produto(empresa_id, &referencia)

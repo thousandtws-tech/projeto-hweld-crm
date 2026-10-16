@@ -1,18 +1,48 @@
-<!-- Breadcrumb Minimalista -->
+<!-- Breadcrumb Hierárquico -->
 <nav class="crumb" aria-label="Caminho de navegação">
   <a routerLink="/">Início</a>
+  @if (categoriaPai(); as pai) {
+    <span class="material-symbols-outlined sep" aria-hidden="true">chevron_right</span>
+    <a [routerLink]="['/c', pai.id + '-' + pai.slug]">{{ pai.nome }}</a>
+  }
   <span class="material-symbols-outlined sep" aria-hidden="true">chevron_right</span>
   <span class="atual">{{ nome() }}</span>
 </nav>
 
 <div class="categoria-cabecalho">
-  <div>
-    <h1>{{ nome() }}</h1>
-    @if (pagina(); as p) {
-      <span class="total-itens">{{ p.total }} produtos disponíveis</span>
+  <div class="cat-info-topo">
+    @if (categoriaAtual()?.imagem_url; as img) {
+      <img [src]="img" [alt]="nome()" class="cat-avatar-topo" />
     }
+    <div>
+      <h1>{{ nome() }}</h1>
+      @if (categoriaAtual()?.descricao; as desc) {
+        <p class="cat-descricao">{{ desc }}</p>
+      }
+      @if (pagina(); as p) {
+        <span class="total-itens">{{ p.total }} produtos disponíveis</span>
+      }
+    </div>
   </div>
 </div>
+
+<!-- Barra de Subcategorias (Padrão E-commerce quando departamento possui filhas) -->
+@if (subcategorias().length > 0) {
+  <div class="subcategorias-strip" aria-label="Subcategorias">
+    @for (sub of subcategorias(); track sub.id) {
+      <a [routerLink]="['/c', sub.id + '-' + sub.slug]" class="subcat-chip">
+        @if (sub.imagem_url) {
+          <img [src]="sub.imagem_url" [alt]="sub.nome" class="subcat-chip-img" loading="lazy" />
+        } @else {
+          <span class="material-symbols-outlined subcat-chip-icone" aria-hidden="true"
+            >category</span
+          >
+        }
+        <span class="subcat-chip-nome">{{ sub.nome }}</span>
+      </a>
+    }
+  </div>
+}
 
 @if (carregando()) {
   <div class="grid">

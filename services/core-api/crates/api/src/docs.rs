@@ -4,7 +4,9 @@
 
 use hweld_application::ports::busca::{FacetaContagem, Facetas, SugestaoProduto};
 use hweld_application::use_cases::busca::{BuscaPaginada, ItemBuscaPortal, ItemBuscaStaff};
-use hweld_application::use_cases::carrinho::CarrinhoDetalhe;
+use hweld_application::use_cases::carrinho::{
+    CarrinhoDetalhe, CarrinhoItemDetalhe, ResumoProdutoCarrinho,
+};
 use hweld_application::use_cases::catalogo::{
     ItemCatalogoPortal, ProdutoDetalhePortal, ProdutoPortal,
 };
@@ -120,6 +122,7 @@ impl utoipa::Modify for SegurancaBearer {
         orcamentos::transicionar, orcamentos::converter,
         // Catálogo
         catalogo::listar_categorias, catalogo::criar_categoria, catalogo::atualizar_categoria,
+        catalogo::excluir_categoria,
         catalogo::listar_produtos, catalogo::buscar_produto, catalogo::criar_produto,
         catalogo::atualizar_produto, catalogo::arquivar_produto, catalogo::listar_tabelas,
         catalogo::buscar_tabela, catalogo::criar_tabela, catalogo::atualizar_tabela,
@@ -147,7 +150,7 @@ impl utoipa::Modify for SegurancaBearer {
         // Auditoria
         auditoria::listar,
         // Portal B2B — conta, catálogo e checkout
-        portal::me, portal::enderecos, portal::categorias, portal::produto,
+        portal::me, portal::enderecos, portal::criar_endereco, portal::categorias, portal::produto,
         portal::pedidos, portal::pedido,
         carrinho::atual, carrinho::adicionar, carrinho::atualizar, carrinho::remover,
         carrinho::checkout,
@@ -156,14 +159,16 @@ impl utoipa::Modify for SegurancaBearer {
         // Notificações — sino nos dois contextos
         notificacoes::listar_staff, notificacoes::nao_lidas_staff,
         notificacoes::marcar_lida_staff, notificacoes::ler_todas_staff,
+        notificacoes::remover_staff, notificacoes::limpar_todas_staff,
         notificacoes::listar_portal, notificacoes::nao_lidas_portal,
         notificacoes::marcar_lida_portal, notificacoes::ler_todas_portal,
+        notificacoes::remover_portal, notificacoes::limpar_todas_portal,
     ),
     components(
         schemas(
             // ── DTOs de request ─────────────────────────────────────────
             LoginReq, RefreshReq, TrocarSenhaReq, CriarUsuarioReq, AtualizarUsuarioReq,
-            AtivoReq, EmpresaReq, ContatoReq, AtivarPortalReq, EnderecoReq,
+            AtivoReq, EmpresaReq, ContatoReq, AtivarPortalReq, EnderecoReq, EnderecoPortalReq,
             OportunidadeReq, MoverEstagioReq, InteracaoReq, OrcamentoReq,
             ItensOrcamentoReq, ItemOrcamentoReq, StatusOrcamentoReq, CategoriaReq,
             ProdutoReq, TabelaPrecoReq, PrecoItemReq, PedidoManualReq, ItemPedidoReq,
@@ -186,7 +191,8 @@ impl utoipa::Modify for SegurancaBearer {
             PrioridadeOs, StatusCarrinho, StatusPagamento, OrigemPedido, StatusPedido,
             AcaoAuditoria, AmbienteSefaz, StatusIntegracaoFiscal,
             // ── Tipos de aplicação ──────────────────────────────────────
-            CarrinhoDetalhe, ItemCatalogoPortal, ItemBuscaStaff, ItemBuscaPortal,
+            CarrinhoDetalhe, CarrinhoItemDetalhe, ResumoProdutoCarrinho,
+            ItemCatalogoPortal, ItemBuscaStaff, ItemBuscaPortal,
             FacetaContagem, Facetas, SugestaoProduto,
             // ── Envelopes paginados concretos ───────────────────────────
             Pagina<Usuario>, Pagina<Empresa>, Pagina<Contato>, Pagina<Oportunidade>,
