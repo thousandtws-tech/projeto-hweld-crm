@@ -11,6 +11,10 @@
     "logs:motor": "railway logs --service realtime-engine",
     "vars:motor": "railway variable list --service realtime-engine",
     "deploy:motor": "cd ../../services/realtime-engine && railway up",
-    "domain:motor": "railway domain --service realtime-engine"
+    "domain:motor": "railway domain --service realtime-engine",
+    "logs:ops": "railway logs --service operations-api",
+    "vars:ops": "railway variable list --service operations-api",
+    "deploy:ops": "cd ../../services/hweld-operations-api && railway up",
+    "domain:ops": "railway domain --service operations-api"
   }
 }

@@ -11,10 +11,16 @@ projeto Railway: hweld-crm  (workspace clarituz-workspace)
 ├── core-api              (Rust/Actix — Dockerfile)
 │     público:  https://core-api-production-5553.up.railway.app  (:8080)
 │     privado:  core-api.railway.internal:8080
-└── realtime-engine       (Phoenix — services/realtime-engine/Dockerfile)
-      público:  https://realtime-engine-production-081f.up.railway.app  (:4100)
-      privado:  realtime-engine.railway.internal:4100
-      domínio com target port explícito 4100 (app não usa $PORT default 8080)
+├── operations-api        (Java 25/Spring Boot — services/hweld-operations-api/Dockerfile)
+│     público:  https://operations-api-production-d580.up.railway.app  (:$PORT)
+│     privado:  operations-api.railway.internal
+│     banco:    MESMO Postgres do core-api (tabelas payments/outbox/etc.
+│               convivem no schema public; Flyway migra no boot)
+│     healthcheck: /actuator/health (railway.json)
+├── realtime-engine       (Phoenix — services/realtime-engine/Dockerfile)
+│     público:  https://realtime-engine-production-081f.up.railway.app  (:4100)
+│     privado:  realtime-engine.railway.internal:4100
+│     domínio com target port explícito 4100 (app não usa $PORT default 8080)
 └── elasticsearch         (imagem oficial 8.19.0 via infra/docker/elasticsearch)
       privado apenas: elasticsearch.railway.internal:9200 (sem domínio público)
       volume: elasticsearch-volume → /usr/share/elasticsearch/data
@@ -67,6 +73,21 @@ core-api os eventos são descartados com log (não quebra a API).
 
 Template em `env/realtime-engine.env.example`.
 
+### `operations-api` (obrigatórias em **bold**)
+
+| Var | Valor |
+|---|---|
+| **`JWT_SECRET`** | **o mesmo** do core-api — valida tokens HS256 staff/portal |
+| **`INTERNAL_SERVICE_TOKEN`** | segredo compartilhado — **precisa existir nos DOIS serviços**. O Java entrega `PaymentConfirmed` etc. em `POST {CORE_API_URL}/api/v1/internal/eventos-financeiros` com `X-Service-Token`. Sem a var no core-api o endpoint responde 503. |
+| **`CORE_API_URL`** | `http://core-api.railway.internal:8080` — o Java busca pedidos e valida posse repassando o JWT do chamador |
+| `DB_*` | referências `${{Postgres.PG*}}` — mesmo banco do core-api |
+| `EMAIL_PROVIDER` | `log` até haver SMTP real (`smtp` + `SMTP_*`) |
+| `PAYMENT_PROVIDER` | `stub` até credenciais de PSP |
+| `FISCAL_PROVIDER` / `FISCAL_AUTO_EMIT` | `stub` / `false` — emissão real exige provider credenciado |
+| `PORT` | **não definir** — o Railway injeta; `server.port=${PORT:8090}` resolve |
+
+Template em `env/operations-api.env.example`.
+
 ## Comandos
 
 ```bash
@@ -76,8 +97,9 @@ railway logs --service core-api     # logs do serviço
 railway variable list -s core-api   # variáveis
 
 # Redeploy manual do código local (os dirs estão linkados aos serviços):
-cd ../../services/core-api && railway up
-cd ../../services/realtime-engine && railway up
+cd ../../services/hweld-core-api && railway up
+cd ../../services/hweld-realtime-engine && railway up
+cd ../../services/hweld-operations-api && railway up
 ```
 
 ## Pós-deploy
