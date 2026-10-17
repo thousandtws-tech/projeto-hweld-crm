@@ -8,7 +8,10 @@ config :motor_realtime, MotorRealtimeWeb.Endpoint,
     rewrite_on: [:x_forwarded_proto],
     exclude: [
       # paths: ["/health"],
-      hosts: ["localhost", "127.0.0.1"]
+      # *.railway.internal: tráfego interno container→container chega em HTTP
+      # puro (sem x-forwarded-proto) — sem o exclude, Plug.SSL responderia 301
+      # e quebraria o POST /ingest do core-api.
+      hosts: ["localhost", "127.0.0.1", "realtime-engine.railway.internal"]
     ]
   ]
 

@@ -1,10 +1,10 @@
 # syntax=docker/dockerfile:1
 
 # ── Builder ───────────────────────────────────────────────────────────────
-FROM rust:1.85-slim-bookworm AS builder
+FROM rust:1.90-slim-bookworm AS builder
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends pkg-config libssl-dev && \
+    apt-get install -y --no-install-recommends pkg-config libssl-dev curl && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -12,6 +12,7 @@ WORKDIR /app
 # Cache de dependências — copia manifests primeiro.
 COPY Cargo.toml Cargo.lock ./
 COPY crates/ ./crates/
+COPY migrations/ ./migrations/
 
 RUN cargo build --release --bin hweld-server
 

@@ -1,0 +1,16 @@
+{
+  "name": "hweld-infra-railway",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "status": "railway status",
+    "logs:api": "railway logs --service core-api",
+    "vars:api": "railway variable list --service core-api",
+    "deploy:api": "cd ../../services/core-api && railway up",
+    "domain:api": "railway domain --service core-api",
+    "logs:motor": "railway logs --service realtime-engine",
+    "vars:motor": "railway variable list --service realtime-engine",
+    "deploy:motor": "cd ../../services/realtime-engine && railway up",
+    "domain:motor": "railway domain --service realtime-engine"
+  }
+}

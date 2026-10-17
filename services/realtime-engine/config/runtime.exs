@@ -103,11 +103,14 @@ if config_env() == :prod do
   config :motor_realtime, MotorRealtimeWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
-      # Enable IPv6 and bind on all interfaces.
-      # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
-      # See the documentation on https://bandit.hexdocs.pm/Bandit.html#t:options/0
-      # for details about using IPv6 vs IPv4 and loopback vs public addresses.
-      ip: {0, 0, 0, 0, 0, 0, 0, 0}
+      # IPv4 all-interfaces — Railway (private networking + proxy) é IPv4.
+      # `http:` aqui substitui o bloco do MOTOR_PORT acima (keyword merge é
+      # raso), então a porta precisa constar neste config também.
+      ip: {0, 0, 0, 0},
+      port:
+        String.to_integer(
+          System.get_env("MOTOR_PORT") || System.get_env("PORT") || "4100"
+        )
     ],
     secret_key_base: secret_key_base
 
