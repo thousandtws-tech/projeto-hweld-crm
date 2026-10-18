@@ -204,10 +204,12 @@ impl RepositorioEmpresas for RepositorioEmpresasPg {
 
     async fn atualizar(&self, id: Id<Empresa>, input: EmpresaInput) -> Resultado<Empresa> {
         let row = sqlx::query_as::<_, EmpresaRow>(&format!(
-            "UPDATE empresas SET razao_social=$2, nome_fantasia=$3, cnpj=$4, \
-             inscricao_estadual=$5, segmento=$6, telefone=$7, email=$8, site=$9, \
-             status=$10, tabela_preco_id=$11, observacoes=$12, updated_at=now() \
-             WHERE id=$1 AND deleted_at IS NULL RETURNING {EMP_COLS}"
+            "UPDATE empresas SET razao_social=$2, nome_fantasia=COALESCE($3, nome_fantasia), \
+             cnpj=COALESCE($4, cnpj), inscricao_estadual=COALESCE($5, inscricao_estadual), \
+             segmento=COALESCE($6, segmento), telefone=COALESCE($7, telefone), \
+             email=COALESCE($8, email), site=COALESCE($9, site), status=$10, \
+             tabela_preco_id=COALESCE($11, tabela_preco_id), observacoes=COALESCE($12, observacoes), \
+             updated_at=now() WHERE id=$1 AND deleted_at IS NULL RETURNING {EMP_COLS}"
         ))
         .bind(id.valor())
         .bind(input.razao_social)
@@ -417,9 +419,10 @@ impl RepositorioContatos for RepositorioContatosPg {
 
     async fn atualizar(&self, id: Id<Contato>, input: ContatoInput) -> Resultado<Contato> {
         let row = sqlx::query_as::<_, ContatoRow>(&format!(
-            "UPDATE contatos SET empresa_id=$2, nome=$3, cargo=$4, email=$5, telefone=$6, \
-             whatsapp=$7, is_principal=$8, acesso_portal=$9, observacoes=$10, updated_at=now() \
-             WHERE id=$1 AND deleted_at IS NULL RETURNING {CTT_COLS}"
+            "UPDATE contatos SET empresa_id=$2, nome=$3, cargo=COALESCE($4, cargo), \
+             email=COALESCE($5, email), telefone=COALESCE($6, telefone), whatsapp=COALESCE($7, whatsapp), \
+             is_principal=$8, acesso_portal=$9, observacoes=COALESCE($10, observacoes), \
+             updated_at=now() WHERE id=$1 AND deleted_at IS NULL RETURNING {CTT_COLS}"
         ))
         .bind(id.valor())
         .bind(input.empresa_id.valor())
@@ -630,8 +633,9 @@ impl RepositorioEnderecos for RepositorioEnderecosPg {
             limpar_principal_tx(&mut tx, input.empresa_id, input.tipo).await?;
         }
         let row = sqlx::query_as::<_, EnderecoRow>(&format!(
-            "UPDATE enderecos SET empresa_id=$2, tipo=$3, logradouro=$4, numero=$5, \
-             complemento=$6, bairro=$7, cidade=$8, uf=$9, cep=$10, pais=$11, \
+            "UPDATE enderecos SET empresa_id=$2, tipo=$3, logradouro=COALESCE($4, logradouro), \
+             numero=COALESCE($5, numero), complemento=COALESCE($6, complemento), bairro=COALESCE($7, bairro), \
+             cidade=$8, uf=$9, cep=$10, pais=COALESCE($11, pais), \
              principal=$12, updated_at=now() WHERE id=$1 RETURNING {END_COLS}"
         ))
         .bind(id.valor())
@@ -846,9 +850,10 @@ impl RepositorioOportunidades for RepositorioOportunidadesPg {
         input: OportunidadeInput,
     ) -> Resultado<Oportunidade> {
         let row = sqlx::query_as::<_, OportunidadeRow>(&format!(
-            "UPDATE oportunidades SET empresa_id=$2, contato_id=$3, responsavel_id=$4, \
-             titulo=$5, descricao=$6, origem=$7, valor_estimado=$8, \
-             data_prevista_fechamento=$9, updated_at=now() \
+            "UPDATE oportunidades SET empresa_id=$2, contato_id=COALESCE($3, contato_id), \
+             responsavel_id=$4, titulo=$5, descricao=COALESCE($6, descricao), \
+             origem=COALESCE($7, origem), valor_estimado=COALESCE($8, valor_estimado), \
+             data_prevista_fechamento=COALESCE($9, data_prevista_fechamento), updated_at=now() \
              WHERE id=$1 RETURNING {OPO_COLS}"
         ))
         .bind(id.valor())

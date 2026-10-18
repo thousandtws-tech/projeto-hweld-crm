@@ -55,6 +55,17 @@ pub struct ConfigIntegracao {
     pub service_token: Option<String>,
 }
 
+/// Object storage S3-compatível (MinIO). `endpoint` ausente = fallback
+/// em disco local (`uploads/`) — dev sem infra, mesmo contrato.
+#[derive(Debug, Clone)]
+pub struct ConfigArmazenamento {
+    pub endpoint: String,
+    pub bucket: String,
+    pub region: String,
+    pub access_key: String,
+    pub secret_key: String,
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
     pub host: String,
@@ -62,6 +73,9 @@ pub struct Config {
     pub ambiente: String,
     pub run_migrations: bool,
     pub seed_admin: bool,
+    /// Swagger UI + openapi.json — default off em production
+    /// (enumeração de rotas/DTOs não é recurso de API pública).
+    pub docs_habilitados: bool,
     pub cors_permissive: bool,
     pub cors_origins: Vec<String>,
     pub database_url: String,
@@ -72,6 +86,8 @@ pub struct Config {
     pub motor: ConfigMotor,
     pub observabilidade: ConfigObservabilidade,
     pub integracao: ConfigIntegracao,
+    /// `None` = storage local em disco; `Some` = MinIO/S3 remoto.
+    pub armazenamento: Option<ConfigArmazenamento>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -102,13 +118,15 @@ impl Config {
         if jwt_secret.len() < 32 {
             return Err(ErroConfig("JWT_SECRET deve ter ao menos 32 bytes".into()));
         }
+        let ambiente = env("ENVIRONMENT").unwrap_or_else(|| "development".into());
 
         Ok(Self {
             host: env("HOST").unwrap_or_else(|| "0.0.0.0".into()),
             port: env_parse("PORT", 8080u16)?,
-            ambiente: env("ENVIRONMENT").unwrap_or_else(|| "development".into()),
+            ambiente: ambiente.clone(),
             run_migrations: env_parse("RUN_MIGRATIONS", true)?,
             seed_admin: env_parse("SEED_ADMIN", true)?,
+            docs_habilitados: env_parse("API_DOCS_ENABLED", ambiente != "production")?,
             cors_permissive: env_parse("CORS_PERMISSIVE", false)?,
             cors_origins: env("CORS_ORIGINS")
                 .map(|v| {
@@ -160,6 +178,13 @@ impl Config {
                         .then(|| "dev-internal-token".to_string())
                 }),
             },
+            armazenamento: env("MINIO_ENDPOINT").map(|endpoint| ConfigArmazenamento {
+                endpoint,
+                bucket: env("MINIO_BUCKET").unwrap_or_else(|| "hweld".into()),
+                region: env("MINIO_REGION").unwrap_or_else(|| "us-east-1".into()),
+                access_key: env("MINIO_ACCESS_KEY").unwrap_or_default(),
+                secret_key: env("MINIO_SECRET_KEY").unwrap_or_default(),
+            }),
         })
     }
 

@@ -91,4 +91,6 @@ dotenvy = "0.15"
 [profile.release]
 lto = "thin"
 codegen-units = 1
-panic = "abort"
+# panic = "abort" derrubaria o processo inteiro num panic de request —
+# unwind isola a falha e mantém o serviço atendendo as demais conexões.
+panic = "unwind"

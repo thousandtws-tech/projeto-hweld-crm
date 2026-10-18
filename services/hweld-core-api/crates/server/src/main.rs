@@ -90,6 +90,7 @@ async fn executar() -> anyhow::Result<()> {
     let dados_pool = web::Data::new(pool);
     let cors_origins = config.cors_origins.clone();
     let cors_permissive = config.cors_permissive;
+    let docs_habilitados = config.docs_habilitados;
     let bind = (config.host.clone(), config.port);
 
     tracing::info!(bind = ?bind, "servidor HTTP subindo");
@@ -138,7 +139,7 @@ async fn executar() -> anyhow::Result<()> {
             // de IO no caminho quente). Compress reduz o payload das listas.
             .wrap(Compress::default())
             .wrap(TracingLogger::default())
-            .configure(rotas::configurar)
+            .configure(move |cfg| rotas::configurar(cfg, docs_habilitados))
     });
     let mut server = servidor.bind(bind)?;
     // Em host IPv4-only ("0.0.0.0"), "localhost" resolve ::1 primeiro e o
@@ -406,6 +407,7 @@ fn montar_estado(
         caixas: ServicoCaixas::novo(caixas_repo, audit.clone(), realtime.clone()),
         auditoria: ServicoAuditoria::novo(auditoria_repo),
         notificacoes,
+        armazenamento: montar_armazenamento(config),
         busca: motor_busca.map(|motor| {
             ServicoBusca::novo(
                 motor,
@@ -415,5 +417,41 @@ fn montar_estado(
                 empresas_repo.clone(),
             )
         }),
+    }
+}
+
+/// Object storage — MinIO/S3 quando `MINIO_ENDPOINT` está configurado;
+/// disco local (`uploads/`) como fallback de desenvolvimento.
+fn montar_armazenamento(
+    config: &Config,
+) -> Arc<dyn hweld_application::ports::armazenamento::ArmazenamentoObjetos> {
+    match &config.armazenamento {
+        Some(cfg) => {
+            tracing::info!(bucket = %cfg.bucket, endpoint = %cfg.endpoint, "armazenamento: MinIO/S3 remoto");
+            let minio = Arc::new(
+                hweld_infrastructure::storage::ArmazenamentoMinio::novo(
+                    hweld_infrastructure::storage::minio::ConfigMinio {
+                        endpoint: cfg.endpoint.clone(),
+                        bucket: cfg.bucket.clone(),
+                        region: cfg.region.clone(),
+                        access_key: cfg.access_key.clone(),
+                        secret_key: cfg.secret_key.clone(),
+                    },
+                )
+                .expect("MINIO_ENDPOINT inválido"),
+            );
+            // Bootstrap: cria o bucket se ausente — falha só loga.
+            let minio_boot = minio.clone();
+            tokio::spawn(async move {
+                if let Err(e) = minio_boot.garantir_bucket().await {
+                    tracing::warn!(erro = %e, "storage: garantir bucket falhou (pode já existir)");
+                }
+            });
+            minio
+        }
+        None => {
+            tracing::info!("armazenamento: disco local uploads/ (MINIO_ENDPOINT ausente)");
+            Arc::new(hweld_infrastructure::storage::ArmazenamentoLocal::novo("uploads"))
+        }
     }
 }

@@ -125,13 +125,15 @@ impl RepositorioCategorias for RepositorioCategoriasPg {
 
     async fn atualizar(&self, id: Id<Categoria>, input: CategoriaInput) -> Resultado<Categoria> {
         let row = sqlx::query_as::<_, CategoriaRow>(&format!(
-            "UPDATE categorias SET categoria_pai_id=$2, nome=$3, slug=$4, descricao=$5, \
-             imagem_url=$6, ordem=$7, ativa=$8, updated_at=now() WHERE id=$1 RETURNING {CAT_COLS}"
+            "UPDATE categorias SET categoria_pai_id=COALESCE($2, categoria_pai_id), nome=$3, \
+             slug=COALESCE($4, slug), descricao=COALESCE($5, descricao), \
+             imagem_url=COALESCE($6, imagem_url), ordem=$7, ativa=$8, updated_at=now() \
+             WHERE id=$1 RETURNING {CAT_COLS}"
         ))
         .bind(id.valor())
         .bind(input.categoria_pai_id.map(|i| i.valor()))
         .bind(input.nome)
-        .bind(input.slug.unwrap_or_default())
+        .bind(input.slug)
         .bind(input.descricao)
         .bind(input.imagem_url)
         .bind(input.ordem)
@@ -517,24 +519,28 @@ impl RepositorioProdutos for RepositorioProdutosPg {
 
     async fn atualizar(&self, id: Id<Produto>, input: ProdutoInput) -> Resultado<Produto> {
         let row = sqlx::query_as::<_, ProdutoRow>(&format!(
-            "UPDATE produtos SET sku=$2, nome=$3, slug=$4, categoria_id=$5, marca=$6, \
-             unidade_medida=$7, descricao_curta=$8, descricao_tecnica=$9, ncm=$10, \
-             origem_mercadoria=$11, peso_kg=$12, altura_cm=$13, largura_cm=$14, \
-             comprimento_cm=$15, preco_custo=$16, preco_venda=$17, estoque_minimo=$18, \
-             controla_estoque=$19, ativo=$20, destaque=$21, updated_at=now() \
+            "UPDATE produtos SET sku=$2, nome=$3, slug=COALESCE($4, slug), categoria_id=$5, \
+             marca=COALESCE($6, marca), unidade_medida=COALESCE($7, unidade_medida), \
+             descricao_curta=COALESCE($8, descricao_curta), descricao_tecnica=COALESCE($9, descricao_tecnica), \
+             ncm=COALESCE($10, ncm), origem_mercadoria=COALESCE($11, origem_mercadoria), \
+             peso_kg=COALESCE($12, peso_kg), altura_cm=COALESCE($13, altura_cm), \
+             largura_cm=COALESCE($14, largura_cm), comprimento_cm=COALESCE($15, comprimento_cm), \
+             preco_custo=COALESCE($16, preco_custo), preco_venda=$17, \
+             estoque_minimo=COALESCE($18, estoque_minimo), controla_estoque=$19, ativo=$20, \
+             destaque=$21, updated_at=now() \
              WHERE id=$1 AND deleted_at IS NULL RETURNING {PROD_COLS}"
         ))
         .bind(id.valor())
         .bind(input.sku)
         .bind(input.nome)
-        .bind(input.slug.unwrap_or_default())
+        .bind(input.slug)
         .bind(input.categoria_id.valor())
         .bind(input.marca)
         .bind(input.unidade_medida)
         .bind(input.descricao_curta)
         .bind(input.descricao_tecnica)
         .bind(input.ncm)
-        .bind(input.origem_mercadoria.unwrap_or_else(|| "0".into()))
+        .bind(input.origem_mercadoria)
         .bind(input.peso_kg)
         .bind(input.altura_cm)
         .bind(input.largura_cm)
@@ -654,7 +660,7 @@ impl RepositorioProdutos for RepositorioProdutosPg {
                 .map_err(erro_db(CTX_PROD))?;
         }
         let row = sqlx::query_as::<_, ProdutoImagemRow>(&format!(
-            "UPDATE produto_imagens SET alt_text = $3, ordem = $4, is_principal = $5 \
+            "UPDATE produto_imagens SET alt_text = COALESCE($3, alt_text), ordem = $4, is_principal = $5 \
              WHERE id = $1 AND produto_id = $2 RETURNING {IMG_COLS}"
         ))
         .bind(imagem_id.valor())
@@ -867,8 +873,8 @@ impl RepositorioTabelasPreco for RepositorioTabelasPrecoPg {
         input: TabelaPrecoInput,
     ) -> Resultado<TabelaPreco> {
         let row = sqlx::query_as::<_, TabelaPrecoRow>(&format!(
-            "UPDATE tabelas_preco SET nome=$2, descricao=$3, ativa=$4, updated_at=now() \
-             WHERE id=$1 RETURNING {TAB_COLS}"
+            "UPDATE tabelas_preco SET nome=$2, descricao=COALESCE($3, descricao), ativa=$4, \
+             updated_at=now() WHERE id=$1 RETURNING {TAB_COLS}"
         ))
         .bind(id.valor())
         .bind(input.nome)

@@ -4,22 +4,63 @@
 use std::sync::OnceLock;
 
 use actix_governor::{
-    Governor, GovernorConfig, GovernorConfigBuilder, PeerIpKeyExtractor,
+    Governor, GovernorConfig, GovernorConfigBuilder, KeyExtractor, SimpleKeyExtractionError,
     governor::middleware::StateInformationMiddleware,
 };
-use actix_web::web;
+use actix_web::{dev::ServiceRequest, error::JsonPayloadError, web};
+use hweld_application::ErroApp;
+use hweld_domain::shared::erro::ErroDominio;
+use std::net::IpAddr;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::docs::ApiDoc;
 use crate::handlers::*;
 
+/// Extrator de chave do rate limit — `PeerIpKeyExtractor` enxergaria só o IP
+/// do LB/edge na frente do serviço: ou todos os clientes dividem o mesmo
+/// balde, ou cada nó do LB vira um balde e o limite nunca estoura (bug
+/// medido em prod: ~90 logins por IP sem nenhum 429). Prefere `x-real-ip` e
+/// `cf-connecting-ip` — setados pelo worker Cloudflare no proxy — depois
+/// `x-forwarded-for`, e por fim o peer da conexão (dev local sem proxy).
+#[derive(Clone, Debug)]
+struct RealIpExtractor;
+
+impl KeyExtractor for RealIpExtractor {
+    type Key = IpAddr;
+    type KeyExtractionError = SimpleKeyExtractionError<&'static str>;
+
+    fn extract(&self, req: &ServiceRequest) -> Result<Self::Key, Self::KeyExtractionError> {
+        let headers = req.headers();
+        for nome in ["x-real-ip", "cf-connecting-ip"] {
+            if let Some(ip) = headers
+                .get(nome)
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| s.trim().parse::<IpAddr>().ok())
+            {
+                return Ok(ip);
+            }
+        }
+        if let Some(ip) = headers
+            .get("x-forwarded-for")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| v.split(',').next())
+            .and_then(|s| s.trim().parse::<IpAddr>().ok())
+        {
+            return Ok(ip);
+        }
+        req.peer_addr()
+            .map(|a| a.ip())
+            .ok_or_else(|| SimpleKeyExtractionError::new("cliente sem IP identificável"))
+    }
+}
+
 // O App factory do Actix roda uma vez por worker — o limiter precisa ser
 // criado fora do factory (Arc interno) senão cada thread teria sua própria
 // cota e o rate limit nunca dispararia.
-type ConfigLimiteAuth = GovernorConfig<PeerIpKeyExtractor, StateInformationMiddleware>;
+type ConfigLimiteAuth = GovernorConfig<RealIpExtractor, StateInformationMiddleware>;
 
-fn limite_auth() -> Governor<PeerIpKeyExtractor, StateInformationMiddleware> {
+fn limite_auth() -> Governor<RealIpExtractor, StateInformationMiddleware> {
     static CONFIG: OnceLock<ConfigLimiteAuth> = OnceLock::new();
     Governor::new(CONFIG.get_or_init(|| {
         // Token-bucket por IP: burst 10, recarga ~6s. Login/troca de senha
@@ -29,16 +70,38 @@ fn limite_auth() -> Governor<PeerIpKeyExtractor, StateInformationMiddleware> {
             .seconds_per_request(6)
             .burst_size(10)
             .use_headers()
+            .key_extractor(RealIpExtractor)
             .finish()
             .expect("config de rate limit inválida")
     }))
 }
 
-pub fn configurar(cfg: &mut web::ServiceConfig) {
+/// Erros de desserialização JSON voltam no mesmo envelope `{erro:{...}}`
+/// das falhas de domínio — o default do actix devolvia texto puro.
+fn json_cfg() -> web::JsonConfig {
+    web::JsonConfig::default().error_handler(|err, _req| {
+        let detalhe = match &err {
+            JsonPayloadError::Deserialize(e) => format!("{e}"),
+            JsonPayloadError::ContentType => "content-type deve ser application/json".into(),
+            _ => err.to_string(),
+        };
+        crate::erro::ErroHttp::from(ErroApp::Dominio(ErroDominio::valor_invalido(
+            "payload", detalhe,
+        )))
+        .into()
+    })
+}
+
+pub fn configurar(cfg: &mut web::ServiceConfig, docs_habilitados: bool) {
+    cfg.app_data(json_cfg());
+
     // Swagger UI self-hosted — spec gerada do código (nunca diverge das rotas).
-    cfg.service(
-        SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
-    );
+    // Fora de prod por padrão: a spec enumera todas as rotas, incluindo internas.
+    if docs_habilitados {
+        cfg.service(
+            SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
+        );
+    }
 
     cfg.service(saude::health).service(saude::ready).service(
         web::scope("/api/v1")
