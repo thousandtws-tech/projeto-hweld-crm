@@ -77,9 +77,10 @@ function FiscalPage() {
       .listar({ por_pagina: 100 })
       .then((p) => {
         const faturaveis = (p.itens ?? []).filter((ped) =>
-          ["confirmado", "em_separacao", "faturado", "enviado", "entregue", "concluido"].includes(
-            ped.status,
-          ),
+          // Regra do core-api: emissão só com pedido em separação ou faturado —
+          // listar outros status deixava o usuário escolher pedido que o
+          // backend rejeita com 422.
+          ["em_separacao", "faturado"].includes(ped.status),
         );
         setPedidosElegiveis(faturaveis);
       })
