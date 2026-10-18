@@ -80,10 +80,11 @@ logging:
 
 hweld:
   security:
-    # Mesmo segredo HS256 do core-api (>=32 bytes). Obrigatório.
-    jwt-secret: ${JWT_SECRET:dev-only-troque-em-producao-0123456789abcdef0123456789abcdef}
-    # Token service-to-service para /api/v1/internal/**.
-    internal-service-token: ${INTERNAL_SERVICE_TOKEN:dev-internal-token}
+    # Mesmo segredo HS256 do core-api (>=32 bytes). OBRIGATÓRIO — sem default:
+    # um segredo conhecido em fallback deixaria tokens falsificáveis em prod.
+    jwt-secret: ${JWT_SECRET}
+    # Token service-to-service para /api/v1/internal/** — também fail-fast.
+    internal-service-token: ${INTERNAL_SERVICE_TOKEN}
   core-api:
     url: ${CORE_API_URL:http://localhost:8080}
     timeout-ms: ${CORE_API_TIMEOUT_MS:4000}
@@ -95,10 +96,13 @@ hweld:
     poll-interval-ms: 2000
     batch-size: 50
     max-attempts: 8
+    # Lease do claim SKIP LOCKED — worker morto devolve o evento à fila após o lease.
+    claim-lease-ms: ${OUTBOX_CLAIM_LEASE_MS:60000}
   payment:
     default-provider: ${PAYMENT_PROVIDER:stub}
     webhook-secrets:
-      stub: ${PAYMENT_STUB_WEBHOOK_SECRET:dev-stub-webhook-secret}
+      # Vazio = nenhum webhook stub passa na validação de assinatura (fail-safe).
+      stub: ${PAYMENT_STUB_WEBHOOK_SECRET:}
       # mercadopago: ${PAYMENT_MP_WEBHOOK_SECRET:}
       # asaas: ${PAYMENT_ASAAS_WEBHOOK_SECRET:}
     pix-expiration-minutes: 30
@@ -108,6 +112,13 @@ hweld:
     provider: ${FISCAL_PROVIDER:stub}
     auto-emit-on-payment-confirmed: ${FISCAL_AUTO_EMIT:false}
     ambiente: ${FISCAL_AMBIENTE:homologacao}
+  storage:
+    # MinIO/S3 — endpoint ausente = NoopObjectStorage (dev sem infra).
+    endpoint: ${MINIO_ENDPOINT:}
+    bucket: ${MINIO_BUCKET:hweld}
+    region: ${MINIO_REGION:us-east-1}
+    access-key: ${MINIO_ACCESS_KEY:}
+    secret-key: ${MINIO_SECRET_KEY:}
   notification:
     email-provider: ${EMAIL_PROVIDER:log}   # log | smtp
     max-attempts: 4
@@ -116,7 +127,10 @@ hweld:
     default-from-name: ${MAIL_FROM_NAME:HWeld}
 
 springdoc:
+  # Spec + UI expõem todas as rotas, incluindo /internal/** — desligar em prod.
   swagger-ui:
     path: /swagger-ui.html
+    enabled: ${API_DOCS_ENABLED:true}
   api-docs:
     path: /api-docs
+    enabled: ${API_DOCS_ENABLED:true}

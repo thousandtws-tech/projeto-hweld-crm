@@ -35,6 +35,11 @@ public class Payment {
     @Column(name = "contato_email", length = 320)
     private String contatoEmail;
 
+    /** Número do pedido (PV-XXXXXX), denormalizado na criação — eventos de
+     *  transição não voltam ao core-api, então o número viaja junto. */
+    @Column(name = "pedido_numero", length = 40)
+    private String pedidoNumero;
+
     @Column(nullable = false, length = 40)
     private String provider;
 
@@ -108,6 +113,13 @@ public class Payment {
         this.createdById = createdById;
     }
 
+    /** Número do pedido, capturado na criação para eventos/notificações. */
+    public void assignPedidoNumero(String numero) {
+        if (numero != null && !numero.isBlank()) {
+            this.pedidoNumero = numero.substring(0, Math.min(numero.length(), 40));
+        }
+    }
+
     /** E-mail do contato, capturado na criação para notificações assíncronas. */
     public void assignContatoEmail(String email) {
         if (email != null && !email.isBlank()) {
@@ -143,6 +155,7 @@ public class Payment {
     public Long getEmpresaId() { return empresaId; }
     public Long getContatoId() { return contatoId; }
     public String getContatoEmail() { return contatoEmail; }
+    public String getPedidoNumero() { return pedidoNumero; }
     public String getProvider() { return provider; }
     public PaymentMethod getMethod() { return method; }
     public PaymentStatus getStatus() { return status; }

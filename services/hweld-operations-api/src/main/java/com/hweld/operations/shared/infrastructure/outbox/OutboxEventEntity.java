@@ -87,6 +87,8 @@ public class OutboxEventEntity {
     }
 
     public void markRetry(String error, Instant nextRetry) {
+        // Volta a PENDING com backoff — CLAIMED é só o lease do dispatch atual.
+        this.status = "PENDING";
         this.attempts++;
         this.lastError = error == null ? null : error.substring(0, Math.min(error.length(), 500));
         this.nextRetryAt = nextRetry;

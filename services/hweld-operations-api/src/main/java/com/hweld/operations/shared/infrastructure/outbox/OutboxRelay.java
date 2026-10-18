@@ -9,7 +9,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -27,23 +26,27 @@ public class OutboxRelay {
     private static final Logger log = LoggerFactory.getLogger(OutboxRelay.class);
 
     @ConfigurationProperties(prefix = "hweld.outbox")
-    public record Props(long pollIntervalMs, int batchSize, int maxAttempts) {
+    public record Props(long pollIntervalMs, int batchSize, int maxAttempts, long claimLeaseMs) {
         public Props {
             if (pollIntervalMs <= 0) pollIntervalMs = 2000;
             if (batchSize <= 0) batchSize = 50;
             if (maxAttempts <= 0) maxAttempts = 8;
+            if (claimLeaseMs <= 0) claimLeaseMs = 60_000;
         }
     }
 
     private final OutboxEventRepository outbox;
+    private final OutboxClaim claimer;
     private final ProcessedEventRepository processed;
     private final List<IntegrationEventHandler> handlers;
     private final TransactionTemplate tx;
     private final Props props;
 
-    public OutboxRelay(OutboxEventRepository outbox, ProcessedEventRepository processed,
-            List<IntegrationEventHandler> handlers, PlatformTransactionManager txm, Props props) {
+    public OutboxRelay(OutboxEventRepository outbox, OutboxClaim claimer,
+            ProcessedEventRepository processed, List<IntegrationEventHandler> handlers,
+            PlatformTransactionManager txm, Props props) {
         this.outbox = outbox;
+        this.claimer = claimer;
         this.processed = processed;
         this.handlers = handlers;
         this.props = props;
@@ -52,7 +55,11 @@ public class OutboxRelay {
 
     @Scheduled(fixedDelayString = "${hweld.outbox.poll-interval-ms:2000}", initialDelay = 3000)
     public void poll() {
-        List<OutboxEventEntity> batch = outbox.findPending(Instant.now(), PageRequest.of(0, props.batchSize()));
+        // Claim com SKIP LOCKED — seguro para N réplicas; linhas travadas por
+        // outro worker são ignoradas em vez de despachadas em duplicidade.
+        Instant agora = Instant.now();
+        List<OutboxEventEntity> batch =
+                claimer.claim(props.batchSize(), agora, agora.plusMillis(props.claimLeaseMs()));
         for (OutboxEventEntity row : batch) {
             try {
                 dispatch(row);

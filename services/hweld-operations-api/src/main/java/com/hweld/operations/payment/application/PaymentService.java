@@ -111,6 +111,7 @@ public class PaymentService {
         Payment payment = new Payment(UUID.randomUUID(), cmd.pedidoId(), order.empresaId(),
                 order.contatoId(), provider.name(), cmd.method(), order.total().amount(),
                 idemKey, actor.tipo(), String.valueOf(actor.id()));
+        payment.assignPedidoNumero(order.numero());
         payment.assignContatoEmail(order.contatoEmail() != null ? order.contatoEmail() : cmd.emailContato());
         payment.applyProviderResult(charge.externalId(), charge.checkoutUrl(),
                 charge.pixQrCode(), charge.pixCopyPaste(), charge.expiresAt());
@@ -269,6 +270,11 @@ public class PaymentService {
                     "provider", p.getProvider()));
             if (p.getContatoId() != null) payload.put("contatoId", p.getContatoId());
             if (p.getContatoEmail() != null) payload.put("contatoEmail", p.getContatoEmail());
+            // Templates de notificação interpolam {{pedidoNumero}} — sem ele o
+            // e-mail sai com "pedido ," em branco. Rows antigas (pré-coluna)
+            // caem no fallback com o id numérico.
+            payload.put("pedidoNumero", p.getPedidoNumero() != null
+                    ? p.getPedidoNumero() : String.valueOf(p.getPedidoId()));
             if (failureCode != null) payload.put("failureCode", failureCode);
             outbox.publish("payment", p.getId().toString(),
                     IntegrationEvent.of(eventType, p.getId().toString(), payload, CorrelationIdFilter.current()));

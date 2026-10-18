@@ -86,6 +86,8 @@ class OperationsFlowIT {
         r.add("spring.datasource.password", PG::getPassword);
         r.add("hweld.security.jwt-secret",
                 () -> "0123456789abcdef0123456789abcdef-test-secret");
+        r.add("hweld.security.internal-service-token", () -> "test-internal-token");
+        r.add("hweld.payment.webhook-secrets.stub", () -> WEBHOOK_SECRET);
         r.add("hweld.core-api.url", () -> "http://localhost:" + coreApiStub.getAddress().getPort());
         r.add("hweld.motor.token", () -> "");
         r.add("hweld.fiscal.auto-emit-on-payment-confirmed", () -> "true");
