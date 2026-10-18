@@ -7,6 +7,7 @@ name: E2E produção
 on:
   schedule:
     - cron: "0 8 * * *" # 05:00 BRT — smoke diário
+    - cron: "0 9 * * 0" # domingo 06:00 BRT — carga semanal (perf)
   workflow_dispatch:
 
 jobs:
@@ -61,3 +62,24 @@ jobs:
           name: playwright-report
           path: tests/e2e/playwright-report/
           retention-days: 7
+
+  performance:
+    name: performance (carga/latência)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 9 * * 0'
+    env:
+      E2E_CORE_API: https://core-api-production-5553.up.railway.app
+      E2E_OPS_API: https://operations-api-production-d580.up.railway.app
+      E2E_REALTIME: https://realtime-engine-production-081f.up.railway.app
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_SENHA: ${{ secrets.E2E_ADMIN_SENHA }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+        working-directory: tests/performance
+      - run: npx playwright test
+        working-directory: tests/performance
