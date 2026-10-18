@@ -34,3 +34,8 @@ Thumbs.db
 .wrangler/
 .dev.vars
 infra/cloudflare/dist-check/
+
+# Dados de runtime — dumps de API (PII) e uploads locais nunca entram no repo
+deliv.json
+uploads/
+services/hweld-core-api/uploads/
