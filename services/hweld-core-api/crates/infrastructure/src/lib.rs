@@ -11,6 +11,7 @@ pub mod observabilidade;
 pub mod persistence;
 pub mod realtime;
 pub mod seguranca;
+pub mod storage;
 
 pub use busca::BuscaElastic;
 pub use config::{Config, ErroConfig};

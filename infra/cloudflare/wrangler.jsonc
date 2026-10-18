@@ -14,7 +14,8 @@
   // Valores default — usados por `wrangler dev` e por `wrangler deploy` sem --env.
   "vars": {
     "CORE_API_ORIGIN": "http://localhost:8080",
-    "REALTIME_ORIGIN": "http://localhost:4100"
+    "REALTIME_ORIGIN": "http://localhost:4100",
+    "OPS_API_ORIGIN": "http://localhost:8090"
   },
 
   "env": {
@@ -30,7 +31,8 @@
       "name": "hweld-loja",
       "vars": {
         "CORE_API_ORIGIN": "https://core-api-production-5553.up.railway.app",
-        "REALTIME_ORIGIN": "https://realtime-engine-production-081f.up.railway.app"
+        "REALTIME_ORIGIN": "https://realtime-engine-production-081f.up.railway.app",
+        "OPS_API_ORIGIN": "https://operations-api-production-d580.up.railway.app"
       }
       // Domínio customizado (requer a zona no Cloudflare):
       // "routes": [{ "pattern": "app.seudominio.com", "custom_domain": true }]

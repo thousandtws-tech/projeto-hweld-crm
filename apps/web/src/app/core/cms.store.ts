@@ -52,11 +52,22 @@ export interface CardDuoCms {
   ativo: boolean;
 }
 
+export interface SeloCms {
+  id: string;
+  titulo: string;
+  descricao: string;
+  link: string;
+  icone_url: string;
+  externo: boolean;
+  ativo: boolean;
+}
+
 export interface CmsLoja {
   marcas: MarcaCms[];
   slides: SlideBannerCms[];
   trio_banners: CardTrioCms[];
   duo_banners: CardDuoCms[];
+  selos: SeloCms[];
 }
 
 const CMS_FALLBACK: CmsLoja = {
@@ -179,6 +190,53 @@ const CMS_FALLBACK: CmsLoja = {
       ativo: true,
     },
   ],
+  selos: [
+    {
+      id: 'entrega-brasil',
+      titulo: 'Entrega em Todo o Brasil',
+      descricao: '',
+      link: '/conta/pedidos',
+      icone_url: 'assets/header/icons/icon-map.png',
+      externo: false,
+      ativo: true,
+    },
+    {
+      id: 'faturamento-direto',
+      titulo: 'Faturamento Direto',
+      descricao: '',
+      link: '/conta',
+      icone_url: 'assets/header/icons/icon-faturamento-direto.png',
+      externo: false,
+      ativo: true,
+    },
+    {
+      id: 'cotacao-b2b',
+      titulo: 'Cotação B2B em 30 min',
+      descricao: 'Preço especial por lote e atacado',
+      link: '/busca',
+      icone_url: 'assets/header/icons/icon-cotacao.png',
+      externo: false,
+      ativo: true,
+    },
+    {
+      id: 'portal-cnpj',
+      titulo: 'Portal do Cliente CNPJ',
+      descricao: '2ª via, faturas e suporte de fábrica',
+      link: '/conta',
+      icone_url: 'assets/header/icons/icon-usuario.png',
+      externo: false,
+      ativo: true,
+    },
+    {
+      id: 'instagram',
+      titulo: 'Instagram Oficial',
+      descricao: 'Dicas técnicas e novidades @hweld',
+      link: 'https://instagram.com',
+      icone_url: 'assets/header/icons/icon-instagram.png',
+      externo: true,
+      ativo: true,
+    },
+  ],
 };
 
 @Injectable({ providedIn: 'root' })
@@ -193,6 +251,9 @@ export class CmsStore {
   readonly slides = computed(() => this._cms().slides.filter((s) => s.ativo));
   readonly trioBanners = computed(() => this._cms().trio_banners.filter((c) => c.ativo));
   readonly duoBanners = computed(() => this._cms().duo_banners.filter((c) => c.ativo));
+  // JSON antigo pode vir sem `selos` — o `?? []` evita crash antes do
+  // backend popular o padrão (o `??` também cobre o fallback parcial).
+  readonly selos = computed(() => (this._cms().selos ?? []).filter((s) => s.ativo));
 
   constructor() {
     effect(() => {

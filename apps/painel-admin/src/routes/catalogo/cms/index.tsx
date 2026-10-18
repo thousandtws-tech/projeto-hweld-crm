@@ -12,7 +12,7 @@ import {
   processarEEnviarComPreset,
   type ModoAutoAjuste,
 } from "@/lib/midia";
-import type { CardDuoCms, CardTrioCms, CmsLoja, MarcaCms, SlideBannerCms } from "@/lib/models";
+import type { CardDuoCms, CardTrioCms, CmsLoja, MarcaCms, SeloCms, SlideBannerCms } from "@/lib/models";
 import { catalogoService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/catalogo/cms/")({
   component: CmsLojaPage,
 });
 
-type Aba = "marcas" | "slides" | "trio" | "duo";
+type Aba = "marcas" | "slides" | "trio" | "duo" | "selos";
 
 function resolverUrlPreview(url: string): string {
   if (!url) return "";
@@ -38,6 +38,7 @@ function CmsLojaPage() {
     slides: [],
     trio_banners: [],
     duo_banners: [],
+    selos: [],
   });
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
@@ -51,7 +52,8 @@ function CmsLojaPage() {
     if (!silencioso) setCarregando(true);
     try {
       const dados = await catalogoService.obterCms();
-      setCms(dados);
+      // JSONs antigos podem não ter `selos` — normaliza para nunca quebrar a UI.
+      setCms({ ...dados, selos: dados.selos ?? [] });
     } catch {
       toast.error("Não foi possível carregar o CMS da loja.");
     } finally {
@@ -232,6 +234,33 @@ function CmsLojaPage() {
     await persistir(proximo, "Banner largo removido.");
   };
 
+  // ── Ações dos Selos de Confiança (faixa abaixo do hero) ────────────────────
+  const adicionarSelo = () => {
+    const novo: SeloCms = {
+      id: `selo-${Date.now().toString(36)}`,
+      titulo: "Novo Selo de Confiança",
+      descricao: "Descrição curta do benefício.",
+      link: "/busca",
+      icone_url: "",
+      externo: false,
+      ativo: true,
+    };
+    setCms((atual) => ({ ...atual, selos: [...atual.selos, novo] }));
+  };
+
+  const atualizarSelo = (idx: number, patch: Partial<SeloCms>) => {
+    setCms((atual) => ({
+      ...atual,
+      selos: atual.selos.map((s, i) => (i === idx ? { ...s, ...patch } : s)),
+    }));
+  };
+
+  const excluirSelo = async (idx: number) => {
+    if (!window.confirm("Deseja remover este selo da faixa de confiança?")) return;
+    const proximo = { ...cms, selos: cms.selos.filter((_, i) => i !== idx) };
+    await persistir(proximo, "Selo removido.");
+  };
+
   return (
     <AppShell>
       <PageHeader
@@ -269,6 +298,7 @@ function CmsLojaPage() {
               ["slides", `Banner Principal Topo (${cms.slides.length})`],
               ["trio", `Trio de Banners (${cms.trio_banners.length})`],
               ["duo", `Duo de Banners 50/50 (${cms.duo_banners.length})`],
+              ["selos", `Selos de Confiança (${cms.selos.length})`],
             ] as const
           ).map(([id, rotulo]) => (
             <button
@@ -731,6 +761,128 @@ function CmsLojaPage() {
                       value={c.botao_link}
                       onChange={(e) => atualizarDuo(idx, { botao_link: e.target.value })}
                     />
+                  </FormField>
+                </div>
+              </div>
+            </SectionCard>
+          ))}
+        </div>
+      )}
+
+      {/* ABA 5: SELOS DE CONFIANÇA (faixa abaixo do hero) */}
+      {aba === "selos" && (
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={adicionarSelo}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-secondary"
+            >
+              <Plus className="h-4 w-4" /> Adicionar Selo
+            </button>
+          </div>
+
+          {cms.selos.map((s, idx) => (
+            <SectionCard key={s.id} className="space-y-4">
+              <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                    Selo #{idx + 1} · {s.titulo}
+                  </span>
+                  <label className="flex items-center gap-2 text-xs font-medium">
+                    <input
+                      type="checkbox"
+                      checked={s.ativo}
+                      onChange={(e) => atualizarSelo(idx, { ativo: e.target.checked })}
+                    />
+                    Ativo
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void excluirSelo(idx)}
+                  className="inline-flex items-center gap-1 rounded-full border border-[#D92546]/30 px-3 py-1 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Excluir
+                </button>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-[160px_1fr]">
+                <div className="space-y-2">
+                  <div className="grid aspect-square w-full place-items-center overflow-hidden rounded-2xl border border-border bg-white p-4">
+                    {s.icone_url ? (
+                      <img
+                        src={resolverUrlPreview(s.icone_url)}
+                        alt={s.titulo}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-[11px] text-slate-400">Sem ícone</span>
+                    )}
+                  </div>
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
+                    {uploadingKey === `selo-${s.id}` ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <ImagePlus className="h-3.5 w-3.5" />
+                    )}
+                    Ícone (128×128)
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        void uploadImagem(
+                          e.target.files?.[0],
+                          `selo-${s.id}`,
+                          "selo",
+                          (url) => atualizarSelo(idx, { icone_url: url }),
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <FormField label="Título *">
+                    <input
+                      className={fieldClass}
+                      value={s.titulo}
+                      onChange={(e) => atualizarSelo(idx, { titulo: e.target.value })}
+                    />
+                  </FormField>
+                  <FormField label="Descrição (opcional)">
+                    <input
+                      className={fieldClass}
+                      value={s.descricao}
+                      onChange={(e) => atualizarSelo(idx, { descricao: e.target.value })}
+                    />
+                  </FormField>
+                  <FormField label="URL do Ícone (upload ou assets/externa)" wide>
+                    <input
+                      className={fieldClass}
+                      placeholder="/api/v1/midia/… ou assets/header/icons/icon-x.png"
+                      value={s.icone_url}
+                      onChange={(e) => atualizarSelo(idx, { icone_url: e.target.value })}
+                    />
+                  </FormField>
+                  <FormField label="Link de Destino ao clicar">
+                    <input
+                      className={fieldClass}
+                      placeholder="/busca ou https://…"
+                      value={s.link}
+                      onChange={(e) => atualizarSelo(idx, { link: e.target.value })}
+                    />
+                  </FormField>
+                  <FormField label="Abertura do link">
+                    <label className="flex h-10 items-center gap-2 text-xs font-medium">
+                      <input
+                        type="checkbox"
+                        checked={s.externo}
+                        onChange={(e) => atualizarSelo(idx, { externo: e.target.checked })}
+                      />
+                      Abrir em nova aba (link externo)
+                    </label>
                   </FormField>
                 </div>
               </div>

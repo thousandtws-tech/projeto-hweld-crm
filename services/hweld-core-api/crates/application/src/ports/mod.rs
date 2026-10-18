@@ -1,4 +1,5 @@
 pub mod acesso;
+pub mod armazenamento;
 pub mod auditoria;
 pub mod busca;
 pub mod catalogo;

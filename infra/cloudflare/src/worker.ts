@@ -1,6 +1,8 @@
 /**
  * Worker de borda do portal HWeld (apps/web).
  *
+ * - `/api/v1/{payments,billing,fiscal-documents,notifications,events,webhooks}*`
+ *               → proxy para o operations-api (Java/Spring) — REST
  * - `/api/*`      → proxy para o core-api (Rust/Actix)      — REST
  * - `/events/*`   → proxy para o realtime-engine (Phoenix)  — SSE
  * - `/socket/*`   → proxy para o realtime-engine (Phoenix)  — WebSocket Channels
@@ -12,15 +14,31 @@ interface Env {
   ASSETS: Fetcher;
   CORE_API_ORIGIN: string;
   REALTIME_ORIGIN: string;
+  OPS_API_ORIGIN: string;
 }
 
 const API_PREFIX = "/api";
 const REALTIME_PREFIXES = ["/events", "/socket"];
 
+// Prefixos `/api/v1/*` servidos pelo operations-api (Java) — pagamentos,
+// billing, fiscal, notificações e trilha de eventos. Os paths do Java são
+// em inglês e não colidem com os do core-api (em português).
+const OPS_PREFIXES = [
+  "/api/v1/payments",
+  "/api/v1/billing",
+  "/api/v1/fiscal-documents",
+  "/api/v1/notifications",
+  "/api/v1/events",
+  "/api/v1/webhooks",
+];
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const { pathname } = new URL(request.url);
 
+    if (OPS_PREFIXES.some((p) => matchesPrefix(pathname, p))) {
+      return proxy(request, env.OPS_API_ORIGIN);
+    }
     if (matchesPrefix(pathname, API_PREFIX)) {
       return proxy(request, env.CORE_API_ORIGIN);
     }

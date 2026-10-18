@@ -458,9 +458,20 @@ export interface CardDuoCms {
   ativo: boolean;
 }
 
+export interface SeloCms {
+  id: string;
+  titulo: string;
+  descricao: string;
+  link: string;
+  icone_url: string;
+  externo: boolean;
+  ativo: boolean;
+}
+
 export interface CmsLoja {
   marcas: MarcaCms[];
   slides: SlideBannerCms[];
   trio_banners: CardTrioCms[];
   duo_banners: CardDuoCms[];
+  selos: SeloCms[];
 }

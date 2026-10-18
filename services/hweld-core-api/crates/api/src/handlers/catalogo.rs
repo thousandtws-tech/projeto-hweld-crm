@@ -19,7 +19,6 @@ use crate::dto::{
 };
 use crate::estado::AppState;
 use crate::extratores::{AuthPortalOpcional, AuthStaff};
-use actix_web::HttpRequest;
 
 const CATALOGO: &[Perfil] = &[Perfil::Admin, Perfil::Estoque, Perfil::Vendedor];
 /// Imagens e upload de mídia — liberado para quem gerencia o catálogo.
@@ -130,7 +129,7 @@ pub async fn atualizar_categoria(
     // Ao trocar/remover a imagem local da categoria, descarta o arquivo órfão.
     if antes.imagem_url.as_deref() != cat.imagem_url.as_deref() {
         if let Some(antiga) = antes.imagem_url.as_deref() {
-            descartar_arquivo_midia(antiga).await;
+            descartar_arquivo_midia(antiga, state.armazenamento.as_ref()).await;
         }
     }
     Ok(HttpResponse::Ok().json(cat))
@@ -158,7 +157,7 @@ pub async fn excluir_categoria(
     staff.exige(CATALOGO)?;
     let removida = state.categorias.remover(Id::novo(*id)).await?;
     if let Some(img) = removida.imagem_url.as_deref() {
-        descartar_arquivo_midia(img).await;
+        descartar_arquivo_midia(img, state.armazenamento.as_ref()).await;
     }
     Ok(HttpResponse::NoContent().finish())
 }
@@ -430,7 +429,7 @@ pub async fn remover_imagem(
         .produtos
         .remover_imagem(Id::novo(produto_id), Id::novo(imagem_id))
         .await?;
-    descartar_arquivo_midia(&removida.url).await;
+    descartar_arquivo_midia(&removida.url, state.armazenamento.as_ref()).await;
     Ok(HttpResponse::NoContent().finish())
 }
 
@@ -452,10 +451,13 @@ fn detectar_formato_imagem(bytes: &[u8]) -> Option<(&'static str, &'static str)>
     None
 }
 
-/// Descarta o arquivo físico quando a URL aponta para `…/api/v1/midia/{arquivo}`
-/// (upload local). URLs externas e Data URLs não têm arquivo para remover.
-/// Best-effort: falha de FS não derruba a operação principal — registra warn.
-async fn descartar_arquivo_midia(url: &str) {
+/// Descarta o objeto quando a URL aponta para `…/api/v1/midia/{arquivo}`
+/// (upload nosso). URLs externas e Data URLs não têm objeto para remover.
+/// Best-effort: falha de storage não derruba a operação principal — registra warn.
+async fn descartar_arquivo_midia(
+    url: &str,
+    storage: &dyn hweld_application::ports::armazenamento::ArmazenamentoObjetos,
+) {
     if !url.contains("/api/v1/midia/") {
         return;
     }
@@ -471,10 +473,8 @@ async fn descartar_arquivo_midia(url: &str) {
     if !seguro {
         return;
     }
-    match tokio::fs::remove_file(std::path::Path::new("uploads").join(nome)).await {
-        Ok(()) => {}
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-        Err(e) => tracing::warn!(arquivo = nome, erro = %e, "falha ao descartar arquivo de mídia"),
+    if let Err(e) = storage.remover(&format!("midia/{nome}")).await {
+        tracing::warn!(arquivo = nome, erro = %e, "falha ao descartar objeto de mídia");
     }
 }
 
@@ -492,7 +492,7 @@ async fn descartar_arquivo_midia(url: &str) {
 )]
 #[post("/midia/upload")]
 pub async fn upload_midia(
-    req: HttpRequest,
+    state: web::Data<AppState>,
     staff: AuthStaff,
     body: web::Bytes,
 ) -> Resposta<HttpResponse> {
@@ -516,24 +516,16 @@ pub async fn upload_midia(
         .into());
     };
 
-    let dir = std::path::Path::new("uploads");
-    tokio::fs::create_dir_all(dir)
-        .await
-        .map_err(|e| hweld_application::ErroApp::interno("midia_dir", e))?;
-
     let nome_arquivo = format!("{}.{ext}", uuid::Uuid::new_v4().simple());
-    let caminho = dir.join(&nome_arquivo);
-    tokio::fs::write(&caminho, &body)
-        .await
-        .map_err(|e| hweld_application::ErroApp::interno("midia_write", e))?;
+    state
+        .armazenamento
+        .salvar(&format!("midia/{nome_arquivo}"), &body, mime)
+        .await?;
 
-    let conn = req.connection_info();
-    let url = format!(
-        "{}://{}/api/v1/midia/{}",
-        conn.scheme(),
-        conn.host(),
-        nome_arquivo
-    );
+    // URL relativa — o browser resolve no domínio do front (worker), que
+    // proxya para esta API. URL absoluta gravaria o host visto pelo
+    // servidor (interno/Railway), quebrando atrás de proxy reverso.
+    let url = format!("/api/v1/midia/{nome_arquivo}");
 
     Ok(HttpResponse::Created().json(UploadMidiaResp {
         url,
@@ -555,7 +547,10 @@ pub async fn upload_midia(
     ),
 )]
 #[get("/midia/{arquivo}")]
-pub async fn servir_midia(arquivo: web::Path<String>) -> Resposta<HttpResponse> {
+pub async fn servir_midia(
+    state: web::Data<AppState>,
+    arquivo: web::Path<String>,
+) -> Resposta<HttpResponse> {
     let nome = arquivo.into_inner();
     let nome_seguro = !nome.is_empty()
         && nome.len() <= 80
@@ -569,10 +564,7 @@ pub async fn servir_midia(arquivo: web::Path<String>) -> Resposta<HttpResponse> 
         return Err(hweld_application::ErroApp::nao_encontrado("midia", nome).into());
     }
 
-    let caminho = std::path::Path::new("uploads").join(&nome);
-    let bytes = tokio::fs::read(&caminho)
-        .await
-        .map_err(|_| hweld_application::ErroApp::nao_encontrado("midia", &nome))?;
+    let bytes = state.armazenamento.ler(&format!("midia/{nome}")).await?;
 
     let mime = detectar_formato_imagem(&bytes)
         .map(|(_, m)| m)
@@ -587,7 +579,8 @@ pub async fn servir_midia(arquivo: web::Path<String>) -> Resposta<HttpResponse> 
 
 // ── CMS da Loja (Banners, Marcas & Vitrine) ─────────────────────────────────
 
-const CMS_ARQUIVO: &str = "uploads/cms_loja.json";
+/// Chave do JSON do CMS no object storage (MinIO ou disco local).
+const CMS_CHAVE: &str = "cms/loja.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct MarcaCms {
@@ -658,12 +651,36 @@ fn default_true() -> bool {
     true
 }
 
+/// Item da faixa de confiança da vitrine (selos/benefícios — "Entrega em
+/// Todo o Brasil", "Faturamento Direto"…). `icone_url` aceita caminho de
+/// assets do front (`assets/...`), URL `/api/v1/midia/…` (upload) ou externa.
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct SeloCms {
+    pub id: String,
+    pub titulo: String,
+    #[serde(default)]
+    pub descricao: String,
+    #[serde(default)]
+    pub link: String,
+    #[serde(default)]
+    pub icone_url: String,
+    /// `true` = abre em nova aba (`<a target="_blank">`), `false` = routerLink.
+    #[serde(default)]
+    pub externo: bool,
+    #[serde(default = "default_true")]
+    pub ativo: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct CmsLoja {
     pub marcas: Vec<MarcaCms>,
     pub slides: Vec<SlideBannerCms>,
     pub trio_banners: Vec<CardTrioCms>,
     pub duo_banners: Vec<CardDuoCms>,
+    /// Faixa de selos de confiança — `#[serde(default)]` mantém JSONs
+    /// antigos (sem a chave) desserializando; vazio vira o padrão na carga.
+    #[serde(default)]
+    pub selos: Vec<SeloCms>,
 }
 
 fn cms_padrao() -> CmsLoja {
@@ -777,46 +794,105 @@ fn cms_padrao() -> CmsLoja {
                 ativo: true,
             },
         ],
+        selos: selos_padrao(),
     }
 }
 
-async fn carregar_cms_disco() -> CmsLoja {
-    if let Ok(bytes) = tokio::fs::read(CMS_ARQUIVO).await {
-        if let Ok(cms) = serde_json::from_slice::<CmsLoja>(&bytes) {
+/// Faixa de selos padrão — mesmos 5 itens que eram hardcoded no front.
+fn selos_padrao() -> Vec<SeloCms> {
+    vec![
+        SeloCms {
+            id: "entrega-brasil".into(),
+            titulo: "Entrega em Todo o Brasil".into(),
+            descricao: "".into(),
+            link: "/conta/pedidos".into(),
+            icone_url: "assets/header/icons/icon-map.png".into(),
+            externo: false,
+            ativo: true,
+        },
+        SeloCms {
+            id: "faturamento-direto".into(),
+            titulo: "Faturamento Direto".into(),
+            descricao: "".into(),
+            link: "/conta".into(),
+            icone_url: "assets/header/icons/icon-faturamento-direto.png".into(),
+            externo: false,
+            ativo: true,
+        },
+        SeloCms {
+            id: "cotacao-b2b".into(),
+            titulo: "Cotação B2B em 30 min".into(),
+            descricao: "Preço especial por lote e atacado".into(),
+            link: "/busca".into(),
+            icone_url: "assets/header/icons/icon-cotacao.png".into(),
+            externo: false,
+            ativo: true,
+        },
+        SeloCms {
+            id: "portal-cnpj".into(),
+            titulo: "Portal do Cliente CNPJ".into(),
+            descricao: "2ª via, faturas e suporte de fábrica".into(),
+            link: "/conta".into(),
+            icone_url: "assets/header/icons/icon-usuario.png".into(),
+            externo: false,
+            ativo: true,
+        },
+        SeloCms {
+            id: "instagram".into(),
+            titulo: "Instagram Oficial".into(),
+            descricao: "Dicas técnicas e novidades @hweld".into(),
+            link: "https://instagram.com".into(),
+            icone_url: "assets/header/icons/icon-instagram.png".into(),
+            externo: true,
+            ativo: true,
+        },
+    ]
+}
+
+async fn carregar_cms(
+    storage: &dyn hweld_application::ports::armazenamento::ArmazenamentoObjetos,
+) -> CmsLoja {
+    if let Ok(bytes) = storage.ler(CMS_CHAVE).await {
+        if let Ok(mut cms) = serde_json::from_slice::<CmsLoja>(&bytes) {
+            // JSONs antigos não têm `selos` — vazio significa "nunca
+            // configurado" (o padrão), não "remover todos" (o admin
+            // consegue esvaziar salvando a lista explicitamente vazia…
+            // distinção impossível sem migração; selos_padrao é o
+            // comportamento menos surpreendente aqui).
+            if cms.selos.is_empty() {
+                cms.selos = selos_padrao();
+            }
             return cms;
         }
     }
     let padrao = cms_padrao();
-    let _ = tokio::fs::create_dir_all("uploads").await;
-    if let Ok(json) = serde_json::to_vec_pretty(&padrao) {
-        let _ = tokio::fs::write(CMS_ARQUIVO, json).await;
-    }
+    let _ = salvar_cms(storage, &padrao).await;
     padrao
 }
 
-async fn salvar_cms_disco(cms: &CmsLoja) -> Result<(), hweld_application::ErroApp> {
-    tokio::fs::create_dir_all("uploads")
-        .await
-        .map_err(|e| hweld_application::ErroApp::interno("cms_dir", e))?;
+async fn salvar_cms(
+    storage: &dyn hweld_application::ports::armazenamento::ArmazenamentoObjetos,
+    cms: &CmsLoja,
+) -> Result<(), hweld_application::ErroApp> {
     let json = serde_json::to_vec_pretty(cms)
         .map_err(|e| hweld_application::ErroApp::interno("cms_json", e))?;
-    tokio::fs::write(CMS_ARQUIVO, json)
-        .await
-        .map_err(|e| hweld_application::ErroApp::interno("cms_write", e))?;
-    Ok(())
+    storage.salvar(CMS_CHAVE, &json, "application/json").await
 }
 
 /// Retorna a configuração completa do CMS da loja (público para o portal web).
 #[get("/portal/cms")]
-pub async fn obter_cms_publico() -> Resposta<HttpResponse> {
-    let cms = carregar_cms_disco().await;
+pub async fn obter_cms_publico(state: web::Data<AppState>) -> Resposta<HttpResponse> {
+    let cms = carregar_cms(state.armazenamento.as_ref()).await;
     Ok(HttpResponse::Ok().json(cms))
 }
 
 /// Retorna a configuração completa do CMS da loja (painel admin).
 #[get("/cms")]
-pub async fn obter_cms_staff(_staff: AuthStaff) -> Resposta<HttpResponse> {
-    let cms = carregar_cms_disco().await;
+pub async fn obter_cms_staff(
+    state: web::Data<AppState>,
+    _staff: AuthStaff,
+) -> Resposta<HttpResponse> {
+    let cms = carregar_cms(state.armazenamento.as_ref()).await;
     Ok(HttpResponse::Ok().json(cms))
 }
 
@@ -829,7 +905,7 @@ pub async fn salvar_cms_staff(
 ) -> Resposta<HttpResponse> {
     staff.exige(CATALOGO)?;
     let cms = body.into_inner();
-    salvar_cms_disco(&cms).await?;
+    salvar_cms(state.armazenamento.as_ref(), &cms).await?;
     state.categorias.publicar_cms_atualizado();
     Ok(HttpResponse::Ok().json(cms))
 }

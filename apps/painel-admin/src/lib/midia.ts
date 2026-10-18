@@ -18,7 +18,7 @@ export interface OpcoesAutoAjuste {
  * e altura antes de ir para o servidor.
  */
 export const PRESETS_MIDIA: Record<
-  "banner-desktop" | "banner-mobile" | "banner-trio" | "banner-duo" | "categoria" | "marca" | "produto",
+  "banner-desktop" | "banner-mobile" | "banner-trio" | "banner-duo" | "categoria" | "marca" | "produto" | "selo",
   OpcoesAutoAjuste
 > = {
   "banner-desktop": { largura: 1920, altura: 780, modo: "smart-banner", qualidade: 0.92 },
@@ -27,6 +27,7 @@ export const PRESETS_MIDIA: Record<
   "banner-duo": { largura: 1200, altura: 620, modo: "cover", qualidade: 0.88 },
   categoria: { largura: 800, altura: 480, modo: "cover", qualidade: 0.88 },
   marca: { largura: 480, altura: 200, modo: "contain", qualidade: 0.9 },
+  selo: { largura: 128, altura: 128, modo: "contain", qualidade: 0.9 },
   produto: { largura: 1000, altura: 1000, modo: "contain", qualidade: 0.88, fundo: "#ffffff" },
 };
 

@@ -3,6 +3,7 @@
 
 use std::sync::Arc;
 
+use hweld_application::ports::armazenamento::ArmazenamentoObjetos;
 use hweld_application::ports::seguranca::EmissorTokens;
 use hweld_application::use_cases::auditoria::ServicoAuditoria;
 use hweld_application::use_cases::auth::ServicoAuth;
@@ -72,4 +73,7 @@ pub struct AppState {
     /// Segredo `X-Service-Token` do canal service-to-service — `None`
     /// desliga o endpoint interno (503), nunca libera sem autenticação.
     pub token_integracao: Option<String>,
+    /// Object storage (MinIO em produção, disco local em dev) — mídias
+    /// de catálogo e blobs em geral, endereçados por chave.
+    pub armazenamento: Arc<dyn ArmazenamentoObjetos>,
 }

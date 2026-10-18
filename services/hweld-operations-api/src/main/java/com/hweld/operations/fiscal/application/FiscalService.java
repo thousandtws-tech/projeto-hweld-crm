@@ -4,6 +4,7 @@ import com.hweld.operations.fiscal.domain.FiscalDocument;
 import com.hweld.operations.fiscal.domain.FiscalDocumentRepository;
 import com.hweld.operations.shared.application.EventTypes;
 import com.hweld.operations.shared.application.IntegrationEvent;
+import com.hweld.operations.shared.application.ObjectStorage;
 import com.hweld.operations.shared.infrastructure.audit.AuditService;
 import com.hweld.operations.shared.infrastructure.http.HttpClientsConfig;
 import com.hweld.operations.shared.infrastructure.outbox.Outbox;
@@ -44,15 +45,17 @@ public class FiscalService {
     private final Map<String, FiscalProvider> providers;
     private final Outbox outbox;
     private final AuditService audit;
+    private final ObjectStorage storage;
     private final Props props;
 
     public FiscalService(FiscalDocumentRepository repository, List<FiscalProvider> providerList,
-            Outbox outbox, AuditService audit, Props props) {
+            Outbox outbox, AuditService audit, ObjectStorage storage, Props props) {
         this.repository = repository;
         this.providers = providerList.stream().collect(
                 java.util.stream.Collectors.toMap(FiscalProvider::name, p -> p));
         this.outbox = outbox;
         this.audit = audit;
+        this.storage = storage;
         this.props = props;
     }
 
@@ -114,6 +117,24 @@ public class FiscalService {
         audit.record("fiscal." + doc.getStatus().toLowerCase(), "fiscal_document",
                 doc.getId().toString(), Map.of("pedidoId", pedidoId, "docType", docType.name()));
         return doc;
+    }
+
+    /**
+     * Bytes do artefato hospedado (`xml`/`pdf`) — `null` quando o doc
+     * não tem a chave ou o storage não tem o objeto.
+     */
+    @Transactional(readOnly = true)
+    public byte[] artefato(UUID id, String tipo) {
+        FiscalDocument doc = get(id);
+        String chave = switch (tipo) {
+            case "xml" -> doc.getXmlUrl();
+            case "pdf" -> doc.getPdfUrl();
+            default -> null;
+        };
+        if (chave == null || !chave.startsWith("fiscal/")) {
+            return null;
+        }
+        return storage.ler(chave);
     }
 
     @Transactional(readOnly = true)

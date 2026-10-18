@@ -71,6 +71,28 @@ public class FiscalController {
         return service.get(id);
     }
 
+    /** Download do artefato fiscal hospedado no object storage. */
+    @GetMapping("/{id}/xml")
+    public ResponseEntity<byte[]> xml(@PathVariable UUID id) {
+        return artefato(id, "xml", "application/xml");
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> pdf(@PathVariable UUID id) {
+        return artefato(id, "pdf", "application/pdf");
+    }
+
+    private ResponseEntity<byte[]> artefato(UUID id, String tipo, String mime) {
+        byte[] bytes = service.artefato(id, tipo);
+        if (bytes == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .header("Content-Type", mime)
+                .header("Content-Disposition", "inline; filename=\"" + id + "." + tipo + "\"")
+                .body(bytes);
+    }
+
     @PostMapping("/{id}/cancel")
     public FiscalDocument cancel(@PathVariable UUID id,
             @RequestBody(required = false) Map<String, String> body) {

@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { CmsStore } from '../../../../core/cms.store';
 
 @Component({
   selector: 'hw-trust-bar',
@@ -7,4 +8,7 @@ import { RouterLink } from '@angular/router';
   templateUrl: './trust-bar.html',
   styleUrl: './trust-bar.scss',
 })
-export class HwTrustBar {}
+export class HwTrustBar {
+  private cms = inject(CmsStore);
+  readonly selos = this.cms.selos;
+}

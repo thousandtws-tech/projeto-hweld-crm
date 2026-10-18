@@ -10,6 +10,9 @@ workers, mesma lógica de proxy (`src/worker.ts`):
 
 ```
 Browser → Worker
+            ├── /api/v1/{payments,billing,fiscal-documents,
+            │    notifications,events,webhooks}*
+            │             → OPS_API_ORIGIN     (operations-api, Java/Spring — REST)
             ├── /api/*    → CORE_API_ORIGIN    (core-api, Rust/Actix — REST)
             ├── /events/* → REALTIME_ORIGIN    (realtime-engine, Phoenix — SSE)
             ├── /socket/* → REALTIME_ORIGIN    (Phoenix Channels — WebSocket)
@@ -38,6 +41,7 @@ Preencher em `wrangler.jsonc` e `wrangler.admin.jsonc`, por ambiente
 |---|---|---|
 | `CORE_API_ORIGIN` | `services/core-api` | `https://core-api-production.up.railway.app` |
 | `REALTIME_ORIGIN` | `services/realtime-engine` | `https://realtime-production.up.railway.app` |
+| `OPS_API_ORIGIN` | `services/hweld-operations-api` | `https://operations-api-production.up.railway.app` |
 
 São URLs públicas, não segredos — ficam em `vars`, não em `wrangler secret`.
 
