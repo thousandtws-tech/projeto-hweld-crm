@@ -1,0 +1,21 @@
+# TLS automático via Let's Encrypt + reverse proxy por subdomínio.
+# Substitua `seudominio.com.br` pelo domínio real antes do primeiro boot —
+# o Caddy emite o certificado no primeiro acesso (DNS já tem que apontar).
+
+api.seudominio.com.br {
+	reverse_proxy core-api:8080
+}
+
+ops.seudominio.com.br {
+	reverse_proxy operations-api:8090
+}
+
+rt.seudominio.com.br {
+	reverse_proxy realtime:4100
+}
+
+# MinIO console — opcional; alternativa segura é tunnel SSH
+# (ssh -L 9001:localhost:9001 user@vm) sem publicar este bloco.
+# minio.seudominio.com.br {
+# 	reverse_proxy minio:9001
+# }

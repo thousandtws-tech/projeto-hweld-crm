@@ -1,0 +1,166 @@
+# ── HWeld — stack completa self-hosted (OCI Ampere A1) ─────────────────────
+# Uso:  cd infra/oci && cp .env.example .env  (preencher!)  && docker compose --env-file .env up -d
+#
+# Topologia: Caddy termina TLS nos subdomínios e roteia para os serviços
+# internos. Postgres/ES/MinIO NUNCA expostos — só rede interna do compose.
+# Fits no free tier: ~2.5 GB de heap (ES) + serviços leves → ~8 GB usados.
+
+x-healthcheck-pg: &hc-pg
+  test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+  interval: 10s
+  timeout: 5s
+  retries: 12
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: hweld-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-hweld}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck: *hc-pg
+    restart: unless-stopped
+    networks: [internal]
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.0
+    container_name: hweld-elasticsearch
+    environment:
+      discovery.type: single-node
+      # Segurança off: ES só existe na rede interna do compose (sem auth aqui
+      # — quem chega nele já passou pelo perímetro). TLS interno é overhead
+      # sem ganho nesta topologia.
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 18
+      start_period: 60s
+    restart: unless-stopped
+    networks: [internal]
+
+  minio:
+    image: minio/minio:latest
+    container_name: hweld-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+    restart: unless-stopped
+    networks: [internal]
+
+  core-api:
+    build:
+      context: ../../services/hweld-core-api
+      dockerfile: Dockerfile
+    container_name: hweld-core-api
+    environment:
+      ENVIRONMENT: production
+      HOST: 0.0.0.0
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hweld}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      API_DOCS_ENABLED: "false"
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_SENHA: ${ADMIN_SENHA}
+      ADMIN_NOME: ${ADMIN_NOME:-Administrador}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      MOTOR_URL: http://realtime:4100
+      MOTOR_INGEST_TOKEN: ${MOTOR_INGEST_TOKEN}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_BUCKET: hweld-uploads
+      MINIO_REGION: us-east-1
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+    depends_on:
+      postgres: {condition: service_healthy}
+      elasticsearch: {condition: service_healthy}
+      minio: {condition: service_healthy}
+    restart: unless-stopped
+    networks: [internal]
+
+  operations-api:
+    build:
+      context: ../../services/hweld-operations-api
+      dockerfile: Dockerfile
+    container_name: hweld-operations-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-hweld}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      CORE_API_URL: http://core-api:8080
+      MOTOR_URL: http://realtime:4100
+      MOTOR_INGEST_TOKEN: ${MOTOR_INGEST_TOKEN}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      PAYMENT_STUB_WEBHOOK_SECRET: ${PAYMENT_STUB_WEBHOOK_SECRET}
+      API_DOCS_ENABLED: "false"
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_BUCKET: hweld
+      MINIO_REGION: us-east-1
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+    depends_on:
+      postgres: {condition: service_healthy}
+      core-api: {condition: service_started}
+      minio: {condition: service_healthy}
+    restart: unless-stopped
+    networks: [internal]
+
+  realtime:
+    build:
+      context: ../../services/hweld-realtime-engine
+      dockerfile: Dockerfile
+    container_name: hweld-realtime
+    environment:
+      MOTOR_PORT: "4100"
+      MOTOR_INGEST_TOKEN: ${MOTOR_INGEST_TOKEN}
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-hweld}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      PHX_SERVER: "true"
+    depends_on:
+      postgres: {condition: service_healthy}
+    restart: unless-stopped
+    networks: [internal]
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: hweld-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [core-api, operations-api, realtime]
+    restart: unless-stopped
+    networks: [internal]
+
+volumes:
+  pgdata:
+  esdata:
+  miniodata:
+  caddy-data:
+  caddy-config:
+
+networks:
+  internal:
+    driver: bridge
