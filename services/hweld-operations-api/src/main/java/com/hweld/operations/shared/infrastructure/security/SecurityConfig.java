@@ -39,6 +39,10 @@ public class SecurityConfig {
             Converter<Jwt, AbstractAuthenticationToken> jwtConverter, SecurityProperties props) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
+            // Allowlist explícita via `hweld.security.cors-allowed-origins`
+            // (dev: Vite :5173). Vazia = CORS inativo — prod vai same-origin
+            // pelo Worker de borda.
+            .cors(org.springframework.security.config.Customizer.withDefaults())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/health/**", "/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
@@ -56,6 +60,19 @@ public class SecurityConfig {
             .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter)))
             .addFilterBefore(new ServiceTokenFilter(props.internalServiceToken()), BearerTokenAuthenticationFilter.class);
         return http.build();
+    }
+
+    @Bean
+    org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource(
+            SecurityProperties props) {
+        var cfg = new org.springframework.web.cors.CorsConfiguration();
+        cfg.setAllowedOrigins(props.corsAllowedOrigins());
+        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        cfg.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
+        cfg.setMaxAge(3600L);
+        var src = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        src.registerCorsConfiguration("/api/**", cfg);
+        return src;
     }
 
     @Bean

@@ -4,8 +4,8 @@
 use std::sync::OnceLock;
 
 use actix_governor::{
-    Governor, GovernorConfig, GovernorConfigBuilder, KeyExtractor, SimpleKeyExtractionError,
-    governor::middleware::StateInformationMiddleware,
+    governor::middleware::StateInformationMiddleware, Governor, GovernorConfig,
+    GovernorConfigBuilder, KeyExtractor, SimpleKeyExtractionError,
 };
 use actix_web::{dev::ServiceRequest, error::JsonPayloadError, web};
 use hweld_application::ErroApp;
@@ -221,6 +221,7 @@ pub fn configurar(cfg: &mut web::ServiceConfig, docs_habilitados: bool) {
             // Canal interno service-to-service (hweld-operations-api) —
             // auth própria por X-Service-Token, sem JWT de usuário.
             .service(interno::eventos_financeiros)
+            .service(interno::dados_fiscais)
             // Busca (Elasticsearch) — staff.
             .service(busca::buscar_staff)
             .service(busca::reindexar)

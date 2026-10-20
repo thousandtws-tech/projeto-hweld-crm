@@ -1,4 +1,4 @@
-import { API_URL } from "./config";
+import { API_URL, OPS_API_URL } from "./config";
 import type { Pagina } from "./models";
 import {
   accessToken,
@@ -114,6 +114,8 @@ interface OpcoesRequest {
   bytes?: BodyInit;
   /** Headers extras (ex.: metadados de upload via X-*). */
   headers?: Record<string, string>;
+  /** Resposta binária (download de artefato) — devolve `Blob` em vez de JSON. */
+  download?: boolean;
 }
 
 async function executeRequest<T>(
@@ -177,70 +179,109 @@ async function executeRequest<T>(
 
   if (!res.ok) throw await extrairApiError(res);
   if (res.status === 204) return undefined as T;
+  if (options.download) return (await res.blob()) as T;
   return (await res.json()) as T;
 }
 
-function request<T>(method: string, path: string, options: OpcoesRequest = {}): Promise<T> {
-  const urlCompleta = `${API_URL}/${path}${queryString(options.params ?? {})}`;
+/** Envelope de página do Spring Data (`Page<T>`) — distinto do `Pagina` do core-api. */
+export interface PaginaSpring<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
 
-  if (method === "GET") {
-    const existente = inflightGets.get(urlCompleta) as Promise<T> | undefined;
-    if (existente) return existente;
+function criarApi(base: string) {
+  function request<T>(method: string, path: string, options: OpcoesRequest = {}): Promise<T> {
+    const urlCompleta = `${base}/${path}${queryString(options.params ?? {})}`;
 
-    const promessa = executeRequest<T>(method, urlCompleta, path, options).finally(() => {
-      inflightGets.delete(urlCompleta);
-    });
-    inflightGets.set(urlCompleta, promessa);
-    return promessa;
+    if (method === "GET") {
+      const existente = inflightGets.get(urlCompleta) as Promise<T> | undefined;
+      if (existente) return existente;
+
+      const promessa = executeRequest<T>(method, urlCompleta, path, options).finally(() => {
+        inflightGets.delete(urlCompleta);
+      });
+      inflightGets.set(urlCompleta, promessa);
+      return promessa;
+    }
+
+    return executeRequest<T>(method, urlCompleta, path, options);
   }
 
-  return executeRequest<T>(method, urlCompleta, path, options);
+  return {
+    lista<T>(recurso: string, filtros: Filtros = {}): Promise<Pagina<T>> {
+      return request<Pagina<T>>("GET", recurso, { params: filtros });
+    },
+    /** Endpoints que devolvem array puro (ex.: `/categorias` retorna `T[]`, não `Pagina`). */
+    listaArray<T>(recurso: string, filtros: Filtros = {}): Promise<T[]> {
+      return request<T[]>("GET", recurso, { params: filtros });
+    },
+    /** Página Spring (`{content,totalElements,...}`) — operations-api Java. */
+    pagina<T>(recurso: string, filtros: Filtros = {}): Promise<PaginaSpring<T>> {
+      return request<PaginaSpring<T>>("GET", recurso, { params: filtros });
+    },
+    get<T>(recurso: string, id: number | string): Promise<T> {
+      return request<T>("GET", `${recurso}/${id}`);
+    },
+    /** GET em recurso sem id (singletons, ex.: `/fiscal/configuracao`). */
+    getRecurso<T>(recurso: string): Promise<T> {
+      return request<T>("GET", recurso);
+    },
+    post<T>(recurso: string, body: unknown): Promise<T> {
+      return request<T>("POST", recurso, { body });
+    },
+    /** POST de bytes brutos com headers extras (ex.: certificado .pfx). */
+    postBytes<T>(recurso: string, bytes: BodyInit, headers: Record<string, string>): Promise<T> {
+      return request<T>("POST", recurso, { bytes, headers });
+    },
+    /** PUT em recurso sem id (singletons). */
+    putRecurso<T>(recurso: string, body: unknown): Promise<T> {
+      return request<T>("PUT", recurso, { body });
+    },
+    postAcao<T>(
+      recurso: string,
+      id: number | string,
+      acao: string,
+      body: unknown = {},
+    ): Promise<T> {
+      return request<T>("POST", `${recurso}/${id}/${acao}`, { body });
+    },
+    patchAcao<T>(
+      recurso: string,
+      id: number | string,
+      acao: string,
+      body: unknown = {},
+    ): Promise<T> {
+      return request<T>("PATCH", `${recurso}/${id}/${acao}`, { body });
+    },
+    put<T>(recurso: string, id: number | string, body: unknown): Promise<T> {
+      return request<T>("PUT", `${recurso}/${id}`, { body });
+    },
+    patch<T>(recurso: string, id: number | string, body: unknown): Promise<T> {
+      return request<T>("PATCH", `${recurso}/${id}`, { body });
+    },
+    del<T = void>(recurso: string, id?: number | string, sub?: string): Promise<T> {
+      const path = id === undefined ? recurso : `${recurso}/${id}`;
+      return request<T>("DELETE", `${path}${sub ? `/${sub}` : ""}`);
+    },
+    /** GET binário autenticado (XML/DANFE hospedados no object storage). */
+    baixar(recurso: string): Promise<Blob> {
+      return request<Blob>("GET", recurso, { download: true });
+    },
+    url(): string {
+      return base;
+    },
+  };
 }
 
 /** API genérica — paginação server-side `{itens,total,pagina,por_pagina,total_paginas}`. */
-export const api = {
-  lista<T>(recurso: string, filtros: Filtros = {}): Promise<Pagina<T>> {
-    return request<Pagina<T>>("GET", recurso, { params: filtros });
-  },
-  /** Endpoints que devolvem array puro (ex.: `/categorias` retorna `T[]`, não `Pagina`). */
-  listaArray<T>(recurso: string, filtros: Filtros = {}): Promise<T[]> {
-    return request<T[]>("GET", recurso, { params: filtros });
-  },
-  get<T>(recurso: string, id: number | string): Promise<T> {
-    return request<T>("GET", `${recurso}/${id}`);
-  },
-  /** GET em recurso sem id (singletons, ex.: `/fiscal/configuracao`). */
-  getRecurso<T>(recurso: string): Promise<T> {
-    return request<T>("GET", recurso);
-  },
-  post<T>(recurso: string, body: unknown): Promise<T> {
-    return request<T>("POST", recurso, { body });
-  },
-  /** POST de bytes brutos com headers extras (ex.: certificado .pfx). */
-  postBytes<T>(recurso: string, bytes: BodyInit, headers: Record<string, string>): Promise<T> {
-    return request<T>("POST", recurso, { bytes, headers });
-  },
-  /** PUT em recurso sem id (singletons). */
-  putRecurso<T>(recurso: string, body: unknown): Promise<T> {
-    return request<T>("PUT", recurso, { body });
-  },
-  postAcao<T>(recurso: string, id: number | string, acao: string, body: unknown = {}): Promise<T> {
-    return request<T>("POST", `${recurso}/${id}/${acao}`, { body });
-  },
-  patchAcao<T>(recurso: string, id: number | string, acao: string, body: unknown = {}): Promise<T> {
-    return request<T>("PATCH", `${recurso}/${id}/${acao}`, { body });
-  },
-  put<T>(recurso: string, id: number | string, body: unknown): Promise<T> {
-    return request<T>("PUT", `${recurso}/${id}`, { body });
-  },
-  patch<T>(recurso: string, id: number | string, body: unknown): Promise<T> {
-    return request<T>("PATCH", `${recurso}/${id}`, { body });
-  },
-  del<T = void>(recurso: string, id?: number | string, sub?: string): Promise<T> {
-    const path = id === undefined ? recurso : `${recurso}/${id}`;
-    return request<T>("DELETE", `${path}${sub ? `/${sub}` : ""}`);
-  },
-  url(): string {
-    return API_URL;
-  },
-};
+export const api = criarApi(API_URL);
+
+/**
+ * hweld-operations-api (Java/Spring) — mesmo JWT do staff, mesmo envelope de
+ * erro `{erro:{codigo,mensagem}}`. Nunca fala com o provedor fiscal: só com
+ * os endpoints internos de orquestração.
+ */
+export const apiOps = criarApi(OPS_API_URL);

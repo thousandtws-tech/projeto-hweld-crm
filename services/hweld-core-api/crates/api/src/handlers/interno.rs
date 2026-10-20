@@ -7,8 +7,11 @@
 //! duplicado, ignorado por estado), reservando 4xx/5xx para envelope
 //! inválido ou falha de infraestrutura (que justifica retry do emissor).
 
-use actix_web::{HttpResponse, post, web};
+use actix_web::{get, post, web, HttpResponse};
 use hweld_application::use_cases::integracao::{EventoFinanceiro, ResultadoEvento};
+use hweld_domain::fiscal::nota_fiscal::NotaFiscal;
+use hweld_domain::shared::id::Id;
+use hweld_domain::vendas::pedido::Pedido;
 
 use crate::erro::Resposta;
 use crate::estado::AppState;
@@ -29,4 +32,30 @@ pub async fn eventos_financeiros(
         "aceito": aceito,
         "resultado": resultado.rotulo(),
     })))
+}
+
+/// Conjunto fiscal autoritativo do pedido para o operations-api montar o
+/// payload do provedor (Focus NFe): itens com NCM/CFOP/unidade resolvidos,
+/// empresa e endereço de faturamento. `nota_fiscal_id` opcional usa o
+/// snapshot da NF como fonte dos campos tributários.
+#[derive(serde::Deserialize)]
+pub struct DadosFiscaisQuery {
+    pub nota_fiscal_id: Option<i64>,
+}
+
+#[get("/internal/pedidos/{id}/dados-fiscais")]
+pub async fn dados_fiscais(
+    state: web::Data<AppState>,
+    _servico: AuthServico,
+    path: web::Path<i64>,
+    query: web::Query<DadosFiscaisQuery>,
+) -> Resposta<HttpResponse> {
+    let dados = state
+        .notas_fiscais
+        .dados_emissao_pedido(
+            Id::<Pedido>::novo(path.into_inner()),
+            query.nota_fiscal_id.map(Id::<NotaFiscal>::novo),
+        )
+        .await?;
+    Ok(HttpResponse::Ok().json(dados))
 }

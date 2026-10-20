@@ -1,5 +1,6 @@
 package com.hweld.operations.fiscal.domain;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -15,4 +16,7 @@ public interface FiscalDocumentRepository extends JpaRepository<FiscalDocument, 
     Page<FiscalDocument> findByEmpresaId(Long empresaId, Pageable pageable);
 
     Optional<FiscalDocument> findByProviderAndExternalId(String provider, String externalId);
+
+    /** Documentos aguardando resolução no provedor (reconciliação/webhook). */
+    List<FiscalDocument> findTop50ByStatusInOrderByUpdatedAtAsc(List<String> statuses);
 }

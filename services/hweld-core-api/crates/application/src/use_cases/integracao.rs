@@ -16,12 +16,15 @@
 use std::sync::Arc;
 
 use hweld_domain::crm::empresa::Empresa;
+use hweld_domain::fiscal::nota_fiscal::{NotaFiscal, StatusNotaFiscal};
 use hweld_domain::shared::id::Id;
 use hweld_domain::vendas::pedido::{Pedido, StatusPedido};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::erro::{ErroApp, Resultado};
+use crate::ports::externos::AutorizacaoFiscal;
+use crate::ports::fiscal::{FiltroNotasFiscais, RepositorioNotasFiscais};
 use crate::ports::integracao::RepositorioEventosIntegracao;
 use crate::ports::notificacoes::{CaixaDeEntrada, NovaNotificacao};
 use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
@@ -68,6 +71,7 @@ pub struct ServicoIntegracao {
     eventos: Arc<dyn RepositorioEventosIntegracao>,
     pedidos: Arc<ServicoPedidos>,
     pedidos_repo: Arc<dyn RepositorioPedidos>,
+    notas: Arc<dyn RepositorioNotasFiscais>,
     notificacoes: Arc<dyn CaixaDeEntrada>,
     realtime: Arc<dyn NotificadorRealtime>,
 }
@@ -77,6 +81,7 @@ impl ServicoIntegracao {
         eventos: Arc<dyn RepositorioEventosIntegracao>,
         pedidos: Arc<ServicoPedidos>,
         pedidos_repo: Arc<dyn RepositorioPedidos>,
+        notas: Arc<dyn RepositorioNotasFiscais>,
         notificacoes: Arc<dyn CaixaDeEntrada>,
         realtime: Arc<dyn NotificadorRealtime>,
     ) -> Self {
@@ -84,6 +89,7 @@ impl ServicoIntegracao {
             eventos,
             pedidos,
             pedidos_repo,
+            notas,
             notificacoes,
             realtime,
         }
@@ -130,9 +136,20 @@ impl ServicoIntegracao {
                 self.notificar_staff(evento).await;
                 Ok(ResultadoEvento::Processado)
             }
-            "InvoiceAuthorized" | "InvoiceRejected" | "FiscalDocumentCancelled" => {
+            "InvoiceAuthorized" => {
+                let r = self.nota_autorizada(evento).await?;
                 self.notificar_staff(evento).await;
-                Ok(ResultadoEvento::Processado)
+                Ok(r)
+            }
+            "InvoiceRejected" => {
+                let r = self.nota_rejeitada(evento).await?;
+                self.notificar_staff(evento).await;
+                Ok(r)
+            }
+            "FiscalDocumentCancelled" => {
+                let r = self.nota_cancelada(evento).await?;
+                self.notificar_staff(evento).await;
+                Ok(r)
             }
             _ => Ok(ResultadoEvento::Ignorado("tipo desconhecido")),
         }
@@ -169,6 +186,136 @@ impl ServicoIntegracao {
         self.pedidos
             .transicionar(pedido_id, StatusPedido::Confirmado, None)
             .await?;
+        Ok(ResultadoEvento::Processado)
+    }
+
+    /// Localiza a NF de negócio alvo do evento: `notaFiscalId` no payload
+    /// quando presente; senão a NF mais recente do pedido (a que o
+    /// operations-api acabou de emitir). Evento sem NF aplicável vira
+    /// `ignorado` — a outbox não prende em retry uma ação sem objeto.
+    async fn nota_do_evento(&self, evento: &EventoFinanceiro) -> Resultado<Option<NotaFiscal>> {
+        if let Some(id) = evento.payload.get("notaFiscalId").and_then(|v| v.as_i64()) {
+            let nota = self.notas.buscar_por_id(Id::novo(id)).await?;
+            if nota.is_none() {
+                return Ok(None);
+            }
+            return Ok(nota);
+        }
+        let pedido_id = match evento.payload.get("pedidoId").and_then(|v| v.as_i64()) {
+            Some(id) => Id::<Pedido>::novo(id),
+            None => return Ok(None),
+        };
+        let pagina = self
+            .notas
+            .listar(
+                hweld_domain::shared::paginacao::Paginacao {
+                    pagina: 1,
+                    por_pagina: 1,
+                },
+                FiltroNotasFiscais {
+                    pedido_id: Some(pedido_id),
+                    ..Default::default()
+                },
+            )
+            .await?;
+        Ok(pagina.itens.into_iter().next())
+    }
+
+    /// `InvoiceAuthorized` — provedor autorizou: registra chave/protocolo na
+    /// NF rascunho. Reenvio com a NF já autorizada é ack `ignorado`.
+    async fn nota_autorizada(&self, evento: &EventoFinanceiro) -> Resultado<ResultadoEvento> {
+        let Some(nota) = self.nota_do_evento(evento).await? else {
+            return Ok(ResultadoEvento::Ignorado(
+                "nenhuma nota fiscal para o evento",
+            ));
+        };
+        if nota.status == StatusNotaFiscal::Autorizada {
+            return Ok(ResultadoEvento::Ignorado("nota já autorizada"));
+        }
+        if nota.status != StatusNotaFiscal::Rascunho {
+            return Ok(ResultadoEvento::Ignorado("nota fora de rascunho"));
+        }
+        let p = &evento.payload;
+        let autorizacao = AutorizacaoFiscal {
+            chave_acesso: p
+                .get("accessKey")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string(),
+            protocolo: p
+                .get("protocol")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string(),
+            xml_path: p.get("xmlUrl").and_then(|v| v.as_str()).map(String::from),
+            pdf_path: p.get("pdfUrl").and_then(|v| v.as_str()).map(String::from),
+        };
+        let depois = self
+            .notas
+            .registrar_autorizacao(nota.id, &autorizacao)
+            .await?;
+        self.realtime.publicar(EventoRealtime::novo(
+            "fiscal.nota_autorizada",
+            Audiencia::Empresa(depois.empresa_id.valor()),
+            serde_json::json!({ "id": depois.id.valor(), "numero": depois.numero }),
+        ));
+        Ok(ResultadoEvento::Processado)
+    }
+
+    /// `InvoiceRejected` — provedor/SEFAZ rejeitou: NF rascunho → rejeitada.
+    /// O motivo fica no documento do operations-api (fonte) e na notificação.
+    async fn nota_rejeitada(&self, evento: &EventoFinanceiro) -> Resultado<ResultadoEvento> {
+        let Some(nota) = self.nota_do_evento(evento).await? else {
+            return Ok(ResultadoEvento::Ignorado(
+                "nenhuma nota fiscal para o evento",
+            ));
+        };
+        if nota.status == StatusNotaFiscal::Rejeitada {
+            return Ok(ResultadoEvento::Ignorado("nota já rejeitada"));
+        }
+        if nota.status != StatusNotaFiscal::Rascunho {
+            return Ok(ResultadoEvento::Ignorado("nota fora de rascunho"));
+        }
+        let depois = self
+            .notas
+            .registrar_status(nota.id, StatusNotaFiscal::Rejeitada)
+            .await?;
+        self.realtime.publicar(EventoRealtime::novo(
+            "fiscal.nota_rejeitada",
+            Audiencia::Empresa(depois.empresa_id.valor()),
+            serde_json::json!({ "id": depois.id.valor(), "numero": depois.numero }),
+        ));
+        Ok(ResultadoEvento::Processado)
+    }
+
+    /// `FiscalDocumentCancelled` — cancelamento confirmado no provedor:
+    /// NF autorizada → cancelada, com o motivo persistido.
+    async fn nota_cancelada(&self, evento: &EventoFinanceiro) -> Resultado<ResultadoEvento> {
+        let Some(nota) = self.nota_do_evento(evento).await? else {
+            return Ok(ResultadoEvento::Ignorado(
+                "nenhuma nota fiscal para o evento",
+            ));
+        };
+        if nota.status == StatusNotaFiscal::Cancelada {
+            return Ok(ResultadoEvento::Ignorado("nota já cancelada"));
+        }
+        if nota.status != StatusNotaFiscal::Autorizada {
+            return Ok(ResultadoEvento::Ignorado(
+                "somente nota autorizada pode ser cancelada",
+            ));
+        }
+        let motivo = evento
+            .payload
+            .get("statusDetail")
+            .and_then(|v| v.as_str())
+            .filter(|s| s.trim().len() >= 15)
+            .unwrap_or("cancelamento registrado pelo provedor fiscal");
+        let depois = self.notas.cancelar(nota.id, motivo).await?;
+        self.realtime.publicar(EventoRealtime::novo(
+            "fiscal.nota_cancelada",
+            Audiencia::Empresa(depois.empresa_id.valor()),
+            serde_json::json!({ "id": depois.id.valor(), "numero": depois.numero }),
+        ));
         Ok(ResultadoEvento::Processado)
     }
 

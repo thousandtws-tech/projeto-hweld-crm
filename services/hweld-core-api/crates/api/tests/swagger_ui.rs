@@ -1,5 +1,8 @@
 use actix_cors::Cors;
-use actix_web::{middleware::{Compress, DefaultHeaders}, test, web, App};
+use actix_web::{
+    middleware::{Compress, DefaultHeaders},
+    test, web, App,
+};
 
 #[actix_web::test]
 async fn swagger_ui_serve_index() {
@@ -26,14 +29,22 @@ async fn swagger_ui_serve_index() {
             )
             .wrap(Compress::default())
             .wrap(tracing_actix_web::TracingLogger::default())
-            .configure(hweld_api::rotas::configurar),
+            .configure(|cfg| hweld_api::rotas::configurar(cfg, true)),
     )
     .await;
 
-    for uri in ["/swagger-ui/", "/swagger-ui/index.html", "/api-docs/openapi.json"] {
+    for uri in [
+        "/swagger-ui/",
+        "/swagger-ui/index.html",
+        "/api-docs/openapi.json",
+    ] {
         let resp = test::call_service(&app, test::TestRequest::get().uri(uri).to_request()).await;
         println!("{uri} -> {}", resp.status());
-        assert!(resp.status().is_success(), "{uri} falhou: {}", resp.status());
+        assert!(
+            resp.status().is_success(),
+            "{uri} falhou: {}",
+            resp.status()
+        );
     }
 }
 
@@ -43,7 +54,7 @@ async fn swagger_ui_em_socket_real() {
     let srv = actix_web::HttpServer::new(|| {
         App::new()
             .wrap(Compress::default())
-            .configure(hweld_api::rotas::configurar)
+            .configure(|cfg| hweld_api::rotas::configurar(cfg, true))
     })
     .bind(("127.0.0.1", 18099))
     .unwrap()

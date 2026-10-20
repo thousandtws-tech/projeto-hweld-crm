@@ -13,11 +13,33 @@ public interface FiscalProvider {
 
     String name();
 
+    /** Ambiente do provedor gravado em `fiscal_documents.environment`. */
+    default String environment() { return "homologacao"; }
+
+    /**
+     * Referência única determinística da emissão (`ref` na Focus NFe) —
+     * persistida em `external_id` ANTES do POST para reconciliação pós-falha.
+     * `null` = o provedor atribui o identificador na resposta.
+     */
+    default String providerRef(String documentId) { return null; }
+
     EmissionResult requestEmission(EmissionRequest request);
 
     StatusResult getStatus(String externalId);
 
     void cancel(String externalId, String motivo);
+
+    /**
+     * Baixa artefatos do provedor (XML/DANFE) para o object storage interno
+     * e devolve as chaves persistidas — `{"xml": "fiscal/{id}.xml", ...}`.
+     * Default = nada a fazer (ex.: stub já grava os artefatos na emissão).
+     */
+    default Map<String, String> fetchArtifacts(String externalId, String documentId) {
+        return Map.of();
+    }
+
+    /** Pede ao provedor o reenvio das notificações do documento (webhook). */
+    default void requestNotificationResend(String externalId) {}
 
     record EmissionRequest(
             String documentId,        // nosso UUID — idempotência no provedor
@@ -29,8 +51,12 @@ public interface FiscalProvider {
     record EmissionResult(
             String externalId,
             FiscalDocument.Status status,
+            String providerStatus,
+            String statusDetail,
             String accessKey,
             String protocol,
+            String numero,
+            String serie,
             String xmlUrl,
             String pdfUrl,
             String rejectionReason,
@@ -38,8 +64,12 @@ public interface FiscalProvider {
 
     record StatusResult(
             FiscalDocument.Status status,
+            String providerStatus,
+            String statusDetail,
             String accessKey,
             String protocol,
+            String numero,
+            String serie,
             String xmlUrl,
             String pdfUrl,
             String rejectionReason) {}

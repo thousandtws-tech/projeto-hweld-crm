@@ -8,12 +8,16 @@ use std::sync::Arc;
 
 use hweld_domain::acesso::usuario::Usuario;
 use hweld_domain::auditoria::log::EventoAuditoria;
+use hweld_domain::catalogo::produto::Produto;
 use hweld_domain::fiscal::nota_fiscal::{NotaFiscal, NotaFiscalItem, StatusNotaFiscal};
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::{Pagina, Paginacao};
 use hweld_domain::vendas::pedido::Pedido;
+use serde::Serialize;
 
 use crate::erro::{ErroApp, Resultado};
+use crate::ports::catalogo::RepositorioProdutos;
+use crate::ports::crm::{RepositorioEmpresas, RepositorioEnderecos};
 use crate::ports::externos::{GatewayFiscal, RegistradorAuditoria};
 use crate::ports::fiscal::{
     FiltroNotasFiscais, NovaNotaFiscal, NovoItemNf, RepositorioNotasFiscais,
@@ -24,6 +28,9 @@ use crate::ports::vendas::RepositorioPedidos;
 pub struct ServicoNotasFiscais {
     notas: Arc<dyn RepositorioNotasFiscais>,
     pedidos: Arc<dyn RepositorioPedidos>,
+    empresas: Arc<dyn RepositorioEmpresas>,
+    enderecos: Arc<dyn RepositorioEnderecos>,
+    produtos: Arc<dyn RepositorioProdutos>,
     gateway: Arc<dyn GatewayFiscal>,
     audit: Arc<dyn RegistradorAuditoria>,
     realtime: Arc<dyn NotificadorRealtime>,
@@ -33,6 +40,9 @@ impl ServicoNotasFiscais {
     pub fn novo(
         notas: Arc<dyn RepositorioNotasFiscais>,
         pedidos: Arc<dyn RepositorioPedidos>,
+        empresas: Arc<dyn RepositorioEmpresas>,
+        enderecos: Arc<dyn RepositorioEnderecos>,
+        produtos: Arc<dyn RepositorioProdutos>,
         gateway: Arc<dyn GatewayFiscal>,
         audit: Arc<dyn RegistradorAuditoria>,
         realtime: Arc<dyn NotificadorRealtime>,
@@ -40,6 +50,9 @@ impl ServicoNotasFiscais {
         Self {
             notas,
             pedidos,
+            empresas,
+            enderecos,
+            produtos,
             gateway,
             audit,
             realtime,
@@ -200,6 +213,195 @@ impl ServicoNotasFiscais {
         ));
         Ok(depois)
     }
+
+    /// Conjunto fiscal autoritativo do pedido para o operations-api montar o
+    /// payload do provedor (Focus NFe): pedido + itens com NCM/CFOP/unidade
+    /// resolvidos (snapshot da NF quando `nota_fiscal_id` é informada, senão
+    /// cadastro do produto), empresa e endereço de faturamento.
+    /// Canal `/internal/**` — service token, nunca JWT de usuário.
+    pub async fn dados_emissao_pedido(
+        &self,
+        pedido_id: Id<Pedido>,
+        nota_fiscal_id: Option<Id<NotaFiscal>>,
+    ) -> Resultado<DadosFiscaisPedido> {
+        let pedido = self
+            .pedidos
+            .buscar_por_id(pedido_id)
+            .await?
+            .ok_or_else(|| ErroApp::nao_encontrado("pedido", pedido_id))?;
+        let itens_pedido = self.pedidos.buscar_itens(pedido_id).await?;
+        let empresa = self
+            .empresas
+            .buscar_por_id(pedido.empresa_id)
+            .await?
+            .ok_or_else(|| ErroApp::nao_encontrado("empresa", pedido.empresa_id))?;
+        let endereco = self
+            .enderecos
+            .buscar_por_id(pedido.endereco_faturamento_id)
+            .await?;
+
+        // Snapshot da NF (quando existe) é a fonte dos campos tributários por
+        // item — casa com o pedido por produto_id e, em último caso, por ordem.
+        let (nf, nf_itens) = match nota_fiscal_id {
+            Some(id) => {
+                let nf = self
+                    .notas
+                    .buscar_por_id(id)
+                    .await?
+                    .ok_or_else(|| ErroApp::nao_encontrado("nota_fiscal", id))?;
+                if nf.pedido_id != pedido_id {
+                    return Err(ErroApp::Dominio(hweld_domain::ErroDominio::regra(
+                        "nota_fiscal não pertence ao pedido",
+                    )));
+                }
+                let itens = self.notas.buscar_itens(id).await?;
+                (Some(nf), itens)
+            }
+            None => (None, Vec::new()),
+        };
+
+        let produto_ids: Vec<Id<Produto>> = itens_pedido.iter().map(|i| i.produto_id).collect();
+        let produtos = self.produtos.buscar_por_ids(&produto_ids).await?;
+
+        let itens = itens_pedido
+            .iter()
+            .enumerate()
+            .map(|(idx, item)| {
+                let produto = produtos.iter().find(|p| p.id == item.produto_id);
+                let snap = nf_itens
+                    .iter()
+                    .find(|s| s.produto_id == Some(item.produto_id))
+                    .or_else(|| nf_itens.get(idx));
+                ItemFiscalEmissao {
+                    codigo: item.sku.clone(),
+                    descricao: item.descricao.clone(),
+                    quantidade: item.quantidade.valor(),
+                    valor_unitario: item.preco_unitario.valor(),
+                    desconto: item.desconto.valor(),
+                    valor_total: item.total.valor(),
+                    ncm: snap
+                        .and_then(|s| s.ncm.clone())
+                        .or_else(|| produto.and_then(|p| p.ncm.clone())),
+                    cfop: snap
+                        .and_then(|s| s.cfop.clone())
+                        .or_else(|| nf.as_ref().and_then(|n| n.cfop.clone())),
+                    unidade: snap
+                        .and_then(|s| s.unidade.clone())
+                        .or_else(|| produto.and_then(|p| p.unidade_medida.clone())),
+                }
+            })
+            .collect();
+
+        Ok(DadosFiscaisPedido {
+            pedido: PedidoFiscalResumo {
+                id: pedido.id.valor(),
+                numero: pedido.numero.clone(),
+                status: pedido.status.to_string(),
+                empresa_id: pedido.empresa_id.valor(),
+                contato_id: pedido.contato_id.valor(),
+                subtotal: pedido.subtotal.valor(),
+                desconto: pedido.desconto.valor(),
+                frete: pedido.frete.valor(),
+                total: pedido.total.valor(),
+            },
+            itens,
+            empresa: EmpresaFiscalResumo {
+                id: empresa.id.valor(),
+                razao_social: empresa.razao_social,
+                nome_fantasia: empresa.nome_fantasia,
+                cnpj: empresa.cnpj,
+                inscricao_estadual: empresa.inscricao_estadual,
+                telefone: empresa.telefone,
+                email: empresa.email,
+            },
+            endereco_faturamento: endereco.map(|e| EnderecoFiscalResumo {
+                logradouro: e.logradouro,
+                numero: e.numero,
+                complemento: e.complemento,
+                bairro: e.bairro,
+                cidade: e.cidade,
+                uf: e.uf,
+                cep: e.cep,
+            }),
+            nota_fiscal: nf.map(|n| NotaFiscalResumo {
+                id: n.id.valor(),
+                numero: n.numero,
+                serie: n.serie,
+                natureza_operacao: n.natureza_operacao,
+                cfop: n.cfop,
+                status: n.status.to_string(),
+            }),
+        })
+    }
+}
+
+/// Resposta do endpoint interno `dados-fiscais` — contrato com o
+/// `CoreApiFiscalDataGateway` do operations-api (nomes snake_case fixos).
+#[derive(Debug, Clone, Serialize)]
+pub struct DadosFiscaisPedido {
+    pub pedido: PedidoFiscalResumo,
+    pub itens: Vec<ItemFiscalEmissao>,
+    pub empresa: EmpresaFiscalResumo,
+    pub endereco_faturamento: Option<EnderecoFiscalResumo>,
+    pub nota_fiscal: Option<NotaFiscalResumo>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PedidoFiscalResumo {
+    pub id: i64,
+    pub numero: String,
+    pub status: String,
+    pub empresa_id: i64,
+    pub contato_id: i64,
+    pub subtotal: rust_decimal::Decimal,
+    pub desconto: rust_decimal::Decimal,
+    pub frete: rust_decimal::Decimal,
+    pub total: rust_decimal::Decimal,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ItemFiscalEmissao {
+    pub codigo: String,
+    pub descricao: String,
+    pub quantidade: rust_decimal::Decimal,
+    pub valor_unitario: rust_decimal::Decimal,
+    pub desconto: rust_decimal::Decimal,
+    pub valor_total: rust_decimal::Decimal,
+    pub ncm: Option<String>,
+    pub cfop: Option<String>,
+    pub unidade: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct EmpresaFiscalResumo {
+    pub id: i64,
+    pub razao_social: String,
+    pub nome_fantasia: Option<String>,
+    pub cnpj: Option<String>,
+    pub inscricao_estadual: Option<String>,
+    pub telefone: Option<String>,
+    pub email: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct EnderecoFiscalResumo {
+    pub logradouro: Option<String>,
+    pub numero: Option<String>,
+    pub complemento: Option<String>,
+    pub bairro: Option<String>,
+    pub cidade: String,
+    pub uf: String,
+    pub cep: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct NotaFiscalResumo {
+    pub id: i64,
+    pub numero: String,
+    pub serie: Option<String>,
+    pub natureza_operacao: Option<String>,
+    pub cfop: Option<String>,
+    pub status: String,
 }
 
 // ── Configuração fiscal SEFAZ ───────────────────────────────────────────────

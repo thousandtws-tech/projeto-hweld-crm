@@ -1,13 +1,16 @@
 package com.hweld.operations.fiscal.interfaces;
 
 import com.hweld.operations.fiscal.application.FiscalService;
+import com.hweld.operations.fiscal.application.FocusHooksService;
 import com.hweld.operations.fiscal.domain.FiscalDocument;
+import com.hweld.operations.fiscal.domain.FiscalDocumentEvent;
 import com.hweld.operations.shared.infrastructure.coreapi.OrderGateway;
 import com.hweld.operations.shared.infrastructure.security.AuthPrincipal;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -17,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.databind.JsonNode;
 
 @RestController
 @RequestMapping("/api/v1/fiscal-documents")
@@ -32,10 +37,13 @@ public class FiscalController {
 
     private final FiscalService service;
     private final OrderGateway orderGateway;
+    private final FocusHooksService hooks;
 
-    public FiscalController(FiscalService service, OrderGateway orderGateway) {
+    public FiscalController(FiscalService service, OrderGateway orderGateway,
+            FocusHooksService hooks) {
         this.service = service;
         this.orderGateway = orderGateway;
+        this.hooks = hooks;
     }
 
     public record EmitRequest(
@@ -103,6 +111,46 @@ public class FiscalController {
     @PostMapping("/{id}/refresh")
     public FiscalDocument refresh(@PathVariable UUID id) {
         return service.refresh(id);
+    }
+
+    /** Histórico do ciclo de vida (transições, webhooks, reconciliações). */
+    @GetMapping("/{id}/historico")
+    public List<FiscalDocumentEvent> historico(@PathVariable UUID id) {
+        return service.historico(id);
+    }
+
+    /** Pede ao provedor o reenvio das notificações do documento. */
+    @PostMapping("/{id}/webhook-resend")
+    public ResponseEntity<Map<String, Object>> webhookResend(@PathVariable UUID id) {
+        service.requestNotificationResend(id);
+        return ResponseEntity.ok(Map.of("reenvio", true));
+    }
+
+    /** Carta de correção NF-e (15–1000 caracteres, documento AUTHORIZED). */
+    @PostMapping("/{id}/carta-correcao")
+    public ResponseEntity<Map<String, Object>> cartaCorrecao(@PathVariable UUID id,
+            @RequestBody Map<String, String> body) {
+        service.cartaCorrecao(id, body != null ? body.get("correcao") : null);
+        return ResponseEntity.ok(Map.of("registrado", true));
+    }
+
+    // ── Administração dos gatilhos (webhooks) do provedor ─────────────────────
+
+    public record HookRequest(@NotBlank String event, @NotBlank String url, String cnpj) {}
+
+    @PostMapping("/hooks")
+    public JsonNode criarHook(@Valid @RequestBody HookRequest req) {
+        return hooks.criar(req.event(), req.url(), req.cnpj());
+    }
+
+    @GetMapping("/hooks")
+    public JsonNode listarHooks() {
+        return hooks.listar();
+    }
+
+    @DeleteMapping("/hooks/{hookId}")
+    public JsonNode excluirHook(@PathVariable String hookId) {
+        return hooks.excluir(hookId);
     }
 
     private static String bearer(Authentication auth) {

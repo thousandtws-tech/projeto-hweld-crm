@@ -80,6 +80,15 @@ const statusStyles: Record<string, string> = {
   autorizada: SUCCESS,
   rejeitada: DANGER,
   denegada: DANGER,
+  // documentos fiscais (operations-api — StatusFiscalDocumento)
+  requested: INFO,
+  processing: INFO,
+  authorized: SUCCESS,
+  rejected: DANGER,
+  cancelled: NEUTRAL,
+  cancellation_pending: WARN,
+  requires_reconciliation: WARN,
+  error: DANGER,
   // pagamentos
   pendente: WARN,
   pago: SUCCESS,

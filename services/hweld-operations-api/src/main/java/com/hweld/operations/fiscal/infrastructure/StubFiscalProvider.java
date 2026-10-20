@@ -49,8 +49,10 @@ public class StubFiscalProvider implements FiscalProvider {
             log.warn("fiscal stub: storage ausente — {} sem XML/PDF físico", req.documentId());
         }
 
-        return new EmissionResult(externalId, FiscalDocument.Status.AUTHORIZED, chave, protocolo,
-                xmlKey, pdfKey, null, Map.of("externalId", externalId, "provider", NAME));
+        return new EmissionResult(externalId, FiscalDocument.Status.AUTHORIZED,
+                "autorizado", "autorizado (stub)", chave, protocolo, "1", "1",
+                xmlKey, pdfKey, null,
+                Map.of("externalId", externalId, "provider", NAME));
     }
 
     /** XML sintético no envelope NF-e — suficiente p/ testar download/parser. */
@@ -87,7 +89,8 @@ public class StubFiscalProvider implements FiscalProvider {
 
     @Override
     public StatusResult getStatus(String externalId) {
-        return new StatusResult(FiscalDocument.Status.AUTHORIZED, null, null, null, null, null);
+        return new StatusResult(FiscalDocument.Status.AUTHORIZED,
+                "autorizado", null, null, null, null, null, null, null, null);
     }
 
     @Override

@@ -376,6 +376,67 @@ export interface NotaFiscal {
   motivo_cancelamento: string | null;
 }
 
+/* ---------------------------------------------------------------------------
+ * hweld-operations-api — documentos de orquestração fiscal (`/fiscal-documents`).
+ * Estado interno do documento + status bruto do provedor (ex.: Focus NFe).
+ * ------------------------------------------------------------------------- */
+export type StatusFiscalDocumento =
+  | "REQUESTED"
+  | "PROCESSING"
+  | "AUTHORIZED"
+  | "REJECTED"
+  | "CANCELLED"
+  | "CANCELLATION_PENDING"
+  | "REQUIRES_RECONCILIATION"
+  | "ERROR";
+
+export interface FiscalDocumento {
+  id: string; // UUID
+  pedidoId: number;
+  empresaId: number;
+  billingInvoiceId: string | null;
+  notaFiscalId: number | null;
+  docType: "NFE" | "NFSE";
+  provider: string;
+  environment: "homologacao" | "producao";
+  status: StatusFiscalDocumento | string;
+  providerStatus: string | null;
+  statusDetail: string | null;
+  externalId: string | null;
+  accessKey: string | null;
+  protocol: string | null;
+  numero: string | null;
+  serie: string | null;
+  xmlUrl: string | null;
+  pdfUrl: string | null;
+  rejectionReason: string | null;
+  payload: Record<string, unknown> | null;
+  lastSyncedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FiscalDocumentoEvento {
+  id: string;
+  fiscalDocumentId: string;
+  eventType:
+    | "REQUESTED"
+    | "SUBMITTED"
+    | "STATUS_CHANGE"
+    | "WEBHOOK"
+    | "RECONCILE"
+    | "CANCEL"
+    | "ERROR"
+    | "ARTIFACT"
+    | string;
+  statusFrom: string | null;
+  statusTo: string | null;
+  providerStatus: string | null;
+  message: string | null;
+  payload: Record<string, unknown> | null;
+  createdAt: string;
+}
+
 export interface Pagamento {
   id: number;
   pedido_id: number;

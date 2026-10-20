@@ -1,4 +1,4 @@
-import { api, type Filtros } from "./api";
+import { api, apiOps, type Filtros } from "./api";
 import type {
   Caixa,
   CaixaMovimentacao,
@@ -286,6 +286,37 @@ export const fiscalService = {
     }),
   removerCertificado: () =>
     api.del<import("./models").ConfigFiscal>("fiscal/configuracao/certificado"),
+};
+
+/**
+ * Orquestração fiscal no hweld-operations-api (`/fiscal-documents`): emissão,
+ * consulta, cancelamento e artefatos via provedor configurado (Focus NFe).
+ * O frontend nunca fala com o provedor — só com endpoints internos.
+ */
+export const fiscalDocService = {
+  documentos: (f: Filtros = {}) =>
+    apiOps.pagina<import("./models").FiscalDocumento>("fiscal-documents", f),
+  documento: (id: string) => apiOps.get<import("./models").FiscalDocumento>("fiscal-documents", id),
+  historico: (id: string) =>
+    apiOps.listaArray<import("./models").FiscalDocumentoEvento>(`fiscal-documents/${id}/historico`),
+  /** Emissão assíncrona (202) — empresa/dados fiscais resolvidos no backend. */
+  emitir: (pedidoId: number, notaFiscalId?: number, docType: "NFE" | "NFSE" = "NFE") =>
+    apiOps.post<import("./models").FiscalDocumento>("fiscal-documents", {
+      pedidoId,
+      docType,
+      ...(notaFiscalId != null ? { notaFiscalId } : {}),
+    }),
+  cancelar: (id: string, motivo: string) =>
+    apiOps.postAcao<import("./models").FiscalDocumento>("fiscal-documents", id, "cancel", {
+      motivo,
+    }),
+  refresh: (id: string) =>
+    apiOps.postAcao<import("./models").FiscalDocumento>("fiscal-documents", id, "refresh"),
+  cartaCorrecao: (id: string, correcao: string) =>
+    apiOps.postAcao("fiscal-documents", id, "carta-correcao", { correcao }),
+  webhookResend: (id: string) => apiOps.postAcao("fiscal-documents", id, "webhook-resend"),
+  xml: (id: string) => apiOps.baixar(`fiscal-documents/${id}/xml`),
+  pdf: (id: string) => apiOps.baixar(`fiscal-documents/${id}/pdf`),
 };
 
 export const financeiroService = {

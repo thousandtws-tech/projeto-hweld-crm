@@ -58,6 +58,15 @@ const STATUS_LABELS: Record<string, string> = {
   ativo: "Ativo",
   inativo: "Inativo",
   prospecto: "Prospecto",
+  // documentos fiscais (operations-api)
+  requested: "Solicitado",
+  processing: "Em processamento",
+  authorized: "Autorizado",
+  rejected: "Rejeitado",
+  cancelled: "Cancelado",
+  cancellation_pending: "Cancelamento pendente",
+  requires_reconciliation: "Requer reconciliação",
+  error: "Erro",
 };
 
 /** Label amigável para os enums de status do backoffice. */

@@ -3,9 +3,9 @@ use std::sync::Arc;
 
 use actix_cors::Cors;
 use actix_web::middleware::{Compress, DefaultHeaders};
-use actix_web::{App, HttpServer, web};
-use hweld_api::AppState;
+use actix_web::{web, App, HttpServer};
 use hweld_api::rotas;
+use hweld_api::AppState;
 use hweld_application::use_cases::auditoria::ServicoAuditoria;
 use hweld_application::use_cases::auth::ServicoAuth;
 use hweld_application::use_cases::busca::ServicoBusca;
@@ -38,8 +38,8 @@ use hweld_infrastructure::persistence::{
     RepositorioPedidosPg, RepositorioProdutosPg, RepositorioTabelasPrecoPg, RepositorioUsuariosPg,
 };
 use hweld_infrastructure::{
-    BuscaElastic, Config, EmissorJwt, GatewayFiscalStub, HasherArgon2, HttpRealtime, MIGRATOR,
-    Observabilidade, conectar, iniciar_observabilidade,
+    conectar, iniciar_observabilidade, BuscaElastic, Config, EmissorJwt, GatewayFiscalStub,
+    HasherArgon2, HttpRealtime, Observabilidade, MIGRATOR,
 };
 use sqlx::PgPool;
 use tracing_actix_web::TracingLogger;
@@ -163,7 +163,7 @@ fn init_tracing(observabilidade: Option<&Observabilidade>) {
     use opentelemetry::trace::TracerProvider;
     use tracing_subscriber::layer::SubscriberExt;
     use tracing_subscriber::util::SubscriberInitExt;
-    use tracing_subscriber::{EnvFilter, Layer, fmt};
+    use tracing_subscriber::{fmt, EnvFilter, Layer};
 
     let filtro = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new("info,hweld=debug,sqlx=warn,actix_server=info"));
@@ -364,7 +364,7 @@ fn montar_estado(
             carrinhos_repo,
             pedidos_repo.clone(),
             contatos_repo,
-            enderecos_repo,
+            enderecos_repo.clone(),
             produtos_repo.clone(),
             realtime.clone(),
             notificacoes.clone(),
@@ -374,6 +374,7 @@ fn montar_estado(
             eventos_integracao_repo,
             pedidos_svc,
             pedidos_repo.clone(),
+            notas_repo.clone(),
             notificacoes.clone(),
             realtime.clone(),
         )),
@@ -388,6 +389,9 @@ fn montar_estado(
         notas_fiscais: ServicoNotasFiscais::novo(
             notas_repo,
             pedidos_repo.clone(),
+            empresas_repo.clone(),
+            enderecos_repo.clone(),
+            produtos_repo.clone(),
             gateway_fiscal,
             audit.clone(),
             realtime.clone(),
@@ -451,7 +455,9 @@ fn montar_armazenamento(
         }
         None => {
             tracing::info!("armazenamento: disco local uploads/ (MINIO_ENDPOINT ausente)");
-            Arc::new(hweld_infrastructure::storage::ArmazenamentoLocal::novo("uploads"))
+            Arc::new(hweld_infrastructure::storage::ArmazenamentoLocal::novo(
+                "uploads",
+            ))
         }
     }
 }
