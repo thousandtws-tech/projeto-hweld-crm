@@ -148,7 +148,7 @@ reenvios. Perda total de notificação é coberta pelo reconciliador.
 
 ## Migrations
 
-`V2__fiscal_focus.sql` (operations-api): colunas `environment`,
+`V6__fiscal_focus.sql` (operations-api): colunas `environment`,
 `provider_status`, `status_detail`, `numero`, `serie`, `last_sync_at`;
 `CHECK` de status ampliado; `UNIQUE (provider, environment, external_id)`;
 índice de reconciliação; tabelas `fiscal_document_events` e
