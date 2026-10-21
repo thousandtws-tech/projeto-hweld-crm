@@ -11,7 +11,7 @@ use hweld_domain::financeiro::caixa::{Caixa, CaixaMovimentacao, TipoCaixaMovimen
 use hweld_domain::shared::dinheiro::Dinheiro;
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::{Pagina, Paginacao};
-use hweld_domain::vendas::pagamento::{FormaPagamento, Pagamento, StatusPagamento, plano_parcelas};
+use hweld_domain::vendas::pagamento::{plano_parcelas, FormaPagamento, Pagamento, StatusPagamento};
 use hweld_domain::vendas::pedido::Pedido;
 
 use crate::erro::{ErroApp, Resultado};

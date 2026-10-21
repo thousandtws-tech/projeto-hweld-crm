@@ -2,7 +2,7 @@
 //! Escrita exige `admin` ou `vendedor`; leitura qualquer staff autenticado.
 
 use crate::erro::Resposta;
-use actix_web::{HttpResponse, delete, get, patch, post, web};
+use actix_web::{delete, get, patch, post, web, HttpResponse};
 use hweld_application::ports::crm::{FiltroEmpresas, FiltroOportunidades};
 use hweld_domain::acesso::usuario::Perfil;
 use hweld_domain::crm::contato::Contato;

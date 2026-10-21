@@ -16,7 +16,7 @@ use hweld_domain::shared::paginacao::{Pagina, Paginacao};
 use rust_decimal::Decimal;
 use sqlx::{FromRow, PgPool, Postgres, QueryBuilder};
 
-use super::cache::{CacheListas, chave_lista, invalidar_listas};
+use super::cache::{chave_lista, invalidar_listas, CacheListas};
 use super::db::{erro_db, proximo_numero};
 
 const CTX: &str = "notas_fiscais";

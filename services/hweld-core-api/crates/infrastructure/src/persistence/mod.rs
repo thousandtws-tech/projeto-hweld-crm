@@ -34,15 +34,39 @@ pub use vendas::{
     RepositorioPedidosPg,
 };
 
-use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
 
 use crate::config::Config;
 
 /// Pool com limites explícitos — nunca conexões ilimitadas (regra §20).
+///
+/// - `min_connections` mantém conexões quentes: o primeiro request após
+///   idle não paga handshake+auth do Postgres (~20–60ms em Railway).
+/// - `acquire_timeout`/`idle_timeout`/`max_lifetime` boundam fila e
+///   reciclagem — o default do sqlx é ~30s/∞, tempo demais para request.
+/// - `after_connect` aplica `statement_timeout` e mata transações ociosas:
+///   uma query degenerada ou cliente morto não segura conexão nem lock
+///   indefinidamente (proteção de P99/pool exausto).
 pub async fn conectar(config: &Config) -> Result<PgPool, sqlx::Error> {
     PgPoolOptions::new()
         .max_connections(config.db_max_connections)
+        .min_connections(2)
+        .acquire_timeout(std::time::Duration::from_secs(5))
+        .idle_timeout(std::time::Duration::from_secs(600))
+        .max_lifetime(std::time::Duration::from_secs(1800))
+        .after_connect(|conn, _meta| {
+            Box::pin(async move {
+                sqlx::Executor::execute(
+                    conn,
+                    "SET statement_timeout = '10s'; \
+                     SET idle_in_transaction_session_timeout = '30s'; \
+                     SET application_name = 'hweld-core-api'",
+                )
+                .await?;
+                Ok(())
+            })
+        })
         .connect(&config.database_url)
         .await
 }

@@ -2,7 +2,7 @@
 //! Escopo sempre resolvido do token (staff→usuario_id, portal→contato_id):
 //! ninguém lê nem marca notificação de outro destinatário.
 
-use actix_web::{HttpResponse, delete, get, post, web};
+use actix_web::{delete, get, post, web, HttpResponse};
 use hweld_domain::notificacao::DestinoNotificacao;
 use hweld_domain::shared::id::Id;
 use serde::Serialize;
@@ -10,7 +10,7 @@ use serde::Serialize;
 use crate::dto::QueryPaginacao;
 use crate::erro::Resposta;
 use crate::estado::AppState;
-use crate::extratores::{AuthPortal, AuthStaff, id_de};
+use crate::extratores::{id_de, AuthPortal, AuthStaff};
 
 #[derive(Serialize, utoipa::ToSchema)]
 pub struct NaoLidasResposta {

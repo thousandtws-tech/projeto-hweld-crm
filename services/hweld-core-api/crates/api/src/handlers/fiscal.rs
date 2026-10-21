@@ -2,7 +2,7 @@
 //! cancelamento (evento fiscal com motivo).
 
 use crate::erro::Resposta;
-use actix_web::{HttpRequest, HttpResponse, delete, get, post, put, web};
+use actix_web::{delete, get, post, put, web, HttpRequest, HttpResponse};
 use chrono::{NaiveDate, Utc};
 use hweld_application::ports::fiscal::FiltroNotasFiscais;
 use hweld_domain::acesso::usuario::Perfil;

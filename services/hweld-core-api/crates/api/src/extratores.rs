@@ -3,13 +3,13 @@
 //! pelo port `EmissorTokens` e vira `SujeitoToken` tipado.
 //! RBAC por papel via `StaffAuth::exige_perfil` — 403 sem revelar existência.
 
-use std::future::{Ready, ready};
+use std::future::{ready, Ready};
 use std::sync::Arc;
 
 use actix_web::dev::Payload;
 use actix_web::{FromRequest, HttpRequest};
-use hweld_application::ErroApp;
 use hweld_application::ports::seguranca::{EmissorTokens, SujeitoToken, TipoSujeito};
+use hweld_application::ErroApp;
 use hweld_domain::acesso::usuario::Perfil;
 
 use crate::erro::ErroHttp;

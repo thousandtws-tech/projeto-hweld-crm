@@ -9,8 +9,8 @@ use hweld_domain::catalogo::produto::Produto;
 use hweld_domain::shared::dinheiro::Dinheiro;
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::Paginacao;
-use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use serde::Serialize;
 
 use hweld_domain::shared::erro::ErroDominio;
@@ -163,7 +163,7 @@ pub trait MotorBusca: Send + Sync {
     async fn buscar_produtos(&self, consulta: &ConsultaBuscaProdutos) -> Resultado<ResultadoMotor>;
 
     async fn sugerir_produtos(&self, prefixo: &str, limite: u32)
-    -> Resultado<Vec<SugestaoProduto>>;
+        -> Resultado<Vec<SugestaoProduto>>;
 
     async fn indexar_produto(&self, doc: &DocumentoProduto) -> Resultado<()>;
 

@@ -12,7 +12,7 @@ use hweld_domain::shared::paginacao::{Pagina, Paginacao};
 use rust_decimal::Decimal;
 use sqlx::{FromRow, PgPool, Postgres, QueryBuilder};
 
-use super::cache::{CacheListas, invalidar_listas};
+use super::cache::{invalidar_listas, CacheListas};
 use super::catalogo::RepositorioProdutosPg;
 use super::db::erro_db;
 use super::vendas::movimentar_estoque_tx;

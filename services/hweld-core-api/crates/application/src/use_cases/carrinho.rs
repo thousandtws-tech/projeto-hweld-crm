@@ -5,7 +5,7 @@ use hweld_domain::catalogo::preco::preco_efetivo;
 use hweld_domain::catalogo::produto::Produto;
 use hweld_domain::shared::dinheiro::{Dinheiro, Quantidade};
 use hweld_domain::shared::id::Id;
-use hweld_domain::vendas::carrinho::{Carrinho, CarrinhoItem, total_carrinho};
+use hweld_domain::vendas::carrinho::{total_carrinho, Carrinho, CarrinhoItem};
 use rust_decimal::Decimal;
 use serde::Serialize;
 use uuid::Uuid;

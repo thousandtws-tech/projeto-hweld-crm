@@ -8,6 +8,7 @@
 //!
 //! Nenhuma regra de negócio, nenhum SQL, nenhum segredo aqui.
 
+pub mod cache_http;
 pub mod docs;
 pub mod dto;
 pub mod erro;

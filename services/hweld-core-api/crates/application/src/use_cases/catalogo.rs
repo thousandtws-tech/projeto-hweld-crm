@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
-use hweld_domain::catalogo::categoria::{Categoria, CategoriaInput, validar_hierarquia};
+use hweld_domain::catalogo::categoria::{validar_hierarquia, Categoria, CategoriaInput};
 use hweld_domain::catalogo::preco::preco_efetivo;
 use hweld_domain::catalogo::produto::{Produto, ProdutoImagem, ProdutoInput};
 use hweld_domain::catalogo::tabela_preco::{TabelaPreco, TabelaPrecoInput, TabelaPrecoItem};
@@ -609,12 +609,23 @@ impl ServicoCatalogoPortal {
         for img in todas_imagens {
             mapa_imagens.entry(img.produto_id).or_default().push(img);
         }
+        // Lookup O(1) por produto — `find` linear custava page × tamanho da
+        // tabela de preço por request.
+        let mapa_precos: std::collections::HashMap<Id<Produto>, &TabelaPrecoItem> = tabela
+            .as_ref()
+            .map(|(_, itens)| itens.iter().map(|i| (i.produto_id, i)).collect())
+            .unwrap_or_default();
         let itens = pagina
             .itens
             .into_iter()
             .map(|p| {
                 let imgs = mapa_imagens.remove(&p.id).unwrap_or_default();
-                Self::item_com_preco(p, &tabela, imgs)
+                let item = mapa_precos.get(&p.id).copied();
+                ItemCatalogoPortal {
+                    preco_efetivo: preco_efetivo(&p, tabela.as_ref().map(|(t, _)| t), item),
+                    produto: p.into(),
+                    imagens: imgs,
+                }
             })
             .collect();
 

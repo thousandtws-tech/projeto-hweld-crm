@@ -5,7 +5,7 @@
 //! é sempre 404, nunca 403 (não revela existência do recurso alheio).
 
 use crate::erro::Resposta;
-use actix_web::{HttpResponse, get, post, web};
+use actix_web::{get, post, web, HttpResponse};
 use hweld_application::use_cases::catalogo::ProdutoDetalhePortal;
 use hweld_application::use_cases::portal::{
     EnderecoPortal, MeuPerfilPortal, PedidoDetalhePortal, PedidoResumoPortal,

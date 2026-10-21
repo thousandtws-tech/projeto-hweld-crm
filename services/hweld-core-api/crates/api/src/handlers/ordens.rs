@@ -2,7 +2,7 @@
 //! transições com trilha de histórico imutável.
 
 use crate::erro::Resposta;
-use actix_web::{HttpResponse, get, patch, post, web};
+use actix_web::{get, patch, post, web, HttpResponse};
 use hweld_application::ports::operacao::FiltroOrdensServico;
 use hweld_domain::acesso::usuario::Perfil;
 use hweld_domain::operacao::ordem_servico::{OrdemServico, OsHistorico, OsItem, StatusOs};

@@ -1,7 +1,7 @@
 //! Consulta à trilha de auditoria — leitura apenas para `Admin`.
 
 use crate::erro::Resposta;
-use actix_web::{HttpResponse, get, web};
+use actix_web::{get, web, HttpResponse};
 use hweld_application::ports::auditoria::FiltroAuditoria;
 use hweld_domain::acesso::usuario::Perfil;
 use hweld_domain::auditoria::log::LogAuditoria;

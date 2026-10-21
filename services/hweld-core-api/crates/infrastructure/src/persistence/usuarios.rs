@@ -9,7 +9,7 @@ use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::{Pagina, Paginacao};
 use sqlx::{FromRow, PgPool, Postgres, QueryBuilder};
 
-use super::cache::{CacheListas, invalidar_listas};
+use super::cache::{invalidar_listas, CacheListas};
 use super::db::erro_db;
 
 const CTX: &str = "usuarios";

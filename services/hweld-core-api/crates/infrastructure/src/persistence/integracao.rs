@@ -4,8 +4,8 @@
 //! linha afetada, e só o vencedor processa o evento.
 
 use async_trait::async_trait;
-use hweld_application::Resultado;
 use hweld_application::ports::integracao::RepositorioEventosIntegracao;
+use hweld_application::Resultado;
 use sqlx::PgPool;
 use uuid::Uuid;
 

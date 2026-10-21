@@ -1,8 +1,8 @@
-use actix_web::{HttpResponse, get, post, web};
-use hweld_application::ErroApp;
+use actix_web::{get, post, web, HttpResponse};
 use hweld_application::ports::busca::SugestaoProduto;
 use hweld_application::use_cases::busca::ServicoBusca;
 use hweld_application::use_cases::busca::{BuscaPaginada, ItemBuscaPortal, ItemBuscaStaff};
+use hweld_application::ErroApp;
 use hweld_domain::acesso::usuario::Perfil;
 use hweld_domain::shared::id::Id;
 use serde::Serialize;

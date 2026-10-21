@@ -2,10 +2,10 @@
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use hweld_application::Resultado;
 use hweld_application::ports::catalogo::{
     FiltroProdutos, RepositorioCategorias, RepositorioProdutos, RepositorioTabelasPreco,
 };
+use hweld_application::Resultado;
 use hweld_domain::catalogo::categoria::{Categoria, CategoriaInput};
 use hweld_domain::catalogo::produto::{Produto, ProdutoImagem, ProdutoInput};
 use hweld_domain::catalogo::tabela_preco::{TabelaPreco, TabelaPrecoInput, TabelaPrecoItem};
@@ -16,7 +16,7 @@ use hweld_domain::shared::paginacao::{Pagina, Paginacao};
 use rust_decimal::Decimal;
 use sqlx::{FromRow, PgPool, Postgres, QueryBuilder};
 
-use super::cache::{CacheListas, chave_lista, invalidar_listas};
+use super::cache::{chave_lista, invalidar_listas, CacheListas};
 use super::db::erro_db;
 
 // ---------------------------------------------------------------------------
@@ -60,11 +60,17 @@ impl From<CategoriaRow> for Categoria {
 
 pub struct RepositorioCategoriasPg {
     pool: PgPool,
+    /// Árvore de categorias — praticamente estática e lida em toda
+    /// navegação da loja e em cada busca com facetas.
+    cache_todas: CacheListas<Vec<Categoria>>,
 }
 
 impl RepositorioCategoriasPg {
     pub fn novo(pool: PgPool) -> Self {
-        Self { pool }
+        Self {
+            pool,
+            cache_todas: CacheListas::novo("categorias_todas"),
+        }
     }
 }
 
@@ -93,6 +99,10 @@ impl RepositorioCategorias for RepositorioCategoriasPg {
     }
 
     async fn listar_todas(&self, somente_ativas: bool) -> Resultado<Vec<Categoria>> {
+        let chave = somente_ativas.to_string();
+        if let Some(cats) = self.cache_todas.get(&chave) {
+            return Ok(cats);
+        }
         let sql = if somente_ativas {
             format!("SELECT {CAT_COLS} FROM categorias WHERE ativa ORDER BY ordem, nome")
         } else {
@@ -102,7 +112,9 @@ impl RepositorioCategorias for RepositorioCategoriasPg {
             .fetch_all(&self.pool)
             .await
             .map_err(erro_db(CTX_CAT))?;
-        Ok(rows.into_iter().map(Categoria::from).collect())
+        let cats: Vec<Categoria> = rows.into_iter().map(Categoria::from).collect();
+        self.cache_todas.set(chave, cats.clone());
+        Ok(cats)
     }
 
     async fn criar(&self, input: CategoriaInput) -> Resultado<Categoria> {
@@ -776,6 +788,8 @@ impl From<TabelaPrecoItemRow> for TabelaPrecoItem {
 pub struct RepositorioTabelasPrecoPg {
     pool: PgPool,
     cache_listas: CacheListas<Pagina<TabelaPreco>>,
+    /// Tabela vigente de cada empresa — lida em toda requisição do portal.
+    cache_tabela_empresa: CacheListas<Option<(TabelaPreco, Vec<TabelaPrecoItem>)>>,
 }
 
 impl RepositorioTabelasPrecoPg {
@@ -783,6 +797,7 @@ impl RepositorioTabelasPrecoPg {
         Self {
             pool,
             cache_listas: CacheListas::novo("tabelas_preco"),
+            cache_tabela_empresa: CacheListas::novo("tabela_da_empresa"),
         }
     }
 }
@@ -939,10 +954,17 @@ impl RepositorioTabelasPreco for RepositorioTabelasPrecoPg {
     }
 
     /// Tabela ativa vinculada à empresa + seus itens — base da precificação B2B.
+    /// Cacheada por empresa (geração global invalida em qualquer escrita):
+    /// catálogo, PDP, busca e carrinho repetem este join + carga de itens a
+    /// cada requisição.
     async fn tabela_da_empresa(
         &self,
         empresa_id: Id<Empresa>,
     ) -> Resultado<Option<(TabelaPreco, Vec<TabelaPrecoItem>)>> {
+        let chave = format!("empresa:{}", empresa_id.valor());
+        if let Some(t) = self.cache_tabela_empresa.get(&chave) {
+            return Ok(t);
+        }
         // `id` precisa do alias — `empresas` também tem coluna `id`.
         let tabela = sqlx::query_as::<_, TabelaPrecoRow>(&format!(
             "SELECT {} FROM tabelas_preco t \
@@ -958,12 +980,14 @@ impl RepositorioTabelasPreco for RepositorioTabelasPrecoPg {
         .fetch_optional(&self.pool)
         .await
         .map_err(erro_db(CTX_TAB))?;
-        match tabela {
-            None => Ok(None),
+        let resultado = match tabela {
+            None => None,
             Some(t) => {
                 let itens = self.listar_itens(Id::novo(t.id)).await?;
-                Ok(Some((TabelaPreco::from(t), itens)))
+                Some((TabelaPreco::from(t), itens))
             }
-        }
+        };
+        self.cache_tabela_empresa.set(chave, resultado.clone());
+        Ok(resultado)
     }
 }

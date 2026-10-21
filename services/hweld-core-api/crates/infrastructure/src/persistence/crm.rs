@@ -26,7 +26,7 @@ use hweld_domain::vendas::pedido::Pedido;
 use rust_decimal::Decimal;
 use sqlx::{FromRow, PgPool, Postgres, QueryBuilder};
 
-use super::cache::{CacheListas, chave_lista, invalidar_listas};
+use super::cache::{chave_lista, invalidar_listas, CacheListas};
 use super::db::{erro_db, proximo_numero};
 use super::vendas::inserir_pedido_tx;
 
@@ -91,6 +91,9 @@ fn map_empresa(r: EmpresaRow) -> Resultado<Empresa> {
 pub struct RepositorioEmpresasPg {
     pool: PgPool,
     cache_listas: CacheListas<Pagina<Empresa>>,
+    /// Lookup por PK está em toda requisição do portal B2B (preço, pedidos,
+    /// carrinho). A geração global invalida em qualquer escrita.
+    cache_por_id: CacheListas<Option<Empresa>>,
 }
 
 impl RepositorioEmpresasPg {
@@ -98,6 +101,7 @@ impl RepositorioEmpresasPg {
         Self {
             pool,
             cache_listas: CacheListas::novo("empresas"),
+            cache_por_id: CacheListas::novo("empresa_por_id"),
         }
     }
 }
@@ -105,6 +109,10 @@ impl RepositorioEmpresasPg {
 #[async_trait]
 impl RepositorioEmpresas for RepositorioEmpresasPg {
     async fn buscar_por_id(&self, id: Id<Empresa>) -> Resultado<Option<Empresa>> {
+        let chave = id.valor().to_string();
+        if let Some(e) = self.cache_por_id.get(&chave) {
+            return Ok(e);
+        }
         let row = sqlx::query_as::<_, EmpresaRow>(&format!(
             "SELECT {EMP_COLS} FROM empresas WHERE id = $1 AND deleted_at IS NULL"
         ))
@@ -112,7 +120,9 @@ impl RepositorioEmpresas for RepositorioEmpresasPg {
         .fetch_optional(&self.pool)
         .await
         .map_err(erro_db(CTX_EMP))?;
-        row.map(map_empresa).transpose()
+        let empresa = row.map(map_empresa).transpose()?;
+        self.cache_por_id.set(chave, empresa.clone());
+        Ok(empresa)
     }
 
     async fn buscar_por_public_id(&self, public_id: uuid::Uuid) -> Resultado<Option<Empresa>> {
@@ -309,6 +319,10 @@ impl From<ContatoRow> for Contato {
 pub struct RepositorioContatosPg {
     pool: PgPool,
     cache_listas: CacheListas<Pagina<Contato>>,
+    /// Resolução `contato_id → contato` acontece em toda request autenticada
+    /// do portal (catálogo, carrinho, pedidos) — cacheada por id com a
+    /// geração global.
+    cache_por_id: CacheListas<Option<Contato>>,
 }
 
 impl RepositorioContatosPg {
@@ -316,6 +330,7 @@ impl RepositorioContatosPg {
         Self {
             pool,
             cache_listas: CacheListas::novo("contatos"),
+            cache_por_id: CacheListas::novo("contato_por_id"),
         }
     }
 }
@@ -323,6 +338,10 @@ impl RepositorioContatosPg {
 #[async_trait]
 impl RepositorioContatos for RepositorioContatosPg {
     async fn buscar_por_id(&self, id: Id<Contato>) -> Resultado<Option<Contato>> {
+        let chave = id.valor().to_string();
+        if let Some(c) = self.cache_por_id.get(&chave) {
+            return Ok(c);
+        }
         let row = sqlx::query_as::<_, ContatoRow>(&format!(
             "SELECT {CTT_COLS} FROM contatos WHERE id = $1 AND deleted_at IS NULL"
         ))
@@ -330,7 +349,9 @@ impl RepositorioContatos for RepositorioContatosPg {
         .fetch_optional(&self.pool)
         .await
         .map_err(erro_db(CTX_CTT))?;
-        Ok(row.map(Contato::from))
+        let contato = row.map(Contato::from);
+        self.cache_por_id.set(chave, contato.clone());
+        Ok(contato)
     }
 
     async fn buscar_por_email(&self, email: &str) -> Resultado<Option<Contato>> {
@@ -1062,7 +1083,8 @@ fn push_filtro_interacoes<'a>(
 // ---------------------------------------------------------------------------
 
 const CTX_ORC: &str = "orcamentos";
-const ORC_COLS: &str = "id, public_id, numero, empresa_id, contato_id, oportunidade_id, vendedor_id, \
+const ORC_COLS: &str =
+    "id, public_id, numero, empresa_id, contato_id, oportunidade_id, vendedor_id, \
     status, emitido_em, valido_ate, subtotal, desconto, frete, total, \
     condicao_pagamento, observacoes, convertido_pedido_id, created_at, updated_at";
 const ORC_ITEM_COLS: &str =

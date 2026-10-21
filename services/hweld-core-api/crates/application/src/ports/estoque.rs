@@ -19,7 +19,7 @@ pub trait RepositorioEstoque: Send + Sync {
     ) -> Resultado<Pagina<EstoqueMovimentacao>>;
 
     async fn movimentar(&self, comandos: &[MovimentacaoCmd])
-    -> Resultado<Vec<EstoqueMovimentacao>>;
+        -> Resultado<Vec<EstoqueMovimentacao>>;
 
     async fn abaixo_do_minimo(&self, limite: u32) -> Resultado<Vec<(Produto, EstoqueSaldo)>>;
 }

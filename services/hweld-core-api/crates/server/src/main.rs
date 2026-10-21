@@ -137,10 +137,20 @@ async fn executar() -> anyhow::Result<()> {
             // Logger estruturado (tracing) — o Logger::default() foi removido:
             // ambos geravam uma linha por request (log duplicado, ~2 escritas
             // de IO no caminho quente). Compress reduz o payload das listas.
+            // CacheHttp registrado ANTES do Compress = interno a ele: o ETag é
+            // calculado sobre o corpo ainda não comprimido (estável por URL,
+            // independente do Accept-Encoding do cliente).
+            .wrap(hweld_api::cache_http::CacheHttp)
             .wrap(Compress::default())
             .wrap(TracingLogger::default())
             .configure(move |cfg| rotas::configurar(cfg, docs_habilitados))
     });
+    // Keep-alive longo para reuse de conexão edge→origem (Railway proxy →
+    // app): o default (~5s) derruba a conexão entre requests de uma mesma
+    // navegação, pagando handshake TCP/TLS a cada chamada.
+    let servidor = servidor
+        .keep_alive(std::time::Duration::from_secs(75))
+        .client_request_timeout(std::time::Duration::from_secs(15));
     let mut server = servidor.bind(bind)?;
     // Em host IPv4-only ("0.0.0.0"), "localhost" resolve ::1 primeiro e o
     // connect espera o timeout do fallback (~200ms no Windows). Escutar ::1

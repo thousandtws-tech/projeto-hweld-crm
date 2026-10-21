@@ -101,24 +101,26 @@ impl RepositorioNotificacoes for RepositorioNotificacoesPg {
         paginacao: Paginacao,
     ) -> Resultado<Pagina<Notificacao>> {
         let (col, id) = escopo(destino);
-        let (total,): (i64,) = sqlx::query_as(&format!(
-            "SELECT COUNT(*) FROM notificacoes WHERE {col} = $1 AND lida_em IS NULL"
-        ))
-        .bind(id)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(erro_db(CTX))?;
-
-        let rows = sqlx::query_as::<_, NotificacaoRow>(&format!(
+        // COUNT ‖ página — as duas queries são independentes; sequencial
+        // dobrava a latência da listagem (padrão já usado nos demais repos).
+        let sql_count =
+            format!("SELECT COUNT(*) FROM notificacoes WHERE {col} = $1 AND lida_em IS NULL");
+        let sql_page = format!(
             "SELECT {COLS} FROM notificacoes WHERE {col} = $1 AND lida_em IS NULL \
              ORDER BY created_at DESC LIMIT $2 OFFSET $3"
-        ))
-        .bind(id)
-        .bind(paginacao.limite())
-        .bind(paginacao.offset())
-        .fetch_all(&self.pool)
-        .await
-        .map_err(erro_db(CTX))?;
+        );
+        let (total_res, rows_res) = tokio::join!(
+            sqlx::query_as::<_, (i64,)>(&sql_count)
+                .bind(id)
+                .fetch_one(&self.pool),
+            sqlx::query_as::<_, NotificacaoRow>(&sql_page)
+                .bind(id)
+                .bind(paginacao.limite())
+                .bind(paginacao.offset())
+                .fetch_all(&self.pool),
+        );
+        let (total,) = total_res.map_err(erro_db(CTX))?;
+        let rows = rows_res.map_err(erro_db(CTX))?;
 
         Ok(Pagina::nova(
             rows.into_iter().map(Notificacao::from).collect(),

@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use async_trait::async_trait;
 use elasticsearch::auth::Credentials;
 use elasticsearch::http::transport::{SingleNodeConnectionPool, TransportBuilder};
@@ -285,7 +287,9 @@ impl BuscaElastic {
     pub fn novo(config: &ConfigBusca) -> Result<Self, elasticsearch::Error> {
         let url = Url::parse(config.url.as_deref().unwrap_or_default())?;
         let pool = SingleNodeConnectionPool::new(url);
-        let mut builder = TransportBuilder::new(pool);
+        // Deadline por request: sem isso um ES degradado segura a task do
+        // handler (e a conexão do pool) indefinidamente.
+        let mut builder = TransportBuilder::new(pool).timeout(Duration::from_millis(1500));
         if let (Some(u), Some(p)) = (&config.usuario, &config.senha) {
             builder = builder.auth(Credentials::Basic(u.clone(), p.clone()));
         }
@@ -433,7 +437,10 @@ impl MotorBusca for BuscaElastic {
                 &doc.produto_id.to_string(),
             ))
             .body(doc)
-            .refresh(Refresh::WaitFor)
+            // `WaitFor` bloqueava ~1s por escrita (refresh_interval padrão) no
+            // request path. O índice é secundário/eventual por design — o
+            // refresh periódico do cluster cobre a visibilidade.
+            .refresh(Refresh::False)
             .send()
             .await
             .map_err(erro_es)?
@@ -505,7 +512,7 @@ impl MotorBusca for BuscaElastic {
                 self.indice.as_str(),
                 &produto_id.valor().to_string(),
             ))
-            .refresh(Refresh::WaitFor)
+            .refresh(Refresh::False)
             .send()
             .await
             .map_err(erro_es)?;

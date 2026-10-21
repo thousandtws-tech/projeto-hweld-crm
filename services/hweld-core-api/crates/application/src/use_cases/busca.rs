@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use hweld_domain::catalogo::preco::preco_efetivo;
 use hweld_domain::catalogo::produto::{Produto, ProdutoImagem};
+use hweld_domain::catalogo::tabela_preco::TabelaPrecoItem;
 use hweld_domain::crm::empresa::Empresa;
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::Paginacao;
@@ -141,6 +142,11 @@ impl ServicoBusca {
             mapa_imagens.entry(img.produto_id).or_default().push(img);
         }
 
+        // Lookup O(1) — `find` por hit custava hits × tamanho da tabela.
+        let mapa_precos: HashMap<Id<Produto>, &TabelaPrecoItem> = tabela
+            .as_ref()
+            .map(|(_, itens)| itens.iter().map(|i| (i.produto_id, i)).collect())
+            .unwrap_or_default();
         let itens = resultado
             .hits
             .iter()
@@ -149,9 +155,7 @@ impl ServicoBusca {
                 if !p.visivel_no_catalogo() {
                     return None;
                 }
-                let item_tabela = tabela
-                    .as_ref()
-                    .and_then(|(_, itens)| itens.iter().find(|i| i.produto_id == p.id));
+                let item_tabela = mapa_precos.get(&p.id).copied();
                 Some(ItemBuscaPortal {
                     preco_efetivo: preco_efetivo(p, tabela.as_ref().map(|(t, _)| t), item_tabela),
                     produto: crate::use_cases::catalogo::ProdutoPortal::from(p.clone()),

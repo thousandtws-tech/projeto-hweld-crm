@@ -2,15 +2,15 @@
 //! caixa (abrir, lançar, fechar com conferência). Restrito a admin/financeiro.
 
 use crate::erro::Resposta;
-use actix_web::{HttpResponse, get, post, web};
+use actix_web::{get, post, web, HttpResponse};
 use hweld_application::ports::vendas::FiltroPagamentos;
-use hweld_domain::Dinheiro;
 use hweld_domain::acesso::usuario::Perfil;
 use hweld_domain::financeiro::caixa::{Caixa, CaixaMovimentacao};
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::Pagina;
 use hweld_domain::vendas::pagamento::Pagamento;
 use hweld_domain::vendas::pagamento::StatusPagamento;
+use hweld_domain::Dinheiro;
 
 use crate::dto::{
     AbrirCaixaReq, BaixarPagamentoReq, EstornarPagamentoReq, FecharCaixaReq, LancarCaixaReq,

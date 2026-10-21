@@ -1,5 +1,5 @@
 use crate::erro::Resposta;
-use actix_web::{HttpRequest, HttpResponse, delete, get, post, web};
+use actix_web::{delete, get, post, web, HttpRequest, HttpResponse};
 use hweld_application::ports::seguranca::ContextoSessao;
 use hweld_application::use_cases::auth::SessaoPortal;
 use hweld_domain::acesso::sessao::SessaoAutenticada;
@@ -8,7 +8,7 @@ use serde::Serialize;
 
 use crate::dto::{LoginReq, RefreshReq, TrocarSenhaReq};
 use crate::estado::AppState;
-use crate::extratores::{AuthStaff, ip_cliente};
+use crate::extratores::{ip_cliente, AuthStaff};
 
 #[derive(Serialize, utoipa::ToSchema)]
 pub struct TokensResp {

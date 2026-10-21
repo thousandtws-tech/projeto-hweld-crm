@@ -22,7 +22,7 @@ use rust_decimal::Decimal;
 use sqlx::{FromRow, PgPool, Postgres, QueryBuilder, Transaction};
 use uuid::Uuid;
 
-use super::cache::{CacheListas, chave_lista, invalidar_listas};
+use super::cache::{chave_lista, invalidar_listas, CacheListas};
 use super::db::{erro_db, proximo_numero};
 
 // ---------------------------------------------------------------------------
@@ -292,7 +292,8 @@ impl RepositorioCarrinhos for RepositorioCarrinhosPg {
 // ---------------------------------------------------------------------------
 
 const CTX_PED: &str = "pedidos";
-pub(crate) const PED_COLS: &str = "id, public_id, numero, empresa_id, contato_id, endereco_faturamento_id, \
+pub(crate) const PED_COLS: &str =
+    "id, public_id, numero, empresa_id, contato_id, endereco_faturamento_id, \
     endereco_entrega_id, origem, orcamento_id, carrinho_id, vendedor_id, status, \
     subtotal, desconto, frete, total, condicao_pagamento, observacoes, created_at, updated_at";
 const PED_ITEM_COLS: &str =

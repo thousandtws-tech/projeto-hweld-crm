@@ -14,8 +14,8 @@
 
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::sync::RwLock;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::RwLock;
 use std::time::{Duration, Instant};
 
 use crate::observabilidade::metricas;

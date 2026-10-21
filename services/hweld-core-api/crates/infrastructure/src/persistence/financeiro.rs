@@ -13,7 +13,7 @@ use hweld_domain::shared::paginacao::{Pagina, Paginacao};
 use rust_decimal::Decimal;
 use sqlx::{FromRow, PgPool};
 
-use super::cache::{CacheListas, invalidar_listas};
+use super::cache::{invalidar_listas, CacheListas};
 use super::db::erro_db;
 
 const CTX: &str = "caixas";

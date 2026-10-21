@@ -13,7 +13,7 @@ use hweld_domain::shared::paginacao::{Pagina, Paginacao};
 use serde_json::Value;
 use sqlx::{FromRow, PgPool, Postgres, QueryBuilder};
 
-use super::cache::{CacheListas, invalidar_listas};
+use super::cache::{invalidar_listas, CacheListas};
 use super::db::erro_db;
 
 const CTX: &str = "logs_auditoria";
@@ -135,28 +135,35 @@ impl RegistradorAuditoriaPg {
 #[async_trait]
 impl RegistradorAuditoria for RegistradorAuditoriaPg {
     async fn registrar(&self, evento: EventoAuditoria) {
-        let r = sqlx::query(
-            "INSERT INTO logs_auditoria (usuario_id, entidade, entidade_id, acao, \
-             dados_antes, dados_depois, ip) VALUES ($1,$2,$3,$4,$5,$6,$7)",
-        )
-        .bind(evento.usuario_id.map(|u| u.valor()))
-        .bind(&evento.entidade)
-        .bind(evento.entidade_id)
-        .bind(evento.acao.as_str())
-        .bind(&evento.dados_antes)
-        .bind(&evento.dados_depois)
-        .bind(&evento.ip)
-        .execute(&self.pool)
-        .await;
-        match r {
-            Ok(_) => invalidar_listas(),
-            Err(e) => tracing::error!(
-                entidade = %evento.entidade,
-                entidade_id = evento.entidade_id,
-                acao = %evento.acao,
-                erro = %e,
-                "falha ao gravar trilha de auditoria"
-            ),
-        }
+        // Fire-and-forget: a trilha é best-effort (falha vira log) e era
+        // awaited dentro de toda mutação — +1 INSERT na latência percebida
+        // de cada escrita. O INSERT só chega ao DB depois do commit da
+        // mutação (a task só inicia no retorno), preservando a ordenação.
+        let pool = self.pool.clone();
+        tokio::spawn(async move {
+            let r = sqlx::query(
+                "INSERT INTO logs_auditoria (usuario_id, entidade, entidade_id, acao, \
+                 dados_antes, dados_depois, ip) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+            )
+            .bind(evento.usuario_id.map(|u| u.valor()))
+            .bind(&evento.entidade)
+            .bind(evento.entidade_id)
+            .bind(evento.acao.as_str())
+            .bind(&evento.dados_antes)
+            .bind(&evento.dados_depois)
+            .bind(&evento.ip)
+            .execute(&pool)
+            .await;
+            if let Err(e) = r {
+                tracing::error!(
+                    entidade = %evento.entidade,
+                    entidade_id = evento.entidade_id,
+                    acao = %evento.acao,
+                    erro = %e,
+                    "falha ao gravar trilha de auditoria"
+                );
+            }
+        });
+        invalidar_listas();
     }
 }

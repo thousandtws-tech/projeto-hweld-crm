@@ -1,6 +1,6 @@
 //! Health/readiness — sem auth. `/ready` verifica o pool do Postgres.
 
-use actix_web::{HttpResponse, get, web};
+use actix_web::{get, web, HttpResponse};
 use serde::Serialize;
 use sqlx::PgPool;
 

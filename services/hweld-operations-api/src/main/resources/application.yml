@@ -1,6 +1,11 @@
 spring:
   application:
     name: hweld-operations-api
+  threads:
+    # Virtual threads: requests são IO-bound (JDBC/core-api/motor) — escala
+    # concorrência sem inflar pool de plataforma. Boot 4 + Java 25.
+    virtual:
+      enabled: true
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:hweld}
     username: ${DB_USER:hweld}
@@ -43,6 +48,11 @@ server:
   port: ${PORT:8090}
   shutdown: graceful
   forward-headers-strategy: framework
+  compression:
+    # JSON paginado comprimido na borda — listas de 100+ itens caem ~90% em bytes.
+    enabled: true
+    mime-types: application/json,application/xml,text/css,text/html,text/plain,application/javascript
+    min-response-size: 1KB
 
 management:
   endpoints:

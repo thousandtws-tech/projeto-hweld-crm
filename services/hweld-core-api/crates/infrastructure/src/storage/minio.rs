@@ -115,9 +115,15 @@ impl ArmazenamentoMinio {
             self.host
         );
         let escopo = format!("{datestamp}/{}/s3/aws4_request", self.cfg.region);
-        let to_sign = format!("{ALGORITMO}\n{amzdate}\n{escopo}\n{}", sha256_hex(canonico.as_bytes()));
+        let to_sign = format!(
+            "{ALGORITMO}\n{amzdate}\n{escopo}\n{}",
+            sha256_hex(canonico.as_bytes())
+        );
 
-        let k_data = hmac_sha256(format!("AWS4{}", self.cfg.secret_key).as_bytes(), datestamp.as_bytes());
+        let k_data = hmac_sha256(
+            format!("AWS4{}", self.cfg.secret_key).as_bytes(),
+            datestamp.as_bytes(),
+        );
         let k_regiao = hmac_sha256(&k_data, self.cfg.region.as_bytes());
         let k_servico = hmac_sha256(&k_regiao, b"s3");
         let k_signing = hmac_sha256(&k_servico, b"aws4_request");
@@ -131,7 +137,12 @@ impl ArmazenamentoMinio {
     }
 
     fn url(&self, chave: &str) -> String {
-        format!("{}/{}/{}", self.cfg.endpoint.trim_end_matches('/'), self.cfg.bucket, chave)
+        format!(
+            "{}/{}/{}",
+            self.cfg.endpoint.trim_end_matches('/'),
+            self.cfg.bucket,
+            chave
+        )
     }
 
     /// `PUT /{bucket}` — cria o bucket se ausente. Idempotente:
@@ -149,8 +160,14 @@ impl ArmazenamentoMinio {
             self.host
         );
         let escopo = format!("{datestamp}/{}/s3/aws4_request", self.cfg.region);
-        let to_sign = format!("{ALGORITMO}\n{amzdate}\n{escopo}\n{}", sha256_hex(canonico.as_bytes()));
-        let k_data = hmac_sha256(format!("AWS4{}", self.cfg.secret_key).as_bytes(), datestamp.as_bytes());
+        let to_sign = format!(
+            "{ALGORITMO}\n{amzdate}\n{escopo}\n{}",
+            sha256_hex(canonico.as_bytes())
+        );
+        let k_data = hmac_sha256(
+            format!("AWS4{}", self.cfg.secret_key).as_bytes(),
+            datestamp.as_bytes(),
+        );
         let k_regiao = hmac_sha256(&k_data, self.cfg.region.as_bytes());
         let k_servico = hmac_sha256(&k_regiao, b"s3");
         let k_signing = hmac_sha256(&k_servico, b"aws4_request");
@@ -179,7 +196,10 @@ impl ArmazenamentoMinio {
         }
         Err(ErroApp::interno(
             "storage_mkbucket",
-            ErroTexto(format!("MinIO {status}: {}", &corpo[..corpo.len().min(300)])),
+            ErroTexto(format!(
+                "MinIO {status}: {}",
+                &corpo[..corpo.len().min(300)]
+            )),
         ))
     }
 }
@@ -210,7 +230,10 @@ impl ArmazenamentoObjetos for ArmazenamentoMinio {
             let corpo = resp.text().await.unwrap_or_default();
             return Err(ErroApp::interno(
                 "storage_put",
-                ErroTexto(format!("MinIO {status}: {}", &corpo[..corpo.len().min(300)])),
+                ErroTexto(format!(
+                    "MinIO {status}: {}",
+                    &corpo[..corpo.len().min(300)]
+                )),
             ));
         }
         Ok(())
@@ -238,7 +261,10 @@ impl ArmazenamentoObjetos for ArmazenamentoMinio {
             let corpo = resp.text().await.unwrap_or_default();
             return Err(ErroApp::interno(
                 "storage_get",
-                ErroTexto(format!("MinIO {status}: {}", &corpo[..corpo.len().min(300)])),
+                ErroTexto(format!(
+                    "MinIO {status}: {}",
+                    &corpo[..corpo.len().min(300)]
+                )),
             ));
         }
         resp.bytes()
@@ -359,7 +385,9 @@ mod testes {
 
         let dir = std::env::var("UPLOADS_DIR")
             .map(std::path::PathBuf::from)
-            .unwrap_or_else(|_| std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../uploads"));
+            .unwrap_or_else(|_| {
+                std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../uploads")
+            });
         let mut migrados = 0usize;
         for entrada in std::fs::read_dir(&dir).unwrap() {
             let path = entrada.unwrap().path();

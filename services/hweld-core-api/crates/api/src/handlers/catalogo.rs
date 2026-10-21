@@ -2,7 +2,7 @@
 //! precificado do portal B2B (contato autenticado).
 
 use crate::erro::Resposta;
-use actix_web::{HttpResponse, delete, get, patch, post, put, web};
+use actix_web::{delete, get, patch, post, put, web, HttpResponse};
 use hweld_application::ports::catalogo::FiltroProdutos;
 use hweld_application::use_cases::catalogo::ItemCatalogoPortal;
 use hweld_domain::acesso::usuario::Perfil;
@@ -849,7 +849,37 @@ fn selos_padrao() -> Vec<SeloCms> {
     ]
 }
 
+/// Cache do CMS da loja — o JSON mora no object storage (MinIO/S3), então
+/// cada hit de página da loja pagava um GET remoto. TTL curto + invalidação
+/// explícita no `PUT /cms`. Processo único: `RwLock` estático basta.
+static CMS_CACHE: std::sync::RwLock<Option<(std::time::Instant, std::sync::Arc<CmsLoja>)>> =
+    std::sync::RwLock::new(None);
+const CMS_TTL: std::time::Duration = std::time::Duration::from_secs(30);
+
 async fn carregar_cms(
+    storage: &dyn hweld_application::ports::armazenamento::ArmazenamentoObjetos,
+) -> std::sync::Arc<CmsLoja> {
+    if let Ok(g) = CMS_CACHE.read() {
+        if let Some((expira, cms)) = g.as_ref() {
+            if std::time::Instant::now() < *expira {
+                return cms.clone();
+            }
+        }
+    }
+    let cms = std::sync::Arc::new(carregar_cms_remoto(storage).await);
+    if let Ok(mut g) = CMS_CACHE.write() {
+        *g = Some((std::time::Instant::now() + CMS_TTL, cms.clone()));
+    }
+    cms
+}
+
+fn invalidar_cms_cache() {
+    if let Ok(mut g) = CMS_CACHE.write() {
+        *g = None;
+    }
+}
+
+async fn carregar_cms_remoto(
     storage: &dyn hweld_application::ports::armazenamento::ArmazenamentoObjetos,
 ) -> CmsLoja {
     if let Ok(bytes) = storage.ler(CMS_CHAVE).await {
@@ -906,6 +936,7 @@ pub async fn salvar_cms_staff(
     staff.exige(CATALOGO)?;
     let cms = body.into_inner();
     salvar_cms(state.armazenamento.as_ref(), &cms).await?;
+    invalidar_cms_cache();
     state.categorias.publicar_cms_atualizado();
     Ok(HttpResponse::Ok().json(cms))
 }

@@ -74,7 +74,7 @@ pub trait HasherSenha: Send + Sync {
 #[async_trait]
 pub trait EmissorTokens: Send + Sync {
     async fn emitir_par(&self, sujeito: SujeitoToken, ctx: &ContextoSessao)
-    -> Resultado<ParTokens>;
+        -> Resultado<ParTokens>;
 
     fn validar_access(&self, token: &str) -> Resultado<Claims>;
 
@@ -91,7 +91,7 @@ pub trait RepositorioSessoes: Send + Sync {
 
     /// Revoga todas as linhas de uma `sessao_id` do dono. Retorna qtde revogada.
     async fn revogar_sessao(&self, tipo: TipoSujeito, dono: i64, sessao_id: Uuid)
-    -> Resultado<u64>;
+        -> Resultado<u64>;
 
     /// Revoga todas as sessões do dono exceto `exceto` (passar `None` = todas).
     async fn revogar_outras(

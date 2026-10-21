@@ -1,7 +1,7 @@
 //! Administração de usuários internos — restrito a `Perfil::Admin`.
 
 use crate::erro::Resposta;
-use actix_web::{HttpResponse, get, patch, post, web};
+use actix_web::{get, patch, post, web, HttpResponse};
 use hweld_application::ports::acesso::{AtualizarUsuario, FiltroUsuarios};
 use hweld_domain::acesso::usuario::{Perfil, Usuario};
 use hweld_domain::shared::id::Id;

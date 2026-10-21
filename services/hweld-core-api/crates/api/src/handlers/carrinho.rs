@@ -1,7 +1,7 @@
 //! Carrinho + checkout do portal B2B — o dono é sempre o contato autenticado.
 
 use crate::erro::Resposta;
-use actix_web::{HttpResponse, delete, get, post, put, web};
+use actix_web::{delete, get, post, put, web, HttpResponse};
 use hweld_application::ports::vendas::DonoCarrinho;
 use hweld_application::use_cases::carrinho::CarrinhoDetalhe;
 use hweld_application::use_cases::portal::PedidoDetalhePortal;
