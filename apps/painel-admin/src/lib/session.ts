@@ -13,13 +13,24 @@ interface ClaimsJwt {
   jti?: string;
 }
 
-/** Decodifica o payload do JWT (base64url) — só para UX; a autorização é do backend. */
+/** Decodifica o payload do JWT (base64url) — só para UX; a autorização é do backend.
+ *  Memoizado por token: `accessTokenValido()`/`pode()` rodam em toda requisição
+ *  HTTP e em cada item do menu — sem cache seriam atob+JSON.parse repetidos. */
+let tokenCacheado: string | null = null;
+let claimsCacheados: ClaimsJwt | null = null;
+
 function decodificar(token: string): ClaimsJwt | null {
+  if (token === tokenCacheado) return claimsCacheados;
   try {
     const payload = token.split(".")[1];
     const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
-    return JSON.parse(json) as ClaimsJwt;
+    const claims = JSON.parse(json) as ClaimsJwt;
+    tokenCacheado = token;
+    claimsCacheados = claims;
+    return claims;
   } catch {
+    tokenCacheado = null;
+    claimsCacheados = null;
     return null;
   }
 }
@@ -72,6 +83,8 @@ export function refreshToken(): string | null {
 export function setTokens(t: Tokens): void {
   sessionStorage.setItem(KEY_ACCESS, t.access_token);
   sessionStorage.setItem(KEY_REFRESH, t.refresh_token);
+  tokenCacheado = null;
+  claimsCacheados = null;
   notify();
 }
 

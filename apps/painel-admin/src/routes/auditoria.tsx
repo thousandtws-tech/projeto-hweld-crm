@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import type { LogAuditoria } from "@/lib/models";
 import { auditoriaService } from "@/lib/services";
@@ -29,19 +28,15 @@ function AuditoriaPage() {
   }, [carregar]);
 
   // Toda mutação de domínio grava uma linha de auditoria — qualquer evento do
-  // barramento é motivo de reconciliação. Debounce coalesce rajadas (ex.: um
-  // checkout que dispara pedido + estoque + pagamento vira um único GET).
-  const debRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // barramento é motivo de reconciliação. A coalescência de rajadas (ex.: um
+  // checkout que dispara pedido + estoque + pagamento) já é feita pelo hook.
   useRealtimeEvent(
     () => true,
-    () => {
-      if (debRef.current) clearTimeout(debRef.current);
-      debRef.current = setTimeout(carregar, 400);
-    },
+    () => void carregar(),
   );
 
   return (
-    <AppShell>
+    <>
       <PageHeader title="Auditoria" />
       <SectionCard className="p-0 overflow-hidden">
         <table className="w-full text-sm">
@@ -111,6 +106,6 @@ function AuditoriaPage() {
           </tbody>
         </table>
       </SectionCard>
-    </AppShell>
+    </>
   );
 }

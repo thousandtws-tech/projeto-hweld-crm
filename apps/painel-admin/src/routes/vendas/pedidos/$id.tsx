@@ -3,7 +3,6 @@ import { ExternalLink } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { brl, fmtData, fmtDataHoraCompleta, statusLabel } from "@/lib/format";
 import type { Empresa, ItemPedido, NotaFiscal, Pagamento, Pedido } from "@/lib/models";
@@ -149,7 +148,7 @@ function PedidoDetalhePage() {
       : "";
 
   return (
-    <AppShell>
+    <>
       {pedido ? (
         <>
           <PageHeader
@@ -373,6 +372,6 @@ function PedidoDetalhePage() {
           </div>
         </SectionCard>
       )}
-    </AppShell>
+    </>
   );
 }

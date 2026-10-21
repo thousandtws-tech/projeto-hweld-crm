@@ -1,4 +1,13 @@
-import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CatalogoService } from '../../core/servicos';
 import { CategoriasStore } from '../../core/categorias.store';
@@ -10,12 +19,14 @@ import { HwSkeleton } from '../../shared/ui/skeleton';
 
 /** S03 — Listagem por categoria (`/c/{id}-{slug}`). */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, HwProductCard, HwSkeleton, HwEmpty],
   templateUrl: './categoria.html',
   styleUrl: './categoria.scss',
 })
 export class CategoriaPage implements OnInit {
   private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
   private catalogo = inject(CatalogoService);
   private categoriasStore = inject(CategoriasStore);
   private rt = inject(RealtimeService);
@@ -41,17 +52,15 @@ export class CategoriaPage implements OnInit {
   readonly nome = computed(() => this.categoriaAtual()?.nome || this.slugFallback());
 
   constructor() {
-    effect(() => {
-      const e = this.rt.ultimo();
-      if (e?.tipo.startsWith('catalogo.')) {
-        untracked(() => this.ir(this.pagina()?.pagina ?? 1, true));
-      }
-    });
+    this.rt.reagirA(
+      (e) => e.tipo.startsWith('catalogo.'),
+      () => this.ir(this.pagina()?.pagina ?? 1, true),
+    );
   }
 
   ngOnInit(): void {
     this.categoriasStore.carregar();
-    this.route.paramMap.subscribe((params) => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const idSlug = params.get('idslug') ?? '';
       const id = Number(idSlug.split('-')[0]);
       this.categoriaIdSig.set(Number.isFinite(id) ? id : 0);

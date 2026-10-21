@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 /** Banner Institucional B2B (Soluções Corporativas & Faturamento CNPJ) */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-corporate-banner',
   imports: [RouterLink],
   templateUrl: './corporate-banner.html',

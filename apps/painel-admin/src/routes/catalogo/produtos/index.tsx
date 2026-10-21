@@ -1,13 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { ListaPage } from "@/components/lista";
 import { exigePerfil } from "@/lib/guards";
 
 export const Route = createFileRoute("/catalogo/produtos/")({
   beforeLoad: exigePerfil("admin", "estoque", "vendedor"),
   component: () => (
-    <AppShell>
+    <>
       <ListaPage
         cfg={{
           titulo: "Produtos",
@@ -35,6 +34,6 @@ export const Route = createFileRoute("/catalogo/produtos/")({
           excluir: { rotulo: "Excluir", campoNome: "nome" },
         }}
       />
-    </AppShell>
+    </>
   ),
 });

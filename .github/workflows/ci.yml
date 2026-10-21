@@ -61,6 +61,7 @@ jobs:
       - run: npm run lint --if-present
       - run: npm test --if-present
       - run: npm run build
+      - run: npm run perf:budget --if-present
 
   web:
     name: web (Angular B2B)

@@ -1,4 +1,4 @@
-import { Component, Injectable, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injectable, computed, signal } from '@angular/core';
 
 export interface ToastMsg {
   id: number;
@@ -31,6 +31,7 @@ export class ToastService {
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-toast-host',
   templateUrl: './toast.html',
   styleUrl: './toast.scss',

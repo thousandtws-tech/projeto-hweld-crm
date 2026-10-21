@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ContaService } from '../../core/servicos';
 import { RealtimeService } from '../../core/realtime';
@@ -11,6 +11,7 @@ import { HwContaNav } from './conta-nav';
 
 /** S10 — Detalhe do pedido com visualizador de progresso e tabela de itens. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, HwSkeleton, HwEmpty, HwStatusChip, BrlPipe, QtyPipe, HwContaNav],
   templateUrl: './pedido-detalhe.html',
   styleUrl: './pedido-detalhe.scss',
@@ -26,12 +27,10 @@ export class PedidoDetalhePage implements OnInit {
   etapas = ['Confirmado', 'Em separação', 'Faturado', 'Enviado', 'Entregue'];
 
   constructor() {
-    effect(() => {
-      const e = this.rt.ultimo();
-      if (e?.tipo === 'pedido.status_alterado' && Number(e.dados['id']) === this.id) {
-        this.carregar();
-      }
-    });
+    this.rt.reagirA(
+      (e) => e.tipo === 'pedido.status_alterado' && Number(e.dados['id']) === this.id,
+      () => this.carregar(),
+    );
   }
 
   ngOnInit(): void {

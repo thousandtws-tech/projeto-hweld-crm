@@ -1,4 +1,4 @@
-import { Component, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CarrinhoService } from '../../core/servicos';
 import { BrlPipe } from '../../core/pipes';
@@ -9,6 +9,7 @@ import { ToastService } from '../../shared/ui/toast';
 /** Mini-cart lateral (drawer) — padrão Mercado Livre/Amazon: itens editáveis,
  *  subtotal e CTAs sem sair da página. Fecha com Esc ou clique no overlay. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-cart-drawer',
   imports: [RouterLink, HwButton, HwQty, BrlPipe],
   templateUrl: './cart-drawer.html',

@@ -1,8 +1,9 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatRippleModule } from '@angular/material/core';
 
 /** Stepper de quantidade minimalista com micro-interações acessíveis e suporte a decimais. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-qty',
   imports: [MatRippleModule],
   templateUrl: './qty.html',

@@ -1,8 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 /** Banner Faixa Full-Bleed de Alto Impacto (Semana Especial + Cupom Interativo) */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-strip-banner',
   imports: [RouterLink],
   templateUrl: './strip-banner.html',

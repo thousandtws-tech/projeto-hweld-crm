@@ -3,7 +3,6 @@ import { ArrowRight, ExternalLink, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { fieldClass } from "@/components/ui-kit/FormDialog";
 import { ApiError } from "@/lib/api";
@@ -260,7 +259,7 @@ function OrcamentoPage() {
       : "";
 
   return (
-    <AppShell>
+    <>
       {orc ? (
         <>
           <PageHeader
@@ -538,6 +537,6 @@ function OrcamentoPage() {
           </div>
         </SectionCard>
       )}
-    </AppShell>
+    </>
   );
 }

@@ -464,7 +464,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       const [empresasRes, contatosRes, opsRes, produtos] = await Promise.all([
         crmService.empresas({ busca: q, por_pagina: 4 }).catch(() => null),
         crmService.contatos({ busca: q, por_pagina: 4 }).catch(() => null),
-        crmService.oportunidades({ por_pagina: 30 }).catch(() => null),
+        // `busca` filtra no servidor quando suportado; o filtro local abaixo
+        // continua como rede de segurança para o caso de o backend ignorar.
+        crmService.oportunidades({ busca: q, por_pagina: 30 }).catch(() => null),
         buscarProdutos(),
       ]);
 

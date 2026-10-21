@@ -37,7 +37,6 @@
               }
             ],
             "styles": [
-              "swiper/swiper-bundle.css",
               "src/styles.scss"
             ]
           },
@@ -52,8 +51,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1.5MB",
-                  "maximumError": "2.5MB"
+                  "maximumWarning": "800kB",
+                  "maximumError": "1.2MB"
                 },
                 {
                   "type": "anyComponentStyle",

@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatRippleModule } from '@angular/material/core';
 import { ItemCatalogoPortal } from '../../core/models';
@@ -9,6 +9,7 @@ import { HwPrice } from './price';
  * Focado no produto, tipografia refinada, imagem com micro-interação e preço da tabela do cliente.
  */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-product-card',
   imports: [RouterLink, MatRippleModule, HwPrice],
   templateUrl: './product-card.html',

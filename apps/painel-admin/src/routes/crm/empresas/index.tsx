@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { ListaPage } from "@/components/lista";
 
 export const Route = createFileRoute("/crm/empresas/")({
   component: () => (
-    <AppShell>
+    <>
       <ListaPage
         cfg={{
           titulo: "Empresas",
@@ -24,6 +23,6 @@ export const Route = createFileRoute("/crm/empresas/")({
           eventos: ["empresa.criada", "empresa.atualizada", "empresa.arquivada"],
         }}
       />
-    </AppShell>
+    </>
   ),
 });

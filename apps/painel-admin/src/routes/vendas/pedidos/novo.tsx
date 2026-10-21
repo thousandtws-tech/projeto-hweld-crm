@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
 import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import type { Contato, Empresa, Produto } from "@/lib/models";
@@ -135,7 +134,7 @@ function PedidoNovoPage() {
     `${e["logradouro"] ?? ""} — ${e["cidade"] ?? ""}/${e["uf"] ?? ""}`;
 
   return (
-    <AppShell>
+    <>
       <PageHeader title="Novo pedido manual" />
       <form onSubmit={criar} className="space-y-4">
         <SectionCard>
@@ -324,6 +323,6 @@ function PedidoNovoPage() {
           </Link>
         </div>
       </form>
-    </AppShell>
+    </>
   );
 }

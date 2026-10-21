@@ -3,7 +3,6 @@ import { Check, Loader2, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
 import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { ApiError } from "@/lib/api";
@@ -240,7 +239,7 @@ function EmpresaNovaPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Nova empresa"
         subtitle="Digite o CNPJ para preenchimento automático via Receita Federal ou preencha manualmente"
@@ -574,6 +573,6 @@ function EmpresaNovaPage() {
           </Link>
         </div>
       </form>
-    </AppShell>
+    </>
   );
 }

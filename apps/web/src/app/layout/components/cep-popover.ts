@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { MatMenuModule } from '@angular/material/menu';
 
 /**
@@ -7,6 +7,7 @@ import { MatMenuModule } from '@angular/material/menu';
  * o mesmo `mat-menu`. O CEP persiste em `localStorage`.
  */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-cep-popover',
   imports: [MatMenuModule],
   templateUrl: './cep-popover.html',

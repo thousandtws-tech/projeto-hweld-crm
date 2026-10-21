@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -94,16 +94,21 @@ export class BuscaService {
 export class CarrinhoService {
   private http = inject(HttpClient);
   readonly carrinho = signal<Carrinho | null>(null);
-  readonly totalItens = () => this.carrinho()?.itens?.length ?? 0;
+  readonly totalItens = computed(() => this.carrinho()?.itens?.length ?? 0);
 
   /** Mini-cart lateral (drawer) — padrão Mercado Livre/Amazon. */
   readonly drawerAberto = signal(false);
 
   /** Soma das linhas (qtd × preço unitário) — compartilhada por página e drawer. */
-  readonly subtotal = () =>
+  readonly subtotal = computed(() =>
     (this.carrinho()?.itens ?? [])
       .reduce((acc, i) => acc + Number(i.quantidade) * Number(i.preco_unitario), 0)
-      .toFixed(2);
+      .toFixed(2),
+  );
+
+  /** GET em voo compartilhado — evita rajadas de /portal/carrinho quando
+   *  drawer, página e SSE pedem refresh simultaneamente. */
+  private atualEmVoo: Promise<Carrinho> | null = null;
 
   abrirDrawer(): void {
     // Revalida o carrinho ao abrir — estado sempre fresco (evita item fantasma).
@@ -115,10 +120,16 @@ export class CarrinhoService {
     this.drawerAberto.set(false);
   }
 
-  async atual(): Promise<Carrinho> {
-    const c = await firstValueFrom(this.http.get<Carrinho>(`${api}/portal/carrinho`));
-    this.carrinho.set(c);
-    return c;
+  atual(): Promise<Carrinho> {
+    this.atualEmVoo ??= firstValueFrom(this.http.get<Carrinho>(`${api}/portal/carrinho`))
+      .then((c) => {
+        this.carrinho.set(c);
+        return c;
+      })
+      .finally(() => {
+        this.atualEmVoo = null;
+      });
+    return this.atualEmVoo;
   }
 
   async adicionar(produto_id: number, quantidade: number): Promise<Carrinho> {

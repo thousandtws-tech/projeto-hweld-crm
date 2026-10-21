@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -95,18 +94,18 @@ function Empresa360Page() {
 
   if (!empresa) {
     return (
-      <AppShell>
+      <>
         <SectionCard>
           <div className="py-10 text-center text-sm text-muted-foreground">
             {erro ?? "Carregando…"}
           </div>
         </SectionCard>
-      </AppShell>
+      </>
     );
   }
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title={empresa.nome_fantasia || empresa.razao_social}
         subtitle={`${empresa.razao_social} · CNPJ ${empresa.cnpj || "—"}`}
@@ -207,7 +206,7 @@ function Empresa360Page() {
           <TimelineTab empresaId={empresaId} interacoes={interacoes} onChange={carregar} />
         </TabsContent>
       </Tabs>
-    </AppShell>
+    </>
   );
 }
 

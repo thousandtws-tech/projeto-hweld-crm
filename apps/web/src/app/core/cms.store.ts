@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { RealtimeService } from './realtime';
@@ -256,12 +256,13 @@ export class CmsStore {
   readonly selos = computed(() => (this._cms().selos ?? []).filter((s) => s.ativo));
 
   constructor() {
-    effect(() => {
-      if (this.rt.ultimo()?.tipo === 'cms.atualizado') {
+    this.rt.reagirA(
+      (e) => e.tipo === 'cms.atualizado',
+      () => {
         this.carregado = false;
         this.carregar();
-      }
-    });
+      },
+    );
   }
 
   carregar(): void {

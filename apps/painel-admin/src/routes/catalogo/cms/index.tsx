@@ -3,7 +3,6 @@ import { ImagePlus, Loader2, Plus, RefreshCw, Save, Trash2 } from "lucide-react"
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
 import { exigePerfil } from "@/lib/guards";
@@ -262,7 +261,7 @@ function CmsLojaPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="CMS da Loja · Banners & Marcas"
         subtitle="Gerencie as marcas parceiras e todos os banners da vitrine web com atualização em tempo real"
@@ -890,6 +889,6 @@ function CmsLojaPage() {
           ))}
         </div>
       )}
-    </AppShell>
+    </>
   );
 }

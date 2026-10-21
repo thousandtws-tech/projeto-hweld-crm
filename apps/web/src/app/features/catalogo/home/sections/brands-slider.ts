@@ -1,10 +1,10 @@
-import {
+import { ChangeDetectionStrategy,
   Component,
   ElementRef,
+  NgZone,
   OnDestroy,
   OnInit,
   ViewChild,
-  afterNextRender,
   effect,
   inject,
 } from '@angular/core';
@@ -14,6 +14,7 @@ import { Autoplay, Navigation, A11y } from 'swiper/modules';
 import { CmsStore } from '../../../../core/cms.store';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-brands-slider',
   imports: [RouterLink],
   templateUrl: './brands-slider.html',
@@ -22,22 +23,20 @@ import { CmsStore } from '../../../../core/cms.store';
 export class HwBrandsSlider implements OnInit, OnDestroy {
   @ViewChild('brandsSwiperRef') brandsSwiperRef?: ElementRef<HTMLElement>;
   private swiperInstance: Swiper | null = null;
+  private zone = inject(NgZone);
   readonly cms = inject(CmsStore);
 
   readonly marcas = this.cms.marcas;
 
   constructor() {
-    afterNextRender(() => {
-      this.initSwiper();
-    });
+    // Init único + rebuild por mudança de dados via effect (cobre o mount);
+    // Swiper fora da zona para o autoplay não acordar a change detection.
     effect(() => {
       this.marcas();
       setTimeout(() => {
-        if (this.swiperInstance) {
-          this.swiperInstance.destroy(true, true);
-          this.swiperInstance = null;
-        }
-        this.initSwiper();
+        this.swiperInstance?.destroy(true, true);
+        this.swiperInstance = null;
+        this.zone.runOutsideAngular(() => this.initSwiper());
       }, 0);
     });
   }

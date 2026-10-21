@@ -5,12 +5,14 @@ import {
   createRootRouteWithContext,
   redirect,
   useRouter,
+  useRouterState,
 } from "@tanstack/react-router";
 
 import "../styles.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/store/auth-store";
 import { staffAutenticado } from "@/lib/session";
+import { AppShell } from "@/components/layout/AppShell";
 
 function NotFoundComponent() {
   return (
@@ -87,11 +89,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // Shell persistente: montado uma vez acima do <Outlet> e sobrevive a
+  // toda navegação interna (sidebar, topbar, sino e listener Ctrl+K não
+  // remontam). /login fica de fora — não há chrome de app na autenticação.
+  const isLogin = useRouterState({ select: (s) => s.location.pathname === "/login" });
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Outlet />
+        {isLogin ? (
+          <Outlet />
+        ) : (
+          <AppShell>
+            <Outlet />
+          </AppShell>
+        )}
         <Toaster position="top-right" />
       </AuthProvider>
     </QueryClientProvider>

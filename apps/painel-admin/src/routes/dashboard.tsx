@@ -1,6 +1,7 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Inbox, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Area,
   CartesianGrid,
@@ -15,7 +16,6 @@ import {
   YAxis,
 } from "recharts";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { brl, fmtData, qty, statusLabel } from "@/lib/format";
 import type {
@@ -28,7 +28,6 @@ import type {
   Pagamento,
   Pagina,
   Pedido,
-  Produto,
   SaldoAbaixoMinimo,
 } from "@/lib/models";
 import {
@@ -92,6 +91,10 @@ const EVENTOS = [
   "fiscal.nota_autorizada",
   "fiscal.nota_cancelada",
 ];
+
+// Referência estável para `q.data?.itens ?? LISTA_VAZIA` — evita que
+// arrays literais `[]` invalidem os useMemo dependentes a cada render.
+const LISTA_VAZIA: never[] = [];
 
 const PAGINA_VAZIA: Pagina<never> = {
   itens: [],
@@ -444,68 +447,103 @@ function DashboardPage() {
   const { pode } = useAuth();
   const temFinanceiro = pode("admin", "financeiro");
   const temOperacao = pode("admin", "tecnico");
+  const queryClient = useQueryClient();
 
-  const [carregando, setCarregando] = useState(true);
   const [janelaMeses, setJanelaMeses] = useState<3 | 6 | 12>(6);
 
-  const [pedidosRecentes, setPedidosRecentes] = useState<Pedido[]>([]);
-  const [pedidosJanela, setPedidosJanela] = useState<Pedido[]>([]);
-  const [pipeline, setPipeline] = useState<Oportunidade[]>([]);
-  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
-  const [estoqueBaixo, setEstoqueBaixo] = useState<SaldoAbaixoMinimo[]>([]);
-  const [empresasMap, setEmpresasMap] = useState<Map<number, string>>(new Map());
-  const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
-  const [caixaAberto, setCaixaAberto] = useState<Caixa | null>(null);
-  const [ordensServico, setOrdensServico] = useState<OrdemServico[]>([]);
+  // Widgets independentes: cada dataset é uma query própria — todas disparam
+  // em paralelo (sem waterfall financeiro/operação), cacheiam por recurso e
+  // o SSE invalida apenas o widget afetado pelo evento, não a página inteira.
+  const qPedidosRecentes = useQuery({
+    queryKey: ["dash", "pedidos", "recentes"],
+    queryFn: () => dashboardService.pedidosRecentes().catch(() => vazio<Pedido>()),
+  });
+  const qPedidosJanela = useQuery({
+    queryKey: ["dash", "pedidos", "janela"],
+    queryFn: () => pedidosService.listar({ por_pagina: 100 }).catch(() => vazio<Pedido>()),
+  });
+  const qEmpresas = useQuery({
+    queryKey: ["dash", "empresas"],
+    queryFn: () => crmService.empresas({ por_pagina: 100 }).catch(() => vazio<Empresa>()),
+  });
+  const qPipeline = useQuery({
+    queryKey: ["dash", "pipeline"],
+    queryFn: () => dashboardService.oportunidadesAbertas().catch(() => vazio<Oportunidade>()),
+  });
+  const qEstoque = useQuery({
+    queryKey: ["dash", "estoque"],
+    queryFn: () => dashboardService.estoqueBaixo().catch(() => vazio<SaldoAbaixoMinimo>()),
+  });
+  const qOrcamentos = useQuery({
+    queryKey: ["dash", "orcamentos"],
+    queryFn: () => orcamentosService.listar({ por_pagina: 100 }).catch(() => vazio<Orcamento>()),
+  });
+  const qPagamentos = useQuery({
+    queryKey: ["dash", "financeiro", "pagamentos"],
+    queryFn: () => financeiroService.pagamentos({ por_pagina: 100 }).catch(() => vazio<Pagamento>()),
+    enabled: temFinanceiro,
+  });
+  const qCaixa = useQuery({
+    queryKey: ["dash", "financeiro", "caixa"],
+    queryFn: () => financeiroService.caixaAberto().catch(() => null),
+    enabled: temFinanceiro,
+  });
+  const qOrdens = useQuery({
+    queryKey: ["dash", "ordens"],
+    queryFn: () => osService.listar({ por_pagina: 50 }).catch(() => vazio<OrdemServico>()),
+    enabled: temOperacao,
+  });
 
-  const carregar = useCallback(
-    async (silencioso = false) => {
-      if (!silencioso) setCarregando(true);
-      try {
-        const [pPedidos, pJanela, pEmpresas, , pOps, pEstoque, pOrcs] = await Promise.all([
-          dashboardService.pedidosRecentes().catch(() => vazio<Pedido>()),
-          pedidosService.listar({ por_pagina: 100 }).catch(() => vazio<Pedido>()),
-          crmService.empresas({ por_pagina: 100 }).catch(() => vazio<Empresa>()),
-          dashboardService.produtos().catch(() => vazio<Produto>()),
-          dashboardService.oportunidadesAbertas().catch(() => vazio<Oportunidade>()),
-          dashboardService.estoqueBaixo().catch(() => vazio<SaldoAbaixoMinimo>()),
-          orcamentosService.listar({ por_pagina: 100 }).catch(() => vazio<Orcamento>()),
-        ]);
+  const widgets = [
+    qPedidosRecentes,
+    qPedidosJanela,
+    qEmpresas,
+    qPipeline,
+    qEstoque,
+    qOrcamentos,
+    ...(temFinanceiro ? [qPagamentos, qCaixa] : []),
+    ...(temOperacao ? [qOrdens] : []),
+  ];
+  // Skeleton só quando nenhum dado existe ainda — refetch em background
+  // mantém os widgets renderizados (sem "piscar" a página inteira).
+  const carregando = widgets.every((q) => q.isPending);
 
-        setPedidosRecentes(pPedidos.itens ?? []);
-        setPedidosJanela(pJanela.itens ?? []);
-        setPipeline(pOps.itens ?? []);
-        setEstoqueBaixo(pEstoque.itens ?? []);
-        setOrcamentos(pOrcs.itens ?? []);
-        setEmpresasMap(
-          new Map((pEmpresas.itens ?? []).map((e) => [e.id, e.nome_fantasia || e.razao_social])),
-        );
+  const pedidosRecentes = qPedidosRecentes.data?.itens ?? LISTA_VAZIA;
+  const pedidosJanela = qPedidosJanela.data?.itens ?? LISTA_VAZIA;
+  const pipeline = qPipeline.data?.itens ?? LISTA_VAZIA;
+  const orcamentos = qOrcamentos.data?.itens ?? LISTA_VAZIA;
+  const estoqueBaixo = qEstoque.data?.itens ?? LISTA_VAZIA;
+  const pagamentos = qPagamentos.data?.itens ?? LISTA_VAZIA;
+  const caixaAberto = qCaixa.data ?? null;
+  const ordensServico = qOrdens.data?.itens ?? LISTA_VAZIA;
 
-        if (temFinanceiro) {
-          const [pPag, cx] = await Promise.all([
-            financeiroService.pagamentos({ por_pagina: 100 }).catch(() => vazio<Pagamento>()),
-            financeiroService.caixaAberto().catch(() => null),
-          ]);
-          setPagamentos(pPag.itens ?? []);
-          setCaixaAberto(cx);
-        }
-
-        if (temOperacao) {
-          const pOs = await osService.listar({ por_pagina: 50 }).catch(() => vazio<OrdemServico>());
-          setOrdensServico(pOs.itens ?? []);
-        }
-      } finally {
-        setCarregando(false);
-      }
-    },
-    [temFinanceiro, temOperacao],
+  const empresasMap = useMemo(
+    () =>
+      new Map(
+        (qEmpresas.data?.itens ?? LISTA_VAZIA).map((e) => [
+          e.id,
+          e.nome_fantasia || e.razao_social,
+        ]),
+      ),
+    [qEmpresas.data],
   );
 
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
+  const invalidar = (grupo: string) =>
+    void queryClient.invalidateQueries({ queryKey: ["dash", grupo] });
+  const recarregarTudo = () => invalidar("");
 
-  useRealtimeEvent(EVENTOS, () => void carregar(true));
+  // SSE → invalida só o widget do domínio afetado (coalescido pelo hook).
+  useRealtimeEvent(EVENTOS, (e) => {
+    const t = e.tipo;
+    if (t.startsWith("pedido.")) invalidar("pedidos");
+    else if (t.startsWith("orcamento.")) invalidar("orcamentos");
+    else if (t.startsWith("oportunidade.")) invalidar("pipeline");
+    else if (t.startsWith("empresa.")) invalidar("empresas");
+    else if (t.startsWith("catalogo.") || t.startsWith("estoque.")) invalidar("estoque");
+    else if (t.startsWith("pagamento.") || t.startsWith("caixa.") || t.startsWith("fiscal."))
+      invalidar("financeiro");
+    else if (t.startsWith("os.")) invalidar("ordens");
+  });
 
   const receita = useMemo(
     () => calcularSerieReceita(pedidosJanela, janelaMeses),
@@ -552,7 +590,7 @@ function DashboardPage() {
   );
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Dashboard"
         subtitle="Visão geral da operação"
@@ -577,7 +615,7 @@ function DashboardPage() {
 
             <button
               type="button"
-              onClick={() => void carregar()}
+              onClick={recarregarTudo}
               aria-label="Atualizar"
               className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
             >
@@ -1115,6 +1153,6 @@ function DashboardPage() {
           )}
         </div>
       )}
-    </AppShell>
+    </>
   );
 }

@@ -14,7 +14,6 @@ import type { BoardData, BoardItem as BoardItemT, BoardProps } from "react-kanba
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import {
@@ -658,7 +657,7 @@ function OportunidadesPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Oportunidades"
         subtitle={`Pipeline aberto: ${brl(metricas.pipelineAberto.toFixed(2))} · Ponderado: ${brl(metricas.forecastPonderado.toFixed(2))} · Ganho: ${brl(metricas.totalGanho.toFixed(2))} (${metricas.taxaConversao}%)`}
@@ -1150,7 +1149,7 @@ function OportunidadesPage() {
         }}
         onMoverEstagio={(op, para) => iniciarTransicao(op, para)}
       />
-    </AppShell>
+    </>
   );
 }
 

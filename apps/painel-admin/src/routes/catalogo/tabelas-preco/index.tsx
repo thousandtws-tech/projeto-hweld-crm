@@ -3,7 +3,6 @@ import { ArrowRight, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { exigePerfil } from "@/lib/guards";
@@ -83,7 +82,7 @@ function TabelasPrecoIndexPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Tabelas de preço"
         subtitle="Listas de preços diferenciadas por cliente B2B (aplicadas automaticamente no portal e em orçamentos)"
@@ -209,6 +208,6 @@ function TabelasPrecoIndexPage() {
           </label>
         </FormField>
       </FormDialog>
-    </AppShell>
+    </>
   );
 }

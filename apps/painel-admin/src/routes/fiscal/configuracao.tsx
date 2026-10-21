@@ -11,7 +11,6 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
 import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { exigePerfil } from "@/lib/guards";
@@ -162,7 +161,7 @@ function ConfigFiscalPage() {
   const status = cfg ? STATUS_CONFIG[cfg.status_integracao] : STATUS_CONFIG.pendente_credenciais;
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Configuração fiscal"
         subtitle="Credenciais da integração SEFAZ — ambiente, CSC e certificado digital A1"
@@ -366,6 +365,6 @@ function ConfigFiscalPage() {
           )}
         </SectionCard>
       </div>
-    </AppShell>
+    </>
   );
 }

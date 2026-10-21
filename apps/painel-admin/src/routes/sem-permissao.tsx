@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ShieldAlert } from "lucide-react";
 
-import { AppShell } from "@/components/layout/AppShell";
 
 export const Route = createFileRoute("/sem-permissao")({
   component: SemPermissaoPage,
@@ -9,7 +8,7 @@ export const Route = createFileRoute("/sem-permissao")({
 
 function SemPermissaoPage() {
   return (
-    <AppShell>
+    <>
       <div className="grid min-h-[60vh] place-items-center">
         <div className="max-w-md text-center">
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[var(--pill-warn-bg)] text-[var(--pill-warn-fg)]">
@@ -27,6 +26,6 @@ function SemPermissaoPage() {
           </Link>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ContaService } from '../../core/servicos';
@@ -36,6 +36,7 @@ const FILTROS: FiltroChip[] = [
 
 /** S09 — Meus pedidos com filtro de rastreamento por fase da entrega. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, DatePipe, HwStatusChip, HwSkeleton, HwEmpty, HwButton, BrlPipe, HwContaNav],
   templateUrl: './pedidos.html',
   styleUrl: './pedidos.scss',
@@ -49,10 +50,10 @@ export class PedidosPage implements OnInit {
   filtros = FILTROS;
 
   constructor() {
-    effect(() => {
-      const e = this.rt.ultimo();
-      if (e?.tipo.startsWith('pedido.')) this.carregar();
-    });
+    this.rt.reagirA(
+      (e) => e.tipo.startsWith('pedido.'),
+      () => this.carregar(),
+    );
   }
 
   ngOnInit(): void {

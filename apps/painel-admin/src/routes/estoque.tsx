@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { fieldClass } from "@/components/ui-kit/FormDialog";
 import { ApiError } from "@/lib/api";
@@ -115,7 +114,7 @@ function EstoquePage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader title="Estoque" />
 
       {baixos.length > 0 && (
@@ -275,6 +274,6 @@ function EstoquePage() {
           </tbody>
         </table>
       </SectionCard>
-    </AppShell>
+    </>
   );
 }

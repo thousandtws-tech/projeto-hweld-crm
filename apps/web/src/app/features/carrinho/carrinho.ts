@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CarrinhoService } from '../../core/servicos';
@@ -13,6 +13,7 @@ import { ToastService } from '../../shared/ui/toast';
 
 /** S06 — Carrinho de compras minimalista com componentes Angular Material. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, MatTooltipModule, HwButton, HwQty, HwSkeleton, HwEmpty, BrlPipe],
   templateUrl: './carrinho.html',
   styleUrl: './carrinho.scss',
@@ -29,12 +30,10 @@ export class CarrinhoPage implements OnInit {
   constructor() {
     // Admin mudou preço/produto → o carrinho revalida no servidor (preco_unitario
     // é sempre do lado do backend). Silencioso: sem skeleton, sem toast.
-    effect(() => {
-      const e = this.rt.ultimo();
-      if (e?.tipo === 'catalogo.precos' || e?.tipo === 'catalogo.produtos') {
-        untracked(() => this.recarregar());
-      }
-    });
+    this.rt.reagirA(
+      (e) => e.tipo === 'catalogo.precos' || e.tipo === 'catalogo.produtos',
+      () => this.recarregar(),
+    );
   }
 
   ngOnInit(): void {

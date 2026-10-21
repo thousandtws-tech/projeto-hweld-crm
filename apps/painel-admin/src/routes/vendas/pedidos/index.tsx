@@ -3,7 +3,6 @@ import { ChevronRight, Plus, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { brl, fmtData, statusLabel } from "@/lib/format";
 import type { Empresa, Pedido, StatusPedido } from "@/lib/models";
@@ -117,7 +116,7 @@ function PedidosIndexPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Pedidos"
         subtitle={`Volume acumulado: ${brl(metricas.volumeTotal.toFixed(2))} (${metricas.totalAtivos} pedidos) · Em separação/trânsito: ${metricas.emOperacao}`}
@@ -275,6 +274,6 @@ function PedidosIndexPage() {
           </table>
         </div>
       </SectionCard>
-    </AppShell>
+    </>
   );
 }

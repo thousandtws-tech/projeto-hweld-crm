@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthStore } from '../core/auth/auth.store';
 import { RealtimeService } from '../core/realtime';
@@ -16,6 +16,7 @@ import { HwCartDrawer } from './components/cart-drawer';
  * cada região vive em um componente dedicado em `layout/components`.
  */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-shell',
   imports: [
     RouterOutlet,

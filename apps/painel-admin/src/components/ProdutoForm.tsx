@@ -3,7 +3,6 @@ import { ArrowLeft, ArrowRight, ImagePlus, Loader2, Star, Trash2, Upload, X } fr
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
 import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { processarEEnviarImagem } from "@/lib/midia";
@@ -57,6 +56,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [marcasCms, setMarcasCms] = useState<string[]>([]);
   const [f, setF] = useState<Form>(vazio);
+  const [fInicial, setFInicial] = useState<Form | null>(null);
   const [estoqueDisponivel, setEstoqueDisponivel] = useState<string>("100");
   const [saldoOriginal, setSaldoOriginal] = useState<number>(100);
   const [salvando, setSalvando] = useState(false);
@@ -130,7 +130,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
             replace: true,
           });
         }
-        setF({
+        const carregado = {
           ...vazio,
           ...p,
           categoria_id: p.categoria_id,
@@ -146,7 +146,10 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
           altura_cm: p.altura_cm ?? "",
           largura_cm: p.largura_cm ?? "",
           comprimento_cm: p.comprimento_cm ?? "",
-        });
+        };
+        setF(carregado);
+        // Snapshot para PATCH-diff: só os campos alterados trafegam no salvar.
+        setFInicial(carregado);
       });
     }
   }, [produtoRef, navigate]);
@@ -321,39 +324,55 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
     setIndicePreview((atual) => Math.max(0, Math.min(atual, galeria.length - 2)));
   };
 
+  const optStr = (v: string) => (v.trim().length > 0 ? v.trim() : null);
+
+  // Normalização única — usada para o payload e para o diff do PATCH.
+  const montarBody = (v: Form) => ({
+    sku: v.sku.trim(),
+    nome: v.nome.trim(),
+    slug: optStr(v.slug),
+    categoria_id: Number(v.categoria_id),
+    marca: optStr(v.marca),
+    unidade_medida: optStr(v.unidade_medida),
+    descricao_curta: optStr(v.descricao_curta),
+    descricao_tecnica: optStr(v.descricao_tecnica),
+    ncm: optStr(v.ncm),
+    origem_mercadoria: optStr(v.origem_mercadoria),
+    peso_kg: optStr(v.peso_kg),
+    altura_cm: optStr(v.altura_cm),
+    largura_cm: optStr(v.largura_cm),
+    comprimento_cm: optStr(v.comprimento_cm),
+    preco_custo: optStr(v.preco_custo),
+    preco_venda: String(v.preco_venda),
+    estoque_minimo: optStr(v.estoque_minimo),
+    controla_estoque: v.controla_estoque,
+    ativo: v.ativo,
+    destaque: v.destaque,
+  });
+
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!f.sku.trim() || !f.nome.trim() || !f.categoria_id || !f.preco_venda) return;
     setSalvando(true);
-    const optStr = (v: string) => (v.trim().length > 0 ? v.trim() : null);
     try {
-      const body = {
-        sku: f.sku.trim(),
-        nome: f.nome.trim(),
-        slug: optStr(f.slug),
-        categoria_id: Number(f.categoria_id),
-        marca: optStr(f.marca),
-        unidade_medida: optStr(f.unidade_medida),
-        descricao_curta: optStr(f.descricao_curta),
-        descricao_tecnica: optStr(f.descricao_tecnica),
-        ncm: optStr(f.ncm),
-        origem_mercadoria: optStr(f.origem_mercadoria),
-        peso_kg: optStr(f.peso_kg),
-        altura_cm: optStr(f.altura_cm),
-        largura_cm: optStr(f.largura_cm),
-        comprimento_cm: optStr(f.comprimento_cm),
-        preco_custo: optStr(f.preco_custo),
-        preco_venda: String(f.preco_venda),
-        estoque_minimo: optStr(f.estoque_minimo),
-        controla_estoque: f.controla_estoque,
-        ativo: f.ativo,
-        destaque: f.destaque,
-      };
+      const body = montarBody(f);
 
       let idAlvo = produtoId;
       let baseEstoque = saldoOriginal;
       if (edicao && produtoId) {
-        await catalogoService.atualizarProduto(produtoId, body);
+        // PATCH-diff: envia apenas os campos realmente alterados —
+        // payload menor, audit trail mais limpo e sem UPDATE desnecessário.
+        const antes = fInicial ? montarBody(fInicial) : null;
+        const patch = antes
+          ? Object.fromEntries(
+              (Object.entries(body) as [keyof typeof body, unknown][]).filter(
+                ([k, v]) => v !== antes[k],
+              ),
+            )
+          : body;
+        if (Object.keys(patch).length > 0) {
+          await catalogoService.atualizarProduto(produtoId, patch);
+        }
       } else {
         const criado = await catalogoService.criarProduto(body);
         idAlvo = criado.id;
@@ -421,7 +440,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
   const imagemEmDestaque = galeria[indicePreview] ?? galeria[0] ?? null;
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title={edicao ? `Editar produto · ${f.sku || `#${produtoId}`}` : "Novo produto"}
         subtitle="Dados técnicos, precificação e galeria de imagens (capa principal + sub-imagens)"
@@ -850,6 +869,6 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
           </div>
         </div>
       </form>
-    </AppShell>
+    </>
   );
 }

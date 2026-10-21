@@ -3,7 +3,6 @@ import { Download, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { downloadCsv, FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import {
@@ -264,7 +263,7 @@ function CaixaPage() {
   );
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Caixa"
         subtitle={
@@ -775,6 +774,6 @@ function CaixaPage() {
           )}
         </SheetContent>
       </Sheet>
-    </AppShell>
+    </>
   );
 }

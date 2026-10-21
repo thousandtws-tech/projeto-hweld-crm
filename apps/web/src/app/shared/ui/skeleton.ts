@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 /** Skeleton de loading — gradiente suave e elegante. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-skeleton',
   templateUrl: './skeleton.html',
   host: { 'aria-hidden': 'true' },

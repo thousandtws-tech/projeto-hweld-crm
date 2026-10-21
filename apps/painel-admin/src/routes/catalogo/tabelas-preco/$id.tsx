@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
 import { fieldClass } from "@/components/ui-kit/FormDialog";
 import { brl } from "@/lib/format";
@@ -71,7 +70,7 @@ function TabelaPrecoPage() {
   };
 
   return (
-    <AppShell>
+    <>
       {tabela ? (
         <>
           <PageHeader title={tabela.nome} subtitle={tabela.descricao ?? undefined} />
@@ -144,6 +143,6 @@ function TabelaPrecoPage() {
           <div className="py-10 text-center text-sm text-muted-foreground">Carregando…</div>
         </SectionCard>
       )}
-    </AppShell>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { AuthStore } from './auth/auth.store';
 import { CatalogoService } from './servicos';
 import { RealtimeService } from './realtime';
@@ -26,17 +26,31 @@ export class CategoriasStore {
     return todas.filter((c) => !c.categoria_pai_id || !ids.has(c.categoria_pai_id));
   });
 
+  /** Índice pai→filhas pré-computado: o mega-menu consulta O(1) por nó
+   *  em vez de refiltrar a árvore inteira a cada binding do template. */
+  private readonly filhasPorPai = computed(() => {
+    const mapa = new Map<number, Categoria[]>();
+    for (const c of this._categorias()) {
+      if (c.categoria_pai_id == null) continue;
+      const lista = mapa.get(c.categoria_pai_id);
+      if (lista) lista.push(c);
+      else mapa.set(c.categoria_pai_id, [c]);
+    }
+    return mapa;
+  });
+
   constructor() {
-    effect(() => {
-      if (this.realtime.ultimo()?.tipo === 'catalogo.categorias') {
+    this.realtime.reagirA(
+      (e) => e.tipo === 'catalogo.categorias',
+      () => {
         this.carregamentoIniciado = false;
         this.carregar();
-      }
-    });
+      },
+    );
   }
 
   filhasDe(id: number): Categoria[] {
-    return this._categorias().filter((c) => c.categoria_pai_id === id);
+    return this.filhasPorPai().get(id) ?? [];
   }
 
   carregar(): void {

@@ -33,10 +33,10 @@ export class NotificacoesService {
         this.itens.set([]);
       }
     });
-    effect(() => {
-      const e = this.rt.ultimo();
-      if (e?.tipo === 'notificacao.nova') void this.atualizar();
-    });
+    this.rt.reagirA(
+      (e) => e.tipo === 'notificacao.nova',
+      () => void this.atualizar(),
+    );
   }
 
   async atualizar(): Promise<void> {

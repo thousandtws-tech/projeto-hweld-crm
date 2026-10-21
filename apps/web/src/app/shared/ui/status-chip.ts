@@ -1,8 +1,9 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { StatusLabelPipe } from '../../core/pipes';
 
 /** Chip de status semântico — indicador sutil + rótulo textual legível. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-status-chip',
   imports: [StatusLabelPipe],
   templateUrl: './status-chip.html',

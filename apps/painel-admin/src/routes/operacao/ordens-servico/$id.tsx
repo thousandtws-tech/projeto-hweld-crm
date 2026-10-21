@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { fieldClass } from "@/components/ui-kit/FormDialog";
 import { brl, fmtData, statusLabel } from "@/lib/format";
@@ -117,7 +116,7 @@ function OsDetalhePage() {
   };
 
   return (
-    <AppShell>
+    <>
       {os ? (
         <>
           <PageHeader
@@ -254,6 +253,6 @@ function OsDetalhePage() {
           </div>
         </SectionCard>
       )}
-    </AppShell>
+    </>
   );
 }

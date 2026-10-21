@@ -1,4 +1,12 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ContaService } from '../../core/servicos';
 import { HwButton } from '../../shared/ui/button';
@@ -8,12 +16,14 @@ import { HwContaNav } from './conta-nav';
 
 /** S12 — Trocar senha da conta. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, HwButton, HwField, HwContaNav],
   templateUrl: './seguranca.html',
   styleUrl: './seguranca.scss',
 })
 export class SegurancaPage implements OnInit {
   private conta = inject(ContaService);
+  private destroyRef = inject(DestroyRef);
   private toast = inject(ToastService);
 
   enviando = signal(false);
@@ -27,7 +37,9 @@ export class SegurancaPage implements OnInit {
   });
 
   ngOnInit(): void {
-    this.form.controls.confirma.valueChanges.subscribe(() => {
+    this.form.controls.confirma.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
       const ok = this.form.controls.nova.value === this.form.controls.confirma.value;
       this.form.controls.confirma.setErrors(ok ? null : { confere: true });
     });

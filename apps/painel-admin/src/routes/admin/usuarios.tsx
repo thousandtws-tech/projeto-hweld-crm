@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import type { Usuario } from "@/lib/models";
@@ -81,7 +80,7 @@ function UsuariosPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Usuários"
         action={
@@ -202,6 +201,6 @@ function UsuariosPage() {
           </select>
         </FormField>
       </FormDialog>
-    </AppShell>
+    </>
   );
 }

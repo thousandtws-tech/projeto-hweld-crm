@@ -3,7 +3,6 @@ import { CircleHelp, Eye, EyeOff, Monitor, RefreshCw, Smartphone, Tablet } from 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { avaliarEntropiaSenha } from "@/lib/algoritmos";
@@ -265,7 +264,7 @@ function ContaPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Minha conta"
         subtitle="Identidade, escopo de permissões, carteira atribuída e segurança da sessão"
@@ -673,6 +672,6 @@ function ContaPage() {
           )}
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

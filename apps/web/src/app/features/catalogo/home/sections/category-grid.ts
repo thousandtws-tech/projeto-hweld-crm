@@ -1,10 +1,10 @@
-import {
+import { ChangeDetectionStrategy,
   Component,
   ElementRef,
+  NgZone,
   OnDestroy,
   OnInit,
   ViewChild,
-  afterNextRender,
   computed,
   effect,
   inject,
@@ -25,6 +25,7 @@ export interface ItemCategoriaVitrine {
 
 /** Slider Contínuo Automático de Categorias Populares (Padrão E-commerce Swiper) */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-category-grid',
   imports: [RouterLink],
   templateUrl: './category-grid.html',
@@ -33,6 +34,7 @@ export interface ItemCategoriaVitrine {
 export class HwCategoryGrid implements OnInit, OnDestroy {
   @ViewChild('catSwiperRef') catSwiperRef?: ElementRef<HTMLElement>;
   private swiperInstance: Swiper | null = null;
+  private zone = inject(NgZone);
   private categoriasStore = inject(CategoriasStore);
 
   private readonly categoriasPadrao: ItemCategoriaVitrine[] = [
@@ -120,17 +122,14 @@ export class HwCategoryGrid implements OnInit, OnDestroy {
   });
 
   constructor() {
-    afterNextRender(() => {
-      this.initSwiper();
-    });
+    // Init único + rebuild por mudança de dados via effect (cobre o mount);
+    // Swiper fora da zona para o autoplay não acordar a change detection.
     effect(() => {
       this.categorias();
       setTimeout(() => {
-        if (this.swiperInstance) {
-          this.swiperInstance.destroy(true, true);
-          this.swiperInstance = null;
-        }
-        this.initSwiper();
+        this.swiperInstance?.destroy(true, true);
+        this.swiperInstance = null;
+        this.zone.runOutsideAngular(() => this.initSwiper());
       }, 0);
     });
   }

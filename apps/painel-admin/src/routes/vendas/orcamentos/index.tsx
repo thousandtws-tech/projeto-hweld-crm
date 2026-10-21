@@ -3,7 +3,6 @@ import { ArrowRight, ChevronRight, Plus, RefreshCw, Search } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { ApiError } from "@/lib/api";
@@ -365,7 +364,7 @@ function OrcamentosIndexPage() {
   );
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Orçamentos"
         subtitle={`Em negociação: ${brl(metricas.valorEmAberto.toFixed(2))} (${metricas.emAbertoCount}) · Aprovados p/ converter: ${brl(metricas.valorAprovado.toFixed(2))} (${metricas.aprovadosCount}) · Convertidos: ${brl(metricas.valorConvertido.toFixed(2))}`}
@@ -756,6 +755,6 @@ function OrcamentosIndexPage() {
           />
         </FormField>
       </FormDialog>
-    </AppShell>
+    </>
   );
 }

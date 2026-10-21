@@ -3,7 +3,6 @@ import { ImagePlus, Loader2, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { exigePerfil } from "@/lib/guards";
@@ -205,7 +204,7 @@ function CategoriasPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Categorias"
         subtitle="Estrutura hierárquica de departamentos, subcategorias e imagens da vitrine B2B"
@@ -375,6 +374,6 @@ function CategoriasPage() {
           </label>
         </FormField>
       </FormDialog>
-    </AppShell>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { afterNextRender, Component, ElementRef, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, afterNextRender, Component, ElementRef, input, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 /**
@@ -7,6 +7,7 @@ import { RouterLink } from '@angular/router';
  * Itens projetados devem usar a classe `.rail-item` (largura fixa do slot).
  */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-rail',
   imports: [RouterLink],
   templateUrl: './rail.html',

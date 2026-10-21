@@ -1,9 +1,14 @@
+// Formatters Intl são custosos de construir — instâncias únicas de módulo,
+// compartilhadas por todas as células de todas as tabelas da aplicação.
+const FMT_BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const FMT_QTD = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 });
+
 /** `Dinheiro` (string decimal "1234.56") → "R$ 1.234,56". Nunca parseFloat na regra. */
 export function brl(valor: string | null | undefined): string {
   if (!valor) return "—";
   const n = Number(valor);
   if (!Number.isFinite(n)) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
+  return FMT_BRL.format(n);
 }
 
 /** `Quantidade` string + unidade → "1,500 kg". */
@@ -11,7 +16,7 @@ export function qty(qtd: string | null | undefined, unidade?: string | null): st
   if (!qtd) return "—";
   const n = Number(qtd);
   if (!Number.isFinite(n)) return "—";
-  const fmt = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 }).format(n);
+  const fmt = FMT_QTD.format(n);
   return unidade ? `${fmt} ${unidade}` : fmt;
 }
 

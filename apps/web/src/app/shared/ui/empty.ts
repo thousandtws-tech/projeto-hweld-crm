@@ -1,7 +1,8 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 /** Estado vazio padrão — minimalista, com ícone visual claro e chamada para ação. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-empty',
   templateUrl: './empty.html',
   styleUrl: './empty.scss',

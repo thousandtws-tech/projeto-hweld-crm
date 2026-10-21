@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ContaService } from '../../core/servicos';
 import { MeuPerfil } from '../../core/models';
 import { HwSkeleton } from '../../shared/ui/skeleton';
@@ -7,6 +7,7 @@ import { HwContaNav } from './conta-nav';
 
 /** S11 — Minha conta: dados cadastrais, empresa e tabela comercial. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [HwSkeleton, HwContaNav, CnpjPipe],
   templateUrl: './conta.html',
   styleUrl: './conta.scss',

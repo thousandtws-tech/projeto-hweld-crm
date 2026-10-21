@@ -3,7 +3,6 @@ import { ChevronRight, Plus, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { brl, fmtData, statusLabel } from "@/lib/format";
@@ -198,7 +197,7 @@ function OrdensServicoIndexPage() {
   );
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Ordens de serviço"
         subtitle={`Em atendimento: ${resumo.emFila} · Prioridade alta/urgente: ${resumo.urgentes} · Concluídas: ${resumo.concluidas}`}
@@ -473,6 +472,6 @@ function OrdensServicoIndexPage() {
           />
         </FormField>
       </FormDialog>
-    </AppShell>
+    </>
   );
 }

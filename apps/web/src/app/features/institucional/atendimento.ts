@@ -1,9 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HwInstitucionalNav } from './institucional-nav';
 import { ToastService } from '../../shared/ui/toast';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, HwInstitucionalNav],
   templateUrl: './atendimento.html',
   styleUrl: './atendimento.scss',

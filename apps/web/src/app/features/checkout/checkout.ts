@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -16,6 +16,7 @@ import { ToastService } from '../../shared/ui/toast';
 
 /** S07 — Checkout minimalista corporativo com Angular Material. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     NgTemplateOutlet,
@@ -103,20 +104,17 @@ export class CheckoutPage implements OnInit {
   constructor() {
     // Mudança de catálogo/preço durante o checkout revalida os itens — o
     // backend também reconfirma no submit, mas o usuário vê o valor atualizado.
-    // `enviando` em untracked: nunca reconcilia no meio de um submit.
-    effect(() => {
-      const e = this.rt.ultimo();
-      if (e?.tipo === 'catalogo.precos' || e?.tipo === 'catalogo.produtos') {
-        untracked(() => {
-          if (!this.enviando()) {
-            void this.carrinho
-              .atual()
-              .then((c) => this.itens.set(c.itens))
-              .catch(() => {});
-          }
-        });
-      }
-    });
+    // `enviando` lido no predicado (untracked interno): nunca reconcilia
+    // no meio de um submit.
+    this.rt.reagirA(
+      (e) =>
+        (e.tipo === 'catalogo.precos' || e.tipo === 'catalogo.produtos') && !this.enviando(),
+      () =>
+        void this.carrinho
+          .atual()
+          .then((c) => this.itens.set(c.itens))
+          .catch(() => {}),
+    );
   }
 
   ngOnInit(): void {

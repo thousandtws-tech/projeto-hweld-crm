@@ -1,4 +1,12 @@
-import { Component, OnInit, effect, inject, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -22,12 +30,14 @@ const ORDENACOES = [
 /** S04 — Resultados de busca no padrão marketplace BR (`/busca?q=`).
  *  Filtros vivem na URL: link compartilhável e botão voltar funcionam. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, FormsModule, HwProductCard, HwSkeleton, HwEmpty, HwButton],
   templateUrl: './busca.html',
   styleUrl: './busca.scss',
 })
 export class BuscaPage implements OnInit {
   private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
   private router = inject(Router);
   private busca = inject(BuscaService);
   private rt = inject(RealtimeService);
@@ -52,21 +62,16 @@ export class BuscaPage implements OnInit {
   constructor() {
     // Catálogo mudou (produto, categoria, preço) → reroda a query atual sem
     // piscar skeleton — o resultado velho fica até o novo chegar.
-    effect(() => {
-      const e = this.rt.ultimo();
-      // untracked: `resultado` muda dentro de `executar` — sem isso o effect se
-      // re-dispararia a cada resposta (loop de refetch). E só reconcilia depois
-      // que a primeira busca carregou.
-      if (e?.tipo.startsWith('catalogo.')) {
-        untracked(() => {
-          if (this.resultado() !== null) this.executar(true);
-        });
-      }
-    });
+    // Predicado untracked: `resultado` muda dentro de `executar` sem
+    // re-disparar o gatilho (sem loop de refetch).
+    this.rt.reagirA(
+      (e) => e.tipo.startsWith('catalogo.') && this.resultado() !== null,
+      () => this.executar(true),
+    );
   }
 
   ngOnInit(): void {
-    this.route.queryParamMap.subscribe((p) => {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((p) => {
       this.q.set(p.get('q') ?? '');
       const cat = p.get('categoria');
       this.categoriaSel.set(cat ? +cat : null);

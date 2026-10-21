@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CatalogoService } from '../../../core/servicos';
 import { RealtimeService } from '../../../core/realtime';
@@ -70,6 +70,7 @@ function diversificarPorCategoria(lista: ItemCatalogoPortal[]): ItemCatalogoPort
 
 /** S02 — Home / Vitrine minimalista e profissional B2B */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
     HwProductCard,
@@ -96,12 +97,10 @@ export class HomePage implements OnInit {
   carregando = signal(true);
 
   constructor() {
-    effect(() => {
-      const e = this.rt.ultimo();
-      if (e?.tipo.startsWith('catalogo.')) {
-        untracked(() => this.carregar(true));
-      }
-    });
+    this.rt.reagirA(
+      (e) => e.tipo.startsWith('catalogo.'),
+      () => this.carregar(true),
+    );
   }
 
   ngOnInit(): void {

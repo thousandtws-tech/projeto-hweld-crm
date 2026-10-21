@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
@@ -7,6 +7,7 @@ import { CnpjPipe } from '../../shared/ui/cnpj.pipe';
 
 /** Botão "Minha Conta" do cabeçalho com menu de perfil, ou link de login. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-account-menu',
   imports: [RouterLink, MatMenuModule, MatDividerModule, CnpjPipe],
   templateUrl: './account-menu.html',

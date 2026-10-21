@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 /**
@@ -7,6 +7,7 @@ import { RouterLink } from '@angular/router';
  * com oferta em destaque à esquerda e links utilitários à direita.
  */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-shell-topbar',
   imports: [RouterLink],
   templateUrl: './shell-topbar.html',

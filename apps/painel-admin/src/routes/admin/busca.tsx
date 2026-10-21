@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
 import { fieldClass } from "@/components/ui-kit/FormDialog";
 import { ApiError } from "@/lib/api";
@@ -54,7 +53,7 @@ function BuscaPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader title="Busca" />
       <SectionCard>
         <form
@@ -126,6 +125,6 @@ function BuscaPage() {
           )}
         </SectionCard>
       )}
-    </AppShell>
+    </>
   );
 }

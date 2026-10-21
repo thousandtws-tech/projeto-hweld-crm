@@ -146,3 +146,9 @@ export const realtime = new RealtimeClient();
 // Liga/desliga o stream conforme a sessão staff.
 onSessionChange(() => realtime.sync());
 realtime.sync();
+
+// Aba oculta pausa timers do browser — ao voltar, reconecta na hora em
+// vez de esperar o restante do backoff exponencial.
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && staffAutenticado() && !realtime.conectado) realtime.sync();
+});

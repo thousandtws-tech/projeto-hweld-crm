@@ -1,4 +1,4 @@
-import { Component, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
@@ -10,6 +10,7 @@ import { HumanizeNotifPipe } from '../../core/pipes';
 
 /** Sino de notificações do cabeçalho com Inbox Zero + Modal de Detalhes. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-notifications-menu',
   imports: [RouterLink, MatMenuModule, MatTooltipModule, DatePipe, HumanizeNotifPipe],
   templateUrl: './notifications-menu.html',

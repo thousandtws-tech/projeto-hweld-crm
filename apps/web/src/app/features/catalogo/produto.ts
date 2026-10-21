@@ -1,13 +1,14 @@
-import {
+import { ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  NgZone,
   OnDestroy,
   OnInit,
   computed,
-  effect,
   inject,
   signal,
-  untracked,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';
@@ -30,6 +31,7 @@ import { ToastService } from '../../shared/ui/toast';
 /** S05 — PDP: detalhe de produto com padrões de marketplace (subtotal, compra
  *  direta, entrega, cross-sell, zoom, sticky buy bar mobile). */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
     MatTabsModule,
@@ -49,6 +51,7 @@ import { ToastService } from '../../shared/ui/toast';
 })
 export class ProdutoPage implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
   private router = inject(Router);
   private catalogo = inject(CatalogoService);
   private carrinho = inject(CarrinhoService);
@@ -79,6 +82,7 @@ export class ProdutoPage implements OnInit, OnDestroy {
   copiado = signal(false);
   zoom = signal<{ x: number; y: number } | null>(null);
   private copiadoTimer?: ReturnType<typeof setTimeout>;
+  private zone = inject(NgZone);
 
   /** Galeria ordenada (capa principal primeiro, depois ordem) e filtrada contra URLs quebradas. */
   imagensGaleria = computed(() => {
@@ -162,23 +166,29 @@ export class ProdutoPage implements OnInit, OnDestroy {
   constructor() {
     // Preço, ficha e disponibilidade sobem ao vivo: reconcilia quando o evento
     // é do produto em tela (catalogo.produtos, catalogo.precos ou estoque.movimentado).
-    effect(() => {
-      const e = this.rt.ultimo();
-      const p = untracked(this.produto);
-      if (!e || !p) return;
-      const alvo =
-        e.tipo === 'catalogo.precos' || e.tipo === 'estoque.movimentado'
-          ? Number(e.dados['produto_id'])
-          : Number(e.dados['id']);
-      if (
-        (e.tipo === 'catalogo.produtos' ||
-          e.tipo === 'catalogo.precos' ||
-          e.tipo === 'estoque.movimentado') &&
-        alvo === p.id
-      ) {
-        this.recarregarProduto(p.id);
-      }
-    });
+    // O predicado roda untracked — ler `produto` não recria o gatilho.
+    this.rt.reagirA(
+      (e) => {
+        const p = this.produto();
+        if (!p) return false;
+        if (
+          e.tipo !== 'catalogo.produtos' &&
+          e.tipo !== 'catalogo.precos' &&
+          e.tipo !== 'estoque.movimentado'
+        ) {
+          return false;
+        }
+        const alvo =
+          e.tipo === 'catalogo.precos' || e.tipo === 'estoque.movimentado'
+            ? Number(e.dados['produto_id'])
+            : Number(e.dados['id']);
+        return alvo === p.id;
+      },
+      () => {
+        const p = this.produto();
+        if (p) this.recarregarProduto(p.id);
+      },
+    );
   }
 
   ngOnInit(): void {
@@ -193,7 +203,7 @@ export class ProdutoPage implements OnInit, OnDestroy {
         )
         .catch(() => {});
     }
-    this.route.paramMap.subscribe((params) => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const idSlug = params.get('idslug') ?? '';
       const id = Number(idSlug.split('-')[0]);
       if (!id) {
@@ -229,6 +239,7 @@ export class ProdutoPage implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.copiadoTimer) clearTimeout(this.copiadoTimer);
+    if (this.zoomRaf) cancelAnimationFrame(this.zoomRaf);
   }
 
   /** Refetch silencioso do produto em tela (preço, ficha, imagens) — sem
@@ -303,13 +314,25 @@ export class ProdutoPage implements OnInit, OnDestroy {
     );
   }
 
-  /** Zoom estilo Amazon — transform-origin segue o cursor (só desktop/hover). */
+  /** Zoom estilo Amazon — transform-origin segue o cursor (só desktop/hover).
+   *  mousemove dispara ~60-120×/s: coordenadas são coalescidas num único
+   *  write por frame via rAF fora da zona (não acorda a CD global). */
+  private zoomRaf = 0;
+  private zoomPendente: { x: number; y: number } | null = null;
+
   onZoomMove(e: MouseEvent): void {
     const el = e.currentTarget as HTMLElement;
     const r = el.getBoundingClientRect();
-    this.zoom.set({
+    this.zoomPendente = {
       x: ((e.clientX - r.left) / r.width) * 100,
       y: ((e.clientY - r.top) / r.height) * 100,
+    };
+    if (this.zoomRaf) return;
+    this.zone.runOutsideAngular(() => {
+      this.zoomRaf = requestAnimationFrame(() => {
+        this.zoomRaf = 0;
+        if (this.zoomPendente) this.zoom.set(this.zoomPendente);
+      });
     });
   }
 

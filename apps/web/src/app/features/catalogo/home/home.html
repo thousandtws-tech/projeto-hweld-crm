@@ -1,4 +1,4 @@
-<!-- Slider Pro Nativo com Swiper + GSAP + Parallax -->
+<!-- Slider Pro Nativo com Swiper + Parallax -->
 <hw-slider-pro />
 
 <!-- Barra de Benefícios & Vantagens B2B -->
@@ -42,19 +42,39 @@
   }
 </section>
 
+<!-- Abaixo da dobra: seções diferidas até entrarem na viewport
+     (o autoplay dos Swipers e os banners não competem com o LCP) -->
+
 <!-- Trio de Banners Promocionais (3 Containers Lado a Lado) -->
+@defer (on viewport) {
 <hw-trio-banners />
+} @placeholder {
+  <div aria-hidden="true"></div>
+}
 
 <!-- Slider de Marcas Parceiras (Navegue por marcas - Padrão Loja Virtual) -->
+@defer (on viewport) {
 <hw-brands-slider />
+} @placeholder {
+  <div aria-hidden="true"></div>
+}
 
 <!-- Banner Faixa Full-Bleed (Semana da Indústria + Cupom Interativo) -->
+@defer (on viewport) {
 <hw-strip-banner />
+} @placeholder {
+  <div aria-hidden="true"></div>
+}
 
 <!-- Duo de Banners Promocionais (2 Banners Largos Split 50/50) -->
+@defer (on viewport) {
 <hw-duo-banners />
+} @placeholder {
+  <div aria-hidden="true"></div>
+}
 
 <!-- Segunda Vitrine: Mais Vendidos & Reposição Rápida -->
+@defer (on viewport) {
 @if (maisVendidos().length > 0) {
   <section class="secao-catalogo">
     <div class="secao-topo">
@@ -76,9 +96,20 @@
     </div>
   </section>
 }
+} @placeholder {
+  <div aria-hidden="true"></div>
+}
 
 <!-- Banner Institucional B2B (Soluções Corporativas & Faturamento CNPJ) -->
+@defer (on viewport) {
 <hw-corporate-banner />
+} @placeholder {
+  <div aria-hidden="true"></div>
+}
 
 <!-- Banner Newsletter & Tabela VIP de Preços -->
+@defer (on viewport) {
 <hw-newsletter-banner />
+} @placeholder {
+  <div aria-hidden="true"></div>
+}

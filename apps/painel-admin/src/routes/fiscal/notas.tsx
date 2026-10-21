@@ -3,7 +3,6 @@ import { AlertTriangle, FileDown, FileText, History, Plus, RefreshCw } from "luc
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { msgErro } from "@/lib/api";
@@ -225,7 +224,7 @@ function FiscalPage() {
     d.providerStatus ? `${d.providerStatus}${d.statusDetail ? ` — ${d.statusDetail}` : ""}` : null;
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Notas fiscais"
         subtitle="Emissão, transmissão e cancelamento de NF-e vinculadas aos pedidos de venda"
@@ -689,6 +688,6 @@ function FiscalPage() {
           />
         </FormField>
       </FormDialog>
-    </AppShell>
+    </>
   );
 }

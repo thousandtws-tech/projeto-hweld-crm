@@ -28,7 +28,12 @@ function requisitarRefresh(auth: AuthStore): Subject<boolean> {
 
 const GUEST_SID_KEY = 'hweld.guest.sid';
 
+// Resolvido uma vez e cacheado em memória — localStorage é I/O síncrono
+// e este interceptor roda em toda requisição HTTP da aplicação.
+let guestSidCache: string | null = null;
+
 function obterGuestSessionId(): string {
+  if (guestSidCache) return guestSidCache;
   try {
     let sid = localStorage.getItem(GUEST_SID_KEY);
     if (!sid) {
@@ -38,6 +43,7 @@ function obterGuestSessionId(): string {
           : `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
       localStorage.setItem(GUEST_SID_KEY, sid);
     }
+    guestSidCache = sid;
     return sid;
   } catch {
     return 'guest-local';

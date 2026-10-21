@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthStore } from '../../core/auth/auth.store';
@@ -13,6 +13,7 @@ const NOME_PROVEDOR: Record<ProvedorSocial, string> = {
 
 /** S01 — Login do portal B2B minimalista com Angular Material. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterLink, HwButton],
   templateUrl: './login.html',
   styleUrl: './login.scss',

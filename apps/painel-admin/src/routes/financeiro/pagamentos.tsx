@@ -3,7 +3,6 @@ import { Plus, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { brl, fmtData, statusLabel } from "@/lib/format";
@@ -221,7 +220,7 @@ function PagamentosPage() {
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title="Pagamentos"
         subtitle={`A receber: ${brl(metricas.aReceber.toFixed(2))} · Vencido: ${brl(metricas.vencido.toFixed(2))} · Recebido: ${brl(metricas.recebido.toFixed(2))}`}
@@ -547,6 +546,6 @@ function PagamentosPage() {
           />
         </FormField>
       </FormDialog>
-    </AppShell>
+    </>
   );
 }

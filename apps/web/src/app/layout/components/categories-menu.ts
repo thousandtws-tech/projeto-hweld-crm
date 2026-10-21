@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatMenuModule } from '@angular/material/menu';
 import { CategoriasStore } from '../../core/categorias.store';
@@ -27,6 +27,7 @@ const ICONES: Record<string, string> = {
  * (no mobile as subcategorias aparecem inline sob cada raiz).
  */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-categories-menu',
   imports: [RouterLink, MatMenuModule],
   templateUrl: './categories-menu.html',

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CarrinhoService } from '../../core/servicos';
@@ -10,6 +10,7 @@ import { HwNotificationsMenu } from './notifications-menu';
 
 /** Cabeçalho do portal: logo, categorias, CEP, busca e ações de conta/carrinho. */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-shell-header',
   imports: [
     RouterLink,

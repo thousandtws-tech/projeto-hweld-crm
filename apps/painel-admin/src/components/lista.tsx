@@ -1,11 +1,11 @@
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Loader2, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { api, ApiError, type Filtros } from "@/lib/api";
 import { brl, fmtData, qty, statusLabel } from "@/lib/format";
-import type { Pagina } from "@/lib/models";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 
@@ -94,14 +94,43 @@ function Celula({ linha, c }: { linha: Linha; c: Coluna }) {
  */
 export function ListaPage({ cfg }: { cfg: ListaCfg }) {
   const navigate = useNavigate();
-  const [pagina, setPagina] = useState<Pagina<Linha> | null>(null);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [paginaNum, setPaginaNum] = useState(1);
   const [busca, setBusca] = useState("");
   const [buscaDebounced, setBuscaDebounced] = useState("");
   const [filtroValor, setFiltroValor] = useState("");
   const [excluindoId, setExcluindoId] = useState<number | string | null>(null);
+
+  // Cache por (recurso, página, busca, filtro): navegar de volta para uma
+  // página já visitada reutiliza os dados instantaneamente em vez de
+  // reapresentar skeleton + refetch.
+  const query = useQuery({
+    queryKey: ["lista", cfg.recurso, paginaNum, buscaDebounced, filtroValor],
+    queryFn: () => {
+      const f: Filtros = { pagina: paginaNum, por_pagina: POR_PAGINA };
+      if (cfg.busca && buscaDebounced) f.busca = buscaDebounced;
+      if (cfg.filtro && filtroValor) f[cfg.filtro.campo] = filtroValor;
+      return api.lista<Linha>(cfg.recurso, f);
+    },
+    // Mantém a página anterior na tela durante a transição de página/busca
+    // — zero layout shift e nenhum skeleton entre páginas.
+    placeholderData: keepPreviousData,
+    staleTime: 15_000,
+  });
+
+  const pagina = query.data ?? null;
+  // "carregando" cobre load inicial e refetches — a tabela esmaece sem
+  // sumir, e o skeleton só aparece quando não há dado nenhum para mostrar.
+  const carregando = query.isFetching;
+  const erro =
+    query.error == null
+      ? null
+      : query.error instanceof ApiError && query.error.status === 403
+        ? "Sem permissão para este recurso."
+        : "Falha ao carregar. O backend está no ar?";
+
+  const recarregar = () =>
+    queryClient.invalidateQueries({ queryKey: ["lista", cfg.recurso] });
 
   const aoExcluir = async (e: React.MouseEvent, linha: Linha) => {
     e.stopPropagation();
@@ -117,7 +146,7 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
         await api.del(cfg.recurso, id);
       }
       toast.success(`"${nome}" excluído.`);
-      void carregar(true);
+      void recarregar();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao excluir registro.");
     } finally {
@@ -136,34 +165,11 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
     }, 350);
   };
 
-  const carregar = useCallback(
-    async (silencioso = false) => {
-      if (!silencioso) setCarregando(true);
-      setErro(null);
-      const f: Filtros = { pagina: paginaNum, por_pagina: POR_PAGINA };
-      if (cfg.busca && buscaDebounced) f.busca = buscaDebounced;
-      if (cfg.filtro && filtroValor) f[cfg.filtro.campo] = filtroValor;
-      try {
-        setPagina(await api.lista<Linha>(cfg.recurso, f));
-      } catch (e) {
-        setErro(
-          e instanceof ApiError && e.status === 403
-            ? "Sem permissão para este recurso."
-            : "Falha ao carregar. O backend está no ar?",
-        );
-      } finally {
-        setCarregando(false);
-      }
-    },
-    [cfg, paginaNum, buscaDebounced, filtroValor],
-  );
+  // Reconciliação: evento realtime (coalescido no hook) → invalida o
+  // recurso; refetch é silencioso — a tabela esmaece, não reaparece skeleton.
+  useRealtimeEvent(cfg.eventos ?? [], () => void recarregar());
 
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
-
-  // Reconciliação: evento realtime → reload via REST (silencioso, sem skeleton).
-  useRealtimeEvent(cfg.eventos ?? [], () => void carregar(true));
+  const carregar = () => void query.refetch();
 
   const detalhe = cfg.detalhePrefixo;
 

@@ -1,4 +1,5 @@
-import { Component, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HwInstitucionalNav } from './institucional-nav';
@@ -11,12 +12,15 @@ interface ItemFaq {
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterLink, HwInstitucionalNav],
   templateUrl: './faq.html',
   styleUrl: './faq.scss',
 })
 export class FaqPage {
   buscaCtrl = new FormControl('');
+  // valueChanges como signal — o computed de filtro reage a cada tecla.
+  private readonly termoBusca = toSignal(this.buscaCtrl.valueChanges, { initialValue: '' });
   categoriaAtiva = signal('todas');
   itemAberto = signal<string | null>('fat-1');
 
@@ -95,7 +99,7 @@ export class FaqPage {
   ];
 
   itensFiltrados = computed(() => {
-    const q = (this.buscaCtrl.value || '').trim().toLowerCase();
+    const q = (this.termoBusca() || '').trim().toLowerCase();
     const cat = this.categoriaAtiva();
 
     return this.faqData.filter((item) => {

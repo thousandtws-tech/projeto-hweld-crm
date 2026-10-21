@@ -1,4 +1,13 @@
-import { Injectable, NgZone, OnDestroy, effect, inject, signal } from '@angular/core';
+import {
+  DestroyRef,
+  Injectable,
+  NgZone,
+  OnDestroy,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { environment } from '../../environments/environment';
 import { AuthStore } from './auth/auth.store';
 import { ToastService } from '../shared/ui/toast';
@@ -51,6 +60,30 @@ export class RealtimeService implements OnDestroy {
     this.conectado.set(false);
   }
 
+  /**
+   * SSE → reconcile coalesced: uma rajada de eventos vira UMA chamada a `fn`
+   * no trailing edge (~300ms). Ex.: bulk-update de preços do admin emite N
+   * frames `catalogo.precos` — sem coalescer seriam N refetches paralelos.
+   * O predicado roda em `untracked`: pode ler signals do consumidor sem
+   * criar dependências no effect interno. Chamar em injection context.
+   */
+  reagirA(corresponder: (e: EventoRealtime) => boolean, fn: () => void, atrasoMs = 300): void {
+    const destroyRef = inject(DestroyRef);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    effect(() => {
+      const e = this.ultimo();
+      if (!e || !untracked(() => corresponder(e))) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        fn();
+      }, atrasoMs);
+    });
+    destroyRef.onDestroy(() => {
+      if (timer) clearTimeout(timer);
+    });
+  }
+
   private async conectar(): Promise<void> {
     this.desconectar();
     const token = this.auth.accessToken();
@@ -60,20 +93,25 @@ export class RealtimeService implements OnDestroy {
 
     const ctrl = new AbortController();
     this.abort = ctrl;
-    try {
-      const res = await fetch(`${environment.realtimeUrl}/${endpoint}`, {
-        headers,
-        signal: ctrl.signal,
-      });
-      if (!res.ok || !res.body) throw new Error(`SSE ${res.status}`);
-      this.conectado.set(true);
-      this.retryMs = RECONECTAR_PADRAO_MS;
-      await this.ler(res.body, ctrl.signal);
-    } catch {
-      /* abortado ou conexão caiu — reconecta abaixo */
-    } finally {
-      this.conectado.set(false);
-    }
+    // Loop de leitura do stream fora da zona: cada chunk de rede que chega
+    // resolveria um microtask dentro do Angular e dispararia CD global.
+    // Apenas frame() reentra na zona via zone.run() ao emitir o evento.
+    await this.zone.runOutsideAngular(async () => {
+      try {
+        const res = await fetch(`${environment.realtimeUrl}/${endpoint}`, {
+          headers,
+          signal: ctrl.signal,
+        });
+        if (!res.ok || !res.body) throw new Error(`SSE ${res.status}`);
+        this.conectado.set(true);
+        this.retryMs = RECONECTAR_PADRAO_MS;
+        await this.ler(res.body, ctrl.signal);
+      } catch {
+        /* abortado ou conexão caiu — reconecta abaixo */
+      } finally {
+        this.conectado.set(false);
+      }
+    });
     if (!ctrl.signal.aborted) {
       this.timer = setTimeout(() => void this.conectar(), this.retryMs);
       this.retryMs = Math.min(this.retryMs * 2, RECONECTAR_MAX_MS);
