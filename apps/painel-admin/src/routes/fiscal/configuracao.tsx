@@ -184,7 +184,7 @@ function ConfigFiscalPage() {
               {cfg.pendencias.map((p) => (
                 <span
                   key={p}
-                  className="rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                  className="rounded-md border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
                 >
                   {PENDENCIA_LABEL[p] ?? p}
                 </span>

@@ -287,7 +287,7 @@ function OrcamentoPage() {
                 {orc.convertido_pedido_id && (
                   <Link
                     to={`/vendas/pedidos/${orc.convertido_pedido_id}` as "/"}
-                    className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-primary hover:bg-secondary"
+                    className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-4 py-2 text-xs font-semibold text-primary hover:bg-secondary"
                   >
                     Abrir Pedido #{orc.convertido_pedido_id} <ArrowRight className="h-3.5 w-3.5" />
                   </Link>

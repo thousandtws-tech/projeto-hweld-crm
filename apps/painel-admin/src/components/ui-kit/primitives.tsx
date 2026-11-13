@@ -230,7 +230,7 @@ export function StatCard({
                 placeItems: "center",
                 width: 32,
                 height: 32,
-                borderRadius: "50%",
+                borderRadius: 8,
                 bgcolor: "action.hover",
               }}
             >

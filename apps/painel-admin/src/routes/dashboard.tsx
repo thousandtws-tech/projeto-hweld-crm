@@ -606,7 +606,7 @@ function DashboardPage() {
         subtitle="Visão geral da operação"
         action={
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center rounded-full border border-border bg-card p-1 text-xs">
+            <div className="inline-flex items-center rounded-md border border-border bg-card p-1 text-xs">
               {([3, 6, 12] as const).map((m) => (
                 <Chip label={<>{m}M</>} size="small" variant={(janelaMeses === m) ? "filled" : "outlined"} color={(janelaMeses === m) ? "primary" : "default"} key={m} onClick={() => setJanelaMeses(m)} />
               ))}
@@ -912,9 +912,9 @@ function DashboardPage() {
                       </span>
                       <span className="font-semibold tabular-nums">{brl(bruto.toFixed(2))}</span>
                     </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                    <div className="h-2 overflow-hidden rounded-sm bg-secondary">
                       <div
-                        className="h-full rounded-full transition-all"
+                        className="h-full rounded-sm transition-all"
                         style={{
                           width: `${larguraPct}%`,
                           backgroundColor: COR_ESTAGIO[est],

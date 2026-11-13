@@ -444,7 +444,7 @@ function Sino() {
                         e.stopPropagation();
                         void svc.dispensar(n.id);
                       }}
-                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600"
+                      className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-border bg-card text-muted-foreground transition hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600"
                     >
                       <Check className="h-3.5 w-3.5" />
                     </IconButton>
@@ -753,7 +753,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <IconButton
             aria-label="Fechar menu"
             onClick={() => setMenuOpen(false)}
-            className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-secondary/60"
+            className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-md bg-secondary/60"
           >
             <X className="h-4 w-4" />
           </IconButton>

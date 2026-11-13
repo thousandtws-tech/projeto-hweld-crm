@@ -289,7 +289,7 @@ function PedidoNovoPage() {
           <Button variant="contained" type="submit" disabled={!valido || salvando}>Criar pedido</Button>
           <Link
             to="/vendas/pedidos"
-            className="rounded-full border border-border px-5 py-2.5 text-sm font-medium hover:bg-secondary"
+            className="rounded-md border border-border px-5 py-2.5 text-sm font-medium hover:bg-secondary"
           >
             Cancelar
           </Link>

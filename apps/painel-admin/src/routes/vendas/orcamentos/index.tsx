@@ -485,7 +485,7 @@ function OrcamentosIndexPage() {
                           {o.convertido_pedido_id && (
                             <Link
                               to={`/vendas/pedidos/${o.convertido_pedido_id}` as "/"}
-                              className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-primary hover:bg-secondary"
+                              className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-medium text-primary hover:bg-secondary"
                             >
                               Pedido #{o.convertido_pedido_id}
                             </Link>

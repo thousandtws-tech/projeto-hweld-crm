@@ -29,7 +29,7 @@ export const hweldTheme = createTheme({
     },
     MuiChip: {
       styleOverrides: {
-        root: { fontWeight: 500 },
+        root: { fontWeight: 500, borderRadius: 6 },
       },
     },
     MuiOutlinedInput: {

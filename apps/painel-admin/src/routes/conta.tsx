@@ -349,7 +349,7 @@ function ContaPage() {
                     {tempoRelativo(sessaoAtual.ultimo_acesso_em)}
                   </div>
                 </div>
-                <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                <span className="shrink-0 rounded-md bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
                   Esta sessão
                 </span>
               </div>
@@ -531,7 +531,7 @@ function ContaPage() {
                     {[1, 2, 3, 4].map((step) => (
                       <div
                         key={step}
-                        className={`h-1.5 rounded-full transition-colors ${
+                        className={`h-1.5 rounded-sm transition-colors ${
                           entropia.nivel >= step
                             ? entropia.nivel <= 1
                               ? "bg-[#D92546]"

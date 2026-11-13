@@ -62,7 +62,7 @@ export function AuthLayout({
           <List disablePadding>
             {highlights.map(({ icon: Icon, text }) => (
               <ListItem key={text}>
-                <span className="grid place-items-center w-8 h-8 shrink-0 rounded-full bg-lime text-primary-foreground">
+                <span className="grid place-items-center w-8 h-8 shrink-0 rounded-md bg-lime text-primary-foreground">
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="opacity-90">{text}</span>

@@ -1215,7 +1215,7 @@ function DealKanbanCard({
             {val > 0 ? brl(o.valor_estimado) : "—"}
           </span>
           <span
-            className="grid h-5 w-5 place-items-center rounded-full bg-secondary text-[9px] font-bold text-muted-foreground"
+            className="grid h-5 w-5 place-items-center rounded-md bg-secondary text-[9px] font-bold text-muted-foreground"
             title={`Responsável: ${responsavelNome}`}
           >
             {iniciais(responsavelNome)}

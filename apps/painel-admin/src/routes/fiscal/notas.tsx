@@ -514,7 +514,7 @@ function FiscalPage() {
                                 <span className="shrink-0 tabular-nums text-muted-foreground">
                                   {fmtDataHora(ev.createdAt)}
                                 </span>
-                                <span className="rounded-full border border-border bg-card px-2 py-0.5 font-medium">
+                                <span className="rounded-md border border-border bg-card px-2 py-0.5 font-medium">
                                   {ev.eventType}
                                 </span>
                                 {(ev.statusFrom || ev.statusTo) && (
