@@ -190,14 +190,15 @@ function resolverBreadcrumbs(pathname: string): Crumb[] {
     return [{ label: direto.secao }, { label: direto.label }];
   }
 
-  // Rotas parametrizadas (/recurso/:id)
+  // Rotas parametrizadas (/recurso/:id — id numérico legado ou public_id UUID)
   const partes = limpo.split("/").filter(Boolean);
   if (partes.length >= 2) {
     const id = partes[partes.length - 1];
     const prefixo = `/${partes.slice(0, -1).join("/")}`;
     const pai = MAPA_ROTAS[prefixo];
-    if (pai && /^\d+$/.test(id)) {
-      return [{ label: pai.secao }, { label: pai.label, to: prefixo }, { label: `#${id}` }];
+    if (pai && (/^\d+$/.test(id) || /^[0-9a-fA-F-]{16,}$/.test(id))) {
+      const rotuloId = /^\d+$/.test(id) ? `#${id}` : `#${id.slice(0, 8)}…`;
+      return [{ label: pai.secao }, { label: pai.label, to: prefixo }, { label: rotuloId }];
     }
   }
 

@@ -21,7 +21,7 @@ import Typography from "@mui/material/Typography";
 import { api } from "@/lib/api";
 import { brl, fmtData, qty, statusLabel } from "@/lib/format";
 import { useResourceList } from "@/lib/use-resource-list";
-import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
+import { Metabox, PageHeader, StatusPill } from "@/components/ui-kit/primitives";
 
 export interface Coluna {
   campo: string;
@@ -235,7 +235,18 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
         </Alert>
       )}
 
-      <SectionCard className="overflow-hidden p-0">
+      <Metabox
+        title={cfg.titulo}
+        action={
+          pagina ? (
+            <Typography variant="caption" color="text.secondary">
+              {pagina.total} registro(s)
+            </Typography>
+          ) : undefined
+        }
+        className="overflow-hidden"
+        contentClassName="p-0"
+      >
         <TableContainer>
           <Table size="small" sx={{ opacity: carregando ? 0.55 : 1 }}>
             <TableHead>
@@ -322,7 +333,7 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
             sx={{ borderTop: 1, borderColor: "divider", px: 2, py: 1.5 }}
           >
             <Typography variant="caption" color="text.secondary">
-              {pagina.total} registro(s)
+              Página {paginaNum} de {pagina.total_paginas}
             </Typography>
             <Pagination
               count={pagina.total_paginas}
@@ -334,7 +345,7 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
             />
           </Stack>
         )}
-      </SectionCard>
+      </Metabox>
     </>
   );
 }

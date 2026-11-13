@@ -3,8 +3,8 @@ import { Check, Loader2, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
-import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
-import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
+import { Metabox, PageHeader } from "@/components/ui-kit/primitives";
+import { FormField } from "@/components/ui-kit/FormDialog";
 import { ApiError } from "@/lib/api";
 import {
   apenasDigitos,
@@ -20,6 +20,8 @@ import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
+import Divider from "@mui/material/Divider";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 
@@ -251,12 +253,18 @@ function EmpresaNovaPage() {
         subtitle="Digite o CNPJ para preenchimento automático via Receita Federal ou preencha manualmente"
       />
 
-      <Box component="form" onSubmit={salvar} className="space-y-4">
+      <Box
+        component="form"
+        onSubmit={salvar}
+        className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"
+      >
+        {/* Coluna principal */}
+        <div className="min-w-0 space-y-5">
         {/* Bloco 1: Identificação e Consulta CNPJ */}
-        <SectionCard className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <Typography variant="h6" component="h2" className="text-sm font-bold">Dados cadastrais</Typography>
-            {dadosReceita?.situacao_cadastral && (
+        <Metabox
+          title="Dados cadastrais"
+          action={
+            dadosReceita?.situacao_cadastral ? (
               <span className="text-xs text-muted-foreground">
                 Receita:{dadosReceita.nome_fantasia ? ` ${dadosReceita.nome_fantasia} ·` : ""}{" "}
                 <strong
@@ -273,10 +281,10 @@ function EmpresaNovaPage() {
                   ? ` · ${dadosReceita.cnae_fiscal_descricao}`
                   : ""}
               </span>
-            )}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            ) : undefined
+          }
+        >
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <FormField label="CNPJ">
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -307,28 +315,6 @@ function EmpresaNovaPage() {
                 value={f.inscricao_estadual}
                 onChange={(e) => setF((p) => ({ ...p, inscricao_estadual: e.target.value }))}
                 placeholder="Isento ou número" />
-            </FormField>
-
-            <FormField label="Status inicial">
-              <TextField size="small" fullWidth select
-                value={f.status}
-                onChange={(e) => setF((p) => ({ ...p, status: e.target.value }))} slotProps={{ select: { displayEmpty: true } }}>
-                <MenuItem value="prospecto">Prospecto</MenuItem>
-                <MenuItem value="ativo">Ativo</MenuItem>
-              </TextField>
-            </FormField>
-
-            <FormField label="Tabela de preço">
-              <TextField size="small" fullWidth select
-                value={f.tabela_preco_id}
-                onChange={(e) => setF((p) => ({ ...p, tabela_preco_id: e.target.value }))} slotProps={{ select: { displayEmpty: true } }}>
-                <MenuItem value="">Padrão do catálogo</MenuItem>
-                {tabelas.map((t) => (
-                  <MenuItem key={t.id} value={String(t.id)}>
-                    {t.nome}
-                  </MenuItem>
-                ))}
-              </TextField>
             </FormField>
 
             <FormField label="Razão social *" wide>
@@ -383,25 +369,30 @@ function EmpresaNovaPage() {
                 placeholder="Notas sobre perfil de compra, condições comerciais ou referências…" />
             </FormField>
           </div>
-        </SectionCard>
+        </Metabox>
 
         {/* Bloco 2: Endereço Fiscal Principal (preenchido automaticamente pela Receita ou sob demanda) */}
-        <SectionCard className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Typography variant="h6" component="h2" className="text-sm font-bold">Endereço fiscal principal</Typography>
-              <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
-                Preenchido automaticamente ao consultar o CNPJ (necessário para pedidos e notas)
-              </Typography>
-            </div>
-            <Typography component="label" className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-foreground">
-              <Checkbox checked={incluirEndereco} onChange={(e) => setIncluirEndereco(e.target.checked)} />
-              Cadastrar endereço agora
-            </Typography>
-          </div>
+        <Metabox
+          title="Endereço fiscal principal"
+          action={
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={incluirEndereco}
+                  onChange={(e) => setIncluirEndereco(e.target.checked)}
+                />
+              }
+              label={<Typography variant="caption" fontWeight={500}>Cadastrar endereço agora</Typography>}
+            />
+          }
+        >
+          <Typography variant="body2" component="p" className="mb-4 text-xs text-muted-foreground">
+            Preenchido automaticamente ao consultar o CNPJ (necessário para pedidos e notas)
+          </Typography>
 
           {incluirEndereco && (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               <FormField label="CEP *">
                 <TextField size="small" fullWidth slotProps={{ htmlInput: { inputMode: "numeric" } }}
                   required={incluirEndereco}
@@ -445,25 +436,30 @@ function EmpresaNovaPage() {
               </FormField>
             </div>
           )}
-        </SectionCard>
+        </Metabox>
 
         {/* Bloco 3: Contato Principal (opcional para já deixar pronto para orçamentos e pedidos) */}
-        <SectionCard className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Typography variant="h6" component="h2" className="text-sm font-bold">Contato principal</Typography>
-              <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
-                Comprador ou responsável comercial na empresa
-              </Typography>
-            </div>
-            <Typography component="label" className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-foreground">
-              <Checkbox checked={incluirContato} onChange={(e) => setIncluirContato(e.target.checked)} />
-              Cadastrar contato agora
-            </Typography>
-          </div>
+        <Metabox
+          title="Contato principal"
+          action={
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={incluirContato}
+                  onChange={(e) => setIncluirContato(e.target.checked)}
+                />
+              }
+              label={<Typography variant="caption" fontWeight={500}>Cadastrar contato agora</Typography>}
+            />
+          }
+        >
+          <Typography variant="body2" component="p" className="mb-4 text-xs text-muted-foreground">
+            Comprador ou responsável comercial na empresa — cliente com acesso ao portal
+          </Typography>
 
           {incluirContato && (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               <FormField label="Nome *" wide>
                 <TextField size="small" fullWidth
                   required={incluirContato}
@@ -492,16 +488,47 @@ function EmpresaNovaPage() {
               </FormField>
             </div>
           )}
-        </SectionCard>
+        </Metabox>
+        </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="contained" type="submit" disabled={!podeSalvar}>{salvando ? "Salvando…" : "Criar empresa"}</Button>
-          <Link
-            to="/crm/empresas"
-            className="rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium hover:bg-secondary"
-          >
-            Cancelar
-          </Link>
+        {/* Sidebar — publicação/classificação, padrão WooCommerce */}
+        <div className="space-y-5">
+          <Metabox title="Cadastro">
+            <div className="space-y-5">
+              <FormField label="Status inicial">
+                <TextField size="small" fullWidth select
+                  value={f.status}
+                  onChange={(e) => setF((p) => ({ ...p, status: e.target.value }))} slotProps={{ select: { displayEmpty: true } }}>
+                  <MenuItem value="prospecto">Prospecto</MenuItem>
+                  <MenuItem value="ativo">Ativo</MenuItem>
+                </TextField>
+              </FormField>
+
+              <FormField label="Tabela de preço">
+                <TextField size="small" fullWidth select
+                  value={f.tabela_preco_id}
+                  onChange={(e) => setF((p) => ({ ...p, tabela_preco_id: e.target.value }))} slotProps={{ select: { displayEmpty: true } }}>
+                  <MenuItem value="">Padrão do catálogo</MenuItem>
+                  {tabelas.map((t) => (
+                    <MenuItem key={t.id} value={String(t.id)}>
+                      {t.nome}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </FormField>
+
+              <Divider />
+
+              <div className="flex flex-col gap-2">
+                <Button variant="contained" type="submit" fullWidth disabled={!podeSalvar}>
+                  {salvando ? "Salvando…" : "Criar empresa"}
+                </Button>
+                <Button variant="outlined" fullWidth component={Link} to="/crm/empresas">
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </Metabox>
         </div>
       </Box>
     </>

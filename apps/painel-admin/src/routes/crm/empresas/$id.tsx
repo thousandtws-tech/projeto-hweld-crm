@@ -2,9 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
-import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
+import { Metabox, PageHeader, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField } from "@/components/ui-kit/FormDialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { brl, fmtDataHora, statusLabel } from "@/lib/format";
 import type { Contato, Empresa, Oportunidade, TabelaPreco } from "@/lib/models";
 import { catalogoService, crmService } from "@/lib/services";
@@ -18,12 +17,13 @@ import FormControlLabel from "@mui/material/FormControlLabel";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
-import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import Typography from "@mui/material/Typography";
 
 export const Route = createFileRoute("/crm/empresas/$id")({
@@ -44,6 +44,7 @@ function Empresa360Page() {
   const [interacoes, setInteracoes] = useState<Linha[]>([]);
   const [tabelas, setTabelas] = useState<TabelaPreco[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  const [aba, setAba] = useState("dados");
 
   const empresaId = empresa?.id ?? 0;
 
@@ -109,11 +110,11 @@ function Empresa360Page() {
   if (!empresa) {
     return (
       <>
-        <SectionCard>
+        <Metabox title="Empresa">
           <div className="py-10 text-center text-sm text-muted-foreground">
             {erro ?? "Carregando…"}
           </div>
-        </SectionCard>
+        </Metabox>
       </>
     );
   }
@@ -131,27 +132,27 @@ function Empresa360Page() {
         }
       />
 
-      <Tabs defaultValue="dados">
-        <TabsList className="rounded-2xl bg-secondary/60 p-1">
-          <TabsTrigger value="dados" className="rounded-xl">
-            Dados
-          </TabsTrigger>
-          <TabsTrigger value="contatos" className="rounded-xl">
-            Contatos ({contatos.length})
-          </TabsTrigger>
-          <TabsTrigger value="enderecos" className="rounded-xl">
-            Endereços ({enderecos.length})
-          </TabsTrigger>
-          <TabsTrigger value="oportunidades" className="rounded-xl">
-            Oportunidades ({oportunidades.length})
-          </TabsTrigger>
-          <TabsTrigger value="timeline" className="rounded-xl">
-            Timeline ({interacoes.length})
-          </TabsTrigger>
-        </TabsList>
+      <Tabs
+        value={aba}
+        onChange={(_, v: string) => setAba(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{
+          borderBottom: 1,
+          borderColor: "divider",
+          minHeight: 40,
+          "& .MuiTab-root": { minHeight: 40, textTransform: "none", fontWeight: 500 },
+        }}
+      >
+        <Tab value="dados" label="Dados" />
+        <Tab value="contatos" label={`Contatos (${contatos.length})`} />
+        <Tab value="enderecos" label={`Endereços (${enderecos.length})`} />
+        <Tab value="oportunidades" label={`Oportunidades (${oportunidades.length})`} />
+        <Tab value="timeline" label={`Timeline (${interacoes.length})`} />
+      </Tabs>
 
-        <TabsContent value="dados">
-          <SectionCard>
+      {aba === "dados" && (
+          <Metabox title="Dados cadastrais">
             <Box
               sx={{
                 display: "grid",
@@ -185,19 +186,27 @@ function Empresa360Page() {
                 </Typography>
               </Box>
             </Box>
-          </SectionCard>
-        </TabsContent>
+          </Metabox>
+      )}
 
-        <TabsContent value="contatos">
+      {aba === "contatos" && (
           <ContatosTab empresaId={empresaId} contatos={contatos} onChange={carregar} />
-        </TabsContent>
+      )}
 
-        <TabsContent value="enderecos">
+      {aba === "enderecos" && (
           <EnderecosTab empresaId={empresaId} enderecos={enderecos} onChange={carregar} />
-        </TabsContent>
+      )}
 
-        <TabsContent value="oportunidades">
-          <SectionCard className="p-0 overflow-hidden">
+      {aba === "oportunidades" && (
+          <Metabox
+            title="Oportunidades"
+            action={
+              <Typography variant="caption" color="text.secondary">
+                {oportunidades.length} registro(s)
+              </Typography>
+            }
+            contentClassName="p-0"
+          >
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -229,13 +238,12 @@ function Empresa360Page() {
                 ))}
               </TableBody>
             </Table>
-          </SectionCard>
-        </TabsContent>
+          </Metabox>
+      )}
 
-        <TabsContent value="timeline">
+      {aba === "timeline" && (
           <TimelineTab empresaId={empresaId} interacoes={interacoes} onChange={carregar} />
-        </TabsContent>
-      </Tabs>
+      )}
     </>
   );
 }
@@ -371,13 +379,15 @@ function ContatosTab({
   };
 
   return (
-    <SectionCard className="p-0 overflow-hidden">
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2.5, pt: 2, pb: 1 }}>
-        <Typography variant="subtitle2">Contatos</Typography>
+    <Metabox
+      title="Contatos"
+      action={
         <Button variant="contained" size="small" onClick={() => setNovoOpen(true)}>
           + Contato
         </Button>
-      </Stack>
+      }
+      contentClassName="p-0"
+    >
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -461,7 +471,7 @@ function ContatosTab({
           <TextField size="small" fullWidth type="password" required autoComplete="new-password" value={senhaPortal} onChange={(e) => setSenhaPortal(e.target.value)} slotProps={{ htmlInput: { minLength: 6 } }} />
         </FormField>
       </FormDialog>
-    </SectionCard>
+    </Metabox>
   );
 }
 
@@ -501,13 +511,15 @@ function EnderecosTab({
   };
 
   return (
-    <SectionCard className="p-0 overflow-hidden">
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2.5, pt: 2, pb: 1 }}>
-        <Typography variant="subtitle2">Endereços</Typography>
+    <Metabox
+      title="Endereços"
+      action={
         <Button variant="contained" size="small" onClick={() => setOpen(true)}>
           + Endereço
         </Button>
-      </Stack>
+      }
+      contentClassName="p-0"
+    >
       <List disablePadding>
         {enderecos.length === 0 && (
           <ListItem>
@@ -572,7 +584,7 @@ function EnderecosTab({
           />
         </FormField>
       </FormDialog>
-    </SectionCard>
+    </Metabox>
   );
 }
 
@@ -603,13 +615,15 @@ function TimelineTab({
   };
 
   return (
-    <SectionCard className="p-0 overflow-hidden">
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2.5, pt: 2, pb: 1 }}>
-        <Typography variant="subtitle2">Interações</Typography>
+    <Metabox
+      title="Timeline"
+      action={
         <Button variant="contained" size="small" onClick={() => setOpen(true)}>
           + Registrar
         </Button>
-      </Stack>
+      }
+      contentClassName="p-0"
+    >
       <List disablePadding>
         {interacoes.length === 0 && (
           <ListItem>
@@ -659,6 +673,6 @@ function TimelineTab({
           <TextField size="small" fullWidth multiline minRows={3} rows={3} value={f.descricao} onChange={(e) => setF({ ...f, descricao: e.target.value })} />
         </FormField>
       </FormDialog>
-    </SectionCard>
+    </Metabox>
   );
 }
