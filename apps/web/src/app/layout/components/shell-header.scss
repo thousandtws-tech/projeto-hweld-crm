@@ -1,0 +1,177 @@
+@use '../layout-shared';
+
+:host {
+  display: contents;
+}
+
+/* Cabeçalho Sticky Glassmorphism */
+.topo {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--hw-border);
+  height: var(--hw-header-h);
+  display: flex;
+  align-items: center;
+  transition: border-color var(--hw-motion-fast) var(--hw-motion-ease);
+}
+
+.topo-container {
+  width: 100%;
+  max-width: var(--hw-content-max);
+  margin: 0 auto;
+  padding: 0 var(--hw-space-5);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Brand Logo */
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  user-select: none;
+  flex-shrink: 0;
+
+  img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    display: block;
+  }
+}
+
+
+.logo-txt {
+  font-family: var(--hw-font-sans);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--hw-text);
+}
+
+.logo-tag {
+  font-family: var(--hw-font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--hw-accent-tint);
+  color: var(--hw-accent);
+  border: 1px solid rgba(29, 79, 216, 0.2);
+  border-radius: var(--hw-radius-xs);
+  padding: 1px 5px;
+  letter-spacing: 0.05em;
+}
+
+/* Ações */
+.acoes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Carrinho & Badge */
+.icone-carrinho-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+
+  .badge-contador {
+    top: -6px;
+    right: -8px;
+  }
+}
+
+@media (max-width: 1260px) {
+  .televendas-btn {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .pedidos-btn .header-item-sub,
+  .cep-desktop-btn .header-item-sub {
+    display: none;
+  }
+
+  .topo-container {
+    gap: 12px;
+    padding: 0 var(--hw-space-3);
+  }
+}
+
+@media (max-width: 960px) {
+  .pedidos-btn {
+    display: none;
+  }
+
+  .header-carrinho-txt {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .topo {
+    height: auto;
+    padding: 8px 0 6px;
+  }
+
+  .topo-container {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    column-gap: 6px;
+    padding: 0 14px;
+  }
+
+  .logo {
+    order: 2;
+    gap: 4px;
+  }
+
+  .logo-txt {
+    font-size: 18px;
+    letter-spacing: -0.02em;
+  }
+
+  .logo-tag {
+    font-size: 9px;
+    padding: 0 4px;
+  }
+
+  .acoes {
+    order: 3;
+    margin-left: auto;
+    gap: 2px;
+  }
+
+  .televendas-btn,
+  .pedidos-btn {
+    display: none;
+  }
+
+  .carrinho-btn {
+    padding: 4px;
+    min-width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+  }
+
+  .header-carrinho-txt {
+    display: none;
+  }
+
+  .icone-carrinho-wrap .header-item-icone {
+    font-size: 22px;
+  }
+}

@@ -1,0 +1,245 @@
+:host {
+  display: contents;
+}
+
+/* Busca Profissional de Loja Virtual (com Botão Integrado) */
+.busca-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  max-width: 820px;
+  min-width: 260px;
+}
+
+.busca-box {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  height: 44px;
+  padding-left: 16px;
+  overflow: hidden;
+  transition: all 150ms ease;
+
+  &:hover {
+    border-color: #94a3b8;
+  }
+
+  &.com-foco {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+  }
+}
+
+.busca-box input {
+  flex: 1;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-family: var(--hw-font-sans);
+  font-size: 14px;
+  color: #0f172a;
+  padding-right: 8px;
+  min-width: 0;
+
+  &::placeholder {
+    color: #94a3b8;
+  }
+
+  &::-webkit-search-decoration,
+  &::-webkit-search-cancel-button,
+  &::-webkit-search-results-button,
+  &::-webkit-search-results-decoration {
+    display: none;
+  }
+}
+
+.limpar-busca {
+  border: 0;
+  background: #f1f5f9;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #64748b;
+  padding: 0;
+  flex-shrink: 0;
+  margin-right: 6px;
+  transition: all 120ms ease;
+
+  .material-symbols-outlined {
+    font-size: 14px;
+  }
+  &:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+}
+
+.btn-busca-acao {
+  height: 100%;
+  width: 52px;
+  background: #26488c;
+  color: #ffffff;
+  border: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 120ms ease;
+
+  .material-symbols-outlined {
+    font-size: 20px;
+    color: #ffffff;
+  }
+  &:hover {
+    background: #1e293b;
+  }
+  &:active {
+    background: #090d16;
+  }
+}
+
+/* Flyout de Sugestões */
+.sugestoes-flyout {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  border: 1px solid var(--hw-border);
+  border-radius: 12px;
+  box-shadow:
+    0 16px 36px -4px rgba(15, 23, 42, 0.12),
+    0 0 1px 1px rgba(15, 23, 42, 0.04);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.flyout-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  border-bottom: 1px solid var(--hw-border-subtle);
+}
+
+.flyout-contagem {
+  font-size: 10.5px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.flyout-lista {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.flyout-lista li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: #0f172a;
+  transition: background 120ms ease;
+
+  &:hover,
+  &:focus {
+    background: var(--hw-surface);
+    outline: none;
+
+    .flyout-seta {
+      color: #0f172a;
+      transform: translate(-1px, 1px);
+    }
+  }
+}
+
+.flyout-icone {
+  font-size: 17px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.flyout-seta {
+  font-size: 15px;
+  color: #cbd5e1;
+  flex-shrink: 0;
+  transition:
+    transform 120ms ease,
+    color 120ms ease;
+}
+
+.flyout-rodape {
+  padding: 8px 14px;
+  font-size: 11px;
+  color: #94a3b8;
+  background: #f8fafc;
+  border-top: 1px solid var(--hw-border-subtle);
+  text-align: right;
+
+  strong {
+    color: #475569;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Linha 2: Barra de Busca (100% de largura) */
+  .busca-wrap {
+    order: 10;
+    max-width: none;
+    flex-basis: 100%;
+    width: 100%;
+    margin-top: 2px;
+  }
+
+  .busca-box {
+    height: 40px;
+    padding-left: 12px;
+    border-radius: 8px;
+  }
+
+  .busca-box input {
+    font-size: 13px;
+  }
+
+  .btn-busca-acao {
+    width: 44px;
+    .material-symbols-outlined {
+      font-size: 18px;
+    }
+  }
+}
+.sugestao-nome {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.sugestao-sku {
+  font-family: var(--hw-font-mono, monospace);
+  font-size: 11px;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}

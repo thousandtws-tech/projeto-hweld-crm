@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <script>
+      // Tema antes do primeiro paint — evita flash claro/escuro no load.
+      (function () {
+        try {
+          var t = localStorage.getItem("hweld-theme") || localStorage.getItem("finpay-theme");
+          if (t !== "dark" && t !== "light") {
+            t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          if (t === "dark") {
+            document.documentElement.classList.add("dark");
+            document.documentElement.style.colorScheme = "dark";
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <meta
+      name="viewport"
+      content="Painel administrativo HWeld — CRM, vendas, catálogo, estoque e financeiro."
+    />
+    <title>HWeld Admin</title>
+    <meta
+      name="description"
+      content="Painel administrativo HWeld — CRM, vendas, catálogo, estoque e financeiro."
+    />
+    <meta
+      property="og:title"
+      content="Painel administrativo HWeld — CRM, vendas, catálogo, estoque e financeiro."
+    />
+    <meta
+      property="og:description"
+      content="Painel administrativo HWeld — CRM, vendas, catálogo, estoque e financeiro."
+    />
+    <meta
+      property="og:type"
+      content="Painel administrativo HWeld — CRM, vendas, catálogo, estoque e financeiro."
+    />
+    <meta
+      name="twitter:card"
+      content="Painel administrativo HWeld — CRM, vendas, catálogo, estoque e financeiro."
+    />
+    <meta
+      name="twitter:title"
+      content="Painel administrativo HWeld — CRM, vendas, catálogo, estoque e financeiro."
+    />
+    <meta
+      name="twitter:description"
+      content="Painel administrativo HWeld — CRM, vendas, catálogo, estoque e financeiro."
+    />
+    <link rel="icon" href="/brand/hweld-color.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonte fora do caminho crítico — não bloqueia o primeiro paint -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      />
+    </noscript>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

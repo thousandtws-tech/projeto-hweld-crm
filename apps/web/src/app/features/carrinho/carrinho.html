@@ -1,0 +1,135 @@
+<div class="carrinho-header">
+  <div>
+    <h1>Carrinho de Compras</h1>
+    @if (carrinho()?.itens?.length; as n) {
+      <span class="subtitulo"
+        >{{ n }} {{ n === 1 ? 'item selecionado' : 'itens selecionados' }}</span
+      >
+    }
+  </div>
+  @if (carrinho()?.itens?.length) {
+    <a routerLink="/" class="link-continuar">
+      <span class="material-symbols-outlined">arrow_back</span>
+      <span>Continuar comprando</span>
+    </a>
+  }
+</div>
+
+@if (carregando()) {
+  <div class="layout">
+    <div class="itens">
+      @for (i of [1, 2, 3]; track i) {
+        <hw-skeleton style="height: 100px; border-radius: 12px" />
+      }
+    </div>
+    <hw-skeleton style="height: 260px; border-radius: 16px" />
+  </div>
+} @else if (!carrinho() || carrinho()!.itens.length === 0) {
+  <hw-empty
+    titulo="Seu carrinho está vazio"
+    descricao="Explore o catálogo para encontrar máquinas, consumíveis e EPIs com os preços da sua tabela."
+    icone="shopping_bag"
+  >
+    <a routerLink="/" hwButton size="lg">Explorar catálogo</a>
+  </hw-empty>
+} @else {
+  <div class="layout">
+    <ul class="itens">
+      @for (item of carrinho()!.itens; track item.produto_id) {
+        <li class="item-card">
+          <div class="item-info" style="display: flex; align-items: center; gap: 14px">
+            @if (item.produto?.imagem_url; as imgUrl) {
+              <img
+                [src]="imgUrl"
+                [alt]="item.produto?.nome ?? ''"
+                style="
+                  width: 56px;
+                  height: 56px;
+                  border-radius: 10px;
+                  object-fit: contain;
+                  background: #fff;
+                  border: 1px solid var(--hw-border);
+                  padding: 4px;
+                  flex-shrink: 0;
+                "
+              />
+            }
+            <div>
+              <a
+                class="item-nome"
+                [routerLink]="[
+                  '/p',
+                  item.produto?.slug ? item.produto_id + '-' + item.produto!.slug : item.produto_id
+                ]"
+              >
+                {{ item.produto?.nome ?? 'Produto ' + item.produto_id }}
+              </a>
+              <div class="item-metas">
+                @if (item.produto?.sku) {
+                  <span class="sku-tag hw-numeric">SKU: {{ item.produto?.sku }}</span>
+                }
+                <span class="unit-tag hw-numeric">{{ item.preco_unitario | brl }} / un</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="item-controles">
+            <hw-qty [valor]="num(item.quantidade)" [mudar]="mudar(item.produto_id)" [min]="0" />
+
+            <div class="total-col">
+              <span class="subtotal-label">Subtotal</span>
+              <span class="item-total hw-numeric">{{ linha(item) | brl }}</span>
+            </div>
+
+            <button
+              type="button"
+              class="btn-remover"
+              aria-label="Remover item do carrinho"
+              matTooltip="Remover este produto"
+              (click)="remover(item.produto_id)"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">delete_outline</span>
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+
+    <!-- Resumo Lateral Minimalista -->
+    <aside class="resumo-card">
+      <h2>Resumo do Pedido</h2>
+
+      <div class="resumo-linhas">
+        <div class="resumo-linha">
+          <span>Subtotal dos itens</span>
+          <strong class="hw-numeric">{{ subtotal() | brl }}</strong>
+        </div>
+        <div class="resumo-linha mut">
+          <span>Frete estimado</span>
+          <span>Calculado no checkout</span>
+        </div>
+        <div class="resumo-linha mut">
+          <span>Condição de pagamento</span>
+          <span>A combinar</span>
+        </div>
+      </div>
+
+      <div class="divisor"></div>
+
+      <div class="resumo-linha total-geral">
+        <span>Total estimado</span>
+        <strong class="total-valor hw-numeric">{{ subtotal() | brl }}</strong>
+      </div>
+
+      <p class="resumo-nota">
+        <span class="material-symbols-outlined nota-icon">verified_user</span>
+        <span>Preço corporativo faturado com nota fiscal conforme cadastro da sua empresa.</span>
+      </p>
+
+      <button hwButton size="lg" class="btn-checkout" (click)="ir()">
+        <span>Avançar para o Checkout</span>
+        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+      </button>
+    </aside>
+  </div>
+}

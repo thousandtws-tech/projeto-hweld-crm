@@ -1,0 +1,12 @@
+<section class="trio-section">
+  <div class="trio-grid">
+    @for (c of cards(); track c.id) {
+      <a
+        [routerLink]="c.botao_link.split('?')[0] || '/busca'"
+        class="promo-card"
+      >
+        <img [src]="c.imagem_url" [alt]="c.titulo || 'Banner promocional'" class="card-img" loading="lazy" />
+      </a>
+    }
+  </div>
+</section>

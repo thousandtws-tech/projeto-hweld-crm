@@ -1,0 +1,17 @@
+{
+  "name": "hweld-integration",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Testes de fronteira/contrato entre serviços — shapes de erro, JWT, auth interna, webhooks, storage, busca. Sem browser.",
+  "scripts": {
+    "test": "playwright test",
+    "test:watch": "playwright test --watch",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

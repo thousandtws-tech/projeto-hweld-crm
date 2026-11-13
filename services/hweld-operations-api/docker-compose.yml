@@ -1,0 +1,47 @@
+# hweld-operations-api — serviço de operações de negócio (Java/Spring Boot).
+#
+# Depende do PostgreSQL do compose do core-api (mesmo banco `hweld` —
+# Flyway e sqlx mantêm históricos de migração separados):
+#
+#   docker compose \
+#     -f services/hweld-core-api/docker-compose.yml \
+#     -f services/hweld-operations-api/docker-compose.yml up -d
+#
+# Para subir SEM o core-api (postgres já rodando exposto em 5432):
+#   docker compose -f services/hweld-operations-api/docker-compose.yml up -d
+#   (o depends_on é resolvido pelo compose combinado; standalone, remova-o
+#    ou mantenha o postgres do core-api no ar)
+
+services:
+  operations-api:
+    build: .
+    container_name: hweld-operations-api
+    ports:
+      - "8090:8090"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: hweld               # banco compartilhado com o core-api
+      DB_USER: hweld
+      DB_PASSWORD: hweld
+      # Mesmo segredo HS256 do core-api — em dev, default compatível.
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-hweld-32bytes-minimum!!}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-dev-internal-token}
+      # core-api e realtime rodam fora deste compose (host local).
+      CORE_API_URL: ${CORE_API_URL:-http://host.docker.internal:8080}
+      MOTOR_URL: ${MOTOR_URL:-http://host.docker.internal:4100}
+      MOTOR_INGEST_TOKEN: ${MOTOR_INGEST_TOKEN:-}
+      PAYMENT_PROVIDER: stub
+      PAYMENT_STUB_WEBHOOK_SECRET: ${PAYMENT_STUB_WEBHOOK_SECRET:-dev-stub-webhook-secret}
+      PAYMENT_STUB_ALLOW_UNSIGNED: "false"
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-log}
+      OTEL_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8090/actuator/health/liveness || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 10
+      start_period: 45s

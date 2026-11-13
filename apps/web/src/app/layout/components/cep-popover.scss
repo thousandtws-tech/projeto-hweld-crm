@@ -1,0 +1,187 @@
+@use '../layout-shared';
+
+:host {
+  display: contents;
+}
+
+/* CEP / Enviar para */
+.cep-popover-card {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #ffffff;
+}
+
+.cep-popover-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cep-pin-icone {
+  font-size: 22px;
+  color: #0f172a;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.cep-pin-custom {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.cep-popover-titulos {
+  strong {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--hw-text);
+    display: block;
+    line-height: 1.3;
+  }
+  p {
+    font-size: 12px;
+    color: var(--hw-text-muted);
+    margin: 3px 0 0;
+    line-height: 1.35;
+  }
+}
+
+.cep-form-row {
+  display: flex;
+  gap: 8px;
+}
+
+.cep-input {
+  flex: 1;
+  height: 38px;
+  border: 1px solid var(--hw-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 13.5px;
+  color: var(--hw-text);
+  outline: none;
+  background: #ffffff;
+  font-family: var(--hw-font-mono, monospace);
+  transition: border-color 120ms ease;
+
+  &:focus {
+    border-color: #0f172a;
+  }
+}
+
+.btn-salvar-cep {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 6px;
+  background: #26488c;
+  color: #ffffff;
+  border: 0;
+  font-family: var(--hw-font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, box-shadow 120ms ease;
+
+/* Sombra do botão */
+box-shadow: 0 4px 12px rgba(0, 0, 1, 0.391);
+
+  &:hover {
+    background: #1e293b;
+  }
+}
+
+.cep-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #a7f3d0;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+    color: #059669;
+  }
+}
+
+/* Barra Slim de CEP Mobile (Oculta no Desktop) */
+.cep-mobile-strip {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .cep-desktop-btn {
+    display: none;
+  }
+
+  /* Linha 3: Faixa Slim de Entrega / CEP (Padrão Amazon / Magalu Mobile) */
+  .cep-mobile-strip {
+    order: 11;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 32px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0 10px;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--hw-text);
+    font-family: var(--hw-font-sans);
+    transition: background 120ms ease;
+
+    &:hover {
+      background: #f1f5f9;
+    }
+  }
+
+  .cep-mobile-esq {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1;
+    min-width: 0;
+  }
+
+  .cep-mobile-pin {
+    font-size: 16px;
+    color: #0f172a;
+    flex-shrink: 0;
+  }
+
+  .cep-mobile-custom-pin {
+    width: 15px;
+    height: 15px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .cep-mobile-label {
+    color: #64748b;
+    font-weight: 450;
+  }
+
+  .cep-mobile-val {
+    color: #0f172a;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cep-mobile-seta {
+    font-size: 16px;
+    color: #94a3b8;
+    flex-shrink: 0;
+  }
+}

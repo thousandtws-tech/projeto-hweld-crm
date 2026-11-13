@@ -1,0 +1,12 @@
+<section class="duo-section">
+  <div class="duo-grid">
+    @for (c of cards(); track c.id) {
+      <a
+        [routerLink]="c.botao_link.split('?')[0] || '/busca'"
+        class="duo-card"
+      >
+        <img [src]="c.imagem_url" [alt]="c.titulo || 'Banner promocional'" class="duo-img" loading="lazy" />
+      </a>
+    }
+  </div>
+</section>

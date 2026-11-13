@@ -1,0 +1,35 @@
+[package]
+name = "hweld-infrastructure"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "HWeld infrastructure layer: SQLx repositories, security (Argon2id/JWT), config, external adapters."
+
+[dependencies]
+hweld-domain.workspace = true
+hweld-application.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+async-trait.workspace = true
+futures.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+rust_decimal.workspace = true
+rust_decimal_macros.workspace = true
+sqlx.workspace = true
+elasticsearch.workspace = true
+reqwest.workspace = true
+argon2.workspace = true
+jsonwebtoken.workspace = true
+rand.workspace = true
+sha2.workspace = true
+hex.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+dotenvy.workspace = true
+opentelemetry.workspace = true
+opentelemetry_sdk.workspace = true
+opentelemetry-otlp.workspace = true
+anyhow = "1.0.104"

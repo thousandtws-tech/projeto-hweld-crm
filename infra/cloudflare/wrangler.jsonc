@@ -1,0 +1,41 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "hweld-loja",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-16",
+  "assets": {
+    "directory": "../../apps/web/dist/cliente-web/browser",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "placement": { "mode": "smart" },
+  "observability": { "enabled": true },
+
+  // Valores default — usados por `wrangler dev` e por `wrangler deploy` sem --env.
+  "vars": {
+    "CORE_API_ORIGIN": "http://localhost:8080",
+    "REALTIME_ORIGIN": "http://localhost:4100",
+    "OPS_API_ORIGIN": "http://localhost:8090"
+  },
+
+  "env": {
+    "staging": {
+      "name": "hweld-loja-staging",
+      "vars": {
+        // TODO: preencher com as origens reais de staging.
+        "CORE_API_ORIGIN": "https://core-api-staging.example.com",
+        "REALTIME_ORIGIN": "https://realtime-staging.example.com"
+      }
+    },
+    "production": {
+      "name": "hweld-loja",
+      "vars": {
+        "CORE_API_ORIGIN": "https://core-api-production-5553.up.railway.app",
+        "REALTIME_ORIGIN": "https://realtime-engine-production-081f.up.railway.app",
+        "OPS_API_ORIGIN": "https://operations-api-production-d580.up.railway.app"
+      }
+      // Domínio customizado (requer a zona no Cloudflare):
+      // "routes": [{ "pattern": "app.seudominio.com", "custom_domain": true }]
+    }
+  }
+}

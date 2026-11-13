@@ -1,0 +1,33 @@
+<div class="trust-container">
+  @for (s of selos(); track s.id) {
+    @if (s.externo) {
+      <a [href]="s.link || '#'" target="_blank" rel="noopener" class="trust-item">
+        <div class="trust-icon-box">
+          @if (s.icone_url) {
+            <img [src]="s.icone_url" [alt]="s.titulo" class="trust-img-icon" />
+          }
+        </div>
+        <div class="trust-info">
+          <strong>{{ s.titulo }}</strong>
+          @if (s.descricao) {
+            <span>{{ s.descricao }}</span>
+          }
+        </div>
+      </a>
+    } @else {
+      <a [routerLink]="s.link || '/'" class="trust-item">
+        <div class="trust-icon-box">
+          @if (s.icone_url) {
+            <img [src]="s.icone_url" [alt]="s.titulo" class="trust-img-icon" />
+          }
+        </div>
+        <div class="trust-info">
+          <strong>{{ s.titulo }}</strong>
+          @if (s.descricao) {
+            <span>{{ s.descricao }}</span>
+          }
+        </div>
+      </a>
+    }
+  }
+</div>

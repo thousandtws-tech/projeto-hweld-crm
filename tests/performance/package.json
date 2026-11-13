@@ -1,0 +1,16 @@
+{
+  "name": "hweld-performance",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Suite de carga/perf contra producao — latencia por endpoint, throughput, ponto de ruptura. Smoke-load moderado (nao e stress test).",
+  "scripts": {
+    "test": "playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

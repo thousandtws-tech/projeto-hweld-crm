@@ -1,0 +1,16 @@
+pub mod acesso;
+pub mod armazenamento;
+pub mod auditoria;
+pub mod busca;
+pub mod catalogo;
+pub mod crm;
+pub mod estoque;
+pub mod externos;
+pub mod financeiro;
+pub mod fiscal;
+pub mod integracao;
+pub mod notificacoes;
+pub mod operacao;
+pub mod realtime;
+pub mod seguranca;
+pub mod vendas;

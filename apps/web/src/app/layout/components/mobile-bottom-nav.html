@@ -1,0 +1,62 @@
+<nav class="mobile-bottom-nav" aria-label="Navegação rápida mobile">
+  <a
+    routerLink="/"
+    routerLinkActive="ativo"
+    [routerLinkActiveOptions]="{ exact: true }"
+    class="mobile-nav-item"
+    aria-label="Ir para a página inicial"
+  >
+    <img src="assets/header/icons/icon-home.png" alt="" aria-hidden="true" class="header-item-icone">
+    <span>Início</span>
+  </a>
+
+  <hw-categories-menu variant="mobile" />
+
+  <a
+    routerLink="/conta/pedidos"
+    routerLinkActive="ativo"
+    class="mobile-nav-item"
+    aria-label="Ver meus pedidos"
+  >
+    <img
+      src="assets/header/icons/icon-pedido.png"
+      alt=""
+      class="mob-custom-icone"
+      aria-hidden="true"
+    />
+    <span>Pedidos</span>
+  </a>
+
+  <a
+    [routerLink]="auth.autenticado() ? '/conta' : '/login'"
+    routerLinkActive="ativo"
+    class="mobile-nav-item"
+    aria-label="Minha conta"
+  >
+    <img
+      src="assets/header/icons/icon-usuario.png"
+      alt=""
+      class="mob-custom-icone"
+      aria-hidden="true"
+    />
+    <span>Conta</span>
+  </a>
+
+  <button
+    type="button"
+    class="mobile-nav-item item-carrinho-mob"
+    aria-label="Abrir carrinho de compras"
+    (click)="carrinho.abrirDrawer()"
+  >
+    <img src="assets/header/icons/icon-carrinho-compras.png" alt="" aria-hidden="true" class="header-item-icone">
+
+    <div class="mob-cart-icone-wrap">
+      @if (carrinho.totalItens() > 0) {
+        <span class="badge-contador hw-numeric">
+          {{ carrinho.totalItens() > 99 ? '99+' : carrinho.totalItens() }}
+        </span>
+      }
+    </div>
+    <span>Carrinho</span>
+  </button>
+</nav>

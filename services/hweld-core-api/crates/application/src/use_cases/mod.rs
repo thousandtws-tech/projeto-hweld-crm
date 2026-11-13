@@ -1,0 +1,17 @@
+pub mod auditoria;
+pub mod auth;
+pub mod busca;
+pub mod carrinho;
+pub mod catalogo;
+pub mod checkout;
+pub mod crm;
+pub mod estoque;
+pub mod financeiro;
+pub mod fiscal;
+pub mod integracao;
+pub mod notificacoes;
+pub mod orcamentos;
+pub mod ordens;
+pub mod pedidos;
+pub mod portal;
+pub mod usuarios;

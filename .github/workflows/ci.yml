@@ -1,0 +1,93 @@
+name: CI
+
+# Build + testes de cada serviço/app — roda em todo push e PR.
+# A suíte de integração/E2E contra produção fica em e2e-producao.yml.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-api:
+    name: core-api (Rust)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/hweld-core-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: services/hweld-core-api
+      - run: cargo check --workspace
+      - run: cargo test --workspace
+
+  operations-api:
+    name: operations-api (Java)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/hweld-operations-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      # *Test = unitários; *IT ficam fora (precisam de Docker/testcontainers).
+      - run: mvn -B test
+
+  painel-admin:
+    name: painel-admin (React/Vite)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/painel-admin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/painel-admin/package-lock.json
+      - run: npm ci
+      - run: npm run lint --if-present
+      - run: npm test --if-present
+      - run: npm run build
+      - run: npm run perf:budget --if-present
+
+  web:
+    name: web (Angular B2B)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+  testes-tipagem:
+    name: typecheck suites (e2e + integration)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci && npx tsc --noEmit
+        working-directory: tests/e2e
+      - run: npm ci && npx tsc --noEmit
+        working-directory: tests/integration

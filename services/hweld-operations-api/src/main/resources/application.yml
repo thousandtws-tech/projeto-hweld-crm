@@ -1,0 +1,195 @@
+spring:
+  application:
+    name: hweld-operations-api
+  threads:
+    # Virtual threads: requests são IO-bound (JDBC/core-api/motor) — escala
+    # concorrência sem inflar pool de plataforma. Boot 4 + Java 25.
+    virtual:
+      enabled: true
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:hweld}
+    username: ${DB_USER:hweld}
+    password: ${DB_PASSWORD:hweld}
+    hikari:
+      maximum-pool-size: ${DB_MAX_CONNECTIONS:10}
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
+
+    baseline-on-migrate: true
+    baseline-version: "0"
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  jackson:
+    default-property-inclusion: non_null
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USERNAME:admin}
+    password: ${SMTP_PASSWORD:123}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:false}
+          starttls:
+            enable: ${SMTP_STARTTLS:false}
+
+server:
+  port: ${PORT:8090}
+  shutdown: graceful
+  forward-headers-strategy: framework
+  compression:
+    # JSON paginado comprimido na borda — listas de 100+ itens caem ~90% em bytes.
+    enabled: true
+    mime-types: application/json,application/xml,text/css,text/html,text/plain,application/javascript
+    min-response-size: 1KB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+  health:
+    # Sem SMTP real em dev (EMAIL_PROVIDER=log), o indicador de mail daria
+    # DOWN permanente — os probes liveness/readiness seguem ativos.
+    mail:
+      enabled: false
+  observations:
+    key-values:
+      application: hweld-operations-api
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:https://otlp.nr-data.net}/v1/traces
+  tracing:
+    enabled: ${OTEL_ENABLED:false}
+    sampling:
+      probability: 1.0
+
+logging:
+  level:
+    root: INFO
+    com.hweld.operations: ${LOG_LEVEL:INFO}
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%15.15thread] %logger{36} trace=%X{traceId:-} corr=%X{correlationId:-} | %msg%n"
+
+hweld:
+  security:
+    # Mesmo segredo HS256 do core-api (>=32 bytes). OBRIGATÓRIO — sem default:
+    # um segredo conhecido em fallback deixaria tokens falsificáveis em prod.
+    jwt-secret: ${JWT_SECRET}
+    # Token service-to-service para /api/v1/internal/** — também fail-fast.
+    internal-service-token: ${INTERNAL_SERVICE_TOKEN}
+    # Origens com permissão de CORS (dev: painel Vite). CSV → List<String>.
+    cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  core-api:
+    url: ${CORE_API_URL:http://localhost:8080}
+    timeout-ms: ${CORE_API_TIMEOUT_MS:4000}
+  motor:
+    url: ${MOTOR_URL:http://localhost:4100}
+    token: ${MOTOR_INGEST_TOKEN:}
+    timeout-ms: ${MOTOR_TIMEOUT_MS:1500}
+  outbox:
+    poll-interval-ms: 2000
+    batch-size: 50
+    max-attempts: 8
+    # Lease do claim SKIP LOCKED — worker morto devolve o evento à fila após o lease.
+    claim-lease-ms: ${OUTBOX_CLAIM_LEASE_MS:60000}
+  payment:
+    default-provider: ${PAYMENT_PROVIDER:stub}
+    webhook-secrets:
+      # Vazio = nenhum webhook stub passa na validação de assinatura (fail-safe).
+      stub: ${PAYMENT_STUB_WEBHOOK_SECRET:}
+      # mercadopago: ${PAYMENT_MP_WEBHOOK_SECRET:}
+      # asaas: ${PAYMENT_ASAAS_WEBHOOK_SECRET:}
+    pix-expiration-minutes: 30
+    # Dev only: aceita webhook do provider 'stub' sem assinatura. Sempre false fora de dev/test.
+    allow-unsigned-stub-webhook: ${PAYMENT_STUB_ALLOW_UNSIGNED:false}
+  fiscal:
+    provider: ${FISCAL_PROVIDER:stub}
+    auto-emit-on-payment-confirmed: ${FISCAL_AUTO_EMIT:false}
+    ambiente: ${FISCAL_AMBIENTE:homologacao}
+    reconcile-interval-ms: ${FISCAL_RECONCILE_INTERVAL_MS:120000}
+    reconcile-initial-delay-ms: ${FISCAL_RECONCILE_INITIAL_DELAY_MS:30000}
+    reconcile-min-age-ms: ${FISCAL_RECONCILE_MIN_AGE_MS:60000}
+    reconcile-batch-size: ${FISCAL_RECONCILE_BATCH_SIZE:20}
+    focus:
+      # Ambiente ativo: homologacao | producao — isolamento total, sem fallback.
+      environment: ${FOCUS_NFE_ENV:homologacao}
+      homologation-url: ${FOCUS_NFE_HOMOLOGATION_URL:https://homologacao.focusnfe.com.br}
+      production-url: ${FOCUS_NFE_PRODUCTION_URL:https://api.focusnfe.com.br}
+      # Tokens por ambiente (Basic Auth: username=token, senha vazia). Sem default.
+      homologation-token: ${FOCUS_NFE_HOMOLOGATION_TOKEN:}
+      production-token: ${FOCUS_NFE_PRODUCTION_TOKEN:}
+      # Guard de produção: emissão real só com habilitação explícita.
+      production-enabled: ${FOCUS_NFE_PRODUCTION_ENABLED:false}
+      timeout-ms: ${FOCUS_NFE_TIMEOUT_MS:30000}
+      download-timeout-ms: ${FOCUS_NFE_DOWNLOAD_TIMEOUT_MS:15000}
+      # Segredo do webhook — o par authorization/authorization_header do gatilho.
+      webhook-auth-token: ${FOCUS_NFE_WEBHOOK_AUTH_TOKEN:}
+      webhook-auth-header: ${FOCUS_NFE_WEBHOOK_AUTH_HEADER:X-Webhook-Token}
+      # URL pública deste endpoint (para registro do gatilho via API).
+      webhook-url: ${FOCUS_NFE_WEBHOOK_URL:}
+      emitente:
+        cnpj: ${FOCUS_NFE_EMITENTE_CNPJ:}
+        nome: ${FOCUS_NFE_EMITENTE_NOME:}
+        nome-fantasia: ${FOCUS_NFE_EMITENTE_NOME_FANTASIA:}
+        inscricao-estadual: ${FOCUS_NFE_EMITENTE_IE:}
+        logradouro: ${FOCUS_NFE_EMITENTE_LOGRADOURO:}
+        numero: ${FOCUS_NFE_EMITENTE_NUMERO:}
+        bairro: ${FOCUS_NFE_EMITENTE_BAIRRO:}
+        municipio: ${FOCUS_NFE_EMITENTE_MUNICIPIO:}
+        uf: ${FOCUS_NFE_EMITENTE_UF:}
+        cep: ${FOCUS_NFE_EMITENTE_CEP:}
+        regime-tributario: ${FOCUS_NFE_EMITENTE_REGIME_TRIBUTARIO:1}
+        inscricao-municipal: ${FOCUS_NFE_EMITENTE_IM:}
+      nfe:
+        natureza-operacao: ${FOCUS_NFE_NATUREZA_OPERACAO:Venda de mercadoria}
+        cfop: ${FOCUS_NFE_CFOP:}
+        unidade: ${FOCUS_NFE_UNIDADE:UN}
+        tipo-documento: ${FOCUS_NFE_TIPO_DOCUMENTO:1}
+        finalidade-emissao: ${FOCUS_NFE_FINALIDADE_EMISSAO:1}
+        modalidade-frete: ${FOCUS_NFE_MODALIDADE_FRETE:9}
+        presenca-comprador: ${FOCUS_NFE_PRESENCA_COMPRADOR:9}
+        consumidor-final: ${FOCUS_NFE_CONSUMIDOR_FINAL:0}
+        icms-origem: ${FOCUS_NFE_ICMS_ORIGEM:0}
+        icms-situacao-tributaria: ${FOCUS_NFE_ICMS_ST:}
+        pis-situacao-tributaria: ${FOCUS_NFE_PIS_ST:}
+        cofins-situacao-tributaria: ${FOCUS_NFE_COFINS_ST:}
+  storage:
+    # MinIO/S3 — endpoint ausente = NoopObjectStorage (dev sem infra).
+    endpoint: ${MINIO_ENDPOINT:}
+    bucket: ${MINIO_BUCKET:hweld}
+    region: ${MINIO_REGION:us-east-1}
+    access-key: ${MINIO_ACCESS_KEY:}
+    secret-key: ${MINIO_SECRET_KEY:}
+  notification:
+    email-provider: ${EMAIL_PROVIDER:log}   # log | smtp
+    max-attempts: 4
+    retry-base-delay-ms: 30000
+    default-from: ${MAIL_FROM:noreply@hweld.com.br}
+    default-from-name: ${MAIL_FROM_NAME:HWeld}
+
+springdoc:
+  # Spec + UI expõem todas as rotas, incluindo /internal/** — desligar em prod.
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: ${API_DOCS_ENABLED:true}
+  api-docs:
+    path: /api-docs
+    enabled: ${API_DOCS_ENABLED:true}

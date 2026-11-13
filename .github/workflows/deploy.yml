@@ -1,0 +1,72 @@
+name: Deploy produção
+
+# Deploy manual para o Railway — workflow_dispatch proposital:
+# produção nunca sobe por push automático sem porta de deploy.
+#
+# Requer secrets: RAILWAY_TOKEN (project token com permissão de deploy).
+
+on:
+  workflow_dispatch:
+    inputs:
+      servico:
+        description: Serviço a deployar
+        required: true
+        type: choice
+        options:
+          - core-api
+          - operations-api
+          - realtime-engine
+          - admin-worker
+          - web-worker
+      motivo:
+        description: Motivo do deploy (registrado no run)
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: deploy ${{ inputs.servico }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Deploy Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          set -e
+          npm i -g @railway/cli
+          case "${{ inputs.servico }}" in
+            core-api)        cd services/hweld-core-api ;;
+            operations-api)  cd services/hweld-operations-api ;;
+            realtime-engine) cd services/hweld-realtime-engine ;;
+            *)               echo "worker tratado em passo próprio"; exit 0 ;;
+          esac
+          railway up -s "${{ inputs.servico }}" --ci
+      - name: Deploy worker (Cloudflare)
+        if: inputs.servico == 'admin-worker' || inputs.servico == 'web-worker'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -e
+          if [ "${{ inputs.servico }}" = "admin-worker" ]; then
+            cd apps/painel-admin && npm ci && npm run build
+            cd ../../infra/cloudflare && npx wrangler deploy -c wrangler.admin.jsonc --env production
+          else
+            cd apps/web && npm ci && npm run build
+            cd ../../infra/cloudflare && npx wrangler deploy -c wrangler.jsonc --env production
+          fi
+      - name: Smoke pós-deploy
+        run: |
+          sleep 30
+          for url in \
+            "https://core-api-production-5553.up.railway.app/health" \
+            "https://operations-api-production-d580.up.railway.app/actuator/health" \
+            "https://realtime-engine-production-081f.up.railway.app/health"; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "$url" || true)
+            echo "$url → $code"
+          done
