@@ -12,7 +12,7 @@ import {
 import { Kanban, dropHandler } from "react-kanban-kit";
 import type { BoardData, BoardItem as BoardItemT, BoardProps } from "react-kanban-kit";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";

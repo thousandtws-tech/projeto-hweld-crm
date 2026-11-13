@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 
 import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
 import { fieldClass } from "@/components/ui-kit/FormDialog";

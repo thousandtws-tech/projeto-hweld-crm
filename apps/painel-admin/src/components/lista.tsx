@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Loader2, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import InputAdornment from "@mui/material/InputAdornment";

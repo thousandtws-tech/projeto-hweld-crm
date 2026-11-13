@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ImagePlus, Loader2, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 
 import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
