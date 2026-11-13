@@ -4,18 +4,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
 import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
-import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { processarEEnviarImagem } from "@/lib/midia";
 import type { Categoria, Produto, ProdutoImagem } from "@/lib/models";
 import { catalogoService, estoqueService } from "@/lib/services";
-import TextField from "@mui/material/TextField";
-import MenuItem from "@mui/material/MenuItem";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import Checkbox from "@mui/material/Checkbox";
-import Typography from "@mui/material/Typography";
-import FormControlLabel from "@mui/material/FormControlLabel";
+import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import ButtonBase from "@mui/material/ButtonBase";
+import Checkbox from "@mui/material/Checkbox";
+import Chip from "@mui/material/Chip";
+import Divider from "@mui/material/Divider";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
+import MenuItem from "@mui/material/MenuItem";
+import Stack from "@mui/material/Stack";
+import Switch from "@mui/material/Switch";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 
 const vazio = {
   sku: "",
@@ -75,6 +82,8 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
   const [enviandoArquivos, setEnviandoArquivos] = useState(false);
   const [arrastandoSobre, setArrastandoSobre] = useState(false);
   const [urlExterna, setUrlExterna] = useState("");
+  // Aba ativa do painel "Dados do produto" (padrão WooCommerce).
+  const [aba, setAba] = useState(0);
 
   const edicao = produtoRef !== undefined;
 
@@ -451,31 +460,292 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
     <>
       <PageHeader
         title={edicao ? `Editar produto · ${f.sku || `#${produtoId}`}` : "Novo produto"}
-        subtitle="Dados técnicos, precificação e galeria de imagens (capa principal + sub-imagens)"
-        action={
-          edicao && (
-            <Button variant="contained" color="error" size="small" type="button" onClick={() => void arquivar()}><Trash2 className="h-3.5 w-3.5" /> Excluir produto</Button>
-          )
-        }
+        subtitle="Dados, preços, estoque, entrega, fiscal e imagens do produto"
       />
 
-      <Box component="form" onSubmit={salvar} className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[380px_1fr]">
-          {/* Coluna Esquerda: Galeria de E-commerce (Foto Principal + Sub-imagens) */}
-          <SectionCard className="h-fit space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Typography variant="h6" component="h2" className="text-sm font-bold">Fotos do produto</Typography>
-                <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
-                  1ª foto = capa principal · demais = sub-imagens
-                </Typography>
-              </div>
-              <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                {galeria.length} foto(s)
-              </span>
+      <Box
+        component="form"
+        onSubmit={salvar}
+        className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]"
+      >
+        {/* ============ Coluna principal (conteúdo) ============ */}
+        <div className="min-w-0 space-y-4">
+          {/* Identificação — título + slug + resumo (padrão Woo) */}
+          <SectionCard className="space-y-4">
+            <TextField
+              label="Nome do produto"
+              required
+              fullWidth
+              size="small"
+              placeholder="Ex.: Eletrodo E6013 2,5mm — caixa 5kg"
+              value={f.nome}
+              onChange={set("nome")}
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField label="SKU" required size="small" fullWidth value={f.sku} onChange={set("sku")} />
+              <TextField
+                label="Slug"
+                size="small"
+                fullWidth
+                placeholder="gerado-automaticamente"
+                value={f.slug}
+                onChange={set("slug")}
+              />
+            </div>
+            <TextField
+              label="Descrição curta (resumo da vitrine)"
+              size="small"
+              fullWidth
+              multiline
+              minRows={2}
+              value={f.descricao_curta}
+              onChange={set("descricao_curta")}
+            />
+          </SectionCard>
+
+          {/* Dados do produto — painel com abas (padrão WooCommerce) */}
+          <SectionCard className="!p-0 overflow-hidden">
+            <div className="border-b border-border px-4 pt-3">
+              <Typography variant="subtitle2" className="text-sm font-bold">
+                Dados do produto
+              </Typography>
+              <Tabs
+                value={aba}
+                onChange={(_, v) => setAba(v)}
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{ minHeight: 40, "& .MuiTab-root": { minHeight: 40, textTransform: "none" } }}
+              >
+                <Tab label="Geral" />
+                <Tab label="Preços" />
+                <Tab label="Estoque" />
+                <Tab label="Entrega" />
+                <Tab label="Fiscal" />
+              </Tabs>
             </div>
 
-            {/* Palco da Imagem Selecionada / Dropzone */}
+            <div className="p-4 sm:p-5">
+              {aba === 0 && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Autocomplete
+                    freeSolo
+                    options={marcasCms}
+                    value={f.marca}
+                    onChange={(_, v) => setF((p) => ({ ...p, marca: v ?? "" }))}
+                    onInputChange={(_, v) => setF((p) => ({ ...p, marca: v }))}
+                    renderInput={(params) => (
+                      <TextField {...params} size="small" label="Marca" placeholder="Selecione ou digite…" />
+                    )}
+                  />
+                  <TextField
+                    label="Unidade (kg, cx, un…)"
+                    size="small"
+                    fullWidth
+                    slotProps={{ htmlInput: { maxLength: 6 } }}
+                    value={f.unidade_medida}
+                    onChange={set("unidade_medida")}
+                  />
+                  <TextField
+                    className="sm:col-span-2"
+                    label="Especificação técnica detalhada"
+                    size="small"
+                    fullWidth
+                    multiline
+                    minRows={4}
+                    value={f.descricao_tecnica}
+                    onChange={set("descricao_tecnica")}
+                  />
+                </div>
+              )}
+
+              {aba === 1 && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextField
+                    label="Preço de venda (R$) *"
+                    required
+                    type="number"
+                    size="small"
+                    fullWidth
+                    slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
+                    value={f.preco_venda}
+                    onChange={set("preco_venda")}
+                  />
+                  <TextField
+                    label="Preço de custo (R$)"
+                    type="number"
+                    size="small"
+                    fullWidth
+                    slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
+                    value={f.preco_custo}
+                    onChange={set("preco_custo")}
+                  />
+                  {(() => {
+                    const venda = Number(f.preco_venda);
+                    const custo = Number(f.preco_custo);
+                    if (!Number.isFinite(venda) || venda <= 0 || !Number.isFinite(custo) || custo <= 0) {
+                      return null;
+                    }
+                    const margem = ((venda - custo) / venda) * 100;
+                    return (
+                      <Typography variant="caption" className="text-muted-foreground sm:col-span-2">
+                        Margem estimada sobre a venda: {margem.toFixed(1)}%
+                      </Typography>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {aba === 2 && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormControlLabel
+                    className="sm:col-span-2"
+                    control={<Switch checked={f.controla_estoque} onChange={setFlag("controla_estoque")} />}
+                    label="Controlar saldo de estoque"
+                  />
+                  <TextField
+                    label="Estoque disponível (saldo)"
+                    type="number"
+                    size="small"
+                    fullWidth
+                    disabled={!f.controla_estoque}
+                    slotProps={{ htmlInput: { step: "0.001", min: "0" } }}
+                    value={estoqueDisponivel}
+                    onChange={(e) => setEstoqueDisponivel(e.target.value)}
+                  />
+                  <TextField
+                    label="Estoque mínimo (alerta)"
+                    type="number"
+                    size="small"
+                    fullWidth
+                    disabled={!f.controla_estoque}
+                    slotProps={{ htmlInput: { step: "0.001", min: "0" } }}
+                    value={f.estoque_minimo}
+                    onChange={set("estoque_minimo")}
+                  />
+                </div>
+              )}
+
+              {aba === 3 && (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <TextField label="Peso (kg)" type="number" size="small" fullWidth slotProps={{ htmlInput: { step: "0.001" } }} value={f.peso_kg} onChange={set("peso_kg")} />
+                  <TextField label="Altura (cm)" type="number" size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }} value={f.altura_cm} onChange={set("altura_cm")} />
+                  <TextField label="Largura (cm)" type="number" size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }} value={f.largura_cm} onChange={set("largura_cm")} />
+                  <TextField label="Comprimento (cm)" type="number" size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }} value={f.comprimento_cm} onChange={set("comprimento_cm")} />
+                </div>
+              )}
+
+              {aba === 4 && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextField
+                    label="NCM (8 dígitos)"
+                    size="small"
+                    fullWidth
+                    placeholder="83112000"
+                    slotProps={{ htmlInput: { maxLength: 8 } }}
+                    value={f.ncm}
+                    onChange={set("ncm")}
+                  />
+                  <TextField
+                    label="Origem da mercadoria"
+                    size="small"
+                    fullWidth
+                    select
+                    value={f.origem_mercadoria}
+                    onChange={set("origem_mercadoria")}
+                    slotProps={{ select: { displayEmpty: true } }}
+                  >
+                    <MenuItem value="">0 — Nacional</MenuItem>
+                    <MenuItem value="0">0 — Nacional</MenuItem>
+                    <MenuItem value="1">1 — Importada</MenuItem>
+                    <MenuItem value="2">2 — Estrangeira (mercado interno)</MenuItem>
+                  </TextField>
+                </div>
+              )}
+            </div>
+          </SectionCard>
+        </div>
+
+        {/* ============ Sidebar direita (publicar, organização, imagem) ============ */}
+        <div className="space-y-4">
+          {/* Publicar */}
+          <SectionCard className="space-y-3">
+            <Typography variant="subtitle2" className="text-sm font-bold">
+              Publicar
+            </Typography>
+            <div>
+              <FormControlLabel
+                control={<Switch checked={f.ativo} onChange={setFlag("ativo")} />}
+                label="Ativo no catálogo"
+              />
+              <FormControlLabel
+                control={<Checkbox checked={f.destaque} onChange={setFlag("destaque")} />}
+                label="Destaque na home"
+              />
+            </div>
+            <Divider />
+            <Stack spacing={1}>
+              <Button variant="contained" type="submit" fullWidth disabled={!valido || salvando || enviandoArquivos}>
+                {salvando ? "Salvando…" : edicao ? "Atualizar produto" : "Publicar produto"}
+              </Button>
+              <Button variant="outlined" fullWidth component={Link} to="/catalogo/produtos">
+                Cancelar
+              </Button>
+              {edicao && (
+                <Button
+                  variant="text"
+                  color="error"
+                  fullWidth
+                  type="button"
+                  onClick={() => void arquivar()}
+                  startIcon={<Trash2 className="h-3.5 w-3.5" />}
+                >
+                  Excluir produto
+                </Button>
+              )}
+            </Stack>
+          </SectionCard>
+
+          {/* Organização */}
+          <SectionCard className="space-y-3">
+            <Typography variant="subtitle2" className="text-sm font-bold">
+              Organização
+            </Typography>
+            <TextField
+              label="Categoria"
+              required
+              size="small"
+              fullWidth
+              select
+              value={f.categoria_id === "" ? "" : String(f.categoria_id)}
+              onChange={set("categoria_id")}
+              slotProps={{ select: { displayEmpty: true } }}
+            >
+              <MenuItem value="">Selecione…</MenuItem>
+              {categorias.map((c) => (
+                <MenuItem key={c.id} value={String(c.id)}>
+                  {c.nome}
+                </MenuItem>
+              ))}
+            </TextField>
+          </SectionCard>
+
+          {/* Imagem do produto — galeria com capa */}
+          <SectionCard className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Typography variant="subtitle2" className="text-sm font-bold">
+                  Imagem do produto
+                </Typography>
+                <Typography variant="caption" className="text-muted-foreground">
+                  1ª foto = capa · demais = galeria
+                </Typography>
+              </div>
+              <Typography variant="caption" className="tabular-nums text-muted-foreground">
+                {galeria.length} foto(s)
+              </Typography>
+            </div>
+
+            {/* Palco da imagem selecionada / dropzone */}
             <div
               onDragOver={(e) => {
                 e.preventDefault();
@@ -489,7 +759,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                   void processarArquivos(e.dataTransfer.files);
                 }
               }}
-              className={`relative aspect-square w-full overflow-hidden rounded-2xl border transition ${
+              className={`relative aspect-square w-full overflow-hidden rounded-xl border transition ${
                 arrastandoSobre
                   ? "border-2 border-dashed border-primary bg-primary/5"
                   : imagemEmDestaque
@@ -504,73 +774,134 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                     alt={imagemEmDestaque.alt_text || f.nome || "Produto"}
                     className="h-full w-full object-contain p-2"
                   />
-                  <div className="absolute left-2.5 top-2.5 flex items-center gap-1.5">
+                  <div className="absolute left-2.5 top-2.5">
                     {imagemEmDestaque.is_principal ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-bold text-primary-foreground shadow-xs">
-                        <Star className="h-3 w-3 fill-current" /> Capa principal
-                      </span>
+                      <Chip
+                        size="small"
+                        color="primary"
+                        icon={<Star className="h-3 w-3" />}
+                        label="Capa principal"
+                      />
                     ) : (
-                      <Button variant="contained" size="small" type="button" onClick={() => void definirComoPrincipal(indicePreview)}><Star className="h-3 w-3" /> Definir como capa</Button>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        type="button"
+                        onClick={() => void definirComoPrincipal(indicePreview)}
+                        startIcon={<Star className="h-3 w-3" />}
+                      >
+                        Definir capa
+                      </Button>
                     )}
                   </div>
-
-                  <IconButton size="small" type="button" onClick={() => void removerDaGaleria(indicePreview)} title="Remover esta imagem"><X className="h-3.5 w-3.5" /></IconButton>
+                  <IconButton
+                    size="small"
+                    type="button"
+                    onClick={() => void removerDaGaleria(indicePreview)}
+                    title="Remover esta imagem"
+                    sx={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      bgcolor: "background.paper",
+                      border: 1,
+                      borderColor: "divider",
+                    }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </IconButton>
                 </>
               ) : (
-                <Button variant="text" type="button" onClick={() => fileInputRef.current?.click()}><div className="grid h-12 w-12 place-items-center rounded-2xl border border-border bg-card">
+                <ButtonBase
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground"
+                >
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl border border-border bg-card">
                     <Upload className="h-5 w-5" />
                   </div>
-                  <div className="text-xs font-semibold text-foreground">
-                    Clique para enviar ou arraste as fotos aqui
-                  </div>
-                  <span className="text-[11px] text-muted-foreground">
-                    Suporta múltiplos arquivos (PNG, JPG, WebP)
-                  </span></Button>
+                  <span className="text-xs font-semibold text-foreground">
+                    Clique para enviar ou arraste as fotos
+                  </span>
+                  <span className="text-[11px]">PNG, JPG, WebP — múltiplos arquivos</span>
+                </ButtonBase>
               )}
             </div>
 
-            {/* Tira de Sub-imagens (Miniaturas em Grade estilo E-commerce) */}
-            <div className="grid grid-cols-5 gap-2">
-              {galeria.map((img, idx) => {
-                const selecionada = idx === indicePreview;
-                return (
-                  <div key={img.tempKey} className="group relative aspect-square">
-                    <Button variant="outlined" type="button" onClick={() => setIndicePreview(idx)}><img
-                        src={img.url}
-                        alt={img.alt_text || `Foto ${idx + 1}`}
-                        className="h-full w-full object-cover"
-                      />
+            {/* Tira de miniaturas */}
+            {galeria.length > 0 && (
+              <div className="grid grid-cols-5 gap-1.5">
+                {galeria.map((img, idx) => {
+                  const selecionada = idx === indicePreview;
+                  return (
+                    <div key={img.tempKey} className="group relative aspect-square">
+                      <ButtonBase
+                        type="button"
+                        onClick={() => setIndicePreview(idx)}
+                        className={`h-full w-full overflow-hidden rounded-lg border transition ${
+                          selecionada
+                            ? "border-primary ring-2 ring-primary/25"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <img
+                          src={img.url}
+                          alt={img.alt_text || `Foto ${idx + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+                      </ButtonBase>
                       {img.is_principal && (
-                        <span className="absolute bottom-0 inset-x-0 bg-primary/90 py-0.5 text-center text-[9px] font-bold uppercase text-primary-foreground">
+                        <span className="absolute inset-x-0 bottom-0 rounded-b-lg bg-primary/90 py-0.5 text-center text-[8px] font-bold uppercase text-primary-foreground">
                           Capa
                         </span>
-                      )}</Button>
-
-                    {/* Setas de reordenação no hover */}
-                    {galeria.length > 1 && selecionada && (
-                      <div className="absolute -bottom-1.5 inset-x-0 flex justify-center gap-1">
-                        {idx > 0 && (
-                          <IconButton size="small" type="button" onClick={() => void moverMiniatura(idx, -1)} title="Mover para esquerda"><ArrowLeft className="h-2.5 w-2.5" /></IconButton>
-                        )}
-                        {idx < galeria.length - 1 && (
-                          <IconButton size="small" type="button" onClick={() => void moverMiniatura(idx, 1)} title="Mover para direita"><ArrowRight className="h-2.5 w-2.5" /></IconButton>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* Slot "+" para adicionar mais sub-imagens */}
-              <Button variant="outlined" type="button" disabled={enviandoArquivos} onClick={() => fileInputRef.current?.click()} title="Adicionar mais fotos">{enviandoArquivos ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <ImagePlus className="h-4 w-4" />
-                    <span className="text-[10px] font-medium">+ Foto</span>
-                  </>
-                )}</Button>
-            </div>
+                      )}
+                      {galeria.length > 1 && selecionada && (
+                        <div className="absolute -bottom-1.5 inset-x-0 z-10 flex justify-center gap-1">
+                          {idx > 0 && (
+                            <IconButton
+                              size="small"
+                              type="button"
+                              onClick={() => void moverMiniatura(idx, -1)}
+                              title="Mover para esquerda"
+                              sx={{ width: 18, height: 18, bgcolor: "background.paper", border: 1, borderColor: "divider" }}
+                            >
+                              <ArrowLeft className="h-2.5 w-2.5" />
+                            </IconButton>
+                          )}
+                          {idx < galeria.length - 1 && (
+                            <IconButton
+                              size="small"
+                              type="button"
+                              onClick={() => void moverMiniatura(idx, 1)}
+                              title="Mover para direita"
+                              sx={{ width: 18, height: 18, bgcolor: "background.paper", border: 1, borderColor: "divider" }}
+                            >
+                              <ArrowRight className="h-2.5 w-2.5" />
+                            </IconButton>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                <ButtonBase
+                  type="button"
+                  disabled={enviandoArquivos}
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Adicionar mais fotos"
+                  className="flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed border-border text-muted-foreground transition hover:bg-secondary/50"
+                >
+                  {enviandoArquivos ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <ImagePlus className="h-4 w-4" />
+                      <span className="text-[9px] font-medium">+ Foto</span>
+                    </>
+                  )}
+                </ButtonBase>
+              </div>
+            )}
 
             <input
               ref={fileInputRef}
@@ -581,10 +912,12 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
               onChange={(e) => e.target.files && void processarArquivos(e.target.files)}
             />
 
-            {/* Opção secundária para colar URL externa */}
-            <div className="flex gap-1.5 pt-1">
-              <TextField size="small" fullWidth
-                placeholder="Ou cole uma URL de imagem (https://...)"
+            {/* URL externa */}
+            <div className="flex gap-1.5">
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="Ou cole uma URL de imagem (https://…)"
                 value={urlExterna}
                 onChange={(e) => setUrlExterna(e.target.value)}
                 onKeyDown={(e) => {
@@ -592,184 +925,19 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                     e.preventDefault();
                     void adicionarPorUrl();
                   }
-                }} />
-              <Button variant="outlined" size="small" type="button" disabled={!urlExterna.trim() || enviandoArquivos} onClick={() => void adicionarPorUrl()}>Adicionar</Button>
+                }}
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                type="button"
+                disabled={!urlExterna.trim() || enviandoArquivos}
+                onClick={() => void adicionarPorUrl()}
+              >
+                Adicionar
+              </Button>
             </div>
           </SectionCard>
-
-          {/* Coluna Direita: Dados do Produto */}
-          <div className="space-y-4">
-            <SectionCard>
-              <Typography variant="h6" component="h2" className="mb-4 text-sm font-semibold">Identificação</Typography>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <FormField label="SKU *">
-                  <TextField size="small" fullWidth required value={f.sku} onChange={set("sku")} />
-                </FormField>
-                <FormField label="Nome do produto *" wide>
-                  <TextField size="small" fullWidth required value={f.nome} onChange={set("nome")} />
-                </FormField>
-                <FormField label="Categoria *">
-                  <TextField size="small" fullWidth select
-                    required
-                    value={f.categoria_id}
-                    onChange={set("categoria_id")} slotProps={{ select: { displayEmpty: true } }}>
-                    <MenuItem value="">Selecione…</MenuItem>
-                    {categorias.map((c) => (
-                      <MenuItem key={c.id} value={String(c.id)}>
-                        {c.nome}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </FormField>
-                <FormField label="Marca">
-                  <>
-                    <TextField size="small" fullWidth slotProps={{ htmlInput: { list: "lista-marcas-cms" } }}
-                     
-                      placeholder="Selecione ou digite…"
-                      value={f.marca}
-                      onChange={set("marca")} />
-                    <datalist id="lista-marcas-cms">
-                      {marcasCms.map((nomeMarca) => (
-                        <MenuItem key={nomeMarca} value={String(nomeMarca)} />
-                      ))}
-                    </datalist>
-                  </>
-                </FormField>
-                <FormField label="Unidade (kg, cx, un…)">
-                  <TextField size="small" fullWidth slotProps={{ htmlInput: { maxLength: 6 } }}
-                   
-                    value={f.unidade_medida}
-                    onChange={set("unidade_medida")} />
-                </FormField>
-              </div>
-            </SectionCard>
-
-            <SectionCard>
-              <Typography variant="h6" component="h2" className="mb-4 text-sm font-semibold">Comercial & Estoque</Typography>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <FormField label="Preço de venda (R$) *">
-                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
-                    required
-                    type="number"
-                   
-                   
-                    value={f.preco_venda}
-                    onChange={set("preco_venda")} />
-                </FormField>
-                <FormField label="Preço de custo (R$)">
-                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
-                    type="number"
-                   
-                   
-                    value={f.preco_custo}
-                    onChange={set("preco_custo")} />
-                </FormField>
-                <FormField label="Estoque disponível (saldo)">
-                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: "0" } }}
-                    type="number"
-                   
-                   
-                    value={estoqueDisponivel}
-                    onChange={(e) => setEstoqueDisponivel(e.target.value)} />
-                </FormField>
-                <FormField label="Estoque mínimo">
-                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: "0" } }}
-                    type="number"
-                   
-                   
-                    value={f.estoque_minimo}
-                    onChange={set("estoque_minimo")} />
-                </FormField>
-
-                <div className="flex flex-wrap items-center gap-5 pt-1 sm:col-span-2 lg:col-span-4">
-                  {(
-                    [
-                      ["ativo", "Ativo no catálogo"],
-                      ["destaque", "Produto em destaque na home"],
-                      ["controla_estoque", "Controlar saldo de estoque"],
-                    ] as const
-                  ).map(([k, label]) => (
-                    <FormControlLabel control={<Checkbox checked={f[k]} onChange={setFlag(k)} />} label={"{label}"} />
-                  ))}
-                </div>
-
-                <FormField label="Descrição curta (resumo da vitrine)" wide>
-                  <TextField size="small" fullWidth
-                    value={f.descricao_curta}
-                    onChange={set("descricao_curta")} />
-                </FormField>
-
-                <FormField label="Especificação técnica detalhada" wide>
-                  <TextField size="small" fullWidth multiline minRows={3}
-                    rows={3}
-                    value={f.descricao_tecnica}
-                    onChange={set("descricao_tecnica")} />
-                </FormField>
-              </div>
-            </SectionCard>
-
-            <SectionCard>
-              <Typography variant="h6" component="h2" className="mb-4 text-sm font-semibold">Fiscal & Dimensões</Typography>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <FormField label="NCM (8 dígitos)">
-                  <TextField size="small" fullWidth slotProps={{ htmlInput: { maxLength: 8 } }}
-                   
-                    placeholder="83112000"
-                    value={f.ncm}
-                    onChange={set("ncm")} />
-                </FormField>
-                <FormField label="Origem mercadoria">
-                  <TextField size="small" fullWidth select
-                    value={f.origem_mercadoria}
-                    onChange={set("origem_mercadoria")} slotProps={{ select: { displayEmpty: true } }}>
-                    <MenuItem value="">0 — Nacional</MenuItem>
-                    <MenuItem value="0">0 — Nacional</MenuItem>
-                    <MenuItem value="1">1 — Importada</MenuItem>
-                    <MenuItem value="2">2 — Estrangeira (mercado interno)</MenuItem>
-                  </TextField>
-                </FormField>
-                <FormField label="Peso (kg)">
-                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001" } }}
-                    type="number"
-                   
-                    value={f.peso_kg}
-                    onChange={set("peso_kg")} />
-                </FormField>
-                <FormField label="Dimensões A×L×C (cm)">
-                  <div className="flex gap-1">
-                    <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }}
-                      type="number"
-                     
-                      placeholder="A"
-                      value={f.altura_cm}
-                      onChange={set("altura_cm")} />
-                    <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }}
-                      type="number"
-                     
-                      placeholder="L"
-                      value={f.largura_cm}
-                      onChange={set("largura_cm")} />
-                    <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }}
-                      type="number"
-                     
-                      placeholder="C"
-                      value={f.comprimento_cm}
-                      onChange={set("comprimento_cm")} />
-                  </div>
-                </FormField>
-              </div>
-            </SectionCard>
-
-            <div className="flex items-center gap-2">
-              <Button variant="contained" type="submit" disabled={!valido || salvando || enviandoArquivos}>{salvando ? "Salvando…" : "Salvar produto"}</Button>
-              <Link
-                to="/catalogo/produtos"
-                className="rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium hover:bg-secondary"
-              >
-                Cancelar
-              </Link>
-            </div>
-          </div>
         </div>
       </Box>
     </>
