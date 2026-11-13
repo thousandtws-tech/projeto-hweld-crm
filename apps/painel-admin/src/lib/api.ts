@@ -8,10 +8,6 @@ import {
   refreshTokens,
 } from "./session";
 
-/**
- * Envelope de erro canônico do backend Rust (`crates/api/src/erro.rs`):
- * `{ "erro": { "codigo": "...", "mensagem": "...", "campos": [{ "campo": "...", "mensagem": "..." }]? } }`
- */
 export interface CampoErroApi {
   campo: string;
   mensagem: string;

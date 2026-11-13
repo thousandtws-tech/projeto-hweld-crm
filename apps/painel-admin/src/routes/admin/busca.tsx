@@ -1,10 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/components/ui/sonner";
-import { z } from "zod";
 
 import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
-import { fieldClass } from "@/components/ui-kit/FormDialog";
 import { ApiError } from "@/lib/api";
 import { brl } from "@/lib/format";
 import type { ItemBuscaStaff } from "@/lib/models";
@@ -25,7 +23,6 @@ export const Route = createFileRoute("/admin/busca")({
   component: BuscaPage,
 });
 
-/** Busca global staff + reindexar (admin). */
 function BuscaPage() {
   const { q } = Route.useSearch();
   const [termo, setTermo] = useState(q);

@@ -23,7 +23,6 @@ export const Route = createFileRoute("/admin/usuarios")({
   component: UsuariosPage,
 });
 
-/** Usuários staff — CRUD + ativo (admin only). */
 function UsuariosPage() {
   const l = useResourceList<Usuario>({
     recurso: "usuarios",
