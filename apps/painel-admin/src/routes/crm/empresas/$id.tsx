@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
-import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
+import { FormDialog, FormField } from "@/components/ui-kit/FormDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { brl, fmtDataHora, statusLabel } from "@/lib/format";
 import type { Contato, Empresa, Oportunidade, TabelaPreco } from "@/lib/models";
@@ -11,6 +11,20 @@ import { catalogoService, crmService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import Stack from "@mui/material/Stack";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 
 export const Route = createFileRoute("/crm/empresas/$id")({
   component: Empresa360Page,
@@ -138,7 +152,13 @@ function Empresa360Page() {
 
         <TabsContent value="dados">
           <SectionCard>
-            <dl className="grid grid-cols-2 gap-5 md:grid-cols-3">
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(3, 1fr)" },
+                gap: 2.5,
+              }}
+            >
               {[
                 ["Segmento", empresa.segmento],
                 ["Telefone", empresa.telefone],
@@ -147,16 +167,24 @@ function Empresa360Page() {
                 ["IE", empresa.inscricao_estadual],
                 ["Tabela de preço", nomeTabela(empresa.tabela_preco_id)],
               ].map(([k, v]) => (
-                <div key={k as string}>
-                  <dt className="text-xs text-muted-foreground">{k}</dt>
-                  <dd className="mt-1 text-sm font-medium">{(v as string) || "—"}</dd>
-                </div>
+                <Box key={k as string}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    {k}
+                  </Typography>
+                  <Typography variant="body2" fontWeight={500} sx={{ mt: 0.5 }}>
+                    {(v as string) || "—"}
+                  </Typography>
+                </Box>
               ))}
-              <div className="col-span-2 md:col-span-3">
-                <dt className="text-xs text-muted-foreground">Observações</dt>
-                <dd className="mt-1 text-sm font-medium">{empresa.observacoes || "—"}</dd>
-              </div>
-            </dl>
+              <Box sx={{ gridColumn: { xs: "span 2", md: "span 3" } }}>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Observações
+                </Typography>
+                <Typography variant="body2" fontWeight={500} sx={{ mt: 0.5 }}>
+                  {empresa.observacoes || "—"}
+                </Typography>
+              </Box>
+            </Box>
           </SectionCard>
         </TabsContent>
 
@@ -170,35 +198,37 @@ function Empresa360Page() {
 
         <TabsContent value="oportunidades">
           <SectionCard className="p-0 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-3 font-semibold">Título</th>
-                  <th className="px-4 py-3 font-semibold">Estágio</th>
-                  <th className="px-4 py-3 font-semibold">Valor est.</th>
-                  <th className="px-4 py-3 font-semibold">Previsão</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Título</TableCell>
+                  <TableCell>Estágio</TableCell>
+                  <TableCell>Valor est.</TableCell>
+                  <TableCell>Previsão</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {oportunidades.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                  <TableRow>
+                    <TableCell colSpan={4} align="center" sx={{ py: 6, color: "text.secondary" }}>
                       Sem oportunidades.
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 )}
                 {oportunidades.map((o) => (
-                  <tr key={o.id} className="border-b border-border/60 last:border-0">
-                    <td className="px-4 py-3 font-medium">{o.titulo}</td>
-                    <td className="px-4 py-3">
+                  <TableRow key={o.id} hover>
+                    <TableCell sx={{ fontWeight: 500 }}>{o.titulo}</TableCell>
+                    <TableCell>
                       <StatusPill status={o.estagio} label={statusLabel(o.estagio)} />
-                    </td>
-                    <td className="px-4 py-3 tabular-nums">{brl(o.valor_estimado)}</td>
-                    <td className="px-4 py-3">{o.data_prevista_fechamento || "—"}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell sx={{ fontVariantNumeric: "tabular-nums" }}>
+                      {brl(o.valor_estimado)}
+                    </TableCell>
+                    <TableCell>{o.data_prevista_fechamento || "—"}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </SectionCard>
         </TabsContent>
 
@@ -244,12 +274,9 @@ function EditarEmpresaButton({
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-secondary"
-      >
+      <Button variant="outlined" onClick={() => setOpen(true)}>
         Editar
-      </button>
+      </Button>
       <FormDialog
         open={open}
         onOpenChange={setOpen}
@@ -345,60 +372,49 @@ function ContatosTab({
 
   return (
     <SectionCard className="p-0 overflow-hidden">
-      <div className="flex items-center justify-between px-5 pt-4 pb-2">
-        <span className="text-sm font-semibold">Contatos</span>
-        <button
-          onClick={() => setNovoOpen(true)}
-          className="rounded-full bg-lime px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
-        >
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2.5, pt: 2, pb: 1 }}>
+        <Typography variant="subtitle2">Contatos</Typography>
+        <Button variant="contained" size="small" onClick={() => setNovoOpen(true)}>
           + Contato
-        </button>
-      </div>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+        </Button>
+      </Stack>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
             {["Nome", "Cargo", "E-mail", "Telefone", "Principal", "Portal", ""].map((h) => (
-              <th key={h} className="px-4 py-2 font-semibold">
-                {h}
-              </th>
+              <TableCell key={h}>{h}</TableCell>
             ))}
-          </tr>
-        </thead>
-        <tbody>
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {contatos.map((c) => (
-            <tr key={c.id} className="border-b border-border/60 last:border-0">
-              <td className="px-4 py-2.5 font-medium">{c.nome}</td>
-              <td className="px-4 py-2.5">{c.cargo || "—"}</td>
-              <td className="px-4 py-2.5">{c.email || "—"}</td>
-              <td className="px-4 py-2.5">{c.telefone || c.whatsapp || "—"}</td>
-              <td className="px-4 py-2.5">{c.is_principal ? "Sim" : ""}</td>
-              <td className="px-4 py-2.5">
+            <TableRow key={c.id} hover>
+              <TableCell sx={{ fontWeight: 500 }}>{c.nome}</TableCell>
+              <TableCell>{c.cargo || "—"}</TableCell>
+              <TableCell>{c.email || "—"}</TableCell>
+              <TableCell>{c.telefone || c.whatsapp || "—"}</TableCell>
+              <TableCell>{c.is_principal ? "Sim" : ""}</TableCell>
+              <TableCell>
                 <StatusPill
                   status={c.acesso_portal ? "ativo" : "inativo"}
                   label={c.acesso_portal ? "Ativo" : "Inativo"}
                 />
-              </td>
-              <td className="px-4 py-2.5 text-right">
+              </TableCell>
+              <TableCell align="right">
                 {!c.acesso_portal ? (
-                  <button
-                    onClick={() => setPortalAlvo(c)}
-                    className="rounded-full border border-border px-3 py-1 text-xs font-medium hover:bg-secondary"
-                  >
+                  <Button variant="outlined" size="small" onClick={() => setPortalAlvo(c)}>
                     Ativar portal
-                  </button>
+                  </Button>
                 ) : (
-                  <button
-                    onClick={() => void revogar(c)}
-                    className="rounded-full border border-destructive/30 px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
-                  >
+                  <Button variant="outlined" size="small" color="error" onClick={() => void revogar(c)}>
                     Revogar
-                  </button>
+                  </Button>
                 )}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
 
       <FormDialog
         open={novoOpen}
@@ -421,14 +437,15 @@ function ContatosTab({
           <TextField size="small" fullWidth value={f.telefone} onChange={(e) => setF({ ...f, telefone: e.target.value })} />
         </FormField>
         <FormField label="" wide>
-          <label className="mt-1 flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={f.is_principal}
-              onChange={(e) => setF({ ...f, is_principal: e.target.checked })}
-            />
-            Contato principal
-          </label>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={f.is_principal}
+                onChange={(e) => setF({ ...f, is_principal: e.target.checked })}
+              />
+            }
+            label="Contato principal"
+          />
         </FormField>
       </FormDialog>
 
@@ -485,33 +502,30 @@ function EnderecosTab({
 
   return (
     <SectionCard className="p-0 overflow-hidden">
-      <div className="flex items-center justify-between px-5 pt-4 pb-2">
-        <span className="text-sm font-semibold">Endereços</span>
-        <button
-          onClick={() => setOpen(true)}
-          className="rounded-full bg-lime px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
-        >
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2.5, pt: 2, pb: 1 }}>
+        <Typography variant="subtitle2">Endereços</Typography>
+        <Button variant="contained" size="small" onClick={() => setOpen(true)}>
           + Endereço
-        </button>
-      </div>
-      <ul className="divide-y divide-border/60">
+        </Button>
+      </Stack>
+      <List disablePadding>
         {enderecos.length === 0 && (
-          <li className="px-5 py-6 text-sm text-muted-foreground">Nenhum endereço.</li>
+          <ListItem>
+            <ListItemText secondary="Nenhum endereço." />
+          </ListItem>
         )}
         {enderecos.map((end) => (
-          <li
+          <ListItem
             key={String(end["id"])}
-            className="flex items-center justify-between px-5 py-3 text-sm"
+            divider
+            secondaryAction={<StatusPill status="draft" label={String(end["tipo"] ?? "")} />}
           >
-            <span>
-              {String(end["logradouro"] ?? "")}, {String(end["numero"] ?? "")} —{" "}
-              {String(end["cidade"] ?? "")}/{String(end["uf"] ?? "")} · CEP{" "}
-              {String(end["cep"] ?? "")}
-            </span>
-            <StatusPill status="draft" label={String(end["tipo"] ?? "")} />
-          </li>
+            <ListItemText
+              primary={`${String(end["logradouro"] ?? "")}, ${String(end["numero"] ?? "")} — ${String(end["cidade"] ?? "")}/${String(end["uf"] ?? "")} · CEP ${String(end["cep"] ?? "")}`}
+            />
+          </ListItem>
         ))}
-      </ul>
+      </List>
 
       <FormDialog
         open={open}
@@ -547,14 +561,15 @@ function EnderecosTab({
           <TextField size="small" fullWidth required value={f.uf} onChange={(e) => setF({ ...f, uf: e.target.value })} slotProps={{ htmlInput: { maxLength: 2 } }} />
         </FormField>
         <FormField label="" wide>
-          <label className="mt-1 flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={f.principal}
-              onChange={(e) => setF({ ...f, principal: e.target.checked })}
-            />
-            Endereço principal
-          </label>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={f.principal}
+                onChange={(e) => setF({ ...f, principal: e.target.checked })}
+              />
+            }
+            label="Endereço principal"
+          />
         </FormField>
       </FormDialog>
     </SectionCard>
@@ -589,31 +604,34 @@ function TimelineTab({
 
   return (
     <SectionCard className="p-0 overflow-hidden">
-      <div className="flex items-center justify-between px-5 pt-4 pb-2">
-        <span className="text-sm font-semibold">Interações</span>
-        <button
-          onClick={() => setOpen(true)}
-          className="rounded-full bg-lime px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
-        >
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2.5, pt: 2, pb: 1 }}>
+        <Typography variant="subtitle2">Interações</Typography>
+        <Button variant="contained" size="small" onClick={() => setOpen(true)}>
           + Registrar
-        </button>
-      </div>
-      <ul className="divide-y divide-border/60">
+        </Button>
+      </Stack>
+      <List disablePadding>
         {interacoes.length === 0 && (
-          <li className="px-5 py-6 text-sm text-muted-foreground">Nenhuma interação.</li>
+          <ListItem>
+            <ListItemText secondary="Nenhuma interação." />
+          </ListItem>
         )}
         {interacoes.map((i) => (
-          <li key={String(i["id"])} className="px-5 py-3">
-            <div className="flex items-center justify-between">
-              <strong className="text-sm">{String(i["assunto"] || i["tipo"] || "")}</strong>
-              <small className="text-xs text-muted-foreground">
-                {fmtDataHora(String(i["ocorrido_em"] || i["created_at"] || ""))}
-              </small>
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">{String(i["descricao"] ?? "")}</div>
-          </li>
+          <ListItem key={String(i["id"])} divider>
+            <ListItemText
+              primary={String(i["assunto"] || i["tipo"] || "")}
+              secondary={
+                <>
+                  <Typography component="span" variant="caption" color="text.secondary" display="block">
+                    {fmtDataHora(String(i["ocorrido_em"] || i["created_at"] || ""))}
+                  </Typography>
+                  {String(i["descricao"] ?? "")}
+                </>
+              }
+            />
+          </ListItem>
         ))}
-      </ul>
+      </List>
 
       <FormDialog
         open={open}
