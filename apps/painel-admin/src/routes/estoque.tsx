@@ -3,8 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
-import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
-import { fieldClass } from "@/components/ui-kit/FormDialog";
+import { Metabox, PageHeader, StatusPill } from "@/components/ui-kit/primitives";
+import { FormField } from "@/components/ui-kit/FormDialog";
 import { ApiError, api } from "@/lib/api";
 import { fmtDataHora, qty } from "@/lib/format";
 import type { Movimentacao, Produto, SaldoAbaixoMinimo } from "@/lib/models";
@@ -15,7 +15,8 @@ import { useResourceList } from "@/lib/use-resource-list";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
-import Chip from "@mui/material/Chip";
+import Alert from "@mui/material/Alert";
+import Pagination from "@mui/material/Pagination";
 import Typography from "@mui/material/Typography";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
@@ -138,14 +139,21 @@ function EstoquePage() {
       <PageHeader title="Estoque" />
 
       {baixos.length > 0 && (
-        <div className="rounded-2xl bg-[var(--pill-warn-bg)] px-4 py-3 text-sm text-[var(--pill-warn-fg)]">
-          <strong>{baixos.length}</strong> produto(s) abaixo do mínimo.{" "}
-          <Button variant="text" onClick={() => setMostrarBaixos((v) => !v)}>{mostrarBaixos ? "ocultar" : "ver"}</Button>
-        </div>
+        <Alert
+          severity="warning"
+          sx={{ mb: 2 }}
+          action={
+            <Button color="inherit" size="small" onClick={() => setMostrarBaixos((v) => !v)}>
+              {mostrarBaixos ? "ocultar" : "ver"}
+            </Button>
+          }
+        >
+          <strong>{baixos.length}</strong> produto(s) abaixo do estoque mínimo.
+        </Alert>
       )}
 
       {baixos.length > 0 && mostrarBaixos && (
-        <SectionCard className="p-0 overflow-hidden">
+        <Metabox title="Produtos abaixo do mínimo" className="mb-5" contentClassName="p-0">
           <Table size="small" className="w-full text-sm">
             <TableHead>
               <TableRow >
@@ -176,17 +184,15 @@ function EstoquePage() {
               ))}
             </TableBody>
           </Table>
-        </SectionCard>
+        </Metabox>
       )}
 
-      <SectionCard>
-        <Typography variant="h6" component="h2" className="mb-3 text-sm font-semibold">Lançar movimentação</Typography>
+      <Metabox title="Lançar movimentação" className="mb-5">
         <Box component="form"
           onSubmit={lancar}
-          className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_180px_160px_1fr_auto]"
+          className="grid items-end gap-5 sm:grid-cols-2 lg:grid-cols-[1fr_180px_160px_1fr_auto]"
         >
-          <Typography component="label" className="text-xs font-medium text-muted-foreground">
-            Produto
+          <FormField label="Produto *">
             <TextField size="small" fullWidth select
               required
               value={f.produto_id}
@@ -198,9 +204,8 @@ function EstoquePage() {
                 </MenuItem>
               ))}
             </TextField>
-          </Typography>
-          <Typography component="label" className="text-xs font-medium text-muted-foreground">
-            Tipo
+          </FormField>
+          <FormField label="Tipo">
             <TextField size="small" fullWidth select
               value={f.tipo}
               onChange={(e) => setF({ ...f, tipo: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
@@ -209,34 +214,32 @@ function EstoquePage() {
               <MenuItem value="entrada">Entrada</MenuItem>
               <MenuItem value="ajuste">Ajuste</MenuItem>
             </TextField>
-          </Typography>
-          <Typography component="label" className="text-xs font-medium text-muted-foreground">
-            Quantidade
+          </FormField>
+          <FormField label="Quantidade *">
             <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: f.tipo === "ajuste" ? undefined : "0.001" } }}
               type="number"
-             
-             
               required
               value={f.quantidade}
               onChange={(e) => setF({ ...f, quantidade: e.target.value })} />
-          </Typography>
-          <Typography component="label" className="text-xs font-medium text-muted-foreground">
-            Motivo
+          </FormField>
+          <FormField label="Motivo">
             <TextField size="small" fullWidth
               value={f.motivo}
               onChange={(e) => setF({ ...f, motivo: e.target.value })} />
-          </Typography>
-          <Button variant="contained" >Lançar</Button>
+          </FormField>
+          <Button variant="contained" type="submit" sx={{ mb: 0.5 }}>Lançar</Button>
         </Box>
-      </SectionCard>
+      </Metabox>
 
-      <SectionCard className="p-0 overflow-hidden">
-        <div className="px-5 pt-4 pb-2 text-sm font-semibold">
-          Extrato{" "}
-          <span className="font-normal text-muted-foreground">
-            (append-only — correção é novo lançamento)
+      <Metabox
+        title="Extrato"
+        action={
+          <span className="font-normal text-muted-foreground text-xs">
+            append-only — correção é novo lançamento
           </span>
-        </div>
+        }
+        contentClassName="p-0"
+      >
         <Table size="small" className="w-full text-sm">
           <TableHead>
             <TableRow >
@@ -284,20 +287,19 @@ function EstoquePage() {
 
         {l.pagina && l.pagina.total_paginas > 1 && (
           <div className="flex items-center justify-between border-t border-border px-4 py-3">
-            <span className="text-xs text-muted-foreground">{l.pagina.total} registro(s)</span>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: l.pagina.total_paginas }, (_, i) => i + 1)
-                .slice(
-                  Math.max(0, Math.min(l.paginaNum - 3, l.pagina.total_paginas - 5)),
-                  Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
-                )
-                .map((p) => (
-                  <Chip label={<>{p}</>} size="small" variant={(p === l.paginaNum) ? "filled" : "outlined"} color={(p === l.paginaNum) ? "primary" : "default"} key={p} onClick={() => l.setPaginaNum(p)} />
-                ))}
-            </div>
+            <span className="text-xs text-muted-foreground">
+              Página {l.paginaNum} de {l.pagina.total_paginas} · {l.pagina.total} registro(s)
+            </span>
+            <Pagination
+              size="small"
+              count={l.pagina.total_paginas}
+              page={l.paginaNum}
+              onChange={(_, p) => l.setPaginaNum(p)}
+              shape="rounded"
+            />
           </div>
         )}
-      </SectionCard>
+      </Metabox>
     </>
   );
 }

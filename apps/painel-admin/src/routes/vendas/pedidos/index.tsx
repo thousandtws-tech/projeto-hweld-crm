@@ -3,7 +3,7 @@ import { ChevronRight, Plus, RefreshCw, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
-import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
+import { Metabox, PageHeader, StatusPill } from "@/components/ui-kit/primitives";
 import { brl, fmtData, statusLabel } from "@/lib/format";
 import type { Pedido, StatusPedido } from "@/lib/models";
 import { pedidosService } from "@/lib/services";
@@ -14,7 +14,10 @@ import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
-import Chip from "@mui/material/Chip";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Pagination from "@mui/material/Pagination";
+import Alert from "@mui/material/Alert";
 import Table from "@mui/material/Table";
 import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
@@ -104,32 +107,42 @@ function PedidosIndexPage() {
         action={
           <div className="flex items-center gap-2">
             {podeEditar && (
-              <Link
-                to="/vendas/pedidos/novo"
-                className="inline-flex items-center gap-1.5 rounded-full bg-lime px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+              <Button
+                variant="contained"
+                type="button"
+                startIcon={<Plus className="h-4 w-4" />}
+                onClick={() => navigate({ to: "/vendas/pedidos/novo" as "/" })}
               >
-                <Plus className="h-4 w-4" /> Novo pedido
-              </Link>
+                Novo pedido
+              </Button>
             )}
             <IconButton size="small" type="button" onClick={l.recarregar} aria-label="Atualizar"><RefreshCw className={`h-3.5 w-3.5 ${l.carregando ? "animate-spin" : ""}`} /></IconButton>
           </div>
         }
       />
 
-      {/* Filtros */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-1 flex-wrap items-center gap-2">
-          <div className="flex min-w-52 flex-1 sm:max-w-xs items-center gap-2 rounded-2xl border border-border bg-card px-3 py-1.5">
-            <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <InputBase type="search" value={l.busca} onChange={(e) => l.setBusca(e.target.value)} placeholder="Buscar nº do pedido ou cliente…" inputProps={{ "aria-label": "Buscar", autoComplete: "off", name: "busca-pedidos" }} className="min-w-0 flex-1 text-xs sm:text-sm" />
-          </div>
+      {/* Filtros — status como nav-tabs (padrao Woo "Todos | Aguardando | Processando…") */}
+      <Tabs
+        value={filtroStatus}
+        onChange={(_, v: string) => setStatus(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{
+          minHeight: 40,
+          mb: 2,
+          "& .MuiTab-root": { minHeight: 40, py: 1, textTransform: "none", fontWeight: 500 },
+        }}
+      >
+        <Tab value="" label="Todos" />
+        {STATUS_PEDIDO.map((st) => (
+          <Tab key={st} value={st} label={statusLabel(st)} />
+        ))}
+      </Tabs>
 
-          <div className="flex flex-wrap items-center gap-1">
-            <Chip label={<>Todos</>} size="small" variant={(filtroStatus === "") ? "filled" : "outlined"} color={(filtroStatus === "") ? "primary" : "default"} onClick={() => setStatus("")} />
-            {STATUS_PEDIDO.map((st) => (
-              <Chip label={<>{statusLabel(st)}</>} size="small" variant={(filtroStatus === st) ? "filled" : "outlined"} color={(filtroStatus === st) ? "primary" : "default"} key={st} onClick={() => setStatus(filtroStatus === st ? "" : st)} />
-            ))}
-          </div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-52 flex-1 sm:max-w-xs items-center gap-2 rounded-2xl border border-border bg-card px-3 py-1.5">
+          <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <InputBase type="search" value={l.busca} onChange={(e) => l.setBusca(e.target.value)} placeholder="Buscar nº do pedido ou cliente…" inputProps={{ "aria-label": "Buscar", autoComplete: "off", name: "busca-pedidos" }} className="min-w-0 flex-1 text-xs sm:text-sm" />
         </div>
 
         <TextField size="small" select aria-label="Origem" value={filtroOrigem} onChange={(e) => setOrigem(e.target.value)} slotProps={{ select: { displayEmpty: true } }}>
@@ -141,13 +154,28 @@ function PedidosIndexPage() {
       </div>
 
       {l.erro && (
-        <div className="flex items-center justify-between gap-3 rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          <span>{l.erro}</span>
-          <Button variant="contained" color="error" size="small" onClick={l.recarregar}><RefreshCw className="h-3.5 w-3.5" /> Tentar novamente</Button>
-        </div>
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          action={
+            <Button color="inherit" size="small" onClick={l.recarregar} startIcon={<RefreshCw className="h-3.5 w-3.5" />}>
+              Tentar novamente
+            </Button>
+          }
+        >
+          {l.erro}
+        </Alert>
       )}
 
-      <SectionCard className="overflow-hidden p-0">
+      <Metabox
+        title="Pedidos"
+        action={
+          <span className="text-xs text-muted-foreground">
+            {l.pagina ? `${l.pagina.total} registro(s)` : "—"}
+          </span>
+        }
+        contentClassName="p-0"
+      >
         <div className="overflow-x-auto">
           <Table size="small" className={`w-full text-sm ${l.carregando ? "opacity-60" : ""}`}>
             <TableHead>
@@ -211,20 +239,19 @@ function PedidosIndexPage() {
 
         {l.pagina && l.pagina.total_paginas > 1 && (
           <div className="flex items-center justify-between border-t border-border px-4 py-3">
-            <span className="text-xs text-muted-foreground">{l.pagina.total} registro(s)</span>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: l.pagina.total_paginas }, (_, i) => i + 1)
-                .slice(
-                  Math.max(0, Math.min(l.paginaNum - 3, l.pagina.total_paginas - 5)),
-                  Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
-                )
-                .map((p) => (
-                  <Chip label={<>{p}</>} size="small" variant={(p === l.paginaNum) ? "filled" : "outlined"} color={(p === l.paginaNum) ? "primary" : "default"} key={p} onClick={() => l.setPaginaNum(p)} />
-                ))}
-            </div>
+            <span className="text-xs text-muted-foreground">
+              Página {l.paginaNum} de {l.pagina.total_paginas}
+            </span>
+            <Pagination
+              size="small"
+              count={l.pagina.total_paginas}
+              page={l.paginaNum}
+              onChange={(_, p) => l.setPaginaNum(p)}
+              shape="rounded"
+            />
           </div>
         )}
-      </SectionCard>
+      </Metabox>
     </>
   );
 }

@@ -3,13 +3,17 @@ import { ExternalLink } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
-import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
+import { Metabox, PageHeader, StatusPill } from "@/components/ui-kit/primitives";
 import { brl, fmtData, fmtDataHoraCompleta, statusLabel } from "@/lib/format";
 import type { Empresa, ItemPedido, NotaFiscal, Pagamento, Pedido } from "@/lib/models";
 import { crmService, financeiroService, fiscalService, pedidosService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import { useAuth } from "@/store/auth-store";
 import Button from "@mui/material/Button";
+import Stepper from "@mui/material/Stepper";
+import Step from "@mui/material/Step";
+import StepLabel from "@mui/material/StepLabel";
+import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import Typography from "@mui/material/Typography";
@@ -169,42 +173,45 @@ function PedidoDetalhePage() {
                 <StatusPill status={pedido.status} label={statusLabel(pedido.status)} />
                 {podeVendas &&
                   (TRANSICOES[pedido.status] ?? []).map((t) => (
-                    <Button variant="text" size="small" key={t.para} type="button" onClick={() => void transicionar(pedido, t.para)}>{t.rotulo}</Button>
+                    <Button
+                      variant={t.para === "cancelado" ? "outlined" : "contained"}
+                      color={t.para === "cancelado" ? "error" : "primary"}
+                      size="small"
+                      key={t.para}
+                      type="button"
+                      onClick={() => void transicionar(pedido, t.para)}
+                    >
+                      {t.rotulo}
+                    </Button>
                   ))}
               </div>
             }
           />
 
-          {/* Stepper linear */}
+          {/* Stepper do fluxo do pedido — MUI Stepper (padrao Woo) */}
           {pedido.status !== "cancelado" && (
-            <List component="ol" disablePadding>
-              {STEPS.map((s, i) => {
-                const feito = i < idx(pedido.status);
-                const atual = i === idx(pedido.status);
-                return (
-                  <ListItem key={s}>
-                    <span
-                      className={`absolute left-1/2 top-0 h-3.5 w-3.5 -translate-x-1/2 rounded-full ${
-                        atual
-                          ? "bg-primary ring-4 ring-primary/20"
-                          : feito
-                            ? "bg-primary"
-                            : "bg-secondary"
-                      }`}
-                    />
-                    {statusLabel(s)}
-                  </ListItem>
-                );
-              })}
-            </List>
+            <Metabox title="Progresso do pedido" className="mb-5">
+              <Stepper activeStep={idx(pedido.status)} alternativeLabel>
+                {STEPS.map((s) => (
+                  <Step key={s}>
+                    <StepLabel>{statusLabel(s)}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+            </Metabox>
           )}
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
-            <div className="space-y-4">
-              <SectionCard className="overflow-hidden p-0">
-                <div className="border-b border-border/60 px-5 py-3.5 text-sm font-bold">
-                  Itens do pedido ({(pedido.itens ?? []).length})
-                </div>
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[2fr_1fr]">
+            <div className="space-y-5">
+              <Metabox
+                title="Itens do pedido"
+                action={
+                  <span className="text-xs text-muted-foreground">
+                    {(pedido.itens ?? []).length} item(ns)
+                  </span>
+                }
+                contentClassName="p-0"
+              >
                 <Table size="small" className="w-full text-sm">
                   <TableHead>
                     <TableRow >
@@ -240,21 +247,22 @@ function PedidoDetalhePage() {
                     ))}
                   </TableBody>
                 </Table>
-              </SectionCard>
+              </Metabox>
 
               {/* Vínculo Financeiro e Fiscal (visível para Admin e Financeiro) */}
               {podeFinanceiro && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <SectionCard className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Typography variant="subtitle1" component="h3" className="text-sm font-bold">Parcelas ({parcelas.length})</Typography>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <Metabox
+                    title={`Parcelas (${parcelas.length})`}
+                    action={
                       <Link
                         to="/financeiro/pagamentos"
                         className="text-xs font-medium text-primary hover:underline"
                       >
                         Gerenciar →
                       </Link>
-                    </div>
+                    }
+                  >
                     {parcelas.length === 0 ? (
                       <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
                         Nenhuma parcela gerada para este pedido.
@@ -274,12 +282,12 @@ function PedidoDetalhePage() {
                         ))}
                       </List>
                     )}
-                  </SectionCard>
+                  </Metabox>
 
-                  <SectionCard className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Typography variant="subtitle1" component="h3" className="text-sm font-bold">Notas Fiscais ({notas.length})</Typography>
-                      {notas.length === 0 && pedido.status !== "cancelado" ? (
+                  <Metabox
+                    title={`Notas Fiscais (${notas.length})`}
+                    action={
+                      notas.length === 0 && pedido.status !== "cancelado" ? (
                         <Button variant="outlined" size="small" type="button" onClick={() => void emitirNfRapido()}>+ Emitir rascunho NF</Button>
                       ) : (
                         <Link
@@ -288,8 +296,9 @@ function PedidoDetalhePage() {
                         >
                           Módulo fiscal →
                         </Link>
-                      )}
-                    </div>
+                      )
+                    }
+                  >
                     {notas.length === 0 ? (
                       <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
                         Nenhuma nota fiscal emitida para este pedido.
@@ -304,15 +313,14 @@ function PedidoDetalhePage() {
                         ))}
                       </List>
                     )}
-                  </SectionCard>
+                  </Metabox>
                 </div>
               )}
             </div>
 
-            <SectionCard className="h-fit space-y-4">
-              <div>
-                <Typography variant="h6" component="h2" className="text-sm font-bold">Resumo financeiro</Typography>
-                <Box component="dl" className="mt-3 grid grid-cols-2 gap-y-2 text-sm tabular-nums">
+            <div className="h-fit space-y-5">
+              <Metabox title="Resumo financeiro">
+                <Box component="dl" className="grid grid-cols-2 gap-y-2 text-sm tabular-nums">
                   <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">Subtotal</Typography>
                   <Typography component="dd" variant="body2" className="text-right">{brl(pedido.subtotal)}</Typography>
                   <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">Desconto</Typography>
@@ -324,41 +332,45 @@ function PedidoDetalhePage() {
                     {brl(pedido.total)}
                   </Typography>
                 </Box>
-              </div>
+              </Metabox>
 
-              <div className="space-y-3 border-t border-border pt-4 text-xs">
-                <div>
-                  <span className="text-muted-foreground">Cliente</span>
-                  <div className="mt-0.5">
-                    <Link
-                      to={`/crm/empresas/${pedido.empresa_id}` as "/"}
-                      className="inline-flex items-center gap-1 font-semibold text-foreground hover:text-primary hover:underline"
-                    >
-                      {nomeEmpresa}
-                      <ExternalLink className="h-3 w-3" />
-                    </Link>
+              <Metabox title="Cliente">
+                <div className="space-y-4 text-xs">
+                  <div>
+                    <span className="text-muted-foreground">Empresa</span>
+                    <div className="mt-1">
+                      <Link
+                        to={`/crm/empresas/${pedido.empresa_id}` as "/"}
+                        className="inline-flex items-center gap-1 font-semibold text-foreground hover:text-primary hover:underline"
+                      >
+                        {nomeEmpresa}
+                        <ExternalLink className="h-3 w-3" />
+                      </Link>
+                    </div>
+                  </div>
+                  <Divider />
+                  <div>
+                    <span className="text-muted-foreground">Condição de pagamento</span>
+                    <Typography variant="body2" component="p" className="mt-1 font-medium text-foreground">
+                      {pedido.condicao_pagamento || "—"}
+                    </Typography>
+                  </div>
+                  <Divider />
+                  <div>
+                    <span className="text-muted-foreground">Observações</span>
+                    <Typography variant="body2" component="p" className="mt-1 text-foreground">{pedido.observacoes || "—"}</Typography>
                   </div>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">Condição de pagamento</span>
-                  <Typography variant="body2" component="p" className="mt-0.5 font-medium text-foreground">
-                    {pedido.condicao_pagamento || "—"}
-                  </Typography>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Observações</span>
-                  <Typography variant="body2" component="p" className="mt-0.5 text-foreground">{pedido.observacoes || "—"}</Typography>
-                </div>
-              </div>
-            </SectionCard>
+              </Metabox>
+            </div>
           </div>
         </>
       ) : (
-        <SectionCard>
+        <Metabox title="Pedido">
           <div className="py-10 text-center text-sm text-muted-foreground">
             {erro ?? "Carregando…"}
           </div>
-        </SectionCard>
+        </Metabox>
       )}
     </>
   );

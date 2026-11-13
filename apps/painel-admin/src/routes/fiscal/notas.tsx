@@ -3,8 +3,8 @@ import { AlertTriangle, FileDown, FileText, History, Plus, RefreshCw } from "luc
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
-import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
-import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
+import { Metabox, PageHeader, StatusPill } from "@/components/ui-kit/primitives";
+import { FormDialog, FormField } from "@/components/ui-kit/FormDialog";
 import { msgErro } from "@/lib/api";
 import { brl, fmtDataHora, statusLabel } from "@/lib/format";
 import { exigePerfil } from "@/lib/guards";
@@ -22,6 +22,9 @@ import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import Chip from "@mui/material/Chip";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import Typography from "@mui/material/Typography";
@@ -253,88 +256,74 @@ function FiscalPage() {
 
       {/* Falha ao ler a configuração — nunca confundir com "faltam credenciais" */}
       {configErro && (
-        <div className="flex items-start gap-3 rounded-2xl border border-border bg-secondary/40 px-4 py-3.5 text-xs text-foreground">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-          <div className="space-y-0.5">
-            <div className="font-bold">Não foi possível verificar a configuração fiscal</div>
-            <Typography variant="body2" component="p" className="text-muted-foreground">
-              O estado real da integração SEFAZ está indisponível no momento.
-            </Typography>
-          </div>
-          <Button variant="outlined" size="small" type="button" onClick={() => void carregarConfig()}>Tentar novamente</Button>
-        </div>
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          action={
+            <Button color="inherit" size="small" onClick={() => void carregarConfig()}>
+              Tentar novamente
+            </Button>
+          }
+        >
+          <AlertTitle>Não foi possível verificar a configuração fiscal</AlertTitle>
+          O estado real da integração SEFAZ está indisponível no momento.
+        </Alert>
       )}
 
       {/* Status da integração SEFAZ — dirigido pela configuração real */}
       {configFiscal?.status_integracao === "pendente_credenciais" && (
-        <div className="flex items-start gap-3 rounded-2xl border border-[#D9486E]/40 bg-[var(--pill-warn-bg)] px-4 py-3.5 text-xs text-foreground">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#D9486E]" />
-          <div className="space-y-0.5">
-            <div className="font-bold text-[#D9486E]">
-              Integração SEFAZ pendente para liberação definitiva deste módulo em produção
-            </div>
-            <Typography variant="body2" component="p" className="text-muted-foreground">
-              As emissões operam em modo simulado (homologação interna).{" "}
-              {configFiscal && configFiscal.pendencias.length > 0
-                ? `Pendente: ${configFiscal.pendencias
-                    .map(
-                      (p) =>
-                        (
-                          ({
-                            certificado_a1: "certificado A1",
-                            certificado_expirado: "certificado expirado",
-                            csc: "CSC",
-                            serie_nf: "série da NF-e",
-                            regime_tributario: "regime tributário",
-                          }) as Record<string, string>
-                        )[p] ?? p,
-                    )
-                    .join(", ")}. `
-                : ""}
-              Configure as credenciais em{" "}
-              <Link to="/fiscal/configuracao" className="font-medium text-primary hover:underline">
-                Configuração fiscal
-              </Link>
-              .
-            </Typography>
-          </div>
-        </div>
+        <Alert severity="warning" icon={<AlertTriangle className="h-4 w-4" />} sx={{ mb: 2 }}>
+          <AlertTitle>Integração SEFAZ pendente para liberação definitiva em produção</AlertTitle>
+          As emissões operam em modo simulado (homologação interna).{" "}
+          {configFiscal && configFiscal.pendencias.length > 0
+            ? `Pendente: ${configFiscal.pendencias
+                .map(
+                  (p) =>
+                    (
+                      ({
+                        certificado_a1: "certificado A1",
+                        certificado_expirado: "certificado expirado",
+                        csc: "CSC",
+                        serie_nf: "série da NF-e",
+                        regime_tributario: "regime tributário",
+                      }) as Record<string, string>
+                    )[p] ?? p,
+                )
+                .join(", ")}. `
+            : ""}
+          Configure as credenciais em{" "}
+          <Link to="/fiscal/configuracao" className="font-medium text-primary hover:underline">
+            Configuração fiscal
+          </Link>
+          .
+        </Alert>
       )}
       {configFiscal?.status_integracao === "homologacao_pronta" && (
-        <div className="flex items-start gap-3 rounded-2xl border border-[#B8891D]/40 bg-[#B8891D]/8 px-4 py-3.5 text-xs">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#B8891D]" />
-          <div className="space-y-0.5">
-            <div className="font-bold text-[#B8891D]">
-              Credenciais completas — ambiente de homologação
-            </div>
-            <Typography variant="body2" component="p" className="text-muted-foreground">
-              Certificado, CSC e parâmetros configurados. As transmissões seguem em homologação até
-              a ativação do emissor fiscal de produção.
-            </Typography>
-          </div>
-        </div>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <AlertTitle>Credenciais completas — ambiente de homologação</AlertTitle>
+          Certificado, CSC e parâmetros configurados. As transmissões seguem em homologação até
+          a ativação do emissor fiscal de produção.
+        </Alert>
       )}
       {configFiscal?.status_integracao === "producao_pronta" && (
-        <div className="flex items-start gap-3 rounded-2xl border border-[#2E7D4F]/40 bg-[#2E7D4F]/8 px-4 py-3.5 text-xs">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#2E7D4F]" />
-          <div className="space-y-0.5">
-            <div className="font-bold text-[#2E7D4F]">Integração SEFAZ pronta para produção</div>
-            <Typography variant="body2" component="p" className="text-muted-foreground">
-              Credenciais completas e ambiente em produção — aguardando ativação do transmissor
-              fiscal oficial.
-            </Typography>
-          </div>
-        </div>
+        <Alert severity="success" sx={{ mb: 2 }}>
+          <AlertTitle>Integração SEFAZ pronta para produção</AlertTitle>
+          Credenciais completas e ambiente em produção — aguardando ativação do transmissor
+          fiscal oficial.
+        </Alert>
       )}
 
       {/* Registro de negócio — notas_fiscais no core-api */}
-      <SectionCard className="overflow-hidden p-0">
-        <div className="border-b border-border px-4 py-3">
-          <Typography variant="h6" component="h2" className="text-sm font-semibold">Notas fiscais</Typography>
-          <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
-            Registro de negócio no sistema — atualizado automaticamente pelos eventos do provedor.
+      <Metabox
+        title="Notas fiscais"
+        action={
+          <Typography variant="caption" className="text-muted-foreground">
+            registro de negócio — atualizado pelos eventos do provedor
           </Typography>
-        </div>
+        }
+        className="mb-5"
+        contentClassName="p-0"
+      >
         <div className="overflow-x-auto">
           <Table size="small" className={`w-full text-sm ${carregando ? "opacity-60" : ""}`}>
             <TableHead>
@@ -391,7 +380,7 @@ function FiscalPage() {
                   </TableCell>
                   <TableCell align="right">
                     {n.status === "rascunho" && (
-                      <Button variant="contained" color="error" size="small" type="button" onClick={() => setAlvo(n)}>Descartar</Button>
+                      <Button variant="outlined" color="error" size="small" type="button" onClick={() => setAlvo(n)}>Descartar</Button>
                     )}
                   </TableCell>
                 </TableRow>
@@ -399,23 +388,22 @@ function FiscalPage() {
             </TableBody>
           </Table>
         </div>
-      </SectionCard>
+      </Metabox>
 
       {/* Orquestração no provedor — fiscal_documents no operations-api */}
-      <SectionCard className="overflow-hidden p-0">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <div>
-            <Typography variant="h6" component="h2" className="text-sm font-semibold">Transmissões ao provedor fiscal</Typography>
-            <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
-              Ciclo de vida no provedor (Focus NFe): emissão, autorização, artefatos e cancelamento.
+      <Metabox
+        title="Transmissões ao provedor fiscal"
+        action={
+          opsIndisponivel ? (
+            <Chip size="small" variant="outlined" color="warning" label="Serviço de orquestração indisponível" />
+          ) : (
+            <Typography variant="caption" className="text-muted-foreground">
+              ciclo de vida no provedor (Focus NFe): emissão, autorização, artefatos, cancelamento
             </Typography>
-          </div>
-          {opsIndisponivel && (
-            <span className="rounded-full border border-[#B8891D]/40 bg-[#B8891D]/8 px-3 py-1 text-xs font-medium text-[#B8891D]">
-              Serviço de orquestração indisponível
-            </span>
-          )}
-        </div>
+          )
+        }
+        contentClassName="p-0"
+      >
         <div className="overflow-x-auto">
           <Table size="small" className="w-full text-sm">
             <TableHead>
@@ -500,10 +488,10 @@ function FiscalPage() {
                         {(d.status === "AUTHORIZED" ||
                           d.status === "PROCESSING" ||
                           d.status === "REQUIRES_RECONCILIATION") && (
-                          <Button variant="outlined" size="small" type="button" onClick={() => void reenviarWebhook(d)} title="Reenviar notificação do provedor">Reenviar hook</Button>
+                          <Button variant="text" size="small" type="button" onClick={() => void reenviarWebhook(d)} title="Reenviar notificação do provedor">Reenviar hook</Button>
                         )}
                         {d.status === "AUTHORIZED" && (
-                          <Button variant="contained" color="error" size="small" type="button" onClick={() => setDocAlvo(d)}>Cancelar</Button>
+                          <Button variant="outlined" color="error" size="small" type="button" onClick={() => setDocAlvo(d)}>Cancelar</Button>
                         )}
                       </div>
                     </TableCell>
@@ -549,7 +537,7 @@ function FiscalPage() {
             </TableBody>
           </Table>
         </div>
-      </SectionCard>
+      </Metabox>
 
       <FormDialog
         open={emitirOpen}
