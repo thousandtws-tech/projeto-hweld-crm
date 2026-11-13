@@ -16,15 +16,18 @@ export function FormField({
   label,
   children,
   wide = false,
+  colSpan,
 }: {
   label: string;
   children: ReactNode;
   wide?: boolean;
+  /** Colunas ocupadas na grade a partir de `sm` (sobrepõe `wide`). */
+  colSpan?: number;
 }) {
   return (
     <FormControl
       fullWidth
-      sx={{ gridColumn: wide ? { sm: "span 2" } : undefined, gap: 1.25 }}
+      sx={{ gridColumn: colSpan ? { sm: `span ${colSpan}` } : wide ? { sm: "span 2" } : undefined, gap: 1.25 }}
     >
       <FormLabel sx={{ fontSize: 12.5, fontWeight: 500, color: "text.primary" }}>{label}</FormLabel>
       {children}

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Check, Loader2, Search } from "lucide-react";
+import { Check, Loader2, MapPin, Plus, Search, UserRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
@@ -256,7 +256,7 @@ function EmpresaNovaPage() {
       <Box
         component="form"
         onSubmit={salvar}
-        className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"
+        className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]"
       >
         {/* Coluna principal */}
         <div className="min-w-0 space-y-5">
@@ -284,8 +284,8 @@ function EmpresaNovaPage() {
             ) : undefined
           }
         >
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <FormField label="CNPJ">
+          <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-6">
+            <FormField label="CNPJ" colSpan={3}>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <TextField size="small" fullWidth slotProps={{ htmlInput: { inputMode: "numeric" } }}
@@ -310,14 +310,14 @@ function EmpresaNovaPage() {
               )}
             </FormField>
 
-            <FormField label="Inscrição Estadual (IE)">
+            <FormField label="Inscrição Estadual (IE)" colSpan={3}>
               <TextField size="small" fullWidth
                 value={f.inscricao_estadual}
                 onChange={(e) => setF((p) => ({ ...p, inscricao_estadual: e.target.value }))}
                 placeholder="Isento ou número" />
             </FormField>
 
-            <FormField label="Razão social *" wide>
+            <FormField label="Razão social *" colSpan={6}>
               <TextField size="small" fullWidth
                 required
                 value={f.razao_social}
@@ -325,28 +325,21 @@ function EmpresaNovaPage() {
                 placeholder="Nome empresarial oficial" />
             </FormField>
 
-            <FormField label="Nome fantasia" wide>
+            <FormField label="Nome fantasia" colSpan={3}>
               <TextField size="small" fullWidth
                 value={f.nome_fantasia}
                 onChange={(e) => setF((p) => ({ ...p, nome_fantasia: e.target.value }))}
                 placeholder="Como a empresa é conhecida" />
             </FormField>
 
-            <FormField label="Segmento">
+            <FormField label="Segmento" colSpan={3}>
               <TextField size="small" fullWidth
                 value={f.segmento}
                 onChange={(e) => setF((p) => ({ ...p, segmento: e.target.value }))}
                 placeholder="Ex.: Metalurgia, Indústria" />
             </FormField>
 
-            <FormField label="Telefone">
-              <TextField size="small" fullWidth slotProps={{ htmlInput: { inputMode: "tel" } }}
-                value={f.telefone}
-                onChange={(e) => setF((p) => ({ ...p, telefone: telefoneMask(e.target.value) }))}
-                placeholder="(00) 00000-0000" />
-            </FormField>
-
-            <FormField label="E-mail corporativo">
+            <FormField label="E-mail corporativo" colSpan={2}>
               <TextField size="small" fullWidth
                 type="email"
                 value={f.email}
@@ -354,16 +347,22 @@ function EmpresaNovaPage() {
                 placeholder="contato@empresa.com.br" />
             </FormField>
 
-            <FormField label="Site">
+            <FormField label="Telefone" colSpan={2}>
+              <TextField size="small" fullWidth slotProps={{ htmlInput: { inputMode: "tel" } }}
+                value={f.telefone}
+                onChange={(e) => setF((p) => ({ ...p, telefone: telefoneMask(e.target.value) }))}
+                placeholder="(00) 00000-0000" />
+            </FormField>
+
+            <FormField label="Site" colSpan={2}>
               <TextField size="small" fullWidth
                 value={f.site}
                 onChange={(e) => setF((p) => ({ ...p, site: e.target.value }))}
                 placeholder="https://..." />
             </FormField>
 
-            <FormField label="Observações internas" wide>
+            <FormField label="Observações internas" colSpan={6}>
               <TextField size="small" fullWidth multiline minRows={3}
-                rows={2}
                 value={f.observacoes}
                 onChange={(e) => setF((p) => ({ ...p, observacoes: e.target.value }))}
                 placeholder="Notas sobre perfil de compra, condições comerciais ou referências…" />
@@ -387,49 +386,52 @@ function EmpresaNovaPage() {
             />
           }
         >
-          <Typography variant="body2" component="p" className="mb-4 text-xs text-muted-foreground">
-            Preenchido automaticamente ao consultar o CNPJ (necessário para pedidos e notas)
-          </Typography>
-
-          {incluirEndereco && (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              <FormField label="CEP *">
+          {!incluirEndereco ? (
+            <div className="flex items-center gap-3 rounded-md border border-dashed border-border px-4 py-5 text-muted-foreground">
+              <MapPin className="h-4 w-4 shrink-0" />
+              <div className="text-xs leading-relaxed">
+                <p className="font-medium text-foreground">Nenhum endereço fiscal neste cadastro</p>
+                <p>Preenchido automaticamente ao consultar o CNPJ — ou marque "Cadastrar endereço agora". Necessário para pedidos e notas.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-6">
+              <FormField label="CEP *" colSpan={2}>
                 <TextField size="small" fullWidth slotProps={{ htmlInput: { inputMode: "numeric" } }}
                   required={incluirEndereco}
                   value={fEnd.cep}
                   onChange={(e) => setFEnd((p) => ({ ...p, cep: cepMask(e.target.value) }))}
                   placeholder="00000-000" />
               </FormField>
-              <FormField label="Logradouro" wide>
+              <FormField label="Logradouro" colSpan={4}>
                 <TextField size="small" fullWidth
                   value={fEnd.logradouro}
                   onChange={(e) => setFEnd((p) => ({ ...p, logradouro: e.target.value }))} />
               </FormField>
-              <FormField label="Número">
+              <FormField label="Número" colSpan={2}>
                 <TextField size="small" fullWidth
                   value={fEnd.numero}
                   onChange={(e) => setFEnd((p) => ({ ...p, numero: e.target.value }))} />
               </FormField>
-              <FormField label="Complemento">
+              <FormField label="Complemento" colSpan={2}>
                 <TextField size="small" fullWidth
                   value={fEnd.complemento}
                   onChange={(e) => setFEnd((p) => ({ ...p, complemento: e.target.value }))} />
               </FormField>
-              <FormField label="Bairro">
+              <FormField label="Bairro" colSpan={2}>
                 <TextField size="small" fullWidth
                   value={fEnd.bairro}
                   onChange={(e) => setFEnd((p) => ({ ...p, bairro: e.target.value }))} />
               </FormField>
-              <FormField label="Cidade *">
+              <FormField label="Cidade *" colSpan={4}>
                 <TextField size="small" fullWidth
                   required={incluirEndereco}
                   value={fEnd.cidade}
                   onChange={(e) => setFEnd((p) => ({ ...p, cidade: e.target.value }))} />
               </FormField>
-              <FormField label="UF *">
+              <FormField label="UF *" colSpan={2}>
                 <TextField size="small" fullWidth slotProps={{ htmlInput: { maxLength: 2 } }}
                   required={incluirEndereco}
-                 
                   value={fEnd.uf}
                   onChange={(e) => setFEnd((p) => ({ ...p, uf: e.target.value.toUpperCase() }))}
                   placeholder="SP" />
@@ -454,25 +456,29 @@ function EmpresaNovaPage() {
             />
           }
         >
-          <Typography variant="body2" component="p" className="mb-4 text-xs text-muted-foreground">
-            Comprador ou responsável comercial na empresa — cliente com acesso ao portal
-          </Typography>
-
-          {incluirContato && (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              <FormField label="Nome *" wide>
+          {!incluirContato ? (
+            <div className="flex items-center gap-3 rounded-md border border-dashed border-border px-4 py-5 text-muted-foreground">
+              <UserRound className="h-4 w-4 shrink-0" />
+              <div className="text-xs leading-relaxed">
+                <p className="font-medium text-foreground">Nenhum contato neste cadastro</p>
+                <p>Comprador ou responsável comercial na empresa — marque "Cadastrar contato agora" para já deixar pronto para orçamentos e acesso ao portal.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2 lg:grid-cols-6">
+              <FormField label="Nome *" colSpan={3}>
                 <TextField size="small" fullWidth
                   required={incluirContato}
                   value={fContato.nome}
                   onChange={(e) => setFContato((p) => ({ ...p, nome: e.target.value }))} />
               </FormField>
-              <FormField label="Cargo">
+              <FormField label="Cargo" colSpan={3}>
                 <TextField size="small" fullWidth
                   value={fContato.cargo}
                   onChange={(e) => setFContato((p) => ({ ...p, cargo: e.target.value }))}
                   placeholder="Ex.: Compras, Engenharia" />
               </FormField>
-              <FormField label="Telefone / WhatsApp">
+              <FormField label="Telefone / WhatsApp" colSpan={2}>
                 <TextField size="small" fullWidth
                   value={fContato.telefone}
                   onChange={(e) =>
@@ -480,7 +486,7 @@ function EmpresaNovaPage() {
                   }
                   placeholder="(00) 00000-0000" />
               </FormField>
-              <FormField label="E-mail do contato" wide>
+              <FormField label="E-mail do contato" colSpan={4}>
                 <TextField size="small" fullWidth
                   type="email"
                   value={fContato.email}
@@ -492,9 +498,14 @@ function EmpresaNovaPage() {
         </div>
 
         {/* Sidebar — publicação/classificação, padrão WooCommerce */}
-        <div className="space-y-5">
+        <div className="space-y-5 lg:sticky lg:top-6">
           <Metabox title="Cadastro">
             <div className="space-y-5">
+              <Typography variant="caption" component="p" className="leading-relaxed text-muted-foreground">
+                Somente a <strong className="font-medium text-foreground">Razão social</strong> é
+                obrigatória — os demais dados podem ser completados depois na ficha da empresa.
+              </Typography>
+
               <FormField label="Status inicial">
                 <TextField size="small" fullWidth select
                   value={f.status}
@@ -520,8 +531,9 @@ function EmpresaNovaPage() {
               <Divider />
 
               <div className="flex flex-col gap-2">
-                <Button variant="contained" type="submit" fullWidth disabled={!podeSalvar}>
-                  {salvando ? "Salvando…" : "Criar empresa"}
+                <Button variant="contained" type="submit" fullWidth disabled={!podeSalvar}
+                  startIcon={salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}>
+                  {salvando ? "Criando empresa…" : "Criar empresa"}
                 </Button>
                 <Button variant="outlined" fullWidth component={Link} to="/crm/empresas">
                   Cancelar
