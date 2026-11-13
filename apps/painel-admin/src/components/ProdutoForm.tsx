@@ -511,8 +511,8 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
 
           {/* Dados do produto — painel com abas (padrão WooCommerce) */}
           <SectionCard className="overflow-hidden p-0!">
-            <div className="border-b border-border px-4 pt-3">
-              <Typography variant="subtitle2" className="text-sm font-bold">
+            <div className="border-b border-border px-4 pt-4">
+              <Typography variant="subtitle2" className="pb-1 text-sm font-bold">
                 Dados do produto
               </Typography>
               <Tabs
@@ -691,7 +691,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
         {/* ============ Sidebar direita (publicar, organização, imagem) ============ */}
         <div className="space-y-4">
           {/* Publicar */}
-          <SectionCard className="space-y-3">
+          <SectionCard className="space-y-4">
             <Typography variant="subtitle2" className="text-sm font-bold">
               Publicar
             </Typography>
@@ -729,7 +729,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
           </SectionCard>
 
           {/* Organização */}
-          <SectionCard className="space-y-3">
+          <SectionCard className="space-y-4">
             <Typography variant="subtitle2" className="text-sm font-bold">
               Organização
             </Typography>
@@ -754,7 +754,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
           </SectionCard>
 
           {/* Imagem do produto — galeria com capa */}
-          <SectionCard className="space-y-3">
+          <SectionCard className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <Typography variant="subtitle2" className="text-sm font-bold">
@@ -854,7 +854,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
 
             {/* Tira de miniaturas */}
             {galeria.length > 0 && (
-              <div className="grid grid-cols-5 gap-1.5">
+              <div className="grid grid-cols-5 gap-2">
                 {galeria.map((img, idx) => {
                   const selecionada = idx === indicePreview;
                   return (
@@ -937,7 +937,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
             />
 
             {/* URL externa */}
-            <div className="flex gap-1.5">
+            <div className="flex gap-2">
               <TextField
                 size="small"
                 fullWidth

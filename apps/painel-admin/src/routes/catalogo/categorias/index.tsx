@@ -182,7 +182,7 @@ function CategoriasPage() {
             </Typography>
           )}
 
-          <Box component="form" onSubmit={salvar} className="mt-3 space-y-3">
+          <Box component="form" onSubmit={salvar} className="mt-4 space-y-4">
             <FormField label="Nome *">
               <TextField
                 required
@@ -249,7 +249,7 @@ function CategoriasPage() {
               <Typography sx={{ fontSize: 12.5, fontWeight: 500, color: "text.primary" }}>
                 Imagem da categoria
               </Typography>
-              <div className="mt-1 flex items-center gap-3">
+              <div className="mt-1.5 flex items-center gap-3">
                 {f.imagem_url ? (
                   <div className="relative h-16 w-16 shrink-0">
                     <img
@@ -272,7 +272,7 @@ function CategoriasPage() {
                     <ImagePlus className="h-5 w-5" />
                   </div>
                 )}
-                <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="min-w-0 flex-1 space-y-2">
                   <input
                     ref={fileInputRef}
                     type="file"
