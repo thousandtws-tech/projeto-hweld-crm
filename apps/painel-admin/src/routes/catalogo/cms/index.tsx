@@ -3,8 +3,8 @@ import { ImagePlus, Loader2, Plus, RefreshCw, Save, Trash2 } from "lucide-react"
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
-import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
-import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
+import { FormField } from "@/components/ui-kit/FormDialog";
+import { Metabox, PageHeader } from "@/components/ui-kit/primitives";
 import { exigePerfil } from "@/lib/guards";
 import {
   PRESETS_MIDIA,
@@ -18,8 +18,10 @@ import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
-import Chip from "@mui/material/Chip";
 import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 
@@ -282,96 +284,118 @@ function CmsLojaPage() {
         }
       />
 
-      {/* Barra de Auto-Ajuste de Dimensões (Padrão Grandes CMS) + Navegação por Abas */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3">
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              ["marcas", `Marcas Parceiras (${cms.marcas.length})`],
-              ["slides", `Banner Principal Topo (${cms.slides.length})`],
-              ["trio", `Trio de Banners (${cms.trio_banners.length})`],
-              ["duo", `Duo de Banners 50/50 (${cms.duo_banners.length})`],
-              ["selos", `Selos de Confiança (${cms.selos.length})`],
-            ] as const
-          ).map(([id, rotulo]) => (
-            <Chip label={<>{rotulo}</>} size="small" variant={(aba === id) ? "filled" : "outlined"} color={(aba === id) ? "primary" : "default"} key={id} onClick={() => setAba(id)} />
-          ))}
-        </div>
+      {/* Nav-tabs padrão WooCommerce + opção de auto-ajuste de upload */}
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+          borderBottom: 1,
+          borderColor: "divider",
+          mb: 4,
+        }}
+      >
+        <Tabs
+          value={aba}
+          onChange={(_, v: Aba) => setAba(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            minHeight: 44,
+            "& .MuiTab-root": { minHeight: 44, textTransform: "none", fontWeight: 500, px: 2 },
+          }}
+        >
+          <Tab value="marcas" label={`Marcas Parceiras (${cms.marcas.length})`} />
+          <Tab value="slides" label={`Banner Principal Topo (${cms.slides.length})`} />
+          <Tab value="trio" label={`Trio de Banners (${cms.trio_banners.length})`} />
+          <Tab value="duo" label={`Duo de Banners 50/50 (${cms.duo_banners.length})`} />
+          <Tab value="selos" label={`Selos de Confiança (${cms.selos.length})`} />
+        </Tabs>
 
-        <div className="flex items-center gap-2 text-xs">
-          <span className="font-semibold text-muted-foreground">Auto-Ajuste no Upload:</span>
-          <TextField size="small" select value={modoAjuste} onChange={(e) => setModoAjuste(e.target.value as ModoAutoAjuste)} slotProps={{ select: { displayEmpty: true } }}>
+        <div className="flex items-center gap-2 pb-1">
+          <Typography variant="caption" className="font-semibold text-muted-foreground">
+            Auto-Ajuste no Upload:
+          </Typography>
+          <TextField size="small" select value={modoAjuste} onChange={(e) => setModoAjuste(e.target.value as ModoAutoAjuste)} sx={{ minWidth: 280 }}>
             <MenuItem value="smart-banner">Smart Fit (Encaixe Total sem cortar bordas)</MenuItem>
             <MenuItem value="cover">Smart Crop (Preencher 100% centralizado)</MenuItem>
             <MenuItem value="contain">Contain (Manter imagem inteira + borda suave)</MenuItem>
             <MenuItem value="proporcional">Proporção Original da Arte</MenuItem>
           </TextField>
         </div>
-      </div>
+      </Box>
 
-      {/* ABA 1: MARCAS PARCEIRAS */}
+      {/* ABA 1: MARCAS PARCEIRAS — split form + listagem (padrão taxonomia WP) */}
       {aba === "marcas" && (
-        <div className="space-y-4">
-          <SectionCard>
-            <Typography variant="h6" component="h2" className="mb-3 text-sm font-bold">Cadastrar Nova Marca</Typography>
-            <Box component="form" onSubmit={(e) => void adicionarMarca(e)} className="grid gap-3 sm:grid-cols-12">
-              <div className="sm:col-span-4">
-                <FormField label="Nome da Marca *">
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
+          <Metabox title="Cadastrar Nova Marca">
+            <Box component="form" onSubmit={(e) => void adicionarMarca(e)} className="space-y-5">
+              <FormField label="Nome da Marca *">
+                <TextField size="small" fullWidth
+                  required
+                  placeholder="Ex.: Vonder, Makita, ESAB…"
+                  value={novaMarcaNome}
+                  onChange={(e) => setNovaMarcaNome(e.target.value)} />
+              </FormField>
+              <FormField label="Logo da Marca (Upload ou URL)">
+                <div className="flex gap-2">
                   <TextField size="small" fullWidth
-                    required
-                    placeholder="Ex.: Vonder, Makita, ESAB…"
-                    value={novaMarcaNome}
-                    onChange={(e) => setNovaMarcaNome(e.target.value)} />
-                </FormField>
-              </div>
-              <div className="sm:col-span-5">
-                <FormField label="Logo da Marca (Upload ou URL)">
-                  <div className="flex gap-2">
-                    <TextField size="small" fullWidth
-                      placeholder="https://... ou envie arquivo ao lado"
-                      value={novaMarcaLogo}
-                      onChange={(e) => setNovaMarcaLogo(e.target.value)} />
-                    <Typography component="label" className="mt-1 inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-2 text-xs font-semibold hover:bg-secondary">
-                      {uploadingKey === "nova-marca" ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <ImagePlus className="h-3.5 w-3.5" />
-                      )}
-                      Upload
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) =>
-                          void uploadImagem(
-                            e.target.files?.[0],
-                            "nova-marca",
-                            "marca",
-                            setNovaMarcaLogo,
-                          )
-                        }
-                      />
-                    </Typography>
-                  </div>
-                </FormField>
-              </div>
-              <div className="flex items-end sm:col-span-3">
-                <Button variant="contained" size="small" type="submit"><Plus className="h-4 w-4" /> Cadastrar Marca</Button>
-              </div>
+                    placeholder="https://… ou envie ao lado"
+                    value={novaMarcaLogo}
+                    onChange={(e) => setNovaMarcaLogo(e.target.value)} />
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    size="small"
+                    disabled={uploadingKey === "nova-marca"}
+                    startIcon={uploadingKey === "nova-marca" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+                    sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
+                  >
+                    Upload
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={(e) =>
+                        void uploadImagem(
+                          e.target.files?.[0],
+                          "nova-marca",
+                          "marca",
+                          setNovaMarcaLogo,
+                        )
+                      }
+                    />
+                  </Button>
+                </div>
+              </FormField>
+              <Button variant="contained" size="small" type="submit" fullWidth startIcon={<Plus className="h-4 w-4" />}>
+                Cadastrar Marca
+              </Button>
             </Box>
-          </SectionCard>
+          </Metabox>
 
-          <SectionCard>
-            <Typography variant="h6" component="h2" className="mb-3 text-sm font-bold">
-              Marcas Cadastradas (exibidas em "Navegue por marcas" e no cadastro de Produtos)
-            </Typography>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <Metabox
+            title="Marcas Cadastradas"
+            action={
+              <Typography variant="caption" className="text-muted-foreground">
+                exibidas em "Navegue por marcas" e no cadastro de Produtos
+              </Typography>
+            }
+          >
+            {cms.marcas.length === 0 && (
+              <Typography variant="body2" className="py-8 text-center text-muted-foreground">
+                Nenhuma marca cadastrada — use o formulário ao lado.
+              </Typography>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {cms.marcas.map((m, idx) => (
                 <div
                   key={m.id}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-secondary/20 p-3"
+                  className="flex items-center gap-3 rounded-xl border border-border bg-secondary/20 p-3"
                 >
-                  <div className="grid h-14 w-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-border bg-white p-2">
+                  <div className="grid h-14 w-20 shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-white p-2">
                     {m.logo ? (
                       <img
                         src={resolverUrlPreview(m.logo)}
@@ -383,17 +407,23 @@ function CmsLojaPage() {
                     )}
                   </div>
 
-                  <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="min-w-0 flex-1 space-y-2">
                     <TextField size="small" fullWidth
                       value={m.nome}
                       onChange={(e) => atualizarMarca(idx, { nome: e.target.value })} />
-                    <div className="flex items-center gap-1.5">
-                      <Typography component="label" className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-medium hover:bg-secondary">
-                        <ImagePlus className="h-3 w-3" /> Trocar logo
+                    <div className="flex items-center gap-1">
+                      <Button
+                        component="label"
+                        variant="outlined"
+                        size="small"
+                        startIcon={<ImagePlus className="h-3 w-3" />}
+                        sx={{ fontSize: 11, px: 1, whiteSpace: "nowrap" }}
+                      >
+                        Trocar logo
                         <input
                           type="file"
+                          hidden
                           accept="image/*"
-                          className="hidden"
                           onChange={(e) =>
                             void uploadImagem(
                               e.target.files?.[0],
@@ -403,46 +433,64 @@ function CmsLojaPage() {
                             )
                           }
                         />
-                      </Typography>
-                      <Typography component="label" className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <Checkbox checked={m.ativa} onChange={(e) => atualizarMarca(idx, { ativa: e.target.checked })} />
-                        Ativa
-                      </Typography>
-                      <Button variant="contained" color="error" size="small" type="button" onClick={() => void excluirMarca(idx)}><Trash2 className="h-3 w-3" /> Excluir</Button>
+                      </Button>
+                      <FormControlLabel
+                        control={<Checkbox size="small" checked={m.ativa} onChange={(e) => atualizarMarca(idx, { ativa: e.target.checked })} />}
+                        label={<Typography variant="caption">Ativa</Typography>}
+                        sx={{ mr: 0 }}
+                      />
+                      <IconButton size="small" color="error" type="button" onClick={() => void excluirMarca(idx)} aria-label={`Excluir ${m.nome}`}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </IconButton>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          </SectionCard>
+          </Metabox>
         </div>
       )}
 
       {/* ABA 2: BANNER PRINCIPAL DO TOPO (HERO SLIDER) */}
       {aba === "slides" && (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button variant="outlined" size="small" type="button" onClick={adicionarSlide}><Plus className="h-4 w-4" /> Adicionar Slide no Topo</Button>
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <Typography variant="caption" className="text-muted-foreground">
+              Slides do banner principal (hero) no topo da vitrine.
+            </Typography>
+            <Button variant="contained" size="small" type="button" onClick={adicionarSlide} startIcon={<Plus className="h-4 w-4" />}>
+              Adicionar Slide
+            </Button>
           </div>
 
-          {cms.slides.map((s, idx) => (
-            <SectionCard key={s.id} className="space-y-4">
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div className="flex items-center gap-3">
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-                    Slide #{idx + 1}
-                  </span>
-                  <Typography component="label" className="flex items-center gap-2 text-xs font-medium">
-                    <Checkbox checked={s.ativo} onChange={(e) => atualizarSlide(idx, { ativo: e.target.checked })} />
-                    Slide ativo na vitrine
-                  </Typography>
-                </div>
-                <Button variant="contained" color="error" size="small" type="button" onClick={() => void excluirSlide(idx)}><Trash2 className="h-3.5 w-3.5" /> Excluir Slide</Button>
-              </div>
+          {cms.slides.length === 0 && (
+            <Metabox title="Banner Principal">
+              <Typography variant="body2" className="py-8 text-center text-muted-foreground">
+                Nenhum slide cadastrado.
+              </Typography>
+            </Metabox>
+          )}
 
-              <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-                <div className="space-y-2">
-                  <div className="aspect-[16/7] w-full overflow-hidden rounded-2xl border border-border bg-slate-900">
+          {cms.slides.map((s, idx) => (
+            <Metabox
+              key={s.id}
+              title={`Slide #${idx + 1}`}
+              action={
+                <div className="flex items-center gap-1">
+                  <FormControlLabel
+                    control={<Checkbox size="small" checked={s.ativo} onChange={(e) => atualizarSlide(idx, { ativo: e.target.checked })} />}
+                    label={<Typography variant="caption">Slide ativo na vitrine</Typography>}
+                    sx={{ mr: 0 }}
+                  />
+                  <IconButton size="small" color="error" type="button" onClick={() => void excluirSlide(idx)} aria-label={`Excluir slide ${idx + 1}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </IconButton>
+                </div>
+              }
+            >
+              <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
+                <div className="space-y-3">
+                  <div className="aspect-[16/7] w-full overflow-hidden rounded-xl border border-border bg-slate-900">
                     {s.bg_image ? (
                       <img
                         src={resolverUrlPreview(s.bg_image)}
@@ -456,17 +504,18 @@ function CmsLojaPage() {
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Typography component="label" className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
-                      {uploadingKey === `slide-bg-${s.id}` ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <ImagePlus className="h-3.5 w-3.5" />
-                      )}
-                      Trocar Banner Desktop (2000×650)
+                    <Button
+                      component="label"
+                      variant="outlined"
+                      size="small"
+                      disabled={uploadingKey === `slide-bg-${s.id}`}
+                      startIcon={uploadingKey === `slide-bg-${s.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+                    >
+                      Banner Desktop (2000×650)
                       <input
                         type="file"
+                        hidden
                         accept="image/*"
-                        className="hidden"
                         onChange={(e) =>
                           void uploadImagem(
                             e.target.files?.[0],
@@ -477,13 +526,18 @@ function CmsLojaPage() {
                           )
                         }
                       />
-                    </Typography>
-                    <Typography component="label" className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
-                      <ImagePlus className="h-3.5 w-3.5" /> Banner Mobile (1080×1350)
+                    </Button>
+                    <Button
+                      component="label"
+                      variant="outlined"
+                      size="small"
+                      startIcon={<ImagePlus className="h-3.5 w-3.5" />}
+                    >
+                      Banner Mobile (1080×1350)
                       <input
                         type="file"
+                        hidden
                         accept="image/*"
-                        className="hidden"
                         onChange={(e) =>
                           void uploadImagem(
                             e.target.files?.[0],
@@ -494,7 +548,7 @@ function CmsLojaPage() {
                           )
                         }
                       />
-                    </Typography>
+                    </Button>
                   </div>
                 </div>
 
@@ -517,36 +571,51 @@ function CmsLojaPage() {
                   </FormField>
                 </div>
               </div>
-            </SectionCard>
+            </Metabox>
           ))}
         </div>
       )}
 
       {/* ABA 3: TRIO DE BANNERS PROMOCIONAIS */}
       {aba === "trio" && (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button variant="outlined" size="small" type="button" onClick={adicionarTrio}><Plus className="h-4 w-4" /> Adicionar Card no Trio</Button>
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <Typography variant="caption" className="text-muted-foreground">
+              Três cards promocionais lado a lado abaixo do hero.
+            </Typography>
+            <Button variant="contained" size="small" type="button" onClick={adicionarTrio} startIcon={<Plus className="h-4 w-4" />}>
+              Adicionar Card
+            </Button>
           </div>
 
-          {cms.trio_banners.map((c, idx) => (
-            <SectionCard key={c.id} className="space-y-4">
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div className="flex items-center gap-3">
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-                    Card #{idx + 1} · {c.titulo}
-                  </span>
-                  <Typography component="label" className="flex items-center gap-2 text-xs font-medium">
-                    <Checkbox checked={c.ativo} onChange={(e) => atualizarTrio(idx, { ativo: e.target.checked })} />
-                    Ativo
-                  </Typography>
-                </div>
-                <Button variant="contained" color="error" size="small" type="button" onClick={() => void excluirTrio(idx)}><Trash2 className="h-3.5 w-3.5" /> Excluir</Button>
-              </div>
+          {cms.trio_banners.length === 0 && (
+            <Metabox title="Trio de Banners">
+              <Typography variant="body2" className="py-8 text-center text-muted-foreground">
+                Nenhum card promocional cadastrado.
+              </Typography>
+            </Metabox>
+          )}
 
-              <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
-                <div className="space-y-2">
-                  <div className="aspect-[16/10] w-full overflow-hidden rounded-2xl border border-border bg-slate-900">
+          {cms.trio_banners.map((c, idx) => (
+            <Metabox
+              key={c.id}
+              title={`Card #${idx + 1} · ${c.titulo}`}
+              action={
+                <div className="flex items-center gap-1">
+                  <FormControlLabel
+                    control={<Checkbox size="small" checked={c.ativo} onChange={(e) => atualizarTrio(idx, { ativo: e.target.checked })} />}
+                    label={<Typography variant="caption">Ativo</Typography>}
+                    sx={{ mr: 0 }}
+                  />
+                  <IconButton size="small" color="error" type="button" onClick={() => void excluirTrio(idx)} aria-label={`Excluir card ${idx + 1}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </IconButton>
+                </div>
+              }
+            >
+              <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
+                <div className="space-y-3">
+                  <div className="aspect-[16/10] w-full overflow-hidden rounded-xl border border-border bg-slate-900">
                     {c.imagem_url && (
                       <img
                         src={resolverUrlPreview(c.imagem_url)}
@@ -555,12 +624,17 @@ function CmsLojaPage() {
                       />
                     )}
                   </div>
-                  <Typography component="label" className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
-                    <ImagePlus className="h-3.5 w-3.5" /> Auto-Ajustar Imagem (900×560)
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    size="small"
+                    startIcon={<ImagePlus className="h-3.5 w-3.5" />}
+                  >
+                    Auto-Ajustar Imagem (900×560)
                     <input
                       type="file"
+                      hidden
                       accept="image/*"
-                      className="hidden"
                       onChange={(e) =>
                         void uploadImagem(
                           e.target.files?.[0],
@@ -571,7 +645,7 @@ function CmsLojaPage() {
                         )
                       }
                     />
-                  </Typography>
+                  </Button>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -588,36 +662,51 @@ function CmsLojaPage() {
                   </FormField>
                 </div>
               </div>
-            </SectionCard>
+            </Metabox>
           ))}
         </div>
       )}
 
       {/* ABA 4: DUO DE BANNERS LARGOS (50/50) */}
       {aba === "duo" && (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button variant="outlined" size="small" type="button" onClick={adicionarDuo}><Plus className="h-4 w-4" /> Adicionar Banner Largo</Button>
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <Typography variant="caption" className="text-muted-foreground">
+              Dois banners largos lado a lado (50/50).
+            </Typography>
+            <Button variant="contained" size="small" type="button" onClick={adicionarDuo} startIcon={<Plus className="h-4 w-4" />}>
+              Adicionar Banner Largo
+            </Button>
           </div>
 
-          {cms.duo_banners.map((c, idx) => (
-            <SectionCard key={c.id} className="space-y-4">
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div className="flex items-center gap-3">
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-                    Banner Largo #{idx + 1}
-                  </span>
-                  <Typography component="label" className="flex items-center gap-2 text-xs font-medium">
-                    <Checkbox checked={c.ativo} onChange={(e) => atualizarDuo(idx, { ativo: e.target.checked })} />
-                    Ativo
-                  </Typography>
-                </div>
-                <Button variant="contained" color="error" size="small" type="button" onClick={() => void excluirDuo(idx)}><Trash2 className="h-3.5 w-3.5" /> Excluir</Button>
-              </div>
+          {cms.duo_banners.length === 0 && (
+            <Metabox title="Duo de Banners">
+              <Typography variant="body2" className="py-8 text-center text-muted-foreground">
+                Nenhum banner largo cadastrado.
+              </Typography>
+            </Metabox>
+          )}
 
-              <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
-                <div className="space-y-2">
-                  <div className="aspect-[16/9] w-full overflow-hidden rounded-2xl border border-border bg-slate-900">
+          {cms.duo_banners.map((c, idx) => (
+            <Metabox
+              key={c.id}
+              title={`Banner Largo #${idx + 1}`}
+              action={
+                <div className="flex items-center gap-1">
+                  <FormControlLabel
+                    control={<Checkbox size="small" checked={c.ativo} onChange={(e) => atualizarDuo(idx, { ativo: e.target.checked })} />}
+                    label={<Typography variant="caption">Ativo</Typography>}
+                    sx={{ mr: 0 }}
+                  />
+                  <IconButton size="small" color="error" type="button" onClick={() => void excluirDuo(idx)} aria-label={`Excluir banner largo ${idx + 1}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </IconButton>
+                </div>
+              }
+            >
+              <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
+                <div className="space-y-3">
+                  <div className="aspect-[16/9] w-full overflow-hidden rounded-xl border border-border bg-slate-900">
                     {c.imagem_url && (
                       <img
                         src={resolverUrlPreview(c.imagem_url)}
@@ -626,12 +715,17 @@ function CmsLojaPage() {
                       />
                     )}
                   </div>
-                  <Typography component="label" className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
-                    <ImagePlus className="h-3.5 w-3.5" /> Auto-Ajustar Imagem (1200×620)
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    size="small"
+                    startIcon={<ImagePlus className="h-3.5 w-3.5" />}
+                  >
+                    Auto-Ajustar Imagem (1200×620)
                     <input
                       type="file"
+                      hidden
                       accept="image/*"
-                      className="hidden"
                       onChange={(e) =>
                         void uploadImagem(
                           e.target.files?.[0],
@@ -642,7 +736,7 @@ function CmsLojaPage() {
                         )
                       }
                     />
-                  </Typography>
+                  </Button>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -659,36 +753,51 @@ function CmsLojaPage() {
                   </FormField>
                 </div>
               </div>
-            </SectionCard>
+            </Metabox>
           ))}
         </div>
       )}
 
       {/* ABA 5: SELOS DE CONFIANÇA (faixa abaixo do hero) */}
       {aba === "selos" && (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button variant="outlined" size="small" type="button" onClick={adicionarSelo}><Plus className="h-4 w-4" /> Adicionar Selo</Button>
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <Typography variant="caption" className="text-muted-foreground">
+              Ícones de confiança na faixa abaixo do hero (frete, garantia, pagamento…).
+            </Typography>
+            <Button variant="contained" size="small" type="button" onClick={adicionarSelo} startIcon={<Plus className="h-4 w-4" />}>
+              Adicionar Selo
+            </Button>
           </div>
 
-          {cms.selos.map((s, idx) => (
-            <SectionCard key={s.id} className="space-y-4">
-              <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                <div className="flex items-center gap-3">
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-                    Selo #{idx + 1} · {s.titulo}
-                  </span>
-                  <Typography component="label" className="flex items-center gap-2 text-xs font-medium">
-                    <Checkbox checked={s.ativo} onChange={(e) => atualizarSelo(idx, { ativo: e.target.checked })} />
-                    Ativo
-                  </Typography>
-                </div>
-                <Button variant="contained" color="error" size="small" type="button" onClick={() => void excluirSelo(idx)}><Trash2 className="h-3.5 w-3.5" /> Excluir</Button>
-              </div>
+          {cms.selos.length === 0 && (
+            <Metabox title="Selos de Confiança">
+              <Typography variant="body2" className="py-8 text-center text-muted-foreground">
+                Nenhum selo cadastrado.
+              </Typography>
+            </Metabox>
+          )}
 
-              <div className="grid gap-4 lg:grid-cols-[160px_1fr]">
-                <div className="space-y-2">
-                  <div className="grid aspect-square w-full place-items-center overflow-hidden rounded-2xl border border-border bg-white p-4">
+          {cms.selos.map((s, idx) => (
+            <Metabox
+              key={s.id}
+              title={`Selo #${idx + 1} · ${s.titulo}`}
+              action={
+                <div className="flex items-center gap-1">
+                  <FormControlLabel
+                    control={<Checkbox size="small" checked={s.ativo} onChange={(e) => atualizarSelo(idx, { ativo: e.target.checked })} />}
+                    label={<Typography variant="caption">Ativo</Typography>}
+                    sx={{ mr: 0 }}
+                  />
+                  <IconButton size="small" color="error" type="button" onClick={() => void excluirSelo(idx)} aria-label={`Excluir selo ${idx + 1}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </IconButton>
+                </div>
+              }
+            >
+              <div className="grid gap-5 lg:grid-cols-[160px_1fr]">
+                <div className="space-y-3">
+                  <div className="grid aspect-square w-full place-items-center overflow-hidden rounded-xl border border-border bg-white p-4">
                     {s.icone_url ? (
                       <img
                         src={resolverUrlPreview(s.icone_url)}
@@ -699,17 +808,18 @@ function CmsLojaPage() {
                       <span className="text-[11px] text-slate-400">Sem ícone</span>
                     )}
                   </div>
-                  <Typography component="label" className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
-                    {uploadingKey === `selo-${s.id}` ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <ImagePlus className="h-3.5 w-3.5" />
-                    )}
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    size="small"
+                    disabled={uploadingKey === `selo-${s.id}`}
+                    startIcon={uploadingKey === `selo-${s.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+                  >
                     Ícone (128×128)
                     <input
                       type="file"
+                      hidden
                       accept="image/*"
-                      className="hidden"
                       onChange={(e) =>
                         void uploadImagem(
                           e.target.files?.[0],
@@ -719,7 +829,7 @@ function CmsLojaPage() {
                         )
                       }
                     />
-                  </Typography>
+                  </Button>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -746,14 +856,16 @@ function CmsLojaPage() {
                       onChange={(e) => atualizarSelo(idx, { link: e.target.value })} />
                   </FormField>
                   <FormField label="Abertura do link">
-                    <Typography component="label" className="flex h-10 items-center gap-2 text-xs font-medium">
-                      <Checkbox checked={s.externo} onChange={(e) => atualizarSelo(idx, { externo: e.target.checked })} />
-                      Abrir em nova aba (link externo)
-                    </Typography>
+                    <FormControlLabel
+                      control={<Checkbox size="small" checked={s.externo} onChange={(e) => atualizarSelo(idx, { externo: e.target.checked })} />}
+                      label={<Typography variant="body2">Abrir em nova aba (link externo)</Typography>}
+                      className="flex h-10 items-center"
+                      sx={{ m: 0 }}
+                    />
                   </FormField>
                 </div>
               </div>
-            </SectionCard>
+            </Metabox>
           ))}
         </div>
       )}
