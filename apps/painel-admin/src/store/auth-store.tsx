@@ -21,7 +21,6 @@ import {
 } from "@/lib/session";
 import { trocarSenha } from "@/lib/services";
 
-/** Identidade staff derivada dos claims do JWT + dados do usuário (quando o backend expõe). */
 export type StaffUser = {
   id: number;
   perfil: Perfil | null;
@@ -38,18 +37,10 @@ export class AuthError extends Error {
   }
 }
 
-/* ---------------------------------------------------------------------------
- * Sessão (não-React) — usada pelo guard do router.
- * ------------------------------------------------------------------------- */
-
 export function getSessionUser(): StaffUser | null {
   if (!staffAutenticado()) return null;
   return { id: usuarioIdAtual() ?? 0, perfil: perfilAtual() };
 }
-
-/* ---------------------------------------------------------------------------
- * React binding
- * ------------------------------------------------------------------------- */
 
 type AuthStore = {
   user: StaffUser | null;
@@ -69,10 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading] = useState(false);
   const [, setTick] = useState(0);
 
-  // Refresh do token mantém a mesma identidade — re-renderiza quem lê perfil.
   useEffect(() => onSessionChange(() => setTick((t) => t + 1)), []);
 
-  // Enriquece com nome/email do cadastro de usuários (somente Admin tem acesso a GET /usuarios/{id}).
   useEffect(() => {
     if (!user || user.nome || user.perfil !== "admin") return;
     api

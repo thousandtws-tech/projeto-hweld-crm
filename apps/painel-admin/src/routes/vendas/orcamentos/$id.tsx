@@ -372,7 +372,7 @@ function OrcamentoPage() {
                                     e.target.value ? Number(e.target.value) : null,
                                   )
                                 }
-                                aria-label="Produto">
+                                aria-label="Produto" slotProps={{ select: { displayEmpty: true } }}>
                                 <MenuItem value="">Selecione um produto…</MenuItem>
                                 {produtos.map((p) => (
                                   <MenuItem key={p.id} value={String(p.id)}>

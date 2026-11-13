@@ -300,7 +300,7 @@ function CmsLojaPage() {
 
         <div className="flex items-center gap-2 text-xs">
           <span className="font-semibold text-muted-foreground">Auto-Ajuste no Upload:</span>
-          <TextField size="small" select value={modoAjuste} onChange={(e) => setModoAjuste(e.target.value as ModoAutoAjuste)}>
+          <TextField size="small" select value={modoAjuste} onChange={(e) => setModoAjuste(e.target.value as ModoAutoAjuste)} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="smart-banner">Smart Fit (Encaixe Total sem cortar bordas)</MenuItem>
             <MenuItem value="cover">Smart Crop (Preencher 100% centralizado)</MenuItem>
             <MenuItem value="contain">Contain (Manter imagem inteira + borda suave)</MenuItem>

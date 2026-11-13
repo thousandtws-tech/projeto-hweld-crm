@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { Subject, from, switchMap, catchError, throwError } from 'rxjs';
 import { AuthStore } from '../auth/auth.store';
 
-/** Uma única renovação por vez — demais 401s aguardam na fila. */
 let refreshEmAndamento: Subject<boolean> | null = null;
 
 function requisitarRefresh(auth: AuthStore): Subject<boolean> {
@@ -28,8 +27,6 @@ function requisitarRefresh(auth: AuthStore): Subject<boolean> {
 
 const GUEST_SID_KEY = 'hweld.guest.sid';
 
-// Resolvido uma vez e cacheado em memória — localStorage é I/O síncrono
-// e este interceptor roda em toda requisição HTTP da aplicação.
 let guestSidCache: string | null = null;
 
 function obterGuestSessionId(): string {
@@ -55,10 +52,6 @@ const isAuthCall = (url: string) =>
   url.includes('/auth/portal/login') ||
   url.includes('/auth/refresh');
 
-/**
- * Anexa `Authorization: Bearer <access>` (se logado) e `X-Session-Id` (carrinho de convidado).
- * Em 401 quando havia sessão autenticada, tenta refresh uma vez e repete a requisição.
- */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthStore);
   const router = inject(Router);

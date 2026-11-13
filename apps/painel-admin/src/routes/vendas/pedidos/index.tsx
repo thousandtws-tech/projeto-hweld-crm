@@ -20,6 +20,7 @@ import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
+import InputBase from "@mui/material/InputBase";
 
 export const Route = createFileRoute("/vendas/pedidos/")({
   component: PedidosIndexPage,
@@ -120,7 +121,7 @@ function PedidosIndexPage() {
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <div className="flex min-w-52 flex-1 sm:max-w-xs items-center gap-2 rounded-2xl border border-border bg-card px-3 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <TextField size="small" type="search" value={l.busca} onChange={(e) => l.setBusca(e.target.value)} placeholder="Buscar nº do pedido ou cliente…" />
+            <InputBase type="search" value={l.busca} onChange={(e) => l.setBusca(e.target.value)} placeholder="Buscar nº do pedido ou cliente…" inputProps={{ "aria-label": "Buscar", autoComplete: "off", name: "busca-pedidos" }} className="min-w-0 flex-1 text-xs sm:text-sm" />
           </div>
 
           <div className="flex flex-wrap items-center gap-1">
@@ -131,7 +132,7 @@ function PedidosIndexPage() {
           </div>
         </div>
 
-        <TextField size="small" select aria-label="Origem" value={filtroOrigem} onChange={(e) => setOrigem(e.target.value)}>
+        <TextField size="small" select aria-label="Origem" value={filtroOrigem} onChange={(e) => setOrigem(e.target.value)} slotProps={{ select: { displayEmpty: true } }}>
           <MenuItem value="">Origem: todas</MenuItem>
           <MenuItem value="ecommerce">E-commerce B2B</MenuItem>
           <MenuItem value="orcamento">Orçamento</MenuItem>

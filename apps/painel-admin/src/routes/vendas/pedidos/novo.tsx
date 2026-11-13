@@ -153,7 +153,7 @@ function PedidoNovoPage() {
               <TextField size="small" fullWidth select
                 required
                 value={f.empresa_id}
-                onChange={(e) => aoTrocarEmpresa(e.target.value)}>
+                onChange={(e) => aoTrocarEmpresa(e.target.value)} slotProps={{ select: { displayEmpty: true } }}>
                 <MenuItem value="">—</MenuItem>
                 {empresas.map((e) => (
                   <MenuItem key={e.id} value={String(e.id)}>
@@ -166,7 +166,7 @@ function PedidoNovoPage() {
               <TextField size="small" fullWidth select
                 required
                 value={f.contato_id}
-                onChange={(e) => setF({ ...f, contato_id: e.target.value })}>
+                onChange={(e) => setF({ ...f, contato_id: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
                 <MenuItem value="">—</MenuItem>
                 {contatos.map((c) => (
                   <MenuItem key={c.id} value={String(c.id)}>
@@ -185,7 +185,7 @@ function PedidoNovoPage() {
               <TextField size="small" fullWidth select
                 required
                 value={f.endereco_faturamento_id}
-                onChange={(e) => setF({ ...f, endereco_faturamento_id: e.target.value })}>
+                onChange={(e) => setF({ ...f, endereco_faturamento_id: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
                 <MenuItem value="">—</MenuItem>
                 {enderecos.map((e) => (
                   <MenuItem key={String(e["id"])} value={String(e["id"])}>
@@ -198,7 +198,7 @@ function PedidoNovoPage() {
               <TextField size="small" fullWidth select
                 required
                 value={f.endereco_entrega_id}
-                onChange={(e) => setF({ ...f, endereco_entrega_id: e.target.value })}>
+                onChange={(e) => setF({ ...f, endereco_entrega_id: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
                 <MenuItem value="">—</MenuItem>
                 {enderecos.map((e) => (
                   <MenuItem key={String(e["id"])} value={String(e["id"])}>
@@ -235,7 +235,7 @@ function PedidoNovoPage() {
                         onChange={(e) =>
                           escolherProduto(idx, e.target.value ? Number(e.target.value) : null)
                         }
-                        aria-label="Produto">
+                        aria-label="Produto" slotProps={{ select: { displayEmpty: true } }}>
                         <MenuItem value="">—</MenuItem>
                         {produtos.map((p) => (
                           <MenuItem key={p.id} value={String(p.id)}>

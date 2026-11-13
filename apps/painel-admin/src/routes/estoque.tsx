@@ -190,7 +190,7 @@ function EstoquePage() {
             <TextField size="small" fullWidth select
               required
               value={f.produto_id}
-              onChange={(e) => setF({ ...f, produto_id: e.target.value })}>
+              onChange={(e) => setF({ ...f, produto_id: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
               <MenuItem value="">—</MenuItem>
               {produtos.map((p) => (
                 <MenuItem key={p.id} value={String(p.id)}>
@@ -203,7 +203,7 @@ function EstoquePage() {
             Tipo
             <TextField size="small" fullWidth select
               value={f.tipo}
-              onChange={(e) => setF({ ...f, tipo: e.target.value })}>
+              onChange={(e) => setF({ ...f, tipo: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
               {/* backend só aceita lançamento manual desses dois — reserva/saída
                   nascem de pedidos e ordens de serviço */}
               <MenuItem value="entrada">Entrada</MenuItem>

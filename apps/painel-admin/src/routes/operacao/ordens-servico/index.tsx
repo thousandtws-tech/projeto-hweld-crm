@@ -23,6 +23,7 @@ import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
+import InputBase from "@mui/material/InputBase";
 
 export const Route = createFileRoute("/operacao/ordens-servico/")({
   beforeLoad: exigePerfil("admin", "tecnico"),
@@ -198,7 +199,7 @@ function OrdensServicoIndexPage() {
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <div className="flex min-w-52 flex-1 sm:max-w-xs items-center gap-2 rounded-2xl border border-border bg-card px-3 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <TextField size="small" type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar nº, empresa ou descrição…" />
+            <InputBase type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar nº, empresa ou descrição…" inputProps={{ "aria-label": "Buscar", autoComplete: "off", name: "busca-os" }} className="min-w-0 flex-1 text-xs sm:text-sm" />
           </div>
 
           <div className="flex flex-wrap items-center gap-1">
@@ -214,7 +215,7 @@ function OrdensServicoIndexPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <TextField size="small" select aria-label="Prioridade" value={filtroPrioridade} onChange={(e) => setFiltroPrioridade(e.target.value)}>
+          <TextField size="small" select aria-label="Prioridade" value={filtroPrioridade} onChange={(e) => setFiltroPrioridade(e.target.value)} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">Prioridade: todas</MenuItem>
             <MenuItem value="urgente">Urgente</MenuItem>
             <MenuItem value="alta">Alta</MenuItem>
@@ -323,7 +324,7 @@ function OrdensServicoIndexPage() {
             value={fNovo.empresa_id}
             onChange={(e) =>
               setFNovo({ ...fNovo, empresa_id: e.target.value, contato_id: "", pedido_id: "" })
-            }>
+            } slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">Selecione…</MenuItem>
             {[...empresas.values()].map((emp) => (
               <MenuItem key={emp.id} value={String(emp.id)}>
@@ -337,7 +338,7 @@ function OrdensServicoIndexPage() {
           <TextField size="small" fullWidth select
             value={fNovo.contato_id}
             onChange={(e) => setFNovo({ ...fNovo, contato_id: e.target.value })}
-            disabled={!fNovo.empresa_id}>
+            disabled={!fNovo.empresa_id} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">— Opcional —</MenuItem>
             {contatosDaEmpresa.map((c) => (
               <MenuItem key={c.id} value={String(c.id)}>
@@ -351,7 +352,7 @@ function OrdensServicoIndexPage() {
           <TextField size="small" fullWidth select
             value={fNovo.pedido_id}
             onChange={(e) => setFNovo({ ...fNovo, pedido_id: e.target.value })}
-            disabled={!fNovo.empresa_id}>
+            disabled={!fNovo.empresa_id} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">— Opcional —</MenuItem>
             {pedidosDaEmpresa.map((p) => (
               <MenuItem key={p.id} value={String(p.id)}>
@@ -364,7 +365,7 @@ function OrdensServicoIndexPage() {
         <FormField label="Prioridade">
           <TextField size="small" fullWidth select
             value={fNovo.prioridade}
-            onChange={(e) => setFNovo({ ...fNovo, prioridade: e.target.value as PrioridadeOs })}>
+            onChange={(e) => setFNovo({ ...fNovo, prioridade: e.target.value as PrioridadeOs })} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="baixa">Baixa</MenuItem>
             <MenuItem value="normal">Normal</MenuItem>
             <MenuItem value="alta">Alta</MenuItem>

@@ -89,7 +89,7 @@ function TabelaPrecoPage() {
                 required
                 value={fPreco.produto_id}
                 onChange={(e) => setFPreco({ ...fPreco, produto_id: e.target.value })}
-                aria-label="Produto">
+                aria-label="Produto" slotProps={{ select: { displayEmpty: true } }}>
                 <MenuItem value="">Produto…</MenuItem>
                 {produtos.map((p) => (
                   <MenuItem key={p.id} value={String(p.id)}>

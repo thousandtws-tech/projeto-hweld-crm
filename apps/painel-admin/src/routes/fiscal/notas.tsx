@@ -564,7 +564,7 @@ function FiscalPage() {
             <TextField size="small" fullWidth select
               required
               value={pedidoId}
-              onChange={(e) => setPedidoId(e.target.value)}>
+              onChange={(e) => setPedidoId(e.target.value)} slotProps={{ select: { displayEmpty: true } }}>
               <MenuItem value="">Selecione um pedido…</MenuItem>
               {pedidosElegiveis.map((p) => (
                 <MenuItem key={p.id} value={String(p.id)}>

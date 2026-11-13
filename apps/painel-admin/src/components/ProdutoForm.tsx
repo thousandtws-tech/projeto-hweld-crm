@@ -612,7 +612,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                   <TextField size="small" fullWidth select
                     required
                     value={f.categoria_id}
-                    onChange={set("categoria_id")}>
+                    onChange={set("categoria_id")} slotProps={{ select: { displayEmpty: true } }}>
                     <MenuItem value="">Selecione…</MenuItem>
                     {categorias.map((c) => (
                       <MenuItem key={c.id} value={String(c.id)}>
@@ -721,7 +721,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                 <FormField label="Origem mercadoria">
                   <TextField size="small" fullWidth select
                     value={f.origem_mercadoria}
-                    onChange={set("origem_mercadoria")}>
+                    onChange={set("origem_mercadoria")} slotProps={{ select: { displayEmpty: true } }}>
                     <MenuItem value="">0 — Nacional</MenuItem>
                     <MenuItem value="0">0 — Nacional</MenuItem>
                     <MenuItem value="1">1 — Importada</MenuItem>

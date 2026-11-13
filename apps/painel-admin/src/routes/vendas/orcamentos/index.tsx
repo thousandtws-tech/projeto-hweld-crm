@@ -30,6 +30,7 @@ import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
+import InputBase from "@mui/material/InputBase";
 
 export const Route = createFileRoute("/vendas/orcamentos/")({
   component: OrcamentosIndexPage,
@@ -361,7 +362,7 @@ function OrcamentosIndexPage() {
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <div className="flex min-w-52 flex-1 sm:max-w-xs items-center gap-2 rounded-2xl border border-border bg-card px-3 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <TextField size="small" type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nº ou empresa…" />
+            <InputBase type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nº ou empresa…" inputProps={{ "aria-label": "Buscar", autoComplete: "off", name: "busca-orcamentos" }} className="min-w-0 flex-1 text-xs sm:text-sm" />
           </div>
 
           <div className="flex flex-wrap items-center gap-1">
@@ -379,7 +380,7 @@ function OrcamentosIndexPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <TextField size="small" select aria-label="Ordenar" value={ordenacao} onChange={(e) => setOrdenacao(e.target.value as typeof ordenacao)}>
+          <TextField size="small" select aria-label="Ordenar" value={ordenacao} onChange={(e) => setOrdenacao(e.target.value as typeof ordenacao)} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="recentes">Ordenar: Mais recentes</MenuItem>
             <MenuItem value="maior_valor">Ordenar: Maior valor</MenuItem>
             <MenuItem value="validade">Ordenar: Validade</MenuItem>
@@ -529,7 +530,7 @@ function OrcamentosIndexPage() {
           <TextField size="small" fullWidth select
             required
             value={fNovo.empresa_id}
-            onChange={(e) => void aoEscolherEmpresaNovo(e.target.value)}>
+            onChange={(e) => void aoEscolherEmpresaNovo(e.target.value)} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">Selecione…</MenuItem>
             {[...empresas.values()].map((emp) => (
               <MenuItem key={emp.id} value={String(emp.id)}>
@@ -543,7 +544,7 @@ function OrcamentosIndexPage() {
           <TextField size="small" fullWidth select
             value={fNovo.contato_id}
             onChange={(e) => setFNovo({ ...fNovo, contato_id: e.target.value })}
-            disabled={!fNovo.empresa_id}>
+            disabled={!fNovo.empresa_id} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">—</MenuItem>
             {contatosDaEmpresaNovo.map((c) => (
               <MenuItem key={c.id} value={String(c.id)}>
@@ -557,7 +558,7 @@ function OrcamentosIndexPage() {
           <TextField size="small" fullWidth select
             value={fNovo.oportunidade_id}
             onChange={(e) => setFNovo({ ...fNovo, oportunidade_id: e.target.value })}
-            disabled={!fNovo.empresa_id}>
+            disabled={!fNovo.empresa_id} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">— Opcional —</MenuItem>
             {opsDaEmpresaNovo.map((op) => (
               <MenuItem key={op.id} value={String(op.id)}>
@@ -608,7 +609,7 @@ function OrcamentosIndexPage() {
                   aria-label="Produto"
                   required
                   value={item.produto_id}
-                  onChange={(e) => escolherProdutoNovo(idx, e.target.value)}>
+                  onChange={(e) => escolherProdutoNovo(idx, e.target.value)} slotProps={{ select: { displayEmpty: true } }}>
                   <MenuItem value="">Selecione um produto…</MenuItem>
                   {produtos.map((p) => (
                     <MenuItem key={p.id} value={String(p.id)}>

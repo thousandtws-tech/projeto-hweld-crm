@@ -24,6 +24,7 @@ import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import TableRow from "@mui/material/TableRow";
 import TableCell from "@mui/material/TableCell";
+import InputBase from "@mui/material/InputBase";
 
 export const Route = createFileRoute("/financeiro/pagamentos")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -238,7 +239,7 @@ function PagamentosPage() {
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <div className="flex min-w-52 flex-1 sm:max-w-xs items-center gap-2 rounded-2xl border border-border bg-card px-3 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <TextField size="small" type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar pedido ou cliente…" />
+            <InputBase type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar pedido ou cliente…" inputProps={{ "aria-label": "Buscar", autoComplete: "off", name: "busca-parcelas" }} className="min-w-0 flex-1 text-xs sm:text-sm" />
           </div>
 
           <div className="flex flex-wrap items-center gap-1">
@@ -364,7 +365,7 @@ function PagamentosPage() {
             <TextField size="small" fullWidth select
               required
               value={fParc.pedido_id}
-              onChange={(e) => setFParc({ ...fParc, pedido_id: e.target.value })}>
+              onChange={(e) => setFParc({ ...fParc, pedido_id: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
               <MenuItem value="">Selecione um pedido…</MenuItem>
               {pedidosSemParcelas.map((ped) => (
                 <MenuItem key={ped.id} value={String(ped.id)}>
@@ -392,7 +393,7 @@ function PagamentosPage() {
                 forma_pagamento_id: e.target.value,
                 quantidade: novaForma && !novaForma.permiteParcelamento ? "1" : fParc.quantidade,
               });
-            }}>
+            }} slotProps={{ select: { displayEmpty: true } }}>
             {FORMAS_PAGAMENTO.map((f) => (
               <MenuItem key={f.id} value={String(f.id)}>
                 {f.nome} {f.permiteParcelamento ? `(até ${f.maxParcelas}x)` : "(à vista)"}
@@ -452,7 +453,7 @@ function PagamentosPage() {
           <TextField size="small" fullWidth select
             required
             value={fBaixa.forma_pagamento_id}
-            onChange={(e) => setFBaixa({ ...fBaixa, forma_pagamento_id: e.target.value })}>
+            onChange={(e) => setFBaixa({ ...fBaixa, forma_pagamento_id: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
             {FORMAS_PAGAMENTO.map((f) => (
               <MenuItem key={f.id} value={String(f.id)}>
                 {f.nome}

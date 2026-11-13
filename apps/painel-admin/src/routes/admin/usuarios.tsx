@@ -183,7 +183,7 @@ function UsuariosPage() {
         <FormField label="Perfil">
           <TextField size="small" fullWidth select
             value={f.perfil}
-            onChange={(e) => setF({ ...f, perfil: e.target.value })}>
+            onChange={(e) => setF({ ...f, perfil: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="admin">Admin</MenuItem>
             <MenuItem value="vendedor">Vendedor</MenuItem>
             <MenuItem value="financeiro">Financeiro</MenuItem>

@@ -169,6 +169,8 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
                 onChange={(e) => onBusca(e.target.value)}
                 placeholder="Buscar…"
                 aria-label="Buscar"
+                autoComplete="off"
+                name="busca-lista"
                 sx={{ width: 180, "& .MuiOutlinedInput-root": { bgcolor: "action.hover" } }}
                 slotProps={{
                   input: {
@@ -191,8 +193,7 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
                   setFiltroValor(e.target.value);
                   setPaginaNum(1);
                 }}
-                sx={{ minWidth: 160, "& .MuiOutlinedInput-root": { bgcolor: "action.hover" } }}
-              >
+                sx={{ minWidth: 160, "& .MuiOutlinedInput-root": { bgcolor: "action.hover" } }} slotProps={{ select: { displayEmpty: true } }}>
                 <MenuItem value="">{cfg.filtro.rotulo}: todos</MenuItem>
                 {cfg.filtro.opcoes.map((o) => (
                   <MenuItem key={o.valor} value={o.valor}>

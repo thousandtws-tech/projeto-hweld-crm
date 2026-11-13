@@ -208,7 +208,7 @@ function ConfigFiscalPage() {
                       ...f,
                       ambiente: e.target.value as ConfigFiscal["ambiente"],
                     }))
-                  }>
+                  } slotProps={{ select: { displayEmpty: true } }}>
                   <MenuItem value="homologacao">Homologação (testes)</MenuItem>
                   <MenuItem value="producao">Produção (validade jurídica)</MenuItem>
                 </TextField>
@@ -223,7 +223,7 @@ function ConfigFiscalPage() {
               <FormField label="Regime tributário (CRT) *">
                 <TextField size="small" fullWidth select
                   value={form.regime_tributario}
-                  onChange={(e) => setForm((f) => ({ ...f, regime_tributario: e.target.value }))}>
+                  onChange={(e) => setForm((f) => ({ ...f, regime_tributario: e.target.value }))} slotProps={{ select: { displayEmpty: true } }}>
                   <MenuItem value="">Selecione…</MenuItem>
                   <MenuItem value="1">1 — Simples Nacional</MenuItem>
                   <MenuItem value="2">2 — Simples, excesso de sublimite</MenuItem>

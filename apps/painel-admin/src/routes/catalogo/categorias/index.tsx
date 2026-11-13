@@ -287,7 +287,7 @@ function CategoriasPage() {
             value={f.categoria_pai_id}
             onChange={(e) =>
               setF({ ...f, categoria_pai_id: e.target.value === "" ? "" : Number(e.target.value) })
-            }>
+            } slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">Raiz (departamento principal)</MenuItem>
             {todas
               .filter((c) => !editando || c.id !== editando.id)

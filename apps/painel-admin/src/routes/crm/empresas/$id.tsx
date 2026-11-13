@@ -295,7 +295,7 @@ function EditarEmpresaButton({
           <TextField size="small" fullWidth value={f.cnpj} onChange={(e) => setF({ ...f, cnpj: e.target.value })} />
         </FormField>
         <FormField label="Status">
-          <TextField size="small" fullWidth select value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}>
+          <TextField size="small" fullWidth select value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="prospecto">Prospecto</MenuItem>
             <MenuItem value="ativo">Ativo</MenuItem>
             <MenuItem value="inativo">Inativo</MenuItem>
@@ -304,7 +304,7 @@ function EditarEmpresaButton({
         <FormField label="Tabela de preço">
           <TextField size="small" fullWidth select value={f.tabela_preco_id ?? ""} onChange={(e) =>
               setF({ ...f, tabela_preco_id: e.target.value ? Number(e.target.value) : null })
-            }>
+            } slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">Padrão</MenuItem>
             {tabelas.map((t) => (
               <MenuItem key={t.id} value={String(t.id)}>
@@ -536,7 +536,7 @@ function EnderecosTab({
         onSubmit={salvar}
       >
         <FormField label="Tipo">
-          <TextField size="small" fullWidth select value={f.tipo} onChange={(e) => setF({ ...f, tipo: e.target.value })}>
+          <TextField size="small" fullWidth select value={f.tipo} onChange={(e) => setF({ ...f, tipo: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="fiscal">Fiscal</MenuItem>
             <MenuItem value="entrega">Entrega</MenuItem>
             <MenuItem value="correspondencia">Correspondência</MenuItem>
@@ -642,7 +642,7 @@ function TimelineTab({
         onSubmit={salvar}
       >
         <FormField label="Tipo">
-          <TextField size="small" fullWidth select value={f.tipo} onChange={(e) => setF({ ...f, tipo: e.target.value })}>
+          <TextField size="small" fullWidth select value={f.tipo} onChange={(e) => setF({ ...f, tipo: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="ligacao">Ligação</MenuItem>
             <MenuItem value="email">E-mail</MenuItem>
             <MenuItem value="whatsapp">WhatsApp</MenuItem>

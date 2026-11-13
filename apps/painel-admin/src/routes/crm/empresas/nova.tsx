@@ -312,7 +312,7 @@ function EmpresaNovaPage() {
             <FormField label="Status inicial">
               <TextField size="small" fullWidth select
                 value={f.status}
-                onChange={(e) => setF((p) => ({ ...p, status: e.target.value }))}>
+                onChange={(e) => setF((p) => ({ ...p, status: e.target.value }))} slotProps={{ select: { displayEmpty: true } }}>
                 <MenuItem value="prospecto">Prospecto</MenuItem>
                 <MenuItem value="ativo">Ativo</MenuItem>
               </TextField>
@@ -321,7 +321,7 @@ function EmpresaNovaPage() {
             <FormField label="Tabela de preço">
               <TextField size="small" fullWidth select
                 value={f.tabela_preco_id}
-                onChange={(e) => setF((p) => ({ ...p, tabela_preco_id: e.target.value }))}>
+                onChange={(e) => setF((p) => ({ ...p, tabela_preco_id: e.target.value }))} slotProps={{ select: { displayEmpty: true } }}>
                 <MenuItem value="">Padrão do catálogo</MenuItem>
                 {tabelas.map((t) => (
                   <MenuItem key={t.id} value={String(t.id)}>

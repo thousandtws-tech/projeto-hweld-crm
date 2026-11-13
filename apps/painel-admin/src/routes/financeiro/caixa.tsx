@@ -386,7 +386,7 @@ function CaixaPage() {
             >
               <TextField size="small" fullWidth select label="Tipo"
                 value={fLanc.tipo}
-                onChange={(e) => setFLanc({ ...fLanc, tipo: e.target.value })}>
+                onChange={(e) => setFLanc({ ...fLanc, tipo: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
                 <MenuItem value="suprimento">Suprimento (+)</MenuItem>
                 <MenuItem value="sangria">Sangria (−)</MenuItem>
                 <MenuItem value="despesa">Despesa (−)</MenuItem>
@@ -441,7 +441,7 @@ function CaixaPage() {
                   sx={{ width: 180 }}
                 />
 
-                <TextField size="small" select aria-label="Filtrar por tipo" value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
+                <TextField size="small" select aria-label="Filtrar por tipo" value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)} slotProps={{ select: { displayEmpty: true } }}>
                   <MenuItem value="">Todos os tipos</MenuItem>
                   <MenuItem value="recebimento">Recebimento</MenuItem>
                   <MenuItem value="venda">Venda</MenuItem>

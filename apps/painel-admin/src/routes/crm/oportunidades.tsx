@@ -711,6 +711,8 @@ function OportunidadesPage() {
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar oportunidade ou empresa…"
+            autoComplete="off"
+            name="busca-oportunidades"
             sx={{ minWidth: 210, flex: { xs: 1, sm: "0 1 auto" } }}
             slotProps={{
               input: {
@@ -741,8 +743,7 @@ function OportunidadesPage() {
             value={filtroOrigem}
             onChange={(e) => setFiltroOrigem(e.target.value)}
            
-            sx={{ minWidth: 150 }}
-          >
+            sx={{ minWidth: 150 }} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">Origem: todas</MenuItem>
             <MenuItem value="site">Site</MenuItem>
             <MenuItem value="telefone">Telefone</MenuItem>
@@ -759,8 +760,7 @@ function OportunidadesPage() {
             value={filtroPrazo}
             onChange={(e) => setFiltroPrazo(e.target.value as FiltroPrazo)}
            
-            sx={{ minWidth: 160 }}
-          >
+            sx={{ minWidth: 160 }} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="todos">Prazo: todos</MenuItem>
             <MenuItem value="atrasadas">Atrasadas ({metricas.emAtencao})</MenuItem>
             <MenuItem value="semana">Próximos 7 dias</MenuItem>
@@ -779,8 +779,7 @@ function OportunidadesPage() {
               setOrdemIntraColuna({});
             }}
            
-            sx={{ minWidth: 170 }}
-          >
+            sx={{ minWidth: 170 }} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="relevancia">Ordenar: Prioridade</MenuItem>
             <MenuItem value="maior_valor">Ordenar: Maior valor</MenuItem>
             <MenuItem value="fechamento">Ordenar: Fechamento</MenuItem>
@@ -995,7 +994,7 @@ function OportunidadesPage() {
           <TextField size="small" fullWidth select
             required
             value={fNovo.empresa_id}
-            onChange={(e) => setFNovo({ ...fNovo, empresa_id: e.target.value, contato_id: "" })}>
+            onChange={(e) => setFNovo({ ...fNovo, empresa_id: e.target.value, contato_id: "" })} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">—</MenuItem>
             {[...empresas.values()].map((emp) => (
               <MenuItem key={emp.id} value={String(emp.id)}>
@@ -1008,7 +1007,7 @@ function OportunidadesPage() {
           <TextField size="small" fullWidth select
             value={fNovo.contato_id}
             onChange={(e) => setFNovo({ ...fNovo, contato_id: e.target.value })}
-            disabled={!fNovo.empresa_id}>
+            disabled={!fNovo.empresa_id} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">—</MenuItem>
             {contatosDaEmpresaNovo.map((c) => (
               <MenuItem key={c.id} value={String(c.id)}>
@@ -1031,7 +1030,7 @@ function OportunidadesPage() {
         <FormField label="Origem">
           <TextField size="small" fullWidth select
             value={fNovo.origem}
-            onChange={(e) => setFNovo({ ...fNovo, origem: e.target.value })}>
+            onChange={(e) => setFNovo({ ...fNovo, origem: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
             <MenuItem value="">—</MenuItem>
             <MenuItem value="site">Site</MenuItem>
             <MenuItem value="telefone">Telefone</MenuItem>
@@ -1044,7 +1043,7 @@ function OportunidadesPage() {
         <FormField label="Estágio">
           <TextField size="small" fullWidth select
             value={estagioInicialNovo}
-            onChange={(e) => setEstagioInicialNovo(e.target.value as EstagioOportunidade)}>
+            onChange={(e) => setEstagioInicialNovo(e.target.value as EstagioOportunidade)} slotProps={{ select: { displayEmpty: true } }}>
             {ESTAGIOS.filter((e) => e !== "perdida").map((est) => (
               <MenuItem key={est} value={String(est)}>
                 {statusLabel(est)}
@@ -1536,7 +1535,7 @@ function OportunidadeSheet({
                     value={fEdit.empresa_id}
                     onChange={(e) =>
                       setFEdit({ ...fEdit, empresa_id: e.target.value, contato_id: "" })
-                    }>
+                    } slotProps={{ select: { displayEmpty: true } }}>
                     {[...empresas.values()].map((emp) => (
                       <MenuItem key={emp.id} value={String(emp.id)}>
                         {emp.nome_fantasia || emp.razao_social}
@@ -1549,7 +1548,7 @@ function OportunidadeSheet({
                   <TextField size="small" fullWidth select
                     disabled={!podeEditar}
                     value={fEdit.contato_id}
-                    onChange={(e) => setFEdit({ ...fEdit, contato_id: e.target.value })}>
+                    onChange={(e) => setFEdit({ ...fEdit, contato_id: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
                     <MenuItem value="">—</MenuItem>
                     {contatosEmpresa.map((c) => (
                       <MenuItem key={c.id} value={String(c.id)}>
@@ -1579,7 +1578,7 @@ function OportunidadeSheet({
                   <TextField size="small" fullWidth select
                     disabled={!podeEditar}
                     value={fEdit.origem}
-                    onChange={(e) => setFEdit({ ...fEdit, origem: e.target.value })}>
+                    onChange={(e) => setFEdit({ ...fEdit, origem: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
                     <MenuItem value="">—</MenuItem>
                     <MenuItem value="site">Site</MenuItem>
                     <MenuItem value="telefone">Telefone</MenuItem>
@@ -1615,7 +1614,7 @@ function OportunidadeSheet({
                   <FormField label="Tipo">
                     <TextField size="small" fullWidth select
                       value={fInteracao.tipo}
-                      onChange={(e) => setFInteracao({ ...fInteracao, tipo: e.target.value })}>
+                      onChange={(e) => setFInteracao({ ...fInteracao, tipo: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
                       <MenuItem value="ligacao">Ligação</MenuItem>
                       <MenuItem value="whatsapp">WhatsApp</MenuItem>
                       <MenuItem value="email">E-mail</MenuItem>
@@ -1706,7 +1705,7 @@ function OportunidadeSheet({
                     <TextField size="small" fullWidth select
                       required
                       value={fOrc.produto_id}
-                      onChange={(e) => selecionarProdutoOrc(e.target.value)}>
+                      onChange={(e) => selecionarProdutoOrc(e.target.value)} slotProps={{ select: { displayEmpty: true } }}>
                       <MenuItem value="">—</MenuItem>
                       {produtos.map((p) => (
                         <MenuItem key={p.id} value={String(p.id)}>

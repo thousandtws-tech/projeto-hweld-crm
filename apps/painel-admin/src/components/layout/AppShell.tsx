@@ -146,10 +146,6 @@ const NAV: NavSection[] = [
   },
 ];
 
-/* ---------------------------------------------------------------------------
- * Algoritmo 1: Resolvedor Semântico de Breadcrumbs a partir do Pathname
- * ------------------------------------------------------------------------- */
-
 type Crumb = { label: string; to?: string };
 
 const MAPA_ROTAS: Record<string, { secao: string; label: string; parentTo?: string }> = {
