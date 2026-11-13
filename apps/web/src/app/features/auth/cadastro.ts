@@ -5,8 +5,9 @@ import { AuthStore } from '../../core/auth/auth.store';
 import { HwButton } from '../../shared/ui/button';
 
 /**
- * Auto-cadastro do portal B2B — estilo e-commerce: dados de acesso +
- * dados da empresa num fluxo só, entra logado ao concluir.
+ * Auto-cadastro do portal B2B — estilo e-commerce: só dados de acesso,
+ * entra logado ao concluir. Dados da empresa são completados depois
+ * em "Minha conta → Dados Cadastrais".
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,9 +33,6 @@ export class CadastroPage {
       validators: [Validators.required, Validators.minLength(8)],
     }),
     confirmarSenha: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    razaoSocial: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    nomeFantasia: new FormControl('', { nonNullable: true }),
-    cnpj: new FormControl('', { nonNullable: true }),
     telefone: new FormControl('', { nonNullable: true }),
   });
 
@@ -58,9 +56,6 @@ export class CadastroPage {
         nome: v.nome.trim(),
         email: v.email.trim(),
         senha: v.senha,
-        razao_social: v.razaoSocial.trim(),
-        nome_fantasia: v.nomeFantasia.trim() || null,
-        cnpj: v.cnpj.trim() || null,
         telefone: v.telefone.trim() || null,
       });
       await this.router.navigate(['/']);

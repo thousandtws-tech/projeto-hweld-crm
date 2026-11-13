@@ -97,3 +97,115 @@
     flex-shrink: 0;
   }
 }
+.bloco-topo .btn-editar {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--hw-border);
+  background: transparent;
+  color: var(--hw-accent);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--hw-radius-pill);
+  cursor: pointer;
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+}
+.form-empresa .campos {
+  display: grid;
+  gap: var(--hw-space-4);
+  margin-bottom: var(--hw-space-5);
+}
+.form-empresa .campo {
+  display: grid;
+  gap: 6px;
+  label {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--hw-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  input {
+    font: inherit;
+    font-size: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--hw-border);
+    border-radius: var(--hw-radius-sm);
+    background: var(--hw-surface);
+    color: var(--hw-text);
+    &:focus {
+      outline: 2px solid var(--hw-accent-tint);
+      border-color: var(--hw-accent);
+    }
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+.acoes-form {
+  display: flex;
+  align-items: center;
+  gap: var(--hw-space-3);
+  .btn-cancelar {
+    border: none;
+    background: none;
+    color: var(--hw-text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 10px 8px;
+    &:hover {
+      color: var(--hw-text);
+    }
+  }
+}
+.alerta-erro {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--hw-space-3);
+  margin-bottom: var(--hw-space-4);
+  background: #fde8e8;
+  border: 1px solid #f5b5b5;
+  border-radius: var(--hw-radius-sm);
+  font-size: 13px;
+  color: #a82323;
+  .material-symbols-outlined {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+}
+.completar-banner {
+  margin-bottom: var(--hw-space-5);
+  border-color: rgba(29, 79, 216, 0.35);
+  background: var(--hw-accent-tint);
+  color: var(--hw-text);
+  strong {
+    font-weight: 700;
+  }
+  .link-acao {
+    margin-left: auto;
+    border: none;
+    background: none;
+    color: var(--hw-accent);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+}
+.sucesso-banner {
+  margin-bottom: var(--hw-space-5);
+  border-color: #9fd8b4;
+  background: #e8f6ee;
+  color: #1c6b3c;
+  .material-symbols-outlined {
+    color: #1c6b3c;
+  }
+}

@@ -10,7 +10,7 @@ use chrono::{DateTime, Utc};
 use hweld_domain::catalogo::categoria::Categoria;
 use hweld_domain::catalogo::tabela_preco::TabelaPreco;
 use hweld_domain::crm::contato::Contato;
-use hweld_domain::crm::empresa::Empresa;
+use hweld_domain::crm::empresa::{Empresa, EmpresaInput};
 use hweld_domain::crm::endereco::{Endereco, EnderecoInput, TipoEndereco};
 use hweld_domain::shared::dinheiro::{Dinheiro, Quantidade};
 use hweld_domain::shared::id::Id;
@@ -58,6 +58,8 @@ pub struct EmpresaPortal {
     pub razao_social: String,
     pub nome_fantasia: Option<String>,
     pub cnpj: Option<String>,
+    pub telefone: Option<String>,
+    pub email: Option<String>,
     pub segmento: Option<String>,
 }
 
@@ -68,6 +70,8 @@ impl From<Empresa> for EmpresaPortal {
             razao_social: e.razao_social,
             nome_fantasia: e.nome_fantasia,
             cnpj: e.cnpj,
+            telefone: e.telefone,
+            email: e.email,
             segmento: e.segmento,
         }
     }
@@ -77,6 +81,16 @@ impl From<Empresa> for EmpresaPortal {
 pub struct TabelaPortal {
     pub id: Id<TabelaPreco>,
     pub nome: String,
+}
+
+/// Campos editáveis pelo portal em `PATCH /portal/empresa` (`None` = manter).
+#[derive(Debug, Clone, Default)]
+pub struct DadosEmpresaPortal {
+    pub razao_social: Option<String>,
+    pub nome_fantasia: Option<String>,
+    pub cnpj: Option<String>,
+    pub telefone: Option<String>,
+    pub email: Option<String>,
 }
 
 /// `GET /portal/me` — perfil do contato + empresa + tabela de preço vigente.
@@ -237,6 +251,48 @@ impl ServicoPortal {
             empresa: empresa.into(),
             tabela_preco,
         })
+    }
+
+    /// "Completar dados" — o contato principal edita os dados da empresa.
+    /// Campos `None` preservam o valor atual (semântica PATCH).
+    pub async fn atualizar_empresa(
+        &self,
+        contato_id: Id<Contato>,
+        dados: DadosEmpresaPortal,
+    ) -> Resultado<EmpresaPortal> {
+        let contato = self.contato(contato_id).await?;
+        if !contato.is_principal {
+            return Err(ErroApp::proibido(
+                "somente o contato principal pode editar os dados da empresa",
+            ));
+        }
+        let empresa = self
+            .empresas
+            .buscar_por_id(contato.empresa_id)
+            .await?
+            .filter(|e| e.deleted_at.is_none())
+            .ok_or_else(|| ErroApp::nao_autenticado("empresa inválida"))?;
+
+        let input = EmpresaInput {
+            razao_social: dados
+                .razao_social
+                .filter(|s| !s.trim().is_empty())
+                .unwrap_or(empresa.razao_social),
+            nome_fantasia: dados.nome_fantasia.or(empresa.nome_fantasia),
+            cnpj: dados.cnpj.or(empresa.cnpj),
+            telefone: dados.telefone.or(empresa.telefone),
+            email: dados.email.or(empresa.email),
+            // Não editáveis pelo portal — preservam o valor atual.
+            inscricao_estadual: empresa.inscricao_estadual,
+            segmento: empresa.segmento,
+            status: empresa.status,
+            tabela_preco_id: empresa.tabela_preco_id,
+            observacoes: empresa.observacoes,
+            site: empresa.site,
+        };
+
+        let atualizada = self.empresas.atualizar(empresa.id, input.validar()?).await?;
+        Ok(atualizada.into())
     }
 
     /// G2 — endereços da empresa do contato.

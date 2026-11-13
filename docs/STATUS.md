@@ -24,10 +24,14 @@ integrações. Atualizado em 2026-11-13.
 - CRM: empresas, contatos, endereços, oportunidades, interações
 - Catálogo: categorias, produtos, tabelas de preço
 - Portal B2B: catálogo, carrinho, checkout
-- Auto-cadastro portal: `POST /api/v1/auth/portal/cadastro` cria empresa +
-  contato principal (acesso_portal + senha Argon2) e já emite tokens —
-  acesso imediato estilo e-commerce; dentro do escopo `/auth` (rate limit),
-  e-mail duplicado → 409
+- Auto-cadastro portal: `POST /api/v1/auth/portal/cadastro` só dados de
+  acesso — empresa nasce como "Empresa de {nome}" e o contato completa
+  depois no perfil; já emite tokens (acesso imediato estilo e-commerce);
+  dentro do escopo `/auth` (rate limit), e-mail duplicado → 409
+- Completar dados: `PATCH /api/v1/portal/empresa` (contato principal,
+  `is_principal`) atualiza razão social, nome fantasia, CNPJ, telefone e
+  e-mail com merge semântica PATCH; CNPJ já preenchido não é editado pela
+  UI; campos administrativos (status, segmento, tabela) preservados
 - Vendas: orçamentos, pedidos (máquinas de estado no domínio)
 - Estoque: movimentações append-only → `estoque_saldos` (projeção na mesma TX)
 - Ordens de serviço + histórico
@@ -74,8 +78,9 @@ integrações. Atualizado em 2026-11-13.
 - **apps/web (Angular)**: home com seções CMS (slider, categorias, marcas,
   banners, trust-bar, newsletter), catálogo/busca/PDP, carrinho, checkout,
   conta (pedidos, detalhe, segurança), institucional (FAQ, garantia, trocas,
-  privacidade, atendimento), login, auto-cadastro `/cadastro` (acesso +
-  dados da empresa, entra logado)
+  privacidade, atendimento), login, auto-cadastro `/cadastro` (só acesso,
+  entra logado), `/conta` com edição self-service dos dados da empresa +
+  banner "completar cadastro" quando CNPJ ausente
 - **apps/painel-admin (React)**: dashboard (KPIs, ABC, receita), CRM
   (empresas, oportunidades kanban), catálogo (categorias, produtos,
   tabelas-preço, CMS banners/marcas), vendas (orçamentos, pedidos),

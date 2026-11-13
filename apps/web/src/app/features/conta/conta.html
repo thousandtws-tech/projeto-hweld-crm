@@ -6,6 +6,24 @@
 </div>
 
 @if (perfil(); as p) {
+  @if (empresaIncompleta() && !editando()) {
+    <div class="nota-suporte completar-banner">
+      <span class="material-symbols-outlined">assignment</span>
+      <span>
+        <strong>Complete o cadastro da sua empresa</strong> — informe razão social e CNPJ para
+        liberar faturamento e condições comerciais.
+      </span>
+      @if (p.contato.is_principal) {
+        <button type="button" class="link-acao" (click)="iniciarEdicao()">Completar agora</button>
+      }
+    </div>
+  }
+  @if (sucessoSalvar()) {
+    <div class="nota-suporte sucesso-banner">
+      <span class="material-symbols-outlined">check_circle</span>
+      <span>Dados da empresa atualizados com sucesso.</span>
+    </div>
+  }
   <div class="cards-grid">
     <!-- Card de Contato -->
     <section class="bloco-card">
@@ -44,41 +62,100 @@
           <h2>Dados da Empresa</h2>
           <span class="bloco-desc">Pessoa jurídica vinculada e parâmetros fiscais</span>
         </div>
-      </div>
-      <dl class="info-dl">
-        <div>
-          <dt>Razão Social</dt>
-          <dd>{{ p.empresa.razao_social }}</dd>
-        </div>
-        <div>
-          <dt>Nome Fantasia</dt>
-          <dd>{{ p.empresa.nome_fantasia ?? '—' }}</dd>
-        </div>
-        <div>
-          <dt>CNPJ</dt>
-          <dd class="hw-numeric">{{ (p.empresa.cnpj ?? '—') | cnpj }}</dd>
-        </div>
-        <div>
-          <dt>Segmento de Atuação</dt>
-          <dd>{{ p.empresa.segmento ?? '—' }}</dd>
-        </div>
-        @if (p.tabela_preco) {
-          <div class="tabela-preco-row">
-            <dt>Tabela Comercial Ativa</dt>
-            <dd>
-              <span class="tabela-chip">{{ p.tabela_preco.nome }}</span>
-            </dd>
-          </div>
+        @if (p.contato.is_principal && !editando()) {
+          <button type="button" class="btn-editar" (click)="iniciarEdicao()">
+            <span class="material-symbols-outlined">edit</span>
+            Editar
+          </button>
         }
-      </dl>
+      </div>
+      @if (editando()) {
+        <form class="form-empresa" [formGroup]="form" (ngSubmit)="salvarEmpresa()">
+          @if (erroSalvar()) {
+            <div class="alerta-erro" role="alert">
+              <span class="material-symbols-outlined">error</span>
+              <span>{{ erroSalvar() }}</span>
+            </div>
+          }
+          <div class="campos">
+            <div class="campo">
+              <label for="razaoSocial">Razão social</label>
+              <input id="razaoSocial" type="text" formControlName="razaoSocial" autocomplete="organization" />
+            </div>
+            <div class="campo">
+              <label for="nomeFantasia">Nome fantasia</label>
+              <input id="nomeFantasia" type="text" formControlName="nomeFantasia" />
+            </div>
+            <div class="campo">
+              <label for="cnpj">CNPJ{{ p.empresa.cnpj ? ' (não editável)' : '' }}</label>
+              <input id="cnpj" type="text" formControlName="cnpj" inputmode="numeric" />
+            </div>
+            <div class="campo">
+              <label for="empresaTelefone">Telefone</label>
+              <input id="empresaTelefone" type="tel" formControlName="telefone" autocomplete="tel" />
+            </div>
+            <div class="campo">
+              <label for="empresaEmail">E-mail comercial</label>
+              <input id="empresaEmail" type="email" formControlName="email" autocomplete="email" />
+            </div>
+          </div>
+          <div class="acoes-form">
+            <button
+              hwButton
+              type="submit"
+              [loading]="salvando()"
+              texto="Salvando…"
+              [disabled]="form.invalid"
+            >
+              Salvar
+            </button>
+            <button type="button" class="btn-cancelar" (click)="cancelarEdicao()">Cancelar</button>
+          </div>
+        </form>
+      } @else {
+        <dl class="info-dl">
+          <div>
+            <dt>Razão Social</dt>
+            <dd>{{ p.empresa.razao_social }}</dd>
+          </div>
+          <div>
+            <dt>Nome Fantasia</dt>
+            <dd>{{ p.empresa.nome_fantasia ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>CNPJ</dt>
+            <dd class="hw-numeric">{{ (p.empresa.cnpj ?? '—') | cnpj }}</dd>
+          </div>
+          <div>
+            <dt>Telefone</dt>
+            <dd>{{ p.empresa.telefone ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>E-mail Comercial</dt>
+            <dd>{{ p.empresa.email ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>Segmento de Atuação</dt>
+            <dd>{{ p.empresa.segmento ?? '—' }}</dd>
+          </div>
+          @if (p.tabela_preco) {
+            <div class="tabela-preco-row">
+              <dt>Tabela Comercial Ativa</dt>
+              <dd>
+                <span class="tabela-chip">{{ p.tabela_preco.nome }}</span>
+              </dd>
+            </div>
+          }
+        </dl>
+      }
     </section>
   </div>
 
   <div class="nota-suporte">
     <span class="material-symbols-outlined">info</span>
     <span
-      >Para atualizar endereço de faturamento, razão social ou condições de prazo, entre em contato
-      com o seu consultor de vendas.</span
+      >Para atualizar endereço de faturamento ou condições de prazo, entre em contato com o seu
+      consultor de vendas.</span
     >
   </div>
 } @else {

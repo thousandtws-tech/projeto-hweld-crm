@@ -78,41 +78,6 @@
           </div>
         </div>
 
-        <div class="grupo-form">
-          <h2 class="subtitulo">Dados da empresa</h2>
-          <div class="campos">
-            <div class="campo" [class.invalid]="invalido('razaoSocial')">
-              <input
-                id="razaoSocial"
-                type="text"
-                formControlName="razaoSocial"
-                placeholder="Razão social"
-                autocomplete="organization"
-              />
-            </div>
-            @if (invalido('razaoSocial')) {
-              <p class="campo-erro">Informe a razão social.</p>
-            }
-            <div class="campo">
-              <input
-                id="nomeFantasia"
-                type="text"
-                formControlName="nomeFantasia"
-                placeholder="Nome fantasia (opcional)"
-              />
-            </div>
-            <div class="campo">
-              <input
-                id="cnpj"
-                type="text"
-                formControlName="cnpj"
-                placeholder="CNPJ (opcional)"
-                inputmode="numeric"
-              />
-            </div>
-          </div>
-        </div>
-
         <button
           hwButton
           size="lg"

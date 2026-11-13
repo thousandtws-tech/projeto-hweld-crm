@@ -154,7 +154,11 @@ pub async fn cadastro_portal(
     body: web::Json<CadastroPortalReq>,
 ) -> Resposta<HttpResponse> {
     let empresa = EmpresaInput {
-        razao_social: body.razao_social.clone(),
+        razao_social: body
+            .razao_social
+            .clone()
+            .filter(|r| !r.trim().is_empty())
+            .unwrap_or_else(|| format!("Empresa de {}", body.nome.trim())),
         nome_fantasia: body.nome_fantasia.clone(),
         cnpj: body.cnpj.clone(),
         inscricao_estadual: None,

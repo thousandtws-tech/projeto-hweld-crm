@@ -31,10 +31,10 @@ export interface CadastroPortalReq {
   nome: string;
   email: string;
   senha: string;
-  razao_social: string;
-  nome_fantasia: string | null;
-  cnpj: string | null;
-  telefone: string | null;
+  razao_social?: string;
+  nome_fantasia?: string | null;
+  cnpj?: string | null;
+  telefone?: string | null;
 }
 
 /**
@@ -95,6 +95,8 @@ export class AuthStore {
         razao_social: '',
         nome_fantasia: null,
         cnpj: null,
+        telefone: null,
+        email: null,
         segmento: null,
       },
       tabela_preco: null,

@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import {
   Carrinho,
   Categoria,
+  DadosEmpresa,
   Endereco,
   ItemCatalogoPortal,
   MeuPerfil,
@@ -178,6 +179,10 @@ export class ContaService {
 
   me() {
     return firstValueFrom(this.http.get<MeuPerfil>(`${api}/portal/me`));
+  }
+
+  atualizarEmpresa(dados: DadosEmpresa) {
+    return firstValueFrom(this.http.patch<MeuPerfil['empresa']>(`${api}/portal/empresa`, dados));
   }
 
   enderecos(tipo?: string) {

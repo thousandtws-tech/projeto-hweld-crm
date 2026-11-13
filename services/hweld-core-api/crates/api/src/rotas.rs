@@ -237,6 +237,7 @@ pub fn configurar(cfg: &mut web::ServiceConfig, docs_habilitados: bool) {
             .service(notificacoes::limpar_todas_staff)
             // Portal B2B — mesmo escopo, extrator `AuthPortal` valida o contexto.
             .service(portal::me)
+            .service(portal::atualizar_empresa)
             .service(portal::enderecos)
             .service(portal::criar_endereco)
             .service(portal::categorias)

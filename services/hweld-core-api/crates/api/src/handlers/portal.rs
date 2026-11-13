@@ -5,17 +5,20 @@
 //! é sempre 404, nunca 403 (não revela existência do recurso alheio).
 
 use crate::erro::Resposta;
-use actix_web::{get, post, web, HttpResponse};
+use actix_web::{get, patch, post, web, HttpResponse};
 use hweld_application::use_cases::catalogo::ProdutoDetalhePortal;
 use hweld_application::use_cases::portal::{
-    EnderecoPortal, MeuPerfilPortal, PedidoDetalhePortal, PedidoResumoPortal,
+    DadosEmpresaPortal, EmpresaPortal, EnderecoPortal, MeuPerfilPortal, PedidoDetalhePortal,
+    PedidoResumoPortal,
 };
 use hweld_domain::catalogo::categoria::Categoria;
 use hweld_domain::crm::endereco::TipoEndereco;
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::Pagina;
 
-use crate::dto::{EnderecoPortalReq, QueryEnderecos, QueryPortalPedidos};
+use crate::dto::{
+    AtualizarEmpresaPortalReq, EnderecoPortalReq, QueryEnderecos, QueryPortalPedidos,
+};
 use crate::estado::AppState;
 use crate::extratores::{AuthPortal, AuthPortalOpcional};
 
@@ -34,6 +37,43 @@ use crate::extratores::{AuthPortal, AuthPortalOpcional};
 pub async fn me(state: web::Data<AppState>, portal: AuthPortal) -> Resposta<HttpResponse> {
     let perfil = state.portal.me(Id::novo(portal.contato_id())).await?;
     Ok(HttpResponse::Ok().json(perfil))
+}
+
+/// "Completar dados" — o contato principal atualiza os dados da empresa.
+/// Campos ausentes/no body preservam o valor atual.
+#[utoipa::path(
+    patch,
+    path = "/api/v1/portal/empresa",
+    tag = "Portal B2B",
+    request_body = AtualizarEmpresaPortalReq,
+    responses(
+        (status = 200, body = EmpresaPortal),
+        (status = 401, description = "não autenticado"),
+        (status = 403, description = "somente contato principal"),
+        (status = 422, description = "dados inválidos"),
+    ),
+    security(("bearer_auth" = [])),
+)]
+#[patch("/portal/empresa")]
+pub async fn atualizar_empresa(
+    state: web::Data<AppState>,
+    portal: AuthPortal,
+    body: web::Json<AtualizarEmpresaPortalReq>,
+) -> Resposta<HttpResponse> {
+    let empresa = state
+        .portal
+        .atualizar_empresa(
+            Id::novo(portal.contato_id()),
+            DadosEmpresaPortal {
+                razao_social: body.razao_social.clone(),
+                nome_fantasia: body.nome_fantasia.clone(),
+                cnpj: body.cnpj.clone(),
+                telefone: body.telefone.clone(),
+                email: body.email.clone(),
+            },
+        )
+        .await?;
+    Ok(HttpResponse::Ok().json(empresa))
 }
 
 /// Endereços da empresa do contato (filtro opcional por tipo).

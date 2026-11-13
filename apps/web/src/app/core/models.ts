@@ -161,9 +161,20 @@ export interface MeuPerfil {
     razao_social: string;
     nome_fantasia: string | null;
     cnpj: string | null;
+    telefone: string | null;
+    email: string | null;
     segmento: string | null;
   };
   tabela_preco: { id: number; nome: string } | null;
+}
+
+/** PATCH /portal/empresa — "completar dados" do contato principal. */
+export interface DadosEmpresa {
+  razao_social?: string;
+  nome_fantasia?: string | null;
+  cnpj?: string | null;
+  telefone?: string | null;
+  email?: string | null;
 }
 
 export interface SugestaoBusca {
