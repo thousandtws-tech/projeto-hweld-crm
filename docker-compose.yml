@@ -1,0 +1,157 @@
+# Stack local completa — dev self-contained (Kiri/Docker).
+#
+#   docker compose up -d --build
+#
+# Serviços: postgres, elasticsearch(local), minio, core-api, operations-api,
+# realtime-engine, painel-admin, web. Valores de dev — NÃO usar em produção.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: hweld-postgres
+    environment:
+      POSTGRES_USER: hweld
+      POSTGRES_PASSWORD: hweld
+      POSTGRES_DB: hweld
+    ports: ["5432:5432"]
+    volumes: [hweld-pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hweld -d hweld"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.0
+    container_name: hweld-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports: ["9200:9200"]
+    volumes: [hweld-esdata:/usr/share/elasticsearch/data]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  # minio/minio saiu do Docker Hub — bitnamilegacy é o mirror oficial.
+  minio:
+    image: bitnamilegacy/minio:latest
+    container_name: hweld-minio
+    # root — volume nomeado nasce root-owned; bitnami usa UID 1001 (dev only).
+    user: "0:0"
+    command: server /bitnami/minio/data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: hweld
+      MINIO_ROOT_PASSWORD: hweld123
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [hweld-minio:/bitnami/minio/data]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/minio/health/live || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  core-api:
+    build: ./services/hweld-core-api
+    container_name: hweld-core-api
+    environment:
+      DATABASE_URL: postgres://hweld:hweld@postgres:5432/hweld
+      JWT_SECRET: dev-jwt-secret-hweld-32bytes-minimum!!
+      INTERNAL_SERVICE_TOKEN: dev-internal-token
+      OPERATIONS_API_URL: http://operations-api:8090
+      ENVIRONMENT: development
+      SEED_ADMIN: "true"
+      ADMIN_NOME: Administrador
+      ADMIN_EMAIL: admin@hweld.local
+      ADMIN_SENHA: admin
+      CORS_PERMISSIVE: "true"
+      MOTOR_URL: http://realtime-engine:4100
+      MOTOR_INGEST_TOKEN: dev-ingest-token
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_BUCKET: hweld
+      MINIO_ACCESS_KEY: hweld
+      MINIO_SECRET_KEY: hweld123
+    ports: ["8080:8080"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      elasticsearch: {condition: service_healthy}
+      minio: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  operations-api:
+    build: ./services/hweld-operations-api
+    container_name: hweld-operations-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: hweld               # banco compartilhado — Flyway trackeia separado
+      DB_USER: hweld
+      DB_PASSWORD: hweld
+      JWT_SECRET: dev-jwt-secret-hweld-32bytes-minimum!!
+      INTERNAL_SERVICE_TOKEN: dev-internal-token
+      CORE_API_URL: http://core-api:8080
+      MOTOR_URL: http://realtime-engine:4100
+      MOTOR_INGEST_TOKEN: dev-ingest-token
+      PAYMENT_PROVIDER: stub
+      PAYMENT_STUB_WEBHOOK_SECRET: dev-stub-webhook-secret
+      PAYMENT_STUB_ALLOW_UNSIGNED: "false"
+      EMAIL_PROVIDER: log
+      OTEL_ENABLED: "false"
+      API_DOCS_ENABLED: "true"
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_BUCKET: hweld
+      MINIO_ACCESS_KEY: hweld
+      MINIO_SECRET_KEY: hweld123
+    ports: ["8090:8090"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      minio: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8090/actuator/health/liveness || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 10
+      start_period: 45s
+
+  realtime-engine:
+    build: ./services/hweld-realtime-engine
+    container_name: hweld-realtime-engine
+    environment:
+      PHX_SERVER: "true"
+      PHX_HOST: localhost
+      SECRET_KEY_BASE: dev-secret-key-base-hweld-64bytes-minimum-dev-only-padding!!
+      JWT_SECRET: dev-jwt-secret-hweld-32bytes-minimum!!
+      MOTOR_INGEST_TOKEN: dev-ingest-token
+      DATABASE_URL: postgres://hweld:hweld@postgres:5432/hweld
+      RUST_API_URL: http://core-api:8080
+      CORS_ORIGINS: http://localhost:5173,http://localhost:4200
+    ports: ["4100:4100"]
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  painel-admin:
+    build: ./apps/painel-admin
+    container_name: hweld-painel-admin
+    ports: ["5173:80"]
+    depends_on: [core-api, realtime-engine]
+
+  web:
+    build: ./apps/web
+    container_name: hweld-web
+    ports: ["4200:80"]
+    depends_on: [core-api]
+
+volumes:
+  hweld-pgdata:
+  hweld-esdata:
+  hweld-minio:
