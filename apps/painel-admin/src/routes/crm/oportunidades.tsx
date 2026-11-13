@@ -142,6 +142,16 @@ const ESTAGIOS: EstagioOportunidade[] = [
   "perdida",
 ];
 
+// Cor do indicador de estágio — mesma paleta dos StatusPill (info/warning/error).
+const ESTAGIO_COR: Record<EstagioOportunidade, string> = {
+  lead: "#26488c",
+  qualificacao: "#26488c",
+  proposta: "#d9486e",
+  negociacao: "#d9486e",
+  ganha: "#26488c",
+  perdida: "#d92546",
+};
+
 const MOTIVOS_PERDA_SUGERIDOS = [
   "Preço acima da concorrência",
   "Prazo de entrega / estoque indisponível",
@@ -844,28 +854,30 @@ function OportunidadesPage() {
               };
 
               return (
-                <div className="px-3 pt-3 pb-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <StatusPill status={est} label={cfg.titulo} />
-                      <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                        {col.totalChildrenCount}
-                      </span>
-                    </div>
+                <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: ESTAGIO_COR[est] }}
+                    />
+                    <span className="truncate text-sm font-semibold">{cfg.titulo}</span>
+                    <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-md bg-secondary px-1 text-[11px] font-semibold tabular-nums text-muted-foreground">
+                      {col.totalChildrenCount}
+                    </span>
+                  </div>
 
-                    <div className="flex items-center gap-1.5">
-                      {meta.somaBruta > 0 && (
-                        <span className="text-xs font-semibold tabular-nums text-muted-foreground">
-                          {brl(meta.somaBruta.toFixed(2))}
-                        </span>
-                      )}
-                      {podeEditar && est !== "perdida" && est !== "ganha" && (
-                        <IconButton size="small" type="button" onClick={(e) => {
-                            e.stopPropagation();
-                            abrirModalNovo(est);
-                          }} title={`Adicionar em ${cfg.titulo}`}><Plus className="h-3.5 w-3.5" /></IconButton>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-1.5">
+                    {meta.somaBruta > 0 && (
+                      <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                        {brl(meta.somaBruta.toFixed(2))}
+                      </span>
+                    )}
+                    {podeEditar && est !== "perdida" && est !== "ganha" && (
+                      <IconButton size="small" type="button" onClick={(e) => {
+                          e.stopPropagation();
+                          abrirModalNovo(est);
+                        }} title={`Adicionar em ${cfg.titulo}`}><Plus className="h-3.5 w-3.5" /></IconButton>
+                    )}
                   </div>
                 </div>
               );
@@ -873,7 +885,7 @@ function OportunidadesPage() {
             renderListFooter={(col) => {
               if (col.totalChildrenCount > 0) return null;
               return (
-                <div className="my-1.5 rounded-2xl border border-dashed border-border/60 py-6 text-center text-xs text-muted-foreground/70">
+                <div className="my-1.5 rounded-md border border-dashed border-border/60 py-6 text-center text-xs text-muted-foreground/70">
                   Sem oportunidades
                 </div>
               );
