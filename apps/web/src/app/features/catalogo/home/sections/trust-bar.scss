@@ -25,15 +25,14 @@
     transform 0.18s ease;
 }
 .trust-item:hover {
-  background: #f8fafc;
-  transform: translateY(-2px);
+  background: var(--hw-surface);
 }
 .trust-icon-box {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: #FFFFFF;
-  border: 1px solid #172194;
+  background: var(--hw-surface);
+  border: 1px solid var(--hw-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,9 +47,8 @@
   border-color: #e2e8f0;
 }
 .trust-item:hover .trust-icon-box {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(2, 2, 174, 0.251);
-  border-color: #0224e6;
+  border-color: var(--hw-border-input);
+  box-shadow: var(--hw-shadow-card);
 }
 .trust-img-icon {
   width: 24px;

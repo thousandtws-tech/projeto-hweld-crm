@@ -26,9 +26,9 @@
   width: 54px;
   height: 54px;
   border-radius: 14px;
-  background: rgba(29, 79, 216, 0.2);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  color: #38bdf8;
+  background: rgba(216, 32, 39, 0.18);
+  border: 1px solid rgba(216, 32, 39, 0.35);
+  color: #ff8a8d;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -86,8 +86,8 @@
     box-shadow 0.2s ease;
 }
 .input-wrap input:focus {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+  border-color: rgba(255, 122, 126, 0.65);
+  box-shadow: 0 0 0 3px rgba(216, 32, 39, 0.25);
 }
 .input-wrap input::placeholder {
   color: #64748b;
@@ -110,7 +110,7 @@
     transform 0.15s ease;
 }
 .btn-news:hover {
-  background: #2563eb;
+  background: var(--hw-cta-hover);
   transform: translateY(-1px);
 }
 .btn-news span.material-symbols-outlined {

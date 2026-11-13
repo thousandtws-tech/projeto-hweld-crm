@@ -8,13 +8,13 @@
   margin-bottom: var(--hw-space-6);
   padding-bottom: var(--hw-space-4);
   gap: 16px;
-  border-bottom: 2px solid #f97316;
+  border-bottom: 2px solid var(--hw-brand-red);
 }
 .secao-tag {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: #ea580c;
+  color: var(--hw-brand-red);
   display: inline-block;
   margin-bottom: 4px;
 }

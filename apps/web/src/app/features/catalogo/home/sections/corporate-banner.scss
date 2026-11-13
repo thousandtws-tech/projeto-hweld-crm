@@ -61,8 +61,8 @@
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: #fff7ed;
-  border: 1px solid #ffedd5;
+  background: var(--hw-accent-tint);
+  border: 1px solid rgba(35, 61, 140, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -107,7 +107,7 @@
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.1em;
-  color: #38bdf8;
+  color: #ff8a8d;
   margin-bottom: 6px;
 }
 .action-phone {

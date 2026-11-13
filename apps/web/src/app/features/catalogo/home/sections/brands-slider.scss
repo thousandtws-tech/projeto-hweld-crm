@@ -26,7 +26,7 @@
 .marcas-linha {
   flex: 1;
   height: 2px;
-  background: #f97316;
+  background: var(--hw-brand-red);
   border-radius: 2px;
   opacity: 0.95;
 }
@@ -78,8 +78,8 @@
   cursor: pointer;
 }
 .marca-card:hover {
-  border-color: #fdba74;
-  box-shadow: 0 8px 24px -4px rgba(249, 115, 22, 0.16);
+  border-color: rgba(216, 32, 39, 0.35);
+  box-shadow: 0 8px 24px -4px rgba(216, 32, 39, 0.12);
   transform: translateY(-3px);
 }
 .marca-logo {
@@ -107,7 +107,7 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.12);
-  color: #f97316;
+  color: var(--hw-brand-red);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -115,11 +115,11 @@
   transition: all 0.18s ease;
 }
 .marcas-nav-btn:hover {
-  background: #fff7ed;
-  border-color: #fdba74;
-  color: #ea580c;
+  background: var(--hw-cta-tint);
+  border-color: rgba(216, 32, 39, 0.4);
+  color: var(--hw-cta-hover);
   transform: translateY(-50%) scale(1.1);
-  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.25);
+  box-shadow: 0 4px 14px rgba(216, 32, 39, 0.2);
 }
 .marcas-nav-btn:active {
   transform: translateY(-50%) scale(0.96);

@@ -24,6 +24,48 @@
   gap: 32px;
 }
 
+/* Linha da Marca (logo branca + tagline) */
+.rodape-marca {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.rodape-logo {
+  display: inline-flex;
+  flex-shrink: 0;
+
+  img {
+    height: 40px;
+    width: auto;
+    display: block;
+  }
+}
+
+.rodape-tagline {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 520px;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+  padding-left: 24px;
+}
+
+@media (max-width: 640px) {
+  .rodape-marca {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .rodape-tagline {
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+
 /* Grid de 4 Colunas */
 .rodape-grid {
   display: grid;

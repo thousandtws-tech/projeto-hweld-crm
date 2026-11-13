@@ -63,19 +63,19 @@
   text-transform: uppercase;
 }
 .badge-orange {
-  background: #ea580c;
+  background: var(--hw-brand-red);
   color: #ffffff;
-  box-shadow: 0 0 12px rgba(234, 88, 12, 0.4);
+  box-shadow: 0 0 12px rgba(216, 32, 39, 0.4);
 }
 .badge-cyan {
-  background: #0284c7;
+  background: var(--hw-brand-navy);
   color: #ffffff;
-  box-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
+  box-shadow: 0 0 12px rgba(35, 61, 140, 0.4);
 }
 .badge-blue {
   background: var(--hw-accent);
   color: #ffffff;
-  box-shadow: 0 0 12px rgba(29, 79, 216, 0.4);
+  box-shadow: 0 0 12px rgba(35, 61, 140, 0.4);
 }
 
 .card-title {
@@ -133,11 +133,11 @@
   font-size: 16px;
 }
 .btn-orange {
-  background: #ea580c;
+  background: var(--hw-cta);
   color: #ffffff;
 }
 .btn-cyan {
-  background: #0284c7;
+  background: var(--hw-brand-navy);
   color: #ffffff;
 }
 .btn-blue {

@@ -54,9 +54,9 @@
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.15);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #ff8a8d;
+  background: rgba(216, 32, 39, 0.22);
+  border: 1px solid rgba(216, 32, 39, 0.45);
   padding: 4px 12px;
   border-radius: var(--hw-radius-pill);
   margin-bottom: 12px;
@@ -111,7 +111,7 @@
   white-space: nowrap;
 }
 .btn-duo:hover {
-  background: #2563eb;
+  background: var(--hw-accent-hover);
   transform: translateY(-2px);
 }
 .btn-gold {
