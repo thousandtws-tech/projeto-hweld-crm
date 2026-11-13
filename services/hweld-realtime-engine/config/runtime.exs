@@ -60,6 +60,7 @@ end
 
 jwt_secret = env.("JWT_SECRET")
 ingest_token = env.("MOTOR_INGEST_TOKEN")
+edge_token = env.("EDGE_TOKEN")
 
 if config_env() == :prod do
   if is_nil(jwt_secret) or jwt_secret == "" do
@@ -69,12 +70,20 @@ if config_env() == :prod do
   if is_nil(ingest_token) or ingest_token == "" do
     raise "MOTOR_INGEST_TOKEN é obrigatório em produção (autentica o backend Rust no /ingest)"
   end
+
+  if is_nil(edge_token) or edge_token == "" do
+    IO.warn(
+      "EDGE_TOKEN ausente em produção — /events aceita tráfego direto à origem. " <>
+        "Configurar o segredo compartilhado com o Worker Cloudflare."
+    )
+  end
 end
 
 # `||` no app env preserva valores fixos do test.exs (testes herméticos).
 config :motor_realtime,
   jwt_secret: jwt_secret || Application.get_env(:motor_realtime, :jwt_secret),
   ingest_token: ingest_token || Application.get_env(:motor_realtime, :ingest_token),
+  edge_token: edge_token || Application.get_env(:motor_realtime, :edge_token),
   database_url: env.("DATABASE_URL") || Application.get_env(:motor_realtime, :database_url),
   backend_api_url: System.get_env("RUST_API_URL") || "http://localhost:8080/api/v1",
   cors_origins:

@@ -88,6 +88,10 @@ pub struct Config {
     pub integracao: ConfigIntegracao,
     /// `None` = storage local em disco; `Some` = MinIO/S3 remoto.
     pub armazenamento: Option<ConfigArmazenamento>,
+    /// Segredo de borda (`x-edge-token` injetado pelo Worker Cloudflare).
+    /// `Some` = origem exige o header e rejeita tráfego direto; `None`
+    /// desliga a guarda (dev local).
+    pub edge_token: Option<String>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -178,6 +182,7 @@ impl Config {
                         .then(|| "dev-internal-token".to_string())
                 }),
             },
+            edge_token: env("EDGE_TOKEN"),
             armazenamento: env("MINIO_ENDPOINT").map(|endpoint| ConfigArmazenamento {
                 endpoint,
                 bucket: env("MINIO_BUCKET").unwrap_or_else(|| "hweld".into()),

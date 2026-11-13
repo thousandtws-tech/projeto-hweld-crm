@@ -58,6 +58,9 @@ public class SecurityConfig {
                     .hasAnyAuthority("ROLE_STAFF", "ROLE_PORTAL", "ROLE_SERVICE")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConverter)))
+            // Guarda de borda antes de qualquer auth: tráfego direto à origem
+            // morre aqui (403) sem chegar ao JWT nem ao service token.
+            .addFilterBefore(new EdgeTokenFilter(props.edgeToken()), BearerTokenAuthenticationFilter.class)
             .addFilterBefore(new ServiceTokenFilter(props.internalServiceToken()), BearerTokenAuthenticationFilter.class);
         return http.build();
     }

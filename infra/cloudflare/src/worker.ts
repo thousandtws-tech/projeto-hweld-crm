@@ -15,6 +15,14 @@ interface Env {
   CORE_API_ORIGIN: string;
   REALTIME_ORIGIN: string;
   OPS_API_ORIGIN: string;
+  /**
+   * Segredo de borda compartilhado com as origens (`EDGE_TOKEN` nas três).
+   * A origem rejeita tráfego direto (`*.up.railway.app`) que não venha com
+   * `x-edge-token` — só a edge conhece o segredo. Ausente = header não
+   * injetado (dev local, onde a origem também tem a guarda desligada).
+   * Configurar com `wrangler secret put EDGE_TOKEN` — nunca em `vars`.
+   */
+  EDGE_TOKEN?: string;
 }
 
 const API_PREFIX = "/api";
@@ -37,13 +45,13 @@ export default {
     const { pathname } = new URL(request.url);
 
     if (OPS_PREFIXES.some((p) => matchesPrefix(pathname, p))) {
-      return proxy(request, env.OPS_API_ORIGIN);
+      return proxy(request, env.OPS_API_ORIGIN, env);
     }
     if (matchesPrefix(pathname, API_PREFIX)) {
-      return proxy(request, env.CORE_API_ORIGIN);
+      return proxy(request, env.CORE_API_ORIGIN, env);
     }
     if (REALTIME_PREFIXES.some((p) => matchesPrefix(pathname, p))) {
-      return proxy(request, env.REALTIME_ORIGIN);
+      return proxy(request, env.REALTIME_ORIGIN, env);
     }
 
     return env.ASSETS.fetch(request);
@@ -54,12 +62,18 @@ function matchesPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
-function proxy(request: Request, origin: string): Promise<Response> {
+function proxy(request: Request, origin: string, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const target = new URL(`${url.pathname}${url.search}`, stripSlash(origin));
 
   const proxied = new Request(target.toString(), request);
   proxied.headers.delete("host");
+
+  // `set` sobrescreve um `x-edge-token` forjado pelo cliente — a origem só
+  // confia no valor injetado aqui.
+  if (env.EDGE_TOKEN) {
+    proxied.headers.set("x-edge-token", env.EDGE_TOKEN);
+  }
 
   const clientIp = request.headers.get("cf-connecting-ip");
   if (clientIp) {

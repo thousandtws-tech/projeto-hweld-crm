@@ -91,6 +91,13 @@ async fn executar() -> anyhow::Result<()> {
     let cors_origins = config.cors_origins.clone();
     let cors_permissive = config.cors_permissive;
     let docs_habilitados = config.docs_habilitados;
+    let edge_token = config.edge_token.clone();
+    if config.eh_producao() && edge_token.is_none() {
+        tracing::error!(
+            "EDGE_TOKEN ausente em produção — origem exposta a tráfego direto \
+             (`*.up.railway.app`). Configurar o segredo compartilhado com o Worker."
+        );
+    }
     let bind = (config.host.clone(), config.port);
 
     tracing::info!(bind = ?bind, "servidor HTTP subindo");
@@ -142,6 +149,10 @@ async fn executar() -> anyhow::Result<()> {
             // independente do Accept-Encoding do cliente).
             .wrap(hweld_api::cache_http::CacheHttp)
             .wrap(Compress::default())
+            // EdgeGuard registrado após o Compress e antes do TracingLogger:
+            // executa cedo (rejeita sem custo de compressão) mas ainda sob o
+            // logger — requests negados ficam auditáveis no tracing.
+            .wrap(hweld_api::edge_guard::EdgeGuard::new(edge_token.clone()))
             .wrap(TracingLogger::default())
             .configure(move |cfg| rotas::configurar(cfg, docs_habilitados))
     });

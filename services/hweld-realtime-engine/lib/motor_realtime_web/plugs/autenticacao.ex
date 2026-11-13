@@ -51,6 +51,53 @@ defmodule MotorRealtimeWeb.Plugs.TokenServico do
   end
 end
 
+defmodule MotorRealtimeWeb.Plugs.EdgeGuard do
+  @moduledoc """
+  Guarda de borda — exige `x-edge-token` injetado pelo Worker Cloudflare
+  quando `EDGE_TOKEN` está configurada (Railway). O hostname
+  `*.up.railway.app` é público: sem a guarda, tráfego direto à origem
+  ignoraria as políticas da edge.
+
+  Aplica-se aos scopes `/events` (SSE autenticado e público — todos chegam
+  via Worker). `/ingest`, `/dashboard`, `/monitor`, `/infra` e `/health`
+  têm auth própria ou são probes de infra — fora do escopo da guarda.
+  O `/socket` (Phoenix Channels) também fica fora: o `connect` já exige
+  JWT válido.
+
+  Sem `EDGE_TOKEN` (dev local) a guarda fica desligada. Comparação em
+  tempo constante — o token é segredo simétrico, não JWT.
+  """
+
+  import Plug.Conn
+
+  def init(opts), do: opts
+
+  def call(conn, _opts) do
+    case token_configurado() do
+      {:ok, esperado} ->
+        recebido = conn |> get_req_header("x-edge-token") |> List.first()
+
+        if is_binary(recebido) and Plug.Crypto.secure_compare(recebido, esperado) do
+          conn
+        else
+          conn
+          |> send_resp(403, Jason.encode!(%{erro: "fora_da_borda"}))
+          |> halt()
+        end
+
+      :error ->
+        conn
+    end
+  end
+
+  defp token_configurado do
+    case Application.get_env(:motor_realtime, :edge_token) do
+      t when is_binary(t) and t != "" -> {:ok, t}
+      _ -> :error
+    end
+  end
+end
+
 defmodule MotorRealtimeWeb.Plugs.AutenticacaoMonitor do
   @moduledoc """
   Autentica o `/dashboard` — mesma credencial do `/ingest`

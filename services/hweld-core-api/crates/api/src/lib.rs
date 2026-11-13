@@ -11,6 +11,7 @@
 pub mod cache_http;
 pub mod docs;
 pub mod dto;
+pub mod edge_guard;
 pub mod erro;
 pub mod estado;
 pub mod extratores;

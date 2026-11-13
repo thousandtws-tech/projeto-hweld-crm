@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { CFG, sonda } from "../e2e/helpers/env";
+import { CFG, edgeHeaders, sonda } from "../e2e/helpers/env";
 
 /**
  * Rate limit por IP real no escopo /auth — token bucket burst 10, refill ~6s.
@@ -30,7 +30,7 @@ test.describe("rate limit — proteção de login", () => {
         Array.from({ length: 8 }, () =>
           fetch(`${CFG.coreApi}/api/v1/auth/staff/login`, {
             method: "POST",
-            headers: { "content-type": "application/json" },
+            headers: { "content-type": "application/json", ...edgeHeaders() },
             body: JSON.stringify({
               email: "nao.existe@example.invalid",
               senha: "senha-errada-123",

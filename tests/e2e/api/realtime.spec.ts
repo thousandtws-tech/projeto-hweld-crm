@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { staffToken, uuid } from "../helpers/api";
-import { CFG, sonda, TEM_ADMIN } from "../helpers/env";
+import { CFG, edgeHeaders, sonda, TEM_ADMIN } from "../helpers/env";
 import { aguardarEventoSSE } from "../helpers/sse";
 import { ingest } from "../helpers/webhook";
 
@@ -35,6 +35,7 @@ test.describe("realtime-engine", () => {
 
   test("/events/staff sem JWT → 401", async () => {
     const resp = await fetch(`${CFG.realtime}/events/staff`, {
+      headers: edgeHeaders(),
       signal: AbortSignal.timeout(5_000),
     });
     expect(resp.status).toBe(401);

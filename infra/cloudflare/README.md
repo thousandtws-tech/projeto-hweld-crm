@@ -45,6 +45,46 @@ Preencher em `wrangler.jsonc` e `wrangler.admin.jsonc`, por ambiente
 
 São URLs públicas, não segredos — ficam em `vars`, não em `wrangler secret`.
 
+## Guarda de borda — `EDGE_TOKEN`
+
+Os hostnames `*.up.railway.app` são públicos: sem proteção, quem descobrir a
+origem bate direto na API, ignorando a edge. A guarda fecha isso:
+
+- o Worker injeta `x-edge-token: <segredo>` em todo request ao origin
+  (`set()` sobrescreve valor forjado pelo cliente);
+- cada serviço (Rust/Java/Phoenix) rejeita **403** requests sem o token —
+  exceções: probes de saúde (`/health`, `/ready`, `/actuator/**`) e rotas
+  com auth própria (`/api/v1/internal/**`, `/ingest`, `/dashboard`, `/monitor`).
+
+```bash
+# Mesmo valor nos dois workers E nas três origens Railway:
+TOKEN=$(openssl rand -hex 32)
+npx wrangler secret put EDGE_TOKEN -c wrangler.jsonc --env production        # hweld-loja
+npx wrangler secret put EDGE_TOKEN -c wrangler.admin.jsonc --env production  # hweld-admin
+# Railway → cada serviço:
+railway variable set -s core-api EDGE_TOKEN=$TOKEN
+railway variable set -s operations-api EDGE_TOKEN=$TOKEN
+railway variable set -s realtime-engine EDGE_TOKEN=$TOKEN
+# GitHub Actions (specs E2E batem direto nas origens):
+#   gh secret set E2E_EDGE_TOKEN --body "$TOKEN"
+```
+
+Ordem segura de rollout: origens primeiro (guarda desligada sem a var),
+depois os workers, por último conferir o smoke `e2e-producao`.
+
+## Domínio próprio
+
+1. Registrar o domínio (Hostinger/Registro.br) e **mover a zona DNS para o
+   Cloudflare** (trocar os nameservers no registrador).
+2. Em `wrangler.jsonc` / `wrangler.admin.jsonc` → `env.production`,
+   descomentar `routes` com o padrão `custom_domain` — ex.:
+   `app.hweld.com.br` (loja) e `admin.hweld.com.br` (painel).
+3. Atualizar: `CORS_ORIGINS` no core-api/realtime, `E2E_WEB_URL`/
+   `E2E_ADMIN_URL` no `e2e-producao.yml`, `PHX_HOST` no realtime, e a URL
+   de webhook registrada nos provedores (`FOCUS_NFE_WEBHOOK_URL`, PSPs).
+4. Redeployar os workers e validar certificado (Cloudflare emite
+   automaticamente para zonas próprias).
+
 ## Deploy
 
 ```bash

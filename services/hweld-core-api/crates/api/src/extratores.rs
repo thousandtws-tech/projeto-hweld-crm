@@ -142,7 +142,9 @@ impl FromRequest for AuthPortalOpcional {
 /// simétrico, não um JWT — não há claims a validar.
 pub struct AuthServico;
 
-fn segredo_confere(recebido: &str, esperado: &str) -> bool {
+/// Comparação em tempo constante — compartilhada com a `EdgeGuard` (segredo
+/// simétrico; equalização de tamanho não pode vazar timing).
+pub(crate) fn segredo_confere(recebido: &str, esperado: &str) -> bool {
     let (a, b) = (recebido.as_bytes(), esperado.as_bytes());
     if a.len() != b.len() {
         return false;

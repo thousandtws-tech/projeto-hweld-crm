@@ -20,6 +20,14 @@ server.log
 # Scratch and test output
 sse-*.txt
 
+# Dumps/fixtures com dados reais (PII) — nunca versionar
+deliv.json
+*.dump
+*.dump.json
+
+# Segredos gerados localmente para provisionamento — nunca versionar
+.secrets.local
+
 # OS Files
 .DS_Store
 Thumbs.db

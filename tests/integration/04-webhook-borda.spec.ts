@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { req } from "../e2e/helpers/api";
 import { webhookStub } from "../e2e/helpers/webhook";
-import { CFG, sonda } from "../e2e/helpers/env";
+import { CFG, edgeHeaders, sonda } from "../e2e/helpers/env";
 
 /**
  * Borda do webhook — entradas malformadas, assinaturas erradas e
@@ -17,7 +17,7 @@ test.describe("webhook — bordas", () => {
   test("JSON malformado → 400/422, não 500", async () => {
     const resp = await fetch(`${CFG.opsApi}/api/v1/webhooks/stub`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...edgeHeaders() },
       body: "{isto nao é json",
     });
     expect([400, 422], `payload malformado retornou ${resp.status}`).toContain(resp.status);
@@ -28,7 +28,7 @@ test.describe("webhook — bordas", () => {
     const corpo = JSON.stringify({ eventId: "x", externalId: "y", status: "CONFIRMED" });
     const resp = await fetch(`${CFG.opsApi}/api/v1/webhooks/stub`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-signature": "deadbeef" },
+      headers: { "Content-Type": "application/json", "x-signature": "deadbeef", ...edgeHeaders() },
       body: corpo,
     });
     expect(resp.status).toBe(401);
@@ -46,7 +46,7 @@ test.describe("webhook — bordas", () => {
       .digest("hex")}`;
     const resp = await fetch(`${CFG.opsApi}/api/v1/webhooks/stub`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-signature": sigErrada },
+      headers: { "Content-Type": "application/json", "x-signature": sigErrada, ...edgeHeaders() },
       body: corpoB,
     });
     expect(resp.status).toBe(401);
@@ -71,7 +71,7 @@ test.describe("webhook — bordas", () => {
     const sig = `sha256=${createHmac("sha256", CFG.webhookSecret).update(corpo).digest("hex")}`;
     const resp = await fetch(`${CFG.opsApi}/api/v1/webhooks/stub`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-signature": sig },
+      headers: { "Content-Type": "application/json", "x-signature": sig, ...edgeHeaders() },
       body: corpo,
     });
     // Assinatura válida mas conteúdo inválido: 4xx esperado, nunca 5xx.

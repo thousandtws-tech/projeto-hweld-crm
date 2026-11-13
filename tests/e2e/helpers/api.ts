@@ -25,6 +25,9 @@ export async function req<T = unknown>(
   opts: ReqOpts = {},
 ): Promise<Resp<T>> {
   const headers: Record<string, string> = { ...opts.headers };
+  // Guarda de borda: requests diretas às origens Railway precisam do
+  // `x-edge-token` (as URLs de front passam pelo Worker, que injeta ele mesmo).
+  if (CFG.edgeToken) headers["x-edge-token"] ??= CFG.edgeToken;
   let data: BodyInit | undefined;
   if (opts.rawBody !== undefined) {
     data = opts.rawBody;

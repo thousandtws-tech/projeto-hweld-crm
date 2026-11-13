@@ -45,13 +45,21 @@ defmodule MotorRealtimeWeb.Router do
     plug MotorRealtimeWeb.Plugs.AutenticacaoStaff
   end
 
+  # Guarda de borda — `/events` só chega via Worker Cloudflare (segredo
+  # `EDGE_TOKEN` compartilhado). Tráfego direto `*.up.railway.app` → 403.
+  pipeline :edge do
+    plug MotorRealtimeWeb.Plugs.EdgeGuard
+  end
+
   # SSE por contexto de token — sem o plug :accepts (cliente pede
   # `text/event-stream`, não JSON).
   pipeline :staff do
+    plug MotorRealtimeWeb.Plugs.EdgeGuard
     plug MotorRealtimeWeb.Plugs.AuthJwt, tipo: :staff
   end
 
   pipeline :portal do
+    plug MotorRealtimeWeb.Plugs.EdgeGuard
     plug MotorRealtimeWeb.Plugs.AuthJwt, tipo: :portal
   end
 
@@ -70,6 +78,8 @@ defmodule MotorRealtimeWeb.Router do
   end
 
   scope "/events", MotorRealtimeWeb do
+    pipe_through :edge
+
     get "/publico", EventosController, :publico
   end
 

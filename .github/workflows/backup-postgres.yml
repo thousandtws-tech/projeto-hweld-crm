@@ -1,0 +1,75 @@
+name: Backup Postgres
+
+# Backup diário do Postgres de produção → bucket S3 (MinIO no Railway).
+# Retenção: 30 dias rolling (o script apaga dumps mais velhos no bucket).
+#
+# Secrets necessários (Settings → Secrets and variables → Actions):
+#   BACKUP_DATABASE_URL — connection string completa do Postgres de prod
+#     (postgres://user:pass@host:port/db — Railway mostra em "Connect").
+#     Recomendado: usuário somente-leitura.
+#   BACKUP_S3_ENDPOINT   — ex.: https://bucket-production-e903.up.railway.app
+#   BACKUP_S3_BUCKET     — ex.: hweld-backups (criar uma vez no MinIO)
+#   BACKUP_S3_ACCESS_KEY / BACKUP_S3_SECRET_KEY — credenciais do MinIO
+#
+# Restore: docs/runbooks/backup-restore.md — testar a cada sprint (NFR).
+
+on:
+  schedule:
+    - cron: "0 7 * * *" # 04:00 BRT — janela de menor tráfego
+  workflow_dispatch:
+
+jobs:
+  dump:
+    name: pg_dump → S3
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/setup-node@v4 # só p/ padronizar runner; dump usa pg_dump nativo
+      - name: Instalar cliente Postgres 16
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-16 || sudo apt-get install -y -qq postgresql-client
+
+      - name: Dump compactado
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/backup
+          ARQ="/tmp/backup/hweld-$(date -u +%Y%m%dT%H%M%SZ).dump"
+          pg_dump "$BACKUP_DATABASE_URL" --format=custom --compress=6 --no-owner --no-privileges -f "$ARQ"
+          ls -lh "$ARQ"
+          echo "DUMP_PATH=$ARQ" >> "$GITHUB_ENV"
+
+      - name: Upload para MinIO/S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+          S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+          S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+        run: |
+          set -euo pipefail
+          aws configure set default.s3.signature_version s3v4
+          aws --endpoint-url "$S3_ENDPOINT" s3 cp "$DUMP_PATH" \
+            "s3://$S3_BUCKET/postgres/$(basename "$DUMP_PATH")"
+          aws --endpoint-url "$S3_ENDPOINT" s3 ls "s3://$S3_BUCKET/postgres/" | tail -5
+
+      - name: Retenção — apaga dumps com +30 dias
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_KEY }}
+          S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+          S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+        run: |
+          set -euo pipefail
+          CORTE=$(date -u -d '30 days ago' +%Y%m%dT%H%M%SZ)
+          aws --endpoint-url "$S3_ENDPOINT" s3 ls "s3://$S3_BUCKET/postgres/" \
+            | awk '{print $4}' | while read -r arq; do
+              stamp=$(echo "$arq" | sed -n 's/hweld-\(.*\)\.dump/\1/p')
+              if [ -n "$stamp" ] && [ "$stamp" \< "$CORTE" ]; then
+                echo "expirado: $arq"
+                aws --endpoint-url "$S3_ENDPOINT" s3 rm "s3://$S3_BUCKET/postgres/$arq"
+              fi
+            done

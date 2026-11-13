@@ -25,6 +25,13 @@ export const CFG = {
   temWebhookSecret: Boolean(process.env.E2E_WEBHOOK_SECRET),
   motorToken: process.env.E2E_MOTOR_INGEST_TOKEN ?? process.env.MOTOR_INGEST_TOKEN ?? "",
 
+  /**
+   * Segredo de borda — origens `*.up.railway.app` exigem `x-edge-token`
+   * quando a guarda está ativa. Via Worker (`E2E_WEB_URL`/`E2E_ADMIN_URL`)
+   * o header é injetado pela edge — só requests diretas às origens precisam.
+   */
+  edgeToken: process.env.E2E_EDGE_TOKEN ?? "",
+
   skipRealtime: process.env.E2E_SKIP_REALTIME === "1",
   skipBusca: process.env.E2E_SKIP_BUSCA === "1",
 } as const;
@@ -63,5 +70,10 @@ export const sonda = {
   web: () => servicoVivo(CFG.webUrl, "/"),
   admin: () => servicoVivo(CFG.adminUrl, "/"),
 };
+
+/** Headers da guarda de borda p/ fetch cru — vazio quando E2E_EDGE_TOKEN está ausente. */
+export function edgeHeaders(): Record<string, string> {
+  return CFG.edgeToken ? { "x-edge-token": CFG.edgeToken } : {};
+}
 
 export const TEM_ADMIN = Boolean(CFG.adminEmail && CFG.adminSenha);

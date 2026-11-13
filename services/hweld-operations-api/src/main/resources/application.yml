@@ -95,6 +95,9 @@ hweld:
     jwt-secret: ${JWT_SECRET}
     # Token service-to-service para /api/v1/internal/** — também fail-fast.
     internal-service-token: ${INTERNAL_SERVICE_TOKEN}
+    # Segredo de borda (x-edge-token injetado pelo Worker Cloudflare).
+    # Vazio = guarda desligada (dev). Em prod: mesmo valor do Worker.
+    edge-token: ${EDGE_TOKEN:}
     # Origens com permissão de CORS (dev: painel Vite). CSV → List<String>.
     cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
   core-api:
@@ -186,10 +189,11 @@ hweld:
     default-from-name: ${MAIL_FROM_NAME:HWeld}
 
 springdoc:
-  # Spec + UI expõem todas as rotas, incluindo /internal/** — desligar em prod.
+  # Spec + UI expõem todas as rotas, incluindo /internal/**.
+  # Fail-safe: default OFF — dev liga via API_DOCS_ENABLED=true no compose/.env.
   swagger-ui:
     path: /swagger-ui.html
-    enabled: ${API_DOCS_ENABLED:true}
+    enabled: ${API_DOCS_ENABLED:false}
   api-docs:
     path: /api-docs
-    enabled: ${API_DOCS_ENABLED:true}
+    enabled: ${API_DOCS_ENABLED:false}

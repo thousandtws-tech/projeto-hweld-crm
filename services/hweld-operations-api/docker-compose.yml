@@ -36,6 +36,8 @@ services:
       PAYMENT_STUB_ALLOW_UNSIGNED: "false"
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-log}
       OTEL_ENABLED: "false"
+      # Swagger/api-docs ligados só em dev — o default do application.yml é off.
+      API_DOCS_ENABLED: ${API_DOCS_ENABLED:-true}
     depends_on:
       postgres:
         condition: service_healthy

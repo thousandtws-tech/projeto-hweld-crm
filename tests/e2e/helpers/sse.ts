@@ -3,6 +3,8 @@
  * aqui porque a resposta nunca termina. Node ≥18 entrega o body como stream.
  */
 
+import { edgeHeaders } from "./env";
+
 export interface EventoSSE {
   tipo: string;
   dados: unknown;
@@ -38,6 +40,7 @@ export function aguardarEventoSSE(
     fetch(url, {
       headers: {
         accept: "text/event-stream",
+        ...edgeHeaders(),
         ...(opts.token ? { authorization: `Bearer ${opts.token}` } : {}),
       },
       signal: ctrl.signal,

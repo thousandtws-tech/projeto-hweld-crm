@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { req, staffToken } from "../e2e/helpers/api";
 import { seedCenario } from "../e2e/helpers/dados";
-import { CFG, sonda, TEM_ADMIN } from "../e2e/helpers/env";
+import { CFG, edgeHeaders, sonda, TEM_ADMIN } from "../e2e/helpers/env";
 
 /**
  * Integração com infra externa — MinIO (upload/download round-trip) e
@@ -28,13 +28,14 @@ test.describe("storage e busca", () => {
       headers: {
         authorization: `Bearer ${staff}`,
         "Content-Type": "application/octet-stream",
+        ...edgeHeaders(),
       },
       body: PNG_1PX,
     });
     expect(up.status).toBe(201);
     const { url } = (await up.json()) as { url: string };
 
-    const down = await fetch(`${CFG.coreApi}${url}`);
+    const down = await fetch(`${CFG.coreApi}${url}`, { headers: edgeHeaders() });
     expect(down.status).toBe(200);
     const bytes = Buffer.from(await down.arrayBuffer());
     expect(bytes.equals(PNG_1PX), "bytes do download divergem do upload").toBeTruthy();
@@ -47,6 +48,7 @@ test.describe("storage e busca", () => {
       headers: {
         authorization: `Bearer ${staff}`,
         "Content-Type": "application/octet-stream",
+        ...edgeHeaders(),
       },
       body: Buffer.from("PK\x03\x04 fake zip/exe content"),
     });
