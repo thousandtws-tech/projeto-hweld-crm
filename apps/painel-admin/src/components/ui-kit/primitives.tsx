@@ -30,7 +30,7 @@ export function Metabox({
   action,
   children,
   className = "",
-  contentClassName = "p-4 sm:p-5",
+  contentClassName = "p-5 sm:p-6",
 }: {
   title: ReactNode;
   action?: ReactNode;

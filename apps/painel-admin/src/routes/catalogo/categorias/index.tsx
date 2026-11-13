@@ -165,7 +165,7 @@ function CategoriasPage() {
         }
       />
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
         <Metabox title={editando ? `Editar: ${editando.nome}` : "Adicionar nova categoria"}>
           {editando && (
             <Typography variant="caption" className="mb-3 block text-muted-foreground">
@@ -176,7 +176,7 @@ function CategoriasPage() {
             </Typography>
           )}
 
-          <Box component="form" onSubmit={salvar} className="space-y-5">
+          <Box component="form" onSubmit={salvar} className="space-y-7">
             <FormField label="Nome *">
               <TextField
                 required
@@ -243,7 +243,7 @@ function CategoriasPage() {
               <Typography sx={{ fontSize: 12.5, fontWeight: 500, color: "text.primary" }}>
                 Imagem da categoria
               </Typography>
-              <div className="mt-1.5 flex items-center gap-3">
+              <div className="mt-2.5 flex items-center gap-3">
                 {f.imagem_url ? (
                   <div className="relative h-16 w-16 shrink-0">
                     <img
@@ -266,7 +266,7 @@ function CategoriasPage() {
                     <ImagePlus className="h-5 w-5" />
                   </div>
                 )}
-                <div className="min-w-0 flex-1 space-y-2">
+                <div className="min-w-0 flex-1 space-y-3">
                   <input
                     ref={fileInputRef}
                     type="file"

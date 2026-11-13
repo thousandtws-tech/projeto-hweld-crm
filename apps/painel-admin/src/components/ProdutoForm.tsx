@@ -482,12 +482,12 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
       <Box
         component="form"
         onSubmit={salvar}
-        className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]"
+        className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]"
       >
         {/* ============ Coluna principal (conteúdo) ============ */}
-        <div className="min-w-0 space-y-4">
+        <div className="min-w-0 space-y-5">
           {/* Identificação — título + slug + resumo (padrão Woo) */}
-          <Metabox title="Identificação" contentClassName="p-4 sm:p-5 space-y-5">
+          <Metabox title="Identificação" contentClassName="p-5 sm:p-6 space-y-6">
             <FormField label="Nome do produto *">
               <TextField
                 required
@@ -498,7 +498,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                 onChange={set("nome")}
               />
             </FormField>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-5 sm:grid-cols-2">
               <FormField label="SKU *">
                 <TextField required size="small" fullWidth value={f.sku} onChange={set("sku")} />
               </FormField>
@@ -574,9 +574,9 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                 <Tab icon={<FileText className="h-4 w-4" />} iconPosition="start" label="Fiscal" />
               </Tabs>
 
-              <div className="min-w-0 flex-1 p-4 sm:p-6">
+              <div className="min-w-0 flex-1 p-5 sm:p-7">
               {aba === 0 && (
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-5 sm:grid-cols-2">
                   <FormField label="Marca">
                     <Autocomplete
                       freeSolo
@@ -612,7 +612,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
               )}
 
               {aba === 1 && (
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-5 sm:grid-cols-2">
                   <FormField label="Preço de venda (R$) *">
                     <TextField
                       required
@@ -651,7 +651,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
               )}
 
               {aba === 2 && (
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-5 sm:grid-cols-2">
                   <FormControlLabel
                     className="sm:col-span-2"
                     control={<Switch checked={f.controla_estoque} onChange={setFlag("controla_estoque")} />}
@@ -683,7 +683,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
               )}
 
               {aba === 3 && (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                   <FormField label="Peso (kg)">
                     <TextField type="number" size="small" fullWidth slotProps={{ htmlInput: { step: "0.001" } }} value={f.peso_kg} onChange={set("peso_kg")} />
                   </FormField>
@@ -700,7 +700,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
               )}
 
               {aba === 4 && (
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-5 sm:grid-cols-2">
                   <FormField label="NCM (8 dígitos)">
                     <TextField
                       size="small"
@@ -734,9 +734,9 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
         </div>
 
         {/* ============ Sidebar direita (publicar, organização, imagem) ============ */}
-        <div className="space-y-4">
+        <div className="space-y-5">
           {/* Publicar */}
-          <Metabox title="Publicar" contentClassName="p-4 sm:p-5 space-y-4">
+          <Metabox title="Publicar" contentClassName="p-5 sm:p-6 space-y-5">
             <div className="flex flex-col items-start">
               <FormControlLabel
                 control={<Switch checked={f.ativo} onChange={setFlag("ativo")} />}
@@ -800,7 +800,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                 {galeria.length} foto(s)
               </Typography>
             }
-            contentClassName="p-4 sm:p-5 space-y-3"
+            contentClassName="p-5 sm:p-6 space-y-4"
           >
             <Typography variant="caption" className="text-muted-foreground">
               1ª foto = capa · demais = galeria
