@@ -248,6 +248,7 @@ const navItemSx = {
 } as const;
 
 const subheaderSx = {
+  position: "static",
   bgcolor: "transparent",
   lineHeight: "26px",
   px: 1.5,
@@ -276,7 +277,11 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Logo />
-      <Box component="nav" sx={{ mt: 3, flex: 1 }}>
+      <Box
+        component="nav"
+        className="scrollbar-none"
+        sx={{ mt: 3, flex: 1, minHeight: 0, overflowY: "auto" }}
+      >
         {NAV.map((secao) => {
           const itens = secao.itens.filter((i) => !i.perfis || pode(...i.perfis));
           if (itens.length === 0) return null;
@@ -727,7 +732,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Sidebar (desktop) */}
         <Box
           component="aside"
-          className="hidden lg:flex w-60 xl:w-64 shrink-0 flex-col rounded-3xl bg-card border border-border shadow-[var(--shadow-card)] p-5 sticky top-6 self-start h-[calc(100vh-3rem)] overflow-y-auto scrollbar-none"
+          className="hidden lg:flex w-60 xl:w-64 shrink-0 flex-col rounded-3xl bg-card border border-border shadow-[var(--shadow-card)] p-5 sticky top-6 self-start h-[calc(100vh-3rem)]"
         >
           <SidebarContent pathname={pathname} />
         </Box>
@@ -740,7 +745,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           sx={{ display: { lg: "none" } }}
           slotProps={{
             paper: {
-              className: "w-[80%] max-w-xs flex-col bg-card border-r border-border p-5 overflow-y-auto scrollbar-none",
+              className: "w-[80%] max-w-xs flex-col bg-card border-r border-border p-5",
             },
           }}
         >
