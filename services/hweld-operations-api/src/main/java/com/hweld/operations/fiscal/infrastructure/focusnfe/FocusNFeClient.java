@@ -176,8 +176,8 @@ public class FocusNFeClient {
         List<Map<String, Object>> erros = List.of();
         try {
             JsonNode body = mapper.readTree(raw);
-            if (body.hasNonNull("codigo")) codigo = body.path("codigo").asText();
-            if (body.hasNonNull("mensagem")) mensagem = body.path("mensagem").asText();
+            if (body.hasNonNull("codigo")) codigo = body.path("codigo").asString();
+            if (body.hasNonNull("mensagem")) mensagem = body.path("mensagem").asString();
             if (body.isArray()) erros = lerErros(body);
             else if (body.has("erros") && body.path("erros").isArray()) {
                 erros = lerErros(body.path("erros"));

@@ -72,8 +72,8 @@ public class CoreApiOrderGateway implements OrderGateway {
         JsonNode empresa = body.path("empresa");
         long contatoId = contato.path("id").asLong();
         long empresaId = empresa.path("id").asLong();
-        String email = contato.hasNonNull("email") ? contato.path("email").asText() : null;
-        String nome = contato.hasNonNull("nome") ? contato.path("nome").asText() : null;
+        String email = contato.hasNonNull("email") ? contato.path("email").asString() : null;
+        String nome = contato.hasNonNull("nome") ? contato.path("nome").asString() : null;
         return new PortalProfile(contatoId, empresaId, email, nome);
     }
 
@@ -103,12 +103,12 @@ public class CoreApiOrderGateway implements OrderGateway {
 
     private static String textOr(JsonNode node, String field, String fallback) {
         JsonNode v = node.get(field);
-        return v != null && !v.isNull() ? v.asText() : fallback;
+        return v != null && !v.isNull() ? v.asString() : fallback;
     }
 
     private static BigDecimal decimal(JsonNode node) {
         if (node == null || node.isNull()) return BigDecimal.ZERO;
-        if (node.isTextual()) return new BigDecimal(node.asText());
+        if (node.isString()) return new BigDecimal(node.asString());
         return node.decimalValue();
     }
 }

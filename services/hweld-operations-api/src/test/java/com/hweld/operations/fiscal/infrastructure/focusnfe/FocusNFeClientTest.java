@@ -79,7 +79,7 @@ class FocusNFeClientTest {
         assertThat(chamadas.get(0).method()).isEqualTo("POST");
         assertThat(chamadas.get(0).path()).isEqualTo("/v2/nfe?ref=doc-123");
         assertThat(chamadas.get(0).body()).contains("Venda");
-        assertThat(r.path("status").asText()).isEqualTo("processando_autorizacao");
+        assertThat(r.path("status").asString()).isEqualTo("processando_autorizacao");
     }
 
     @Test

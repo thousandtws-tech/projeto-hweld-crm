@@ -91,8 +91,8 @@ public class FiscalWebhookService {
         } catch (Exception e) {
             throw ApiException.validacao("payload de webhook não é JSON válido");
         }
-        String ref = body.path("ref").asText(null);
-        String status = body.path("status").asText(null);
+        String ref = body.path("ref").asString(null);
+        String status = body.path("status").asString(null);
         if (ref == null || ref.isBlank() || status == null || status.isBlank()) {
             throw ApiException.validacao("webhook sem `ref`/`status` — fora do contrato Focus");
         }

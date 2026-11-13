@@ -132,8 +132,8 @@ class OperationsFlowIT {
                 .andExpect(jsonPath("$.pixCopyPaste").isNotEmpty())
                 .andReturn().getResponse().getContentAsString();
         JsonNode created = mapper.readTree(body);
-        UUID paymentId = UUID.fromString(created.get("id").asText());
-        String externalId = created.get("externalId").asText();
+        UUID paymentId = UUID.fromString(created.get("id").asString());
+        String externalId = created.get("externalId").asString();
 
         // 2) idempotência: mesmo pedido+metodo retorna o mesmo pagamento
         String dup = mvc.perform(post("/api/v1/payments").with(portalJwt())
@@ -141,7 +141,7 @@ class OperationsFlowIT {
                         .content("{\"pedidoId\":10,\"method\":\"PIX\"}"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        assertThat(mapper.readTree(dup).get("id").asText()).isEqualTo(paymentId.toString());
+        assertThat(mapper.readTree(dup).get("id").asString()).isEqualTo(paymentId.toString());
 
         // 3) webhook sem assinatura → rejeitado
         mvc.perform(post("/api/v1/webhooks/stub")

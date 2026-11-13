@@ -131,7 +131,7 @@ public class StubPaymentProvider implements PaymentProvider {
             PaymentStatus status = PaymentStatus.valueOf(required(n, "status").toUpperCase());
             return new ParsedWebhook(eventId, externalId, status,
                     textOrNull(n, "failureCode"), textOrNull(n, "failureMessage"),
-                    n.has("occurredAt") ? Instant.parse(n.get("occurredAt").asText()) : Instant.now(),
+                    n.has("occurredAt") ? Instant.parse(n.get("occurredAt").asString()) : Instant.now(),
                     mapper.convertValue(n, Map.class));
         } catch (PaymentProviderException e) {
             throw e;
@@ -142,15 +142,15 @@ public class StubPaymentProvider implements PaymentProvider {
 
     private static String required(JsonNode n, String field) {
         JsonNode v = n.get(field);
-        if (v == null || v.isNull() || v.asText().isBlank()) {
+        if (v == null || v.isNull() || v.asString().isBlank()) {
             throw new PaymentProviderException("campo obrigatório ausente no webhook: " + field);
         }
-        return v.asText();
+        return v.asString();
     }
 
     private static String textOrNull(JsonNode n, String field) {
         JsonNode v = n.get(field);
-        return v == null || v.isNull() ? null : v.asText();
+        return v == null || v.isNull() ? null : v.asString();
     }
 
     public static class PaymentProviderException extends RuntimeException {

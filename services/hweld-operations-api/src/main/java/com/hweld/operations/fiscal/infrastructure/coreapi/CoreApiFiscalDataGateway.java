@@ -139,12 +139,12 @@ public class CoreApiFiscalDataGateway implements FiscalDataGateway {
 
     private static String textOr(JsonNode node, String field, String fallback) {
         JsonNode v = node.get(field);
-        return v != null && !v.isNull() ? v.asText() : fallback;
+        return v != null && !v.isNull() ? v.asString() : fallback;
     }
 
     private static BigDecimal decimal(JsonNode node) {
         if (node == null || node.isNull()) return BigDecimal.ZERO;
-        if (node.isTextual()) return new BigDecimal(node.asText());
+        if (node.isString()) return new BigDecimal(node.asString());
         return node.decimalValue();
     }
 }

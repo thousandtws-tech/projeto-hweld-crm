@@ -96,7 +96,7 @@ public class FocusNFeProvider implements FiscalProvider {
 
         JsonNode resp = client.emitir("nfe", ref, payload);
         log.info("focusnfe: emissão nfe ref={} → status={}", ref,
-                resp.path("status").asText("?"));
+                resp.path("status").asString("?"));
         return toEmission(ref, resp);
     }
 
@@ -109,10 +109,10 @@ public class FocusNFeProvider implements FiscalProvider {
     public void cancel(String externalId, String motivo) {
         validarJustificativa(motivo);
         JsonNode resp = client.cancelar(docPath(externalId), externalId, motivo);
-        String status = resp.path("status").asText("");
+        String status = resp.path("status").asString("");
         if (!"cancelado".equals(status) && !"cancelamento_homologado".equals(status)) {
             throw FocusNFeException.provedor(
-                    "cancelamento não confirmado: " + resp.path("mensagem_sefaz").asText(status), 0);
+                    "cancelamento não confirmado: " + resp.path("mensagem_sefaz").asString(status), 0);
         }
     }
 
@@ -159,7 +159,7 @@ public class FocusNFeProvider implements FiscalProvider {
 
     private void baixar(JsonNode consulta, String campo, String chave, String mime,
             Map<String, String> chaves, String alias) {
-        String caminho = consulta.path(campo).asText(null);
+        String caminho = consulta.path(campo).asString(null);
         if (caminho == null || caminho.isBlank()) return;
         try {
             byte[] bytes = client.downloadArtefato(caminho);
@@ -177,7 +177,7 @@ public class FocusNFeProvider implements FiscalProvider {
     // ── Mapeamento de respostas oficiais ──────────────────────────────────────
 
     private EmissionResult toEmission(String ref, JsonNode n) {
-        String providerStatus = n.path("status").asText(null);
+        String providerStatus = n.path("status").asString(null);
         FiscalDocument.Status interno = mapearStatus(providerStatus);
         String detail = primeiro(n, "mensagem_sefaz", "status_sefaz");
         String rejeicao = interno == FiscalDocument.Status.REJECTED
@@ -190,7 +190,7 @@ public class FocusNFeProvider implements FiscalProvider {
     }
 
     private StatusResult toStatus(JsonNode n) {
-        String providerStatus = n.path("status").asText(null);
+        String providerStatus = n.path("status").asString(null);
         FiscalDocument.Status interno = mapearStatus(providerStatus);
         String detail = primeiro(n, "mensagem_sefaz", "status_sefaz");
         String rejeicao = interno == FiscalDocument.Status.REJECTED
@@ -215,16 +215,16 @@ public class FocusNFeProvider implements FiscalProvider {
     private static String rejeicao(JsonNode n, String fallback) {
         if (n.has("erros") && n.path("erros").isArray() && !n.path("erros").isEmpty()) {
             JsonNode e = n.path("erros").get(0);
-            String m = e.path("mensagem").asText(null);
+            String m = e.path("mensagem").asString(null);
             if (m != null && !m.isBlank()) return m;
         }
-        String m = n.path("mensagem_sefaz").asText(null);
+        String m = n.path("mensagem_sefaz").asString(null);
         return m != null && !m.isBlank() ? m : fallback;
     }
 
     private static String texto(JsonNode n, String campo) {
         JsonNode v = n.get(campo);
-        return v != null && !v.isNull() && !v.asText().isBlank() ? v.asText() : null;
+        return v != null && !v.isNull() && !v.asString().isBlank() ? v.asString() : null;
     }
 
     private static String primeiro(JsonNode n, String... campos) {
