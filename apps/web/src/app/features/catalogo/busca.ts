@@ -54,6 +54,7 @@ export class BuscaPage implements OnInit {
   precoMaxSel = signal('');
   ordem = signal('relevancia');
   paginaAtual = signal(1);
+  modoVista = signal<'grade' | 'lista'>('grade');
 
   /** Campos do filtro de preço — digitados, aplicados via botão/Enter. */
   precoMinDig = signal('');

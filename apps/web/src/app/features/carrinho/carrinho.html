@@ -1,14 +1,20 @@
+<nav class="crumb" aria-label="Caminho de navegação">
+  <a routerLink="/">Início</a>
+  <span class="material-symbols-outlined sep" aria-hidden="true">chevron_right</span>
+  <span class="atual">Carrinho</span>
+</nav>
+
 <div class="carrinho-header">
   <div>
     <h1>Carrinho de Compras</h1>
     @if (carrinho()?.itens?.length; as n) {
       <span class="subtitulo"
-        >{{ n }} {{ n === 1 ? 'item selecionado' : 'itens selecionados' }}</span
+        >{{ n }} {{ n === 1 ? 'item no carrinho' : 'itens no carrinho' }}</span
       >
     }
   </div>
   @if (carrinho()?.itens?.length) {
-    <a routerLink="/" class="link-continuar">
+    <a routerLink="/busca" class="link-continuar">
       <span class="material-symbols-outlined">arrow_back</span>
       <span>Continuar comprando</span>
     </a>
@@ -17,119 +23,144 @@
 
 @if (carregando()) {
   <div class="layout">
-    <div class="itens">
-      @for (i of [1, 2, 3]; track i) {
-        <hw-skeleton style="height: 100px; border-radius: 12px" />
-      }
+    <div class="itens-col">
+      <hw-skeleton style="height: 280px; border-radius: 8px" />
     </div>
-    <hw-skeleton style="height: 260px; border-radius: 16px" />
+    <hw-skeleton style="height: 260px; border-radius: 8px" />
   </div>
 } @else if (!carrinho() || carrinho()!.itens.length === 0) {
-  <hw-empty
-    titulo="Seu carrinho está vazio"
-    descricao="Explore o catálogo para encontrar máquinas, consumíveis e EPIs com os preços da sua tabela."
-    icone="shopping_bag"
-  >
-    <a routerLink="/" hwButton size="lg">Explorar catálogo</a>
-  </hw-empty>
+  <div class="woo-box">
+    <div class="woo-box-body">
+      <hw-empty
+        titulo="Seu carrinho está vazio"
+        descricao="Explore o catálogo para encontrar máquinas, consumíveis e EPIs com os preços da sua tabela."
+        icone="shopping_bag"
+      >
+        <a routerLink="/busca" hwButton size="lg">Retornar à loja</a>
+      </hw-empty>
+    </div>
+  </div>
 } @else {
   <div class="layout">
-    <ul class="itens">
-      @for (item of carrinho()!.itens; track item.produto_id) {
-        <li class="item-card">
-          <div class="item-info" style="display: flex; align-items: center; gap: 14px">
-            @if (item.produto?.imagem_url; as imgUrl) {
-              <img
-                [src]="imgUrl"
-                [alt]="item.produto?.nome ?? ''"
-                style="
-                  width: 56px;
-                  height: 56px;
-                  border-radius: 10px;
-                  object-fit: contain;
-                  background: #fff;
-                  border: 1px solid var(--hw-border);
-                  padding: 4px;
-                  flex-shrink: 0;
-                "
-              />
+    <!-- Tabela de Itens estilo WooCommerce (woocommerce-cart-form) -->
+    <div class="woo-box tabela-box">
+      <div class="woo-box-head">
+        <h2>Itens do carrinho</h2>
+        <span class="count-txt hw-numeric">{{ carrinho()!.itens.length }} produto(s)</span>
+      </div>
+
+      <div class="tabela-scroll">
+        <table class="woo-table cart-table">
+          <thead>
+            <tr>
+              <th style="width: 44px" aria-label="Remover"></th>
+              <th>Produto</th>
+              <th class="num-col">Preço unit.</th>
+              <th style="width: 150px">Quantidade</th>
+              <th class="num-col">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of carrinho()!.itens; track item.produto_id) {
+              <tr>
+                <td>
+                  <button
+                    type="button"
+                    class="btn-remover"
+                    aria-label="Remover item do carrinho"
+                    matTooltip="Remover este item"
+                    (click)="remover(item.produto_id)"
+                  >
+                    <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                  </button>
+                </td>
+                <td>
+                  <div class="prod-cell">
+                    @if (item.produto?.imagem_url; as imgUrl) {
+                      <img [src]="imgUrl" [alt]="item.produto?.nome ?? ''" class="prod-thumb" />
+                    } @else {
+                      <div class="prod-thumb prod-thumb-vazio">
+                        <span class="material-symbols-outlined">inventory_2</span>
+                      </div>
+                    }
+                    <div class="prod-meta">
+                      <a
+                        class="item-nome"
+                        [routerLink]="[
+                          '/p',
+                          item.produto?.slug
+                            ? item.produto_id + '-' + item.produto!.slug
+                            : item.produto_id
+                        ]"
+                      >
+                        {{ item.produto?.nome ?? 'Produto #' + item.produto_id }}
+                      </a>
+                      @if (item.produto?.sku) {
+                        <span class="sku-tag hw-numeric">SKU: {{ item.produto?.sku }}</span>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td class="num-col unit-col hw-numeric">{{ item.preco_unitario | brl }}</td>
+                <td>
+                  <hw-qty
+                    [valor]="num(item.quantidade)"
+                    [mudar]="mudar(item.produto_id)"
+                    [min]="0"
+                  />
+                </td>
+                <td class="num-col item-total hw-numeric">{{ linha(item) | brl }}</td>
+              </tr>
             }
-            <div>
-              <a
-                class="item-nome"
-                [routerLink]="[
-                  '/p',
-                  item.produto?.slug ? item.produto_id + '-' + item.produto!.slug : item.produto_id
-                ]"
-              >
-                {{ item.produto?.nome ?? 'Produto ' + item.produto_id }}
-              </a>
-              <div class="item-metas">
-                @if (item.produto?.sku) {
-                  <span class="sku-tag hw-numeric">SKU: {{ item.produto?.sku }}</span>
-                }
-                <span class="unit-tag hw-numeric">{{ item.preco_unitario | brl }} / un</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="item-controles">
-            <hw-qty [valor]="num(item.quantidade)" [mudar]="mudar(item.produto_id)" [min]="0" />
-
-            <div class="total-col">
-              <span class="subtotal-label">Subtotal</span>
-              <span class="item-total hw-numeric">{{ linha(item) | brl }}</span>
-            </div>
-
-            <button
-              type="button"
-              class="btn-remover"
-              aria-label="Remover item do carrinho"
-              matTooltip="Remover este produto"
-              (click)="remover(item.produto_id)"
-            >
-              <span class="material-symbols-outlined" aria-hidden="true">delete_outline</span>
-            </button>
-          </div>
-        </li>
-      }
-    </ul>
-
-    <!-- Resumo Lateral Minimalista -->
-    <aside class="resumo-card">
-      <h2>Resumo do Pedido</h2>
-
-      <div class="resumo-linhas">
-        <div class="resumo-linha">
-          <span>Subtotal dos itens</span>
-          <strong class="hw-numeric">{{ subtotal() | brl }}</strong>
-        </div>
-        <div class="resumo-linha mut">
-          <span>Frete estimado</span>
-          <span>Calculado no checkout</span>
-        </div>
-        <div class="resumo-linha mut">
-          <span>Condição de pagamento</span>
-          <span>A combinar</span>
-        </div>
+          </tbody>
+        </table>
       </div>
 
-      <div class="divisor"></div>
+      <div class="cart-actions-bar">
+        <a routerLink="/busca" class="link-continuar">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Continuar comprando</span>
+        </a>
+        <span class="auto-sync-note">Quantidades atualizadas automaticamente</span>
+      </div>
+    </div>
 
-      <div class="resumo-linha total-geral">
-        <span>Total estimado</span>
-        <strong class="total-valor hw-numeric">{{ subtotal() | brl }}</strong>
+    <!-- Lateral "Total no carrinho" (cart_totals do WooCommerce) -->
+    <aside class="woo-box resumo-card">
+      <div class="woo-box-head">
+        <h2>Total no carrinho</h2>
       </div>
 
-      <p class="resumo-nota">
-        <span class="material-symbols-outlined nota-icon">verified_user</span>
-        <span>Preço corporativo faturado com nota fiscal conforme cadastro da sua empresa.</span>
-      </p>
+      <div class="woo-box-body">
+        <dl class="totals-table">
+          <div class="totals-row">
+            <dt>Subtotal</dt>
+            <dd class="hw-numeric">{{ subtotal() | brl }}</dd>
+          </div>
+          <div class="totals-row mut">
+            <dt>Entrega</dt>
+            <dd>Selecionada no checkout</dd>
+          </div>
+          <div class="totals-row mut">
+            <dt>Condição comercial</dt>
+            <dd>Tabela PJ / Faturamento</dd>
+          </div>
+          <div class="totals-row total-geral">
+            <dt>Total</dt>
+            <dd class="total-valor hw-numeric">{{ subtotal() | brl }}</dd>
+          </div>
+        </dl>
 
-      <button hwButton size="lg" class="btn-checkout" (click)="ir()">
-        <span>Avançar para o Checkout</span>
-        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-      </button>
+        <p class="resumo-nota">
+          <span class="material-symbols-outlined nota-icon">verified_user</span>
+          <span>Preço corporativo faturado com NF-e conforme cadastro da sua empresa.</span>
+        </p>
+
+        <button hwButton size="lg" class="btn-checkout" (click)="ir()">
+          <span>Continuar para a finalização de compra</span>
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        </button>
+      </div>
     </aside>
   </div>
 }

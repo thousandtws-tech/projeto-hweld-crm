@@ -1,37 +1,20 @@
-<!-- Breadcrumb — contexto de navegação padrão marketplace -->
+<!-- Breadcrumb — contexto de navegação padrão WooCommerce -->
 <nav class="crumb" aria-label="Caminho de navegação">
   <a routerLink="/">Início</a>
   <span class="material-symbols-outlined sep" aria-hidden="true">chevron_right</span>
-  <span class="atual">Busca</span>
+  <span class="atual">{{ q() ? 'Resultados para “' + q() + '”' : 'Loja' }}</span>
 </nav>
 
 @if (resultado(); as r) {
-  <div class="busca-topo">
+  <header class="shop-header">
     <h1>
       @if (q()) {
-        {{ r.total }} {{ r.total === 1 ? 'resultado' : 'resultados' }} para
-        <span class="termo">“{{ q() }}”</span>
+        Resultados para <span class="termo">“{{ q() }}”</span>
       } @else {
-        Todos os produtos
-        <span class="total-secundario">{{ r.total }} itens</span>
+        Catálogo de Produtos
       }
     </h1>
-
-    <!-- Ordenação — padrão de mercado -->
-    <label class="ordem-wrap">
-      <span class="ordem-label">Ordenar por</span>
-      <select
-        class="ordem-select"
-        [ngModel]="ordem()"
-        (ngModelChange)="mudarOrdem($event)"
-        aria-label="Ordenar resultados por"
-      >
-        @for (o of ordenacoes; track o.valor) {
-          <option [value]="o.valor">{{ o.rotulo }}</option>
-        }
-      </select>
-    </label>
-  </div>
+  </header>
 
   <!-- Did-you-mean — correção ortográfica do motor -->
   @if (r.correcao; as cor) {
@@ -64,18 +47,18 @@
         </button>
       }
       <button type="button" class="btn-limpar-filtros" (click)="limparFiltros()">
-        Limpar tudo
+        Limpar filtros
       </button>
     </div>
   }
 
   <div class="layout">
-    <!-- Sidebar de Facetas -->
+    <!-- Sidebar de Widgets WooCommerce -->
     <aside class="facetas" aria-label="Filtros de busca">
       @if (r.facetas?.categorias?.length) {
-        <div class="grupo-faceta">
-          <h3>Categorias</h3>
-          <div class="itens-faceta">
+        <div class="woo-box">
+          <div class="woo-box-head"><h3>Categorias de produto</h3></div>
+          <div class="woo-box-body itens-faceta">
             @for (f of r.facetas!.categorias!; track f.valor) {
               <label class="item-checkbox">
                 <input
@@ -92,9 +75,9 @@
       }
 
       @if (r.facetas?.marcas?.length) {
-        <div class="grupo-faceta">
-          <h3>Marcas</h3>
-          <div class="itens-faceta">
+        <div class="woo-box">
+          <div class="woo-box-head"><h3>Filtrar por marca</h3></div>
+          <div class="woo-box-body itens-faceta">
             @for (f of r.facetas!.marcas!; track f.valor) {
               <label class="item-checkbox">
                 <input
@@ -110,46 +93,93 @@
         </div>
       }
 
-      <!-- Faixa de preço — facetas devolvem min/max observados -->
-      <div class="grupo-faceta">
-        <h3>Preço</h3>
-        <div class="preco-faixa">
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            class="preco-input hw-numeric"
-            [ngModel]="precoMinDig()"
-            (ngModelChange)="precoMinDig.set($event)"
-            [placeholder]="r.facetas?.preco_min ? 'Min ' + r.facetas!.preco_min : 'Min'"
-            aria-label="Preço mínimo"
-          />
-          <span class="preco-sep">—</span>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            class="preco-input hw-numeric"
-            [ngModel]="precoMaxDig()"
-            (ngModelChange)="precoMaxDig.set($event)"
-            [placeholder]="r.facetas?.preco_max ? 'Máx ' + r.facetas!.preco_max : 'Máx'"
-            aria-label="Preço máximo"
-            (keyup.enter)="aplicarPreco()"
-          />
-          <button
-            type="button"
-            class="preco-ir"
-            (click)="aplicarPreco()"
-            aria-label="Aplicar faixa de preço"
-          >
-            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
-          </button>
+      <div class="woo-box">
+        <div class="woo-box-head"><h3>Filtrar por preço</h3></div>
+        <div class="woo-box-body">
+          <div class="preco-faixa">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              class="preco-input hw-numeric"
+              [ngModel]="precoMinDig()"
+              (ngModelChange)="precoMinDig.set($event)"
+              [placeholder]="r.facetas?.preco_min ? 'Min ' + r.facetas!.preco_min : 'Min'"
+              aria-label="Preço mínimo"
+            />
+            <span class="preco-sep">—</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              class="preco-input hw-numeric"
+              [ngModel]="precoMaxDig()"
+              (ngModelChange)="precoMaxDig.set($event)"
+              [placeholder]="r.facetas?.preco_max ? 'Máx ' + r.facetas!.preco_max : 'Máx'"
+              aria-label="Preço máximo"
+              (keyup.enter)="aplicarPreco()"
+            />
+            <button
+              type="button"
+              class="preco-ir"
+              (click)="aplicarPreco()"
+              aria-label="Aplicar faixa de preço"
+            >
+              Filtrar
+            </button>
+          </div>
         </div>
       </div>
     </aside>
 
-    <!-- Grade de Produtos + Paginação -->
+    <!-- Coluna Principal: Toolbar WooCommerce + Grade/Lista + Paginação -->
     <div class="conteudo-busca">
+      <div class="woo-shop-toolbar">
+        <p class="woo-result-count hw-numeric">
+          @if (r.total > 0) {
+            Exibindo <strong>{{ r.itens.length }}</strong> de <strong>{{ r.total }}</strong>
+            {{ r.total === 1 ? 'resultado' : 'resultados' }}
+          } @else {
+            Exibindo <strong>0</strong> resultados
+          }
+        </p>
+
+        <div class="woo-toolbar-right">
+          <div class="woo-view-toggle" role="group" aria-label="Modo de exibição">
+            <button
+              type="button"
+              [class.ativo]="modoVista() === 'grade'"
+              (click)="modoVista.set('grade')"
+              aria-label="Exibir em grade"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">grid_view</span>
+            </button>
+            <button
+              type="button"
+              [class.ativo]="modoVista() === 'lista'"
+              (click)="modoVista.set('lista')"
+              aria-label="Exibir em lista"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">view_list</span>
+            </button>
+          </div>
+
+          <label class="ordem-wrap">
+            <span class="ordem-label">Ordenar:</span>
+            <select
+              class="ordem-select"
+              [ngModel]="ordem()"
+              (ngModelChange)="mudarOrdem($event)"
+              aria-label="Ordenar resultados por"
+            >
+              @for (o of ordenacoes; track o.valor) {
+                <option [value]="o.valor">{{ o.rotulo }}</option>
+              }
+            </select>
+          </label>
+        </div>
+      </div>
+
       @if (r.itens.length === 0) {
         <hw-empty
           titulo="Nenhum produto encontrado"
@@ -161,7 +191,7 @@
           }
         </hw-empty>
       } @else {
-        <div class="grid">
+        <div class="grid" [class.woo-list-view]="modoVista() === 'lista'">
           @for (p of r.itens; track p.id) {
             <hw-product-card [item]="p" />
           }
@@ -214,7 +244,7 @@
 } @else {
   <div class="grid">
     @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-      <hw-skeleton style="height: 320px; border-radius: 12px" />
+      <hw-skeleton style="height: 320px; border-radius: 8px" />
     }
   </div>
 }

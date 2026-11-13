@@ -32,6 +32,7 @@ export class CategoriaPage implements OnInit {
   private rt = inject(RealtimeService);
   pagina = signal<Pagina<ItemCatalogoPortal> | null>(null);
   carregando = signal(true);
+  modoVista = signal<'grade' | 'lista'>('grade');
   private slugFallback = signal('');
   private categoriaIdSig = signal(0);
 

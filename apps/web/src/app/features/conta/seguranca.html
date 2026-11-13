@@ -1,49 +1,57 @@
-<hw-conta-nav />
+<div class="woo-account-layout">
+  <hw-conta-nav />
 
-<div class="conta-header">
-  <h1>Segurança do Acesso</h1>
-  <span class="subtitulo">Gerencie sua senha de acesso ao portal corporativo</span>
-</div>
+  <div class="seguranca-main">
+    <div class="conta-header">
+      <h1>Segurança do Acesso</h1>
+      <span class="subtitulo">Gerencie sua senha de acesso ao portal corporativo</span>
+    </div>
 
-<form class="cartao-seguranca" [formGroup]="form" (ngSubmit)="trocar()">
-  <h2>Alteração de Senha</h2>
+    <form class="woo-box cartao-seguranca" [formGroup]="form" (ngSubmit)="trocar()">
+      <div class="woo-box-head">
+        <h2>Alteração de senha</h2>
+      </div>
 
-  <div class="campos-troca">
-    <hw-field
-      [control]="form.controls.atual"
-      rotulo="Senha Atual"
-      id="atual"
-      tipo="password"
-      autocomplete="current-password"
-    />
-    <hw-field
-      [control]="form.controls.nova"
-      rotulo="Nova Senha"
-      id="nova"
-      tipo="password"
-      autocomplete="new-password"
-      erro="Mínimo de 8 caracteres"
-    />
-    <hw-field
-      [control]="form.controls.confirma"
-      rotulo="Confirmar Nova Senha"
-      id="confirma"
-      tipo="password"
-      autocomplete="new-password"
-      erro="As senhas informadas não coincidem"
-    />
+      <div class="woo-box-body">
+        <div class="campos-troca">
+          <hw-field
+            [control]="form.controls.atual"
+            rotulo="Senha Atual"
+            id="atual"
+            tipo="password"
+            autocomplete="current-password"
+          />
+          <hw-field
+            [control]="form.controls.nova"
+            rotulo="Nova Senha"
+            id="nova"
+            tipo="password"
+            autocomplete="new-password"
+            erro="Mínimo de 8 caracteres"
+          />
+          <hw-field
+            [control]="form.controls.confirma"
+            rotulo="Confirmar Nova Senha"
+            id="confirma"
+            tipo="password"
+            autocomplete="new-password"
+            erro="As senhas informadas não coincidem"
+          />
+        </div>
+
+        <button
+          hwButton
+          size="lg"
+          type="submit"
+          class="btn-salvar"
+          [loading]="enviando()"
+          texto="Salvando alterações…"
+          [disabled]="form.invalid"
+        >
+          <span>Salvar alterações</span>
+          <span class="material-symbols-outlined" aria-hidden="true">check</span>
+        </button>
+      </div>
+    </form>
   </div>
-
-  <button
-    hwButton
-    size="lg"
-    type="submit"
-    class="btn-salvar"
-    [loading]="enviando()"
-    texto="Salvando alterações…"
-    [disabled]="form.invalid"
-  >
-    <span>Atualizar Senha</span>
-    <span class="material-symbols-outlined" aria-hidden="true">check</span>
-  </button>
-</form>
+</div>

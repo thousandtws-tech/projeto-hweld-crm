@@ -41,6 +41,12 @@
             [title]="c.nome"
           >
             <img [src]="c.imagem" [alt]="c.nome" class="cat-banner-img" loading="lazy" />
+            <div class="cat-banner-overlay">
+              <span class="cat-banner-nome">{{ c.nome }}</span>
+              @if (c.descricao) {
+                <span class="cat-banner-desc">{{ c.descricao }}</span>
+              }
+            </div>
           </a>
         </div>
       }

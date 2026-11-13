@@ -75,6 +75,13 @@
   z-index: 1;
 }
 
+.slide-full-link {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: block;
+}
+
 /* Container do Conteúdo Alinhado (100% da altura do slide) */
 .slide-inner {
   position: relative;

@@ -118,7 +118,9 @@ export class HwCategoryGrid implements OnInit, OnDestroy {
         imagem: c.imagem_url!,
         cadastrada: true,
       }));
-    return reaisComImg.length > 0 ? reaisComImg : this.categoriasPadrao;
+    return reaisComImg.length >= 4
+      ? reaisComImg
+      : [...reaisComImg, ...this.categoriasPadrao.slice(0, Math.max(0, 8 - reaisComImg.length))];
   });
 
   constructor() {

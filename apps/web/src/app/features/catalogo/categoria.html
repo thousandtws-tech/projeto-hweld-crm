@@ -47,7 +47,7 @@
 @if (carregando()) {
   <div class="grid">
     @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
-      <hw-skeleton style="height: 320px; border-radius: 12px" />
+      <hw-skeleton style="height: 320px; border-radius: 8px" />
     }
   </div>
 } @else if (pagina()?.itens.length === 0) {
@@ -57,7 +57,35 @@
     icone="category"
   />
 } @else {
-  <div class="grid">
+  <div class="woo-shop-toolbar">
+    <p class="woo-result-count hw-numeric">
+      Exibindo <strong>{{ pagina()!.itens.length }}</strong> de
+      <strong>{{ pagina()!.total }}</strong>
+      {{ pagina()!.total === 1 ? 'produto' : 'produtos' }}
+    </p>
+    <div class="woo-toolbar-right">
+      <div class="woo-view-toggle" role="group" aria-label="Modo de exibição">
+        <button
+          type="button"
+          [class.ativo]="modoVista() === 'grade'"
+          (click)="modoVista.set('grade')"
+          aria-label="Exibir em grade"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">grid_view</span>
+        </button>
+        <button
+          type="button"
+          [class.ativo]="modoVista() === 'lista'"
+          (click)="modoVista.set('lista')"
+          aria-label="Exibir em lista"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">view_list</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid" [class.woo-list-view]="modoVista() === 'lista'">
     @for (p of pagina()!.itens; track p.id) {
       <hw-product-card [item]="p" />
     }

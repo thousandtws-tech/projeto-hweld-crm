@@ -270,7 +270,18 @@ export class CmsStore {
     this.carregado = true;
     firstValueFrom(this.http.get<CmsLoja>(`${environment.apiUrl}/portal/cms`))
       .then((dados) => {
-        if (dados) this._cms.set(dados);
+        if (!dados) return;
+        // Fallback por seção: se o admin ainda não cadastrou itens numa aba
+        // (array vazio no banco), preserva os defaults industriais daquela seção.
+        this._cms.set({
+          marcas: dados.marcas?.length ? dados.marcas : CMS_FALLBACK.marcas,
+          slides: dados.slides?.length ? dados.slides : CMS_FALLBACK.slides,
+          trio_banners: dados.trio_banners?.length
+            ? dados.trio_banners
+            : CMS_FALLBACK.trio_banners,
+          duo_banners: dados.duo_banners?.length ? dados.duo_banners : CMS_FALLBACK.duo_banners,
+          selos: dados.selos?.length ? dados.selos : CMS_FALLBACK.selos,
+        });
       })
       .catch(() => {
         this.carregado = false;

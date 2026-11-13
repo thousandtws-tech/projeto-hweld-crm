@@ -21,28 +21,16 @@
   }
 }
 
-.busca-topo {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.shop-header {
   margin-bottom: var(--hw-space-4);
-  padding-bottom: var(--hw-space-3);
-  border-bottom: 1px solid var(--hw-border);
-  gap: var(--hw-space-4);
-  flex-wrap: wrap;
   h1 {
-    font-size: 20px;
-    font-weight: 700;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     margin: 0;
   }
   .termo {
     color: var(--hw-accent);
-  }
-  .total-secundario {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--hw-text-muted);
-    margin-left: 6px;
   }
 }
 
@@ -136,28 +124,19 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: var(--hw-space-8);
+  grid-template-columns: 260px 1fr;
+  gap: var(--hw-space-6);
   align-items: start;
 }
 .facetas {
-  background: var(--hw-surface);
-  border: 1px solid var(--hw-border);
-  border-radius: var(--hw-radius-md);
-  padding: var(--hw-space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--hw-space-5);
+  gap: var(--hw-space-4);
   position: sticky;
   top: 84px;
-}
-.grupo-faceta h3 {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--hw-text-muted);
-  margin: 0 0 var(--hw-space-3);
+  .woo-box-body {
+    padding: 14px 16px;
+  }
 }
 .itens-faceta {
   display: flex;
@@ -222,30 +201,33 @@
   flex-shrink: 0;
 }
 .preco-ir {
-  width: 30px;
   height: 32px;
+  padding: 0 12px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: var(--hw-radius-md);
+  border-radius: var(--hw-radius-sm);
   background: var(--hw-accent);
   color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--hw-font-sans);
   cursor: pointer;
   transition: background 0.15s ease;
   &:hover {
     background: var(--hw-accent-hover, #1740b0);
   }
-  .material-symbols-outlined {
-    font-size: 18px;
-  }
 }
 
 .grid {
   display: grid;
-  gap: var(--hw-space-5);
+  gap: var(--hw-space-4);
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  &.woo-list-view {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Paginação numerada — padrão marketplace */

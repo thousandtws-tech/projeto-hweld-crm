@@ -9,6 +9,7 @@ import { ChangeDetectionStrategy,
   inject,
   signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import Swiper from 'swiper';
 import { Pagination, Autoplay, Parallax, A11y } from 'swiper/modules';
 import { CmsStore } from '../../../core/cms.store';
@@ -16,7 +17,7 @@ import { CmsStore } from '../../../core/cms.store';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'hw-slider-pro',
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './slider-pro.html',
   styleUrl: './slider-pro.scss',
 })

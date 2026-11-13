@@ -1,10 +1,33 @@
+.crumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--hw-text-muted);
+  margin-bottom: var(--hw-space-3);
+  a {
+    color: var(--hw-text-muted);
+    text-decoration: none;
+    &:hover {
+      color: var(--hw-accent);
+    }
+  }
+  .sep {
+    font-size: 16px;
+  }
+  .atual {
+    color: var(--hw-text);
+    font-weight: 600;
+  }
+}
+
 .checkout-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--hw-space-4);
-  margin-bottom: var(--hw-space-8);
-  padding-bottom: var(--hw-space-4);
+  margin-bottom: var(--hw-space-6);
+  padding-bottom: var(--hw-space-3);
   border-bottom: 1px solid var(--hw-border);
   .link-voltar {
     display: inline-flex;
@@ -37,35 +60,28 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: var(--hw-space-8);
+  grid-template-columns: 1fr 400px;
+  gap: var(--hw-space-6);
   align-items: start;
 }
 
 .passos {
   display: flex;
   flex-direction: column;
-  gap: var(--hw-space-6);
+  gap: var(--hw-space-5);
 }
 
-.passo-card {
-  background: var(--hw-surface-raised);
-  border: 1px solid var(--hw-border);
-  border-radius: var(--hw-radius-md);
-  padding: var(--hw-space-6);
-  &.form-endereco-card {
-    border-color: rgba(29, 79, 216, 0.35);
-    box-shadow: 0 8px 24px -8px rgba(29, 79, 216, 0.12);
-  }
+.form-endereco-card {
+  border-color: rgba(29, 79, 216, 0.35);
 }
 
 .btn-novo-end,
 .btn-fechar-end {
   border: 1px solid var(--hw-border);
-  background: var(--hw-surface);
+  background: var(--hw-surface-raised);
   color: var(--hw-accent);
-  border-radius: 999px;
-  padding: 5px 12px;
+  border-radius: var(--hw-radius-sm);
+  padding: 4px 10px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -277,73 +293,54 @@
   width: 100%;
 }
 
-/* Resumo Lateral */
+/* Resumo Lateral WooCommerce (woocommerce-checkout-review-order) */
 .resumo-sidebar {
-  background: var(--hw-surface);
-  border: 1px solid var(--hw-border);
-  border-radius: var(--hw-radius-lg);
-  padding: var(--hw-space-6);
   position: sticky;
   top: calc(var(--hw-header-h) + var(--hw-space-4));
-  h2 {
-    font-size: 18px;
-    font-weight: 700;
-    margin: 0 0 var(--hw-space-4);
-  }
-}
-.itens-preview {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hw-space-3);
-  max-height: 240px;
-  overflow-y: auto;
-  margin-bottom: var(--hw-space-4);
-}
-.item-linha {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--hw-space-3);
-  font-size: 13px;
-}
-.item-nome-col {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.item-nome {
-  font-weight: 500;
-  color: var(--hw-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 200px;
-}
-.item-qtd-unit {
-  font-size: 11.5px;
-  color: var(--hw-text-muted);
-}
-.item-subtotal {
-  font-weight: 600;
-  color: var(--hw-text);
 }
 
-.divisor {
-  height: 1px;
-  background: var(--hw-border);
-  margin: var(--hw-space-4) 0;
+.order-review-table {
+  font-size: 13.5px;
+
+  .item-nome {
+    font-weight: 500;
+    color: var(--hw-text);
+  }
+  .item-qty {
+    color: var(--hw-text-muted);
+    font-size: 12.5px;
+  }
+  tfoot th,
+  tfoot td {
+    padding: 11px 16px;
+    border-top: 1px solid var(--hw-border);
+    background: var(--hw-surface);
+    font-size: 13.5px;
+  }
+  tfoot th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--hw-text-muted);
+  }
+  .mut-td {
+    font-size: 12.5px;
+    color: var(--hw-text-muted);
+  }
+  tfoot tr.order-total th {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--hw-text);
+  }
 }
-.total-linha {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: var(--hw-space-5);
+
+.checkout-submit-box {
+  border-top: 1px solid var(--hw-border);
 }
+
 .total-num {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
-  color: var(--hw-accent);
+  color: var(--hw-accent) !important;
   letter-spacing: -0.02em;
 }
 .btn-confirmar {

@@ -21,6 +21,8 @@ const rotas = (process.env.SHOT_ROTAS || "/catalogo/produtos/novo:novo,/catalogo
   await page.addInitScript((t) => {
     sessionStorage.setItem("hw_staff_access", t);
     sessionStorage.setItem("hw_staff_refresh", "dummy-refresh");
+    sessionStorage.setItem("hw_access", t);
+    sessionStorage.setItem("hw_refresh", "dummy-refresh");
   }, token);
 
   for (const [rota, nome] of rotas) {

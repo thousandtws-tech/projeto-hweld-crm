@@ -97,21 +97,24 @@
     flex-shrink: 0;
   }
 }
-.bloco-topo .btn-editar {
-  margin-left: auto;
+.btn-editar {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   border: 1px solid var(--hw-border);
-  background: transparent;
+  background: var(--hw-surface-raised);
   color: var(--hw-accent);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 6px 12px;
-  border-radius: var(--hw-radius-pill);
+  padding: 4px 10px;
+  border-radius: var(--hw-radius-sm);
   cursor: pointer;
   .material-symbols-outlined {
-    font-size: 16px;
+    font-size: 15px;
+  }
+  &:hover {
+    border-color: var(--hw-accent);
+    background: var(--hw-accent-tint);
   }
 }
 .form-empresa .campos {
