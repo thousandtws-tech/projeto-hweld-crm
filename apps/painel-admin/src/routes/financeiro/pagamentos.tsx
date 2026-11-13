@@ -15,6 +15,7 @@ import { useEmpresasNomes } from "@/lib/use-empresas";
 import { useResourceList } from "@/lib/use-resource-list";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import { DateField } from "@/components/ui-kit/DateField";
 
 export const Route = createFileRoute("/financeiro/pagamentos")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -466,11 +467,7 @@ function PagamentosPage() {
         </FormField>
 
         <FormField label="1º vencimento *">
-          <TextField size="small" fullWidth
-            type="date"
-            required
-            value={fParc.primeiro_vencimento}
-            onChange={(e) => setFParc({ ...fParc, primeiro_vencimento: e.target.value })} />
+          <DateField required value={fParc.primeiro_vencimento} onChange={(v) => setFParc({ ...fParc, primeiro_vencimento: v })} />
         </FormField>
 
         <FormField label="Intervalo entre parcelas (dias)">

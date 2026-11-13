@@ -56,6 +56,7 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import MenuItem from "@mui/material/MenuItem";
+import { DateField, DateTimeField } from "@/components/ui-kit/DateField";
 
 export const Route = createFileRoute("/crm/oportunidades")({
   component: OportunidadesPage,
@@ -1032,10 +1033,7 @@ function OportunidadesPage() {
             onChange={(e) => setFNovo({ ...fNovo, valor_estimado: e.target.value })} />
         </FormField>
         <FormField label="Previsão de fechamento">
-          <TextField size="small" fullWidth
-            type="date"
-            value={fNovo.data_prevista_fechamento}
-            onChange={(e) => setFNovo({ ...fNovo, data_prevista_fechamento: e.target.value })} />
+          <DateField value={fNovo.data_prevista_fechamento} onChange={(v) => setFNovo({ ...fNovo, data_prevista_fechamento: v })} />
         </FormField>
         <FormField label="Origem">
           <TextField size="small" fullWidth select
@@ -1609,12 +1607,8 @@ function OportunidadeSheet({
                 </FormField>
 
                 <FormField label="Previsão de fechamento">
-                  <TextField size="small" fullWidth
-                    type="date"
-                    disabled={!podeEditar}
-                    value={fEdit.data_prevista_fechamento}
-                    onChange={(e) =>
-                      setFEdit({ ...fEdit, data_prevista_fechamento: e.target.value })
+                  <DateField disabled={!podeEditar} value={fEdit.data_prevista_fechamento} onChange={(v) =>
+                      setFEdit({ ...fEdit, data_prevista_fechamento: v })
                     } />
                 </FormField>
 
@@ -1694,12 +1688,11 @@ function OportunidadeSheet({
                       } />
                   </FormField>
                   <FormField label="Data da próxima ação">
-                    <TextField size="small" fullWidth
-                      type="datetime-local"
+                    <DateTimeField
                       required={Boolean(fInteracao.proxima_acao.trim())}
                       value={fInteracao.proxima_acao_em}
-                      onChange={(e) =>
-                        setFInteracao({ ...fInteracao, proxima_acao_em: e.target.value })
+                      onChange={(v) =>
+                        setFInteracao({ ...fInteracao, proxima_acao_em: v })
                       } />
                   </FormField>
                   <div className="flex justify-end sm:col-span-2">
@@ -1796,10 +1789,7 @@ function OportunidadeSheet({
                       onChange={(e) => setFOrc({ ...fOrc, preco_unitario: e.target.value })} />
                   </FormField>
                   <FormField label="Validade">
-                    <TextField size="small" fullWidth
-                      type="date"
-                      value={fOrc.valido_ate}
-                      onChange={(e) => setFOrc({ ...fOrc, valido_ate: e.target.value })} />
+                    <DateField value={fOrc.valido_ate} onChange={(v) => setFOrc({ ...fOrc, valido_ate: v })} />
                   </FormField>
                   <FormField label="Condição de pagamento">
                     <TextField size="small" fullWidth

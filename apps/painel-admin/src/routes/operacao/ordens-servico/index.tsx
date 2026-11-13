@@ -14,6 +14,7 @@ import { useResourceList } from "@/lib/use-resource-list";
 import { useAuth } from "@/store/auth-store";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import { DateField } from "@/components/ui-kit/DateField";
 
 export const Route = createFileRoute("/operacao/ordens-servico/")({
   beforeLoad: exigePerfil("admin", "tecnico"),
@@ -424,10 +425,7 @@ function OrdensServicoIndexPage() {
         </FormField>
 
         <FormField label="Previsão de conclusão">
-          <TextField size="small" fullWidth
-            type="date"
-            value={fNovo.prevista_em}
-            onChange={(e) => setFNovo({ ...fNovo, prevista_em: e.target.value })} />
+          <DateField value={fNovo.prevista_em} onChange={(v) => setFNovo({ ...fNovo, prevista_em: v })} />
         </FormField>
 
         <FormField label="Valor de mão de obra (R$)">

@@ -19,6 +19,7 @@ import { fiscalService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import { DateField } from "@/components/ui-kit/DateField";
 
 export const Route = createFileRoute("/fiscal/configuracao")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -342,11 +343,8 @@ function ConfigFiscalPage() {
                     value={certSenha}
                     onChange={(e) => setCertSenha(e.target.value)} />
                 </FormField>
-                <FormField label="Validade (AAAA-MM-DD)">
-                  <TextField size="small" fullWidth
-                    type="date"
-                    value={certValidade}
-                    onChange={(e) => setCertValidade(e.target.value)} />
+                <FormField label="Validade">
+                  <DateField value={certValidade} onChange={(v) => setCertValidade(v)} />
                 </FormField>
               </div>
             </div>

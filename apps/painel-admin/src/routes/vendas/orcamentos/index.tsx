@@ -21,6 +21,7 @@ import { useResourceList } from "@/lib/use-resource-list";
 import { useAuth } from "@/store/auth-store";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import { DateField } from "@/components/ui-kit/DateField";
 
 export const Route = createFileRoute("/vendas/orcamentos/")({
   component: OrcamentosIndexPage,
@@ -625,10 +626,7 @@ function OrcamentosIndexPage() {
         </FormField>
 
         <FormField label="Validade">
-          <TextField size="small" fullWidth
-            type="date"
-            value={fNovo.valido_ate}
-            onChange={(e) => setFNovo({ ...fNovo, valido_ate: e.target.value })} />
+          <DateField value={fNovo.valido_ate} onChange={(v) => setFNovo({ ...fNovo, valido_ate: v })} />
         </FormField>
 
         <FormField label="Condição de pagamento" wide>
