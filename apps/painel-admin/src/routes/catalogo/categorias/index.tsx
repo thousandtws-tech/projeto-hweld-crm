@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
+import { FormField } from "@/components/ui-kit/FormDialog";
 import { exigePerfil } from "@/lib/guards";
 import { processarEEnviarComPreset } from "@/lib/midia";
 import type { Categoria } from "@/lib/models";
@@ -182,65 +183,70 @@ function CategoriasPage() {
           )}
 
           <Box component="form" onSubmit={salvar} className="mt-3 space-y-3">
-            <TextField
-              label="Nome"
-              required
-              size="small"
-              fullWidth
-              value={f.nome}
-              onChange={(e) => setF({ ...f, nome: e.target.value })}
-            />
-            <TextField
-              label="Slug"
-              size="small"
-              fullWidth
-              placeholder="gerado-automaticamente"
-              helperText="Vazio = gerado a partir do nome"
-              value={f.slug}
-              onChange={(e) => setF({ ...f, slug: e.target.value })}
-            />
-            <TextField
-              label="Categoria pai"
-              size="small"
-              fullWidth
-              select
-              value={f.categoria_pai_id === "" ? "" : String(f.categoria_pai_id)}
-              onChange={(e) =>
-                setF({ ...f, categoria_pai_id: e.target.value === "" ? "" : Number(e.target.value) })
-              }
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-            >
-              <MenuItem value="">Nenhuma (departamento raiz)</MenuItem>
-              {linhas
-                .filter(({ c }) => !editando || c.id !== editando.id)
-                .map(({ c, nivel }) => (
-                  <MenuItem key={c.id} value={String(c.id)}>
-                    {"— ".repeat(nivel)}{c.nome}
-                  </MenuItem>
-                ))}
-            </TextField>
-            <TextField
-              label="Descrição"
-              size="small"
-              fullWidth
-              multiline
-              minRows={2}
-              placeholder="Resumo da linha de produtos desta categoria…"
-              value={f.descricao}
-              onChange={(e) => setF({ ...f, descricao: e.target.value })}
-            />
-            <TextField
-              label="Ordem de exibição"
-              size="small"
-              fullWidth
-              type="number"
-              value={f.ordem}
-              onChange={(e) => setF({ ...f, ordem: Number(e.target.value) })}
-            />
+            <FormField label="Nome *">
+              <TextField
+                required
+                size="small"
+                fullWidth
+                value={f.nome}
+                onChange={(e) => setF({ ...f, nome: e.target.value })}
+              />
+            </FormField>
+            <FormField label="Slug">
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="gerado-automaticamente"
+                helperText="Vazio = gerado a partir do nome"
+                value={f.slug}
+                onChange={(e) => setF({ ...f, slug: e.target.value })}
+              />
+            </FormField>
+            <FormField label="Categoria pai">
+              <TextField
+                size="small"
+                fullWidth
+                select
+                value={f.categoria_pai_id === "" ? "" : String(f.categoria_pai_id)}
+                onChange={(e) =>
+                  setF({ ...f, categoria_pai_id: e.target.value === "" ? "" : Number(e.target.value) })
+                }
+                slotProps={{ select: { displayEmpty: true } }}
+              >
+                <MenuItem value="">Nenhuma (departamento raiz)</MenuItem>
+                {linhas
+                  .filter(({ c }) => !editando || c.id !== editando.id)
+                  .map(({ c, nivel }) => (
+                    <MenuItem key={c.id} value={String(c.id)}>
+                      {"— ".repeat(nivel)}{c.nome}
+                    </MenuItem>
+                  ))}
+              </TextField>
+            </FormField>
+            <FormField label="Descrição">
+              <TextField
+                size="small"
+                fullWidth
+                multiline
+                minRows={2}
+                placeholder="Resumo da linha de produtos desta categoria…"
+                value={f.descricao}
+                onChange={(e) => setF({ ...f, descricao: e.target.value })}
+              />
+            </FormField>
+            <FormField label="Ordem de exibição">
+              <TextField
+                size="small"
+                fullWidth
+                type="number"
+                value={f.ordem}
+                onChange={(e) => setF({ ...f, ordem: Number(e.target.value) })}
+              />
+            </FormField>
 
             {/* Imagem da categoria */}
             <div>
-              <Typography variant="caption" className="font-medium text-muted-foreground">
+              <Typography sx={{ fontSize: 12.5, fontWeight: 500, color: "text.primary" }}>
                 Imagem da categoria
               </Typography>
               <div className="mt-1 flex items-center gap-3">

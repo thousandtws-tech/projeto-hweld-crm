@@ -26,7 +26,7 @@ export function FormField({
       fullWidth
       sx={{ gridColumn: wide ? { sm: "span 2" } : undefined, gap: 0.5 }}
     >
-      <FormLabel sx={{ fontSize: 12, color: "text.secondary" }}>{label}</FormLabel>
+      <FormLabel sx={{ fontSize: 12.5, fontWeight: 500, color: "text.primary" }}>{label}</FormLabel>
       {children}
     </FormControl>
   );
