@@ -8,6 +8,12 @@ ThousandTWS Engineering).
 ```
 projeto Railway: hweld-crm  (workspace clarituz-workspace)
 ├── Postgres              (plugin oficial — postgres.railway.internal:5432)
+├── painel-admin          (React — apps/painel-admin, nginx estático)
+│     público:  https://painel-admin-production-70f4bcb0.up.railway.app  (:80)
+│     nginx envsubst: API_UPSTREAM + MOTOR_UPSTREAM (rede privada)
+├── web                   (Angular — apps/web, nginx estático)
+│     público:  https://web-production-978cb2d0.up.railway.app  (:80)
+│     proxy same-origin: /api/v1 → core-api · /events + /socket → realtime
 ├── core-api              (Rust/Actix — Dockerfile)
 │     público:  https://core-api-production-5553.up.railway.app  (:8080)
 │     privado:  core-api.railway.internal:8080
@@ -104,12 +110,14 @@ cd ../../services/hweld-operations-api && railway up
 
 ## Pós-deploy
 
-1. `railway domain --service core-api` → gera `*.up.railway.app`
-2. Conferir `GET https://<domínio>/health` → `{"status":"ok"}` (ou equivalente)
-3. Atualizar `CORE_API_ORIGIN` em `infra/cloudflare/wrangler.jsonc` e
-   `wrangler.admin.jsonc` (`env.production`) e rodar
-   `npm run deploy:production && npm run deploy:admin:production` em
-   `infra/cloudflare` — o proxy same-origin `/api/*` passa a apontar para a API real.
+1. `railway domain --service <svc>` → gera `*.up.railway.app`;
+   para nginx/imagens com porta fixa, `railway domain update <domínio> --port 80`.
+2. Conferir `GET https://<domínio>/health` → `{"status":"ok"}` (ou equivalente).
+3. Frontends: cada app precisa de **link próprio** no seu diretório
+   (`cd apps/painel-admin && railway link -p hweld-crm -e production -s painel-admin`)
+   — sem isso `railway up` sobe a raiz do monorepo e o build falha.
+4. Banco zerado em 2026-11-13: `DROP SCHEMA public CASCADE` + restart do
+   core-api (migrations + seed admin) e operations-api (Flyway).
 
 ## Custos / observações
 
