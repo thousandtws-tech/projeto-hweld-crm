@@ -3,6 +3,7 @@
 //! aqui dentro, mantendo as invariantes do modelo (§7).
 
 pub mod auditoria;
+pub mod busca_pendentes;
 pub mod cache;
 pub mod catalogo;
 pub mod crm;
@@ -17,6 +18,7 @@ pub mod usuarios;
 pub mod vendas;
 
 pub use auditoria::{RegistradorAuditoriaPg, RepositorioAuditoriaPg};
+pub use busca_pendentes::RepositorioBuscaPendentesPg;
 pub use catalogo::{RepositorioCategoriasPg, RepositorioProdutosPg, RepositorioTabelasPrecoPg};
 pub use crm::{
     RepositorioContatosPg, RepositorioEmpresasPg, RepositorioEnderecosPg, RepositorioInteracoesPg,

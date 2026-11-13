@@ -12,7 +12,7 @@ defmodule MotorRealtime.Barramento do
   do próprio processo — um subscriber lento nunca bloqueia o publisher.
   """
 
-  alias MotorRealtime.Evento
+  alias MotorRealtime.{EventLog, Evento}
   alias Phoenix.PubSub
 
   @pubsub MotorRealtime.PubSub
@@ -45,6 +45,11 @@ defmodule MotorRealtime.Barramento do
         :todos -> [@topico_staff, @topico_todos]
       end
 
+    # Sequência antes do broadcast — sai como `id:` no frame SSE e vai ao
+    # EventLog para replay por `Last-Event-ID` na reconexão.
+    seq = EventLog.proximo_seq()
+    e = %{e | seq: seq}
+
     # Entregas reais por tópico (assinantes vivos neste nó) antes do broadcast —
     # alimenta o Monitor/dashboard ("quem recebeu"). Os subscribers do PubSub
     # vivem num Registry com o nome do próprio pubsub.
@@ -53,6 +58,7 @@ defmodule MotorRealtime.Barramento do
 
     # PubSub.broadcast/3 retorna :ok — entregamos o nº de tópicos atingidos.
     Enum.each(topicos, &PubSub.broadcast(@pubsub, &1, e))
+    EventLog.registrar(seq, e, topicos)
 
     :telemetry.execute(
       [:motor_realtime, :evento, :publicado],

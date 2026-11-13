@@ -16,7 +16,8 @@ use tracing::{error, instrument};
 
 use crate::erro::{ErroApp, Resultado};
 use crate::ports::busca::{
-    ConsultaBuscaProdutos, DocumentoProduto, Facetas, MotorBusca, SugestaoProduto,
+    ConsultaBuscaProdutos, DocumentoProduto, Facetas, MotorBusca, OperacaoBusca,
+    RepositorioBuscaPendentes, SugestaoProduto,
 };
 use crate::ports::catalogo::{
     FiltroProdutos, RepositorioCategorias, RepositorioProdutos, RepositorioTabelasPreco,
@@ -62,6 +63,8 @@ pub struct ServicoBusca {
     categorias: Arc<dyn RepositorioCategorias>,
     tabelas: Arc<dyn RepositorioTabelasPreco>,
     empresas: Arc<dyn RepositorioEmpresas>,
+    /// Outbox de indexações falhas — reprocessada pelo relay periódico.
+    pendentes: Arc<dyn RepositorioBuscaPendentes>,
 }
 
 impl ServicoBusca {
@@ -71,6 +74,7 @@ impl ServicoBusca {
         categorias: Arc<dyn RepositorioCategorias>,
         tabelas: Arc<dyn RepositorioTabelasPreco>,
         empresas: Arc<dyn RepositorioEmpresas>,
+        pendentes: Arc<dyn RepositorioBuscaPendentes>,
     ) -> Self {
         Self {
             motor,
@@ -78,7 +82,47 @@ impl ServicoBusca {
             categorias,
             tabelas,
             empresas,
+            pendentes,
         }
+    }
+
+    /// Relay da outbox de busca — reprocessa indexações/remoções que
+    /// falharam no best-effort com backoff (8 tentativas → morto).
+    /// Chamado por um task periódica no boot do servidor.
+    pub async fn reprocessar_pendentes(&self, limite: u32) -> Resultado<u64> {
+        let itens = self.pendentes.vencidos(limite).await?;
+        if itens.is_empty() {
+            return Ok(0);
+        }
+        let nomes = self.mapa_categorias().await?;
+        let mut ok = 0u64;
+        for item in itens {
+            let resultado: Result<(), ErroApp> = match item.operacao {
+                OperacaoBusca::Indexar => match self.produtos.buscar_por_id(item.produto_id).await {
+                    Ok(Some(p)) if p.deleted_at.is_none() => {
+                        let doc = DocumentoProduto::novo(
+                            &p,
+                            nomes.get(&p.categoria_id.valor()).cloned(),
+                        );
+                        self.motor.indexar_produto(&doc).await
+                    }
+                    // Produto removido/arquivado desde o enfileiramento —
+                    // pendente obsoleto, conclui sem tocar o índice.
+                    _ => Ok(()),
+                },
+                OperacaoBusca::Remover => self.motor.remover_produto(item.produto_id).await,
+            };
+            match resultado {
+                Ok(()) => {
+                    self.pendentes.concluir(item.id).await?;
+                    ok += 1;
+                }
+                Err(e) => {
+                    let _ = self.pendentes.falhar(item.id, &e.to_string()).await;
+                }
+            }
+        }
+        Ok(ok)
     }
 
     /// Busca do backoffice — sem resolução de preço B2B.
@@ -275,11 +319,13 @@ impl ServicoBusca {
 }
 
 /// Indexação best-effort — chamada pós-commit pelo `ServicoProdutos`.
-/// Falhas do motor são logadas e nunca propagadas: o Postgres segue como
-/// fonte de verdade e `reindexar` repara divergências.
+/// Falhas do motor são logadas, enfileiradas na outbox de busca
+/// (`busca_pendentes`) e nunca propagadas: o Postgres segue como fonte de
+/// verdade, o relay retenta e `reindexar` repara divergências.
 pub async fn indexar_best_effort(
     motor: &Option<Arc<dyn MotorBusca>>,
     categorias: &Arc<dyn RepositorioCategorias>,
+    pendentes: &Arc<dyn RepositorioBuscaPendentes>,
     produto: &Produto,
 ) {
     let Some(motor) = motor else { return };
@@ -290,13 +336,29 @@ pub async fn indexar_best_effort(
     let doc = DocumentoProduto::novo(produto, nome);
     if let Err(e) = motor.indexar_produto(&doc).await {
         error!(erro = %e, produto_id = produto.id.valor(), "falha ao indexar produto (busca)");
+        if let Err(e2) = pendentes
+            .enfileirar(produto.id, OperacaoBusca::Indexar, &e.to_string())
+            .await
+        {
+            error!(erro = %e2, produto_id = produto.id.valor(), "falha ao enfileirar indexação pendente");
+        }
     }
 }
 
-/// Remoção best-effort do índice (produto arquivado).
-pub async fn desindexar_best_effort(motor: &Option<Arc<dyn MotorBusca>>, id: Id<Produto>) {
+/// Remoção best-effort do índice (produto arquivado) — mesma outbox.
+pub async fn desindexar_best_effort(
+    motor: &Option<Arc<dyn MotorBusca>>,
+    pendentes: &Arc<dyn RepositorioBuscaPendentes>,
+    id: Id<Produto>,
+) {
     let Some(motor) = motor else { return };
     if let Err(e) = motor.remover_produto(id).await {
         error!(erro = %e, produto_id = id.valor(), "falha ao remover produto do índice");
+        if let Err(e2) = pendentes
+            .enfileirar(id, OperacaoBusca::Remover, &e.to_string())
+            .await
+        {
+            error!(erro = %e2, produto_id = id.valor(), "falha ao enfileirar remoção pendente");
+        }
     }
 }

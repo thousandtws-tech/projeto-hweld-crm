@@ -14,7 +14,7 @@ defmodule MotorRealtimeWeb.EventosController do
   use MotorRealtimeWeb, :controller
   require Logger
 
-  alias MotorRealtime.{Barramento, EmpresaResolver, Evento}
+  alias MotorRealtime.{Barramento, EmpresaResolver, EventLog, Evento}
 
   @heartbeat_ms 15_000
   @retry_ms 3_000
@@ -23,30 +23,32 @@ defmodule MotorRealtimeWeb.EventosController do
 
   @doc "GET /events/publico — visitantes da vitrine pública escutam eventos de catálogo/estoque."
   def publico(conn, _params) do
-    Barramento.assinar(Barramento.topico_todos())
+    topicos = [Barramento.topico_todos()]
+    Enum.each(topicos, &Barramento.assinar/1)
     Logger.info("SSE público conectado")
-    stream(assign(conn, :sujeito_id, 0), :publico)
+    stream(assign(conn, :sujeito_id, 0), :publico, topicos)
   end
 
   @doc "GET /events/staff — backoffice escuta todos os eventos."
   def staff(conn, _params) do
-    Barramento.assinar(Barramento.topico_staff())
+    topicos = [Barramento.topico_staff()]
+    Enum.each(topicos, &Barramento.assinar/1)
     Logger.info("SSE staff conectado (sujeito=#{conn.assigns.sujeito_id})")
-    stream(conn, :staff)
+    stream(conn, :staff, topicos)
   end
 
   @doc "GET /events/portal — só eventos da empresa do contato + públicos."
   def portal(conn, _params) do
     case EmpresaResolver.empresa_do_contato(conn.assigns.sujeito_id) do
       {:ok, empresa_id} ->
-        Barramento.assinar(Barramento.topico_empresa(empresa_id))
-        Barramento.assinar(Barramento.topico_todos())
+        topicos = [Barramento.topico_empresa(empresa_id), Barramento.topico_todos()]
+        Enum.each(topicos, &Barramento.assinar/1)
 
         Logger.info(
           "SSE portal conectado (contato=#{conn.assigns.sujeito_id} empresa=#{empresa_id})"
         )
 
-        stream(conn, :portal)
+        stream(conn, :portal, topicos)
 
       :error ->
         conn
@@ -55,7 +57,7 @@ defmodule MotorRealtimeWeb.EventosController do
     end
   end
 
-  defp stream(conn, audiencia) do
+  defp stream(conn, audiencia, topicos) do
     meta = %{audiencia: audiencia, sujeito: conn.assigns.sujeito_id, pid: self()}
     :telemetry.execute([:motor_realtime, :conexao, :aberta], %{}, meta)
 
@@ -69,13 +71,64 @@ defmodule MotorRealtimeWeb.EventosController do
       |> send_chunked(200)
 
     try do
-      case chunk(conn, ": hweld-realtime\nretry: #{@retry_ms}\n\n") do
-        {:ok, conn} -> loop(conn)
+      with {:ok, conn} <- chunk(conn, ": hweld-realtime\nretry: #{@retry_ms}\n\n"),
+           {:ok, conn} <- replay(conn, topicos) do
+        loop(conn)
+      else
         {:error, _} -> conn
       end
     after
       :telemetry.execute([:motor_realtime, :conexao, :fechada], %{}, meta)
     end
+  end
+
+  # Reenvia o que o cliente perdeu na queda: EventSource manda o último
+  # `id:` recebido em `Last-Event-ID` ao reconectar — buscamos no EventLog
+  # só os eventos dos tópicos assinados por esta conexão.
+  defp replay(conn, topicos) do
+    with [raw] <- get_req_header(conn, "last-event-id"),
+         {last_id, ""} when last_id >= 0 <- Integer.parse(raw) do
+      %{eventos: perdidos, gap: gap} = EventLog.desde(last_id, topicos)
+
+      # Janela retida expirou sob este last_id — sinaliza explicitamente
+      # para o cliente re-sincronizar via REST em vez de confiar no replay.
+      with {:ok, conn} <- sinaliza_gap(conn, gap),
+           {:ok, conn} <-
+             Enum.reduce_while(perdidos, {:ok, conn}, fn evento, {:ok, c} ->
+               case chunk(c, frame(evento)) do
+                 {:ok, c} -> {:cont, {:ok, c}}
+                 {:error, _} = erro -> {:halt, erro}
+               end
+             end) do
+        if perdidos != [] do
+          Logger.info(
+            "SSE replay: #{length(perdidos)} eventos reenviados (sujeito=#{conn.assigns.sujeito_id})"
+          )
+        end
+
+        {:ok, conn}
+      end
+    else
+      _ -> {:ok, conn}
+    end
+  end
+
+  defp sinaliza_gap(conn, false), do: {:ok, conn}
+
+  defp sinaliza_gap(conn, true) do
+    Logger.info("SSE replay: janela expirada, cliente deve reconciliar via REST")
+
+    chunk(
+      conn,
+      "event: reconcile\ndata: #{Jason.encode!(%{motivo: "janela_expirada"})}\n\n"
+    )
+  end
+
+  # Frame SSE completo: `id:` habilita Last-Event-ID no cliente.
+  defp frame(%Evento{seq: seq} = evento) do
+    dados = Jason.encode!(%{tipo: evento.tipo, dados: evento.dados})
+    id = if seq, do: "id: #{seq}\n", else: ""
+    "#{id}event: #{evento.tipo}\ndata: #{dados}\n\n"
   end
 
   defp loop(conn) do
@@ -86,9 +139,7 @@ defmodule MotorRealtimeWeb.EventosController do
           Logger.warning("SSE encerrado: mailbox acima de #{@max_queue} (cliente lento)")
           conn
         else
-          dados = Jason.encode!(%{tipo: evento.tipo, dados: evento.dados})
-
-          case chunk(conn, "event: #{evento.tipo}\ndata: #{dados}\n\n") do
+          case chunk(conn, frame(evento)) do
             {:ok, conn} -> loop(conn)
             {:error, _} -> conn
           end

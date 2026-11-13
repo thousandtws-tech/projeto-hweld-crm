@@ -10,10 +10,17 @@ defmodule MotorRealtime.Evento do
   """
 
   @enforce_keys [:tipo, :audiencia, :dados]
-  defstruct [:tipo, :audiencia, :dados]
+  # `seq` é atribuída pelo Barramento no publish (EventLog) — sai como
+  # `id:` no frame SSE para suportar `Last-Event-ID` na reconexão.
+  defstruct [:tipo, :audiencia, :dados, :seq]
 
   @type audiencia :: :staff | {:empresa, pos_integer()} | :todos
-  @type t :: %__MODULE__{tipo: String.t(), audiencia: audiencia(), dados: map()}
+  @type t :: %__MODULE__{
+          tipo: String.t(),
+          audiencia: audiencia(),
+          dados: map(),
+          seq: pos_integer() | nil
+        }
 
   @doc """
   Constrói um evento a partir do payload JSON do `/ingest`:

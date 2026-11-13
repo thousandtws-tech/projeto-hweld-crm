@@ -110,12 +110,25 @@ integrações. Atualizado em 2026-11-13.
 
 ## Pendente — backend/domínio
 
-- `OrderCreated` Rust→Java não emitido (canal `/internal/events` existe)
-- Endpoints agregados de dashboard (`/dashboard/receita`, curva ABC) — hoje
-  calculados no cliente
-- Sync Elasticsearch via outbox/CDC (hoje best-effort pós-commit)
-- Replay de eventos SSE (`Last-Event-ID` + ring buffer) — hoje sem
-  durabilidade, by design; reavaliar se algum consumidor exigir completude
+- ~~`OrderCreated` Rust→Java~~ ✅ **Épico C** — Rust emite
+  `OrderCreated`/`OrderCancelled` via `NotificadorOperacoes`
+  (`ports/integracao.rs` + `infrastructure/ops.rs`, `INTERNAL_SERVICE_TOKEN`)
+  após commit nos 3 fluxos (checkout, manual, conversão de orçamento);
+  Java projeta em `order_projections` (`V7__order_projections.sql`,
+  `OrderCreatedHandler` idempotente via `processed_events`)
+- ~~Dashboard agregado~~ ✅ `GET /api/v1/dashboard/resumo` (staff-only)
+  agrega payments/billing/fiscal/notificações/pedidos via `GROUP BY
+  status` — `DashboardService`/`DashboardController`
+- ~~Sync Elasticsearch via outbox~~ ✅ tabela `busca_pendentes`
+  (migration `0018`) — falha do motor enfileira; relay a cada 30s
+  (`reprocessar_pendentes`) com backoff quadrático até `morto` (8×).
+  `reindexar` segue o reparo total
+- ~~Replay SSE~~ ✅ `EventLog` ETS (ring buffer 1.000, TTL 15min) —
+  frames ganham `id:`, reconexão com `Last-Event-ID` replaya retidos antes
+  de assinar o stream; `last_id` abaixo da janela retida emite
+  `event: reconcile` (cliente re-sincroniza via REST). Observação: log é
+  por-instância — réplicas múltiplas precisam
+  de sticky ou log compartilhado (futuro: Redis/PG)
 - `GatewayFiscal` stub no Rust — mantido por design (Java orquestra);
   remover só se dead code incomodar
 

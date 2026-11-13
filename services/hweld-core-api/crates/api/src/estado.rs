@@ -59,7 +59,8 @@ pub struct AppState {
     pub auditoria: ServicoAuditoria,
     /// `None` quando `ELASTICSEARCH_URL` não está configurada — os
     /// endpoints de busca respondem 503 e o restante segue normal.
-    pub busca: Option<ServicoBusca>,
+    /// `Arc` porque o relay de pendências compartilha a mesma instância.
+    pub busca: Option<Arc<ServicoBusca>>,
     /// Eventos realtime saem pelo port `NotificadorRealtime` direto ao
     /// motor dedicado (Phoenix) — o Actix não serve mais SSE.
 

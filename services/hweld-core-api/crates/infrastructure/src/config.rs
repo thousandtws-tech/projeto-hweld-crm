@@ -53,6 +53,9 @@ pub struct ConfigObservabilidade {
 #[derive(Debug, Clone)]
 pub struct ConfigIntegracao {
     pub service_token: Option<String>,
+    /// URL base do operations-api para publicação outbound (OrderCreated
+    /// etc.). Ausente = eventos descartados com warn (dev sem o Java).
+    pub ops_url: Option<String>,
 }
 
 /// Object storage S3-compatível (MinIO). `endpoint` ausente = fallback
@@ -181,6 +184,7 @@ impl Config {
                     (env("ENVIRONMENT").as_deref() != Some("production"))
                         .then(|| "dev-internal-token".to_string())
                 }),
+                ops_url: env("OPERATIONS_API_URL"),
             },
             edge_token: env("EDGE_TOKEN"),
             armazenamento: env("MINIO_ENDPOINT").map(|endpoint| ConfigArmazenamento {

@@ -179,3 +179,63 @@ pub trait MotorBusca: Send + Sync {
     /// direto e aceita uma janela curta de indisponibilidade.)
     async fn recriar_indice(&self) -> Resultado<()>;
 }
+
+/// Operação de índice pendente — enfileirada quando o best-effort falha.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OperacaoBusca {
+    Indexar,
+    Remover,
+}
+
+impl OperacaoBusca {
+    pub fn como_str(self) -> &'static str {
+        match self {
+            Self::Indexar => "indexar",
+            Self::Remover => "remover",
+        }
+    }
+
+    pub fn de_str(s: &str) -> Self {
+        match s {
+            "remover" => Self::Remover,
+            _ => Self::Indexar,
+        }
+    }
+}
+
+/// Linha da outbox de busca aguardando reprocessamento pelo relay.
+#[derive(Debug, Clone)]
+pub struct PendenciaBusca {
+    pub id: i64,
+    pub produto_id: Id<Produto>,
+    pub operacao: OperacaoBusca,
+    pub tentativas: i32,
+}
+
+/// Outbox de sincronização do índice de busca — falhas do motor viram
+/// linhas que um relay reprocessa com backoff quadrático até `morto`
+/// (8 tentativas). Garante que um ES instável não perde atualizações
+/// silenciosamente entre `reindexar` completos.
+#[async_trait]
+pub trait RepositorioBuscaPendentes: Send + Sync {
+    /// Enfileira a operação para retry (chamado no caminho de falha do
+    /// best-effort — nunca falha o caso de uso se o próprio insert falhar,
+    /// o chamador apenas loga).
+    async fn enfileirar(
+        &self,
+        produto_id: Id<Produto>,
+        operacao: OperacaoBusca,
+        erro: &str,
+    ) -> Resultado<()>;
+
+    /// Pendências vencidas (`proximo_retry <= now`, não mortas), da mais
+    /// antiga para a mais nova.
+    async fn vencidos(&self, limite: u32) -> Resultado<Vec<PendenciaBusca>>;
+
+    /// Reprocessamento bem-sucedido — remove a linha.
+    async fn concluir(&self, id: i64) -> Resultado<()>;
+
+    /// Falha no reprocessamento — incrementa tentativas, agenda o próximo
+    /// retry com backoff quadrático e marca `morto` na 8ª.
+    async fn falhar(&self, id: i64, erro: &str) -> Resultado<()>;
+}

@@ -20,6 +20,7 @@ use crate::ports::catalogo::{
 use crate::ports::crm::RepositorioEmpresas;
 use crate::ports::estoque::RepositorioEstoque;
 use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
+use crate::ports::busca::RepositorioBuscaPendentes;
 use crate::use_cases::busca::{desindexar_best_effort, indexar_best_effort};
 
 pub struct ServicoCategorias {
@@ -127,6 +128,8 @@ pub struct ServicoProdutos {
     categorias: Arc<dyn RepositorioCategorias>,
     /// Motor de busca opcional — sincronização best-effort pós-commit.
     busca: Option<Arc<dyn MotorBusca>>,
+    /// Outbox de indexações falhas — retentadas pelo relay do ServicoBusca.
+    busca_pendentes: Arc<dyn RepositorioBuscaPendentes>,
     realtime: Arc<dyn NotificadorRealtime>,
 }
 
@@ -135,12 +138,14 @@ impl ServicoProdutos {
         produtos: Arc<dyn RepositorioProdutos>,
         categorias: Arc<dyn RepositorioCategorias>,
         busca: Option<Arc<dyn MotorBusca>>,
+        busca_pendentes: Arc<dyn RepositorioBuscaPendentes>,
         realtime: Arc<dyn NotificadorRealtime>,
     ) -> Self {
         Self {
             produtos,
             categorias,
             busca,
+            busca_pendentes,
             realtime,
         }
     }
@@ -195,7 +200,7 @@ impl ServicoProdutos {
             )));
         }
         let produto = self.produtos.criar(input).await?;
-        indexar_best_effort(&self.busca, &self.categorias, &produto).await;
+        indexar_best_effort(&self.busca, &self.categorias, &self.busca_pendentes, &produto).await;
         self.realtime.publicar(EventoRealtime::novo(
             "catalogo.produtos",
             Audiencia::Todos,
@@ -219,7 +224,7 @@ impl ServicoProdutos {
             )));
         }
         let produto = self.produtos.atualizar(id, input).await?;
-        indexar_best_effort(&self.busca, &self.categorias, &produto).await;
+        indexar_best_effort(&self.busca, &self.categorias, &self.busca_pendentes, &produto).await;
         self.realtime.publicar(EventoRealtime::novo(
             "catalogo.produtos",
             Audiencia::Todos,
@@ -230,7 +235,7 @@ impl ServicoProdutos {
 
     pub async fn arquivar(&self, id: Id<Produto>) -> Resultado<()> {
         self.produtos.arquivar(id).await?;
-        desindexar_best_effort(&self.busca, id).await;
+        desindexar_best_effort(&self.busca, &self.busca_pendentes, id).await;
         self.realtime.publicar(EventoRealtime::novo(
             "catalogo.produtos",
             Audiencia::Todos,

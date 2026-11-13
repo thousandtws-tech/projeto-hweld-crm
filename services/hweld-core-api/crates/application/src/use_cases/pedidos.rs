@@ -11,6 +11,7 @@ use hweld_domain::vendas::pedido::{OrigemPedido, Pedido, PedidoItem, StatusPedid
 use crate::erro::{ErroApp, Resultado};
 use crate::ports::catalogo::RepositorioProdutos;
 use crate::ports::externos::RegistradorAuditoria;
+use crate::ports::integracao::{EventoOperacoes, NotificadorOperacoes};
 use crate::ports::notificacoes::{CaixaDeEntrada, NovaNotificacao};
 use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
 use crate::ports::vendas::{FiltroPedidos, NovoPedido, RepositorioPedidos};
@@ -21,6 +22,7 @@ pub struct ServicoPedidos {
     audit: Arc<dyn RegistradorAuditoria>,
     realtime: Arc<dyn NotificadorRealtime>,
     notificacoes: Arc<dyn CaixaDeEntrada>,
+    ops: Arc<dyn NotificadorOperacoes>,
 }
 
 impl ServicoPedidos {
@@ -30,6 +32,7 @@ impl ServicoPedidos {
         audit: Arc<dyn RegistradorAuditoria>,
         realtime: Arc<dyn NotificadorRealtime>,
         notificacoes: Arc<dyn CaixaDeEntrada>,
+        ops: Arc<dyn NotificadorOperacoes>,
     ) -> Self {
         Self {
             pedidos,
@@ -37,6 +40,7 @@ impl ServicoPedidos {
             audit,
             realtime,
             notificacoes,
+            ops,
         }
     }
 
@@ -107,6 +111,8 @@ impl ServicoPedidos {
                 "origem": criado.origem,
             }),
         ));
+        // Projeção no serviço de operações (OrderCreated → read model).
+        self.ops.publicar(EventoOperacoes::pedido_criado(&criado));
         Ok(criado)
     }
 

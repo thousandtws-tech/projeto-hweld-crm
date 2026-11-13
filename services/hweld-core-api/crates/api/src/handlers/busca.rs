@@ -22,7 +22,7 @@ pub struct ReindexResultado {
 fn servico(state: &AppState) -> Resposta<&ServicoBusca> {
     state
         .busca
-        .as_ref()
+        .as_deref()
         .ok_or_else(|| ErroHttp(ErroApp::Indisponivel("motor de busca")))
 }
 

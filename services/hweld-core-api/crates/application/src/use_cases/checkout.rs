@@ -16,6 +16,7 @@ use hweld_domain::vendas::pedido::{ItemPedidoNovo, OrigemPedido, Pedido};
 use crate::erro::{ErroApp, Resultado};
 use crate::ports::catalogo::RepositorioProdutos;
 use crate::ports::crm::{RepositorioContatos, RepositorioEnderecos};
+use crate::ports::integracao::{EventoOperacoes, NotificadorOperacoes};
 use crate::ports::notificacoes::{CaixaDeEntrada, NovaNotificacao};
 use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
 use crate::ports::vendas::{DonoCarrinho, NovoPedido, RepositorioCarrinhos, RepositorioPedidos};
@@ -36,6 +37,7 @@ pub struct ServicoCheckout {
     produtos: Arc<dyn RepositorioProdutos>,
     realtime: Arc<dyn NotificadorRealtime>,
     notificacoes: Arc<dyn CaixaDeEntrada>,
+    ops: Arc<dyn NotificadorOperacoes>,
 }
 
 impl ServicoCheckout {
@@ -47,6 +49,7 @@ impl ServicoCheckout {
         produtos: Arc<dyn RepositorioProdutos>,
         realtime: Arc<dyn NotificadorRealtime>,
         notificacoes: Arc<dyn CaixaDeEntrada>,
+        ops: Arc<dyn NotificadorOperacoes>,
     ) -> Self {
         Self {
             carrinhos,
@@ -56,6 +59,7 @@ impl ServicoCheckout {
             produtos,
             realtime,
             notificacoes,
+            ops,
         }
     }
 
@@ -162,6 +166,8 @@ impl ServicoCheckout {
         };
 
         let pedido = self.pedidos.criar_de_carrinho(pedido, carrinho.id).await?;
+        // Operações: projeção OrderCreated no serviço irmão (fire-and-forget).
+        self.ops.publicar(EventoOperacoes::pedido_criado(&pedido));
         // Realtime: pedido novo do e-commerce + oportunidade automática no funil CRM.
         self.realtime.publicar(EventoRealtime::novo(
             "pedido.criado",

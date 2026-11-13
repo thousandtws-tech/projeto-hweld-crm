@@ -22,6 +22,8 @@ defmodule MotorRealtime.Application do
         {Phoenix.PubSub, name: MotorRealtime.PubSub},
         # Tabela ETS do resolver precisa nascer antes das conexões SSE.
         MotorRealtime.EmpresaResolver,
+        # Log circular de eventos — replay SSE via Last-Event-ID.
+        MotorRealtime.EventLog,
         # Telemetria/contadores do dashboard — antes do endpoint.
         MotorRealtime.Monitor
       ] ++ db ++ [MotorRealtimeWeb.Endpoint]

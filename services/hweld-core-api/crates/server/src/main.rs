@@ -29,7 +29,8 @@ use hweld_application::use_cases::portal::ServicoPortal;
 use hweld_application::use_cases::usuarios::ServicoUsuarios;
 use hweld_domain::acesso::usuario::{NovoUsuario, Perfil};
 use hweld_infrastructure::persistence::{
-    RegistradorAuditoriaPg, RepositorioAuditoriaPg, RepositorioCaixasPg, RepositorioCarrinhosPg,
+    RegistradorAuditoriaPg, RepositorioAuditoriaPg, RepositorioBuscaPendentesPg,
+    RepositorioCaixasPg, RepositorioCarrinhosPg,
     RepositorioCategoriasPg, RepositorioConfigFiscalPg, RepositorioContatosPg,
     RepositorioEmpresasPg, RepositorioEnderecosPg, RepositorioEstoquePg,
     RepositorioEventosIntegracaoPg, RepositorioFormasPagamentoPg, RepositorioInteracoesPg,
@@ -39,7 +40,7 @@ use hweld_infrastructure::persistence::{
 };
 use hweld_infrastructure::{
     conectar, iniciar_observabilidade, BuscaElastic, Config, EmissorJwt, GatewayFiscalStub,
-    HasherArgon2, HttpRealtime, Observabilidade, MIGRATOR,
+    HasherArgon2, HttpOps, HttpRealtime, Observabilidade, MIGRATOR,
 };
 use sqlx::PgPool;
 use tracing_actix_web::TracingLogger;
@@ -86,6 +87,19 @@ async fn executar() -> anyhow::Result<()> {
 
     let motor_busca = montar_busca(&config).await;
     let estado = montar_estado(&pool, &config, motor_busca);
+    // Relay da outbox de busca — retenta indexações/remoções falhas com
+    // backoff (30s por ciclo); só existe quando o motor está configurado.
+    if let Some(busca) = estado.busca.clone() {
+        tokio::spawn(async move {
+            let mut intervalo = tokio::time::interval(std::time::Duration::from_secs(30));
+            loop {
+                intervalo.tick().await;
+                if let Err(e) = busca.reprocessar_pendentes(50).await {
+                    tracing::warn!(erro = %e, "relay busca: ciclo falhou");
+                }
+            }
+        });
+    }
     let dados = web::Data::new(estado);
     let dados_pool = web::Data::new(pool);
     let cors_origins = config.cors_origins.clone();
@@ -287,6 +301,7 @@ fn montar_estado(
     let auditoria_repo = Arc::new(RepositorioAuditoriaPg::novo(pool.clone()));
     let notificacoes_repo = Arc::new(RepositorioNotificacoesPg::novo(pool.clone()));
     let eventos_integracao_repo = Arc::new(RepositorioEventosIntegracaoPg::novo(pool.clone()));
+    let busca_pendentes_repo = Arc::new(RepositorioBuscaPendentesPg::novo(pool.clone()));
 
     let hasher = Arc::new(HasherArgon2::novo());
     // Mesma implementação serve os dois ports — é dona da tabela refresh_tokens.
@@ -297,6 +312,9 @@ fn montar_estado(
     let audit = Arc::new(RegistradorAuditoriaPg::novo(pool.clone()));
     // Motor realtime dedicado (Phoenix) — publicação HTTP fire-and-forget.
     let realtime = Arc::new(HttpRealtime::novo(&config.motor));
+    // Operations-api (Java) — publicação outbound fire-and-forget
+    // (OrderCreated etc. → /api/v1/internal/events com X-Service-Token).
+    let ops = Arc::new(HttpOps::novo(&config.integracao));
     let notificacoes = Arc::new(ServicoNotificacoes::novo(
         notificacoes_repo,
         usuarios_repo.clone(),
@@ -312,6 +330,7 @@ fn montar_estado(
         audit.clone(),
         realtime.clone(),
         notificacoes.clone(),
+        ops.clone(),
     ));
 
     AppState {
@@ -349,12 +368,14 @@ fn montar_estado(
             enderecos_repo.clone(),
             produtos_repo.clone(),
             realtime.clone(),
+            ops.clone(),
         ),
         categorias: ServicoCategorias::novo(categorias_repo.clone(), realtime.clone()),
         produtos: ServicoProdutos::novo(
             produtos_repo.clone(),
             categorias_repo.clone(),
             motor_busca.clone(),
+            busca_pendentes_repo.clone(),
             realtime.clone(),
         ),
         tabelas_preco: ServicoTabelasPreco::novo(
@@ -389,6 +410,7 @@ fn montar_estado(
             produtos_repo.clone(),
             realtime.clone(),
             notificacoes.clone(),
+            ops.clone(),
         ),
         pedidos: pedidos_svc.clone(),
         integracao: Arc::new(ServicoIntegracao::novo(
@@ -434,13 +456,14 @@ fn montar_estado(
         notificacoes,
         armazenamento: montar_armazenamento(config),
         busca: motor_busca.map(|motor| {
-            ServicoBusca::novo(
+            Arc::new(ServicoBusca::novo(
                 motor,
                 produtos_repo.clone(),
                 categorias_repo,
                 tabelas_repo.clone(),
                 empresas_repo.clone(),
-            )
+                busca_pendentes_repo.clone(),
+            ))
         }),
     }
 }

@@ -19,6 +19,7 @@ use hweld_domain::vendas::pedido::{ItemPedidoNovo, OrigemPedido, Pedido};
 use crate::erro::{ErroApp, Resultado};
 use crate::ports::catalogo::RepositorioProdutos;
 use crate::ports::crm::{FiltroOrcamentos, RepositorioEnderecos, RepositorioOrcamentos};
+use crate::ports::integracao::{EventoOperacoes, NotificadorOperacoes};
 use crate::ports::realtime::{Audiencia, EventoRealtime, NotificadorRealtime};
 use crate::ports::vendas::NovoPedido;
 
@@ -27,6 +28,7 @@ pub struct ServicoOrcamentos {
     enderecos: Arc<dyn RepositorioEnderecos>,
     produtos: Arc<dyn RepositorioProdutos>,
     realtime: Arc<dyn NotificadorRealtime>,
+    ops: Arc<dyn NotificadorOperacoes>,
 }
 
 impl ServicoOrcamentos {
@@ -35,12 +37,14 @@ impl ServicoOrcamentos {
         enderecos: Arc<dyn RepositorioEnderecos>,
         produtos: Arc<dyn RepositorioProdutos>,
         realtime: Arc<dyn NotificadorRealtime>,
+        ops: Arc<dyn NotificadorOperacoes>,
     ) -> Self {
         Self {
             orcamentos,
             enderecos,
             produtos,
             realtime,
+            ops,
         }
     }
 
@@ -224,6 +228,8 @@ impl ServicoOrcamentos {
         };
 
         let convertido = self.orcamentos.converter_em_pedido(id, pedido).await?;
+        // Projeção no serviço de operações (OrderCreated → read model).
+        self.ops.publicar(EventoOperacoes::pedido_criado(&convertido));
         // Conversão gera pedido — alimenta a lista de pedidos do backoffice
         // e o portal da empresa (mesmo contrato do checkout e-commerce).
         self.realtime.publicar(EventoRealtime::novo(

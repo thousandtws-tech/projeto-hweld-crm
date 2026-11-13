@@ -54,6 +54,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/billing/**", "/api/v1/fiscal-documents/**", "/api/v1/notifications/**",
                         "/api/v1/events/**")
                     .hasAnyAuthority("ROLE_STAFF_ADMIN", "ROLE_STAFF_FINANCEIRO")
+                // Métricas operacionais agregadas — qualquer staff, nunca portal.
+                .requestMatchers("/api/v1/dashboard/**").hasAuthority("ROLE_STAFF")
                 .requestMatchers("/api/v1/**")
                     .hasAnyAuthority("ROLE_STAFF", "ROLE_PORTAL", "ROLE_SERVICE")
                 .anyRequest().authenticated())
