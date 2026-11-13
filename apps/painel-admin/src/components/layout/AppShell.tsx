@@ -234,6 +234,7 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
   const navigate = useNavigate();
   const itemBase =
     "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors";
+  const itemSx = { py: "10px", px: "12px", borderRadius: "16px" } as const;
 
   const handleSignOut = async () => {
     await signOut();
@@ -271,6 +272,7 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
                         to={item.to as "/"}
                         onClick={onNavigate}
                         selected={active}
+                        sx={itemSx}
                         className={`${itemBase} ${
                           active
                             ? "bg-lime text-primary-foreground"
@@ -289,29 +291,35 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
         })}
       </Box>
 
-      <div className="mt-auto space-y-1 pt-6">
-        <ListItemButton
-          component={Link}
-          to="/conta"
-          onClick={onNavigate}
-          selected={pathname === "/conta"}
-          className={`${itemBase} ${pathname === "/conta" ? "bg-lime text-primary-foreground" : "text-foreground hover:bg-secondary"}`}
-        >
-          <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-secondary text-[10px] font-bold">
-            {(user?.perfil?.[0] ?? "?").toUpperCase()}
-          </div>
-          <span className="min-w-0 flex-1 truncate">
-            {user?.nome ?? `#${user?.id ?? "?"}`}
-            <span className="ml-1.5 text-xs capitalize text-muted-foreground">{user?.perfil}</span>
-          </span>
-        </ListItemButton>
-        <ListItemButton
-          onClick={handleSignOut}
-          className={`${itemBase} w-full text-foreground hover:bg-secondary`}
-        >
-          <LogOut className="h-4 w-4" /> Sair
-        </ListItemButton>
-      </div>
+      <List disablePadding className="mt-auto space-y-1 pt-6">
+        <ListItem disablePadding>
+          <ListItemButton
+            component={Link}
+            to="/conta"
+            onClick={onNavigate}
+            selected={pathname === "/conta"}
+            className={`${itemBase} ${pathname === "/conta" ? "bg-lime text-primary-foreground" : "text-foreground hover:bg-secondary"}`}
+            sx={itemSx}
+          >
+            <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-secondary text-[10px] font-bold">
+              {(user?.perfil?.[0] ?? "?").toUpperCase()}
+            </div>
+            <span className="min-w-0 flex-1 truncate">
+              {user?.nome ?? `#${user?.id ?? "?"}`}
+              <span className="ml-1.5 text-xs capitalize text-muted-foreground">{user?.perfil}</span>
+            </span>
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={handleSignOut}
+            className={`${itemBase} w-full text-foreground hover:bg-secondary`}
+            sx={itemSx}
+          >
+            <LogOut className="h-4 w-4" /> Sair
+          </ListItemButton>
+        </ListItem>
+      </List>
     </>
   );
 }
