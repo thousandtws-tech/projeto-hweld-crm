@@ -208,7 +208,7 @@ function CategoriasPage() {
               onChange={(e) =>
                 setF({ ...f, categoria_pai_id: e.target.value === "" ? "" : Number(e.target.value) })
               }
-              slotProps={{ select: { displayEmpty: true } }}
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
             >
               <MenuItem value="">Nenhuma (departamento raiz)</MenuItem>
               {linhas
@@ -312,7 +312,7 @@ function CategoriasPage() {
         </SectionCard>
 
         {/* Coluna direita — listagem hierárquica */}
-        <SectionCard className="!p-0 overflow-hidden">
+        <SectionCard className="overflow-hidden p-0!">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <Typography variant="subtitle2" className="text-sm font-bold">Categorias</Typography>
             <Typography variant="caption" className="text-muted-foreground">{linhas.length} cadastrada(s)</Typography>

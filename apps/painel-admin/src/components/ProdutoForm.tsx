@@ -504,7 +504,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
           </SectionCard>
 
           {/* Dados do produto — painel com abas (padrão WooCommerce) */}
-          <SectionCard className="!p-0 overflow-hidden">
+          <SectionCard className="overflow-hidden p-0!">
             <div className="border-b border-border px-4 pt-3">
               <Typography variant="subtitle2" className="text-sm font-bold">
                 Dados do produto
@@ -652,7 +652,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                     select
                     value={f.origem_mercadoria}
                     onChange={set("origem_mercadoria")}
-                    slotProps={{ select: { displayEmpty: true } }}
+                    slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
                   >
                     <MenuItem value="">0 — Nacional</MenuItem>
                     <MenuItem value="0">0 — Nacional</MenuItem>
@@ -672,7 +672,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
             <Typography variant="subtitle2" className="text-sm font-bold">
               Publicar
             </Typography>
-            <div>
+            <div className="flex flex-col items-start">
               <FormControlLabel
                 control={<Switch checked={f.ativo} onChange={setFlag("ativo")} />}
                 label="Ativo no catálogo"
@@ -718,7 +718,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
               select
               value={f.categoria_id === "" ? "" : String(f.categoria_id)}
               onChange={set("categoria_id")}
-              slotProps={{ select: { displayEmpty: true } }}
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
             >
               <MenuItem value="">Selecione…</MenuItem>
               {categorias.map((c) => (
@@ -759,7 +759,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                   void processarArquivos(e.dataTransfer.files);
                 }
               }}
-              className={`relative aspect-square w-full overflow-hidden rounded-xl border transition ${
+              className={`relative aspect-[4/3] w-full overflow-hidden rounded-xl border transition lg:aspect-square ${
                 arrastandoSobre
                   ? "border-2 border-dashed border-primary bg-primary/5"
                   : imagemEmDestaque
