@@ -22,6 +22,11 @@ import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 
@@ -314,7 +319,7 @@ function CmsLojaPage() {
           <Tab value="selos" label={`Selos de Confiança (${cms.selos.length})`} />
         </Tabs>
 
-        <div className="flex items-center gap-2 pb-1">
+        <div className="ml-auto flex items-center gap-2 pb-1.5">
           <Typography variant="caption" className="font-semibold text-muted-foreground">
             Auto-Ajuste no Upload:
           </Typography>
@@ -340,34 +345,47 @@ function CmsLojaPage() {
                   onChange={(e) => setNovaMarcaNome(e.target.value)} />
               </FormField>
               <FormField label="Logo da Marca (Upload ou URL)">
-                <div className="flex gap-2">
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-12 w-20 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-white p-1.5">
+                      {novaMarcaLogo ? (
+                        <img
+                          src={resolverUrlPreview(novaMarcaLogo)}
+                          alt="Prévia do logo"
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-[10px] text-slate-400">Sem logo</span>
+                      )}
+                    </div>
+                    <Button
+                      component="label"
+                      variant="outlined"
+                      size="small"
+                      disabled={uploadingKey === "nova-marca"}
+                      startIcon={uploadingKey === "nova-marca" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+                      sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
+                    >
+                      Enviar logo
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={(e) =>
+                          void uploadImagem(
+                            e.target.files?.[0],
+                            "nova-marca",
+                            "marca",
+                            setNovaMarcaLogo,
+                          )
+                        }
+                      />
+                    </Button>
+                  </div>
                   <TextField size="small" fullWidth
-                    placeholder="https://… ou envie ao lado"
+                    placeholder="…ou cole a URL da imagem (https://…)"
                     value={novaMarcaLogo}
                     onChange={(e) => setNovaMarcaLogo(e.target.value)} />
-                  <Button
-                    component="label"
-                    variant="outlined"
-                    size="small"
-                    disabled={uploadingKey === "nova-marca"}
-                    startIcon={uploadingKey === "nova-marca" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
-                    sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
-                  >
-                    Upload
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={(e) =>
-                        void uploadImagem(
-                          e.target.files?.[0],
-                          "nova-marca",
-                          "marca",
-                          setNovaMarcaLogo,
-                        )
-                      }
-                    />
-                  </Button>
                 </div>
               </FormField>
               <Button variant="contained" size="small" type="submit" fullWidth startIcon={<Plus className="h-4 w-4" />}>
@@ -380,73 +398,97 @@ function CmsLojaPage() {
             title="Marcas Cadastradas"
             action={
               <Typography variant="caption" className="text-muted-foreground">
-                exibidas em "Navegue por marcas" e no cadastro de Produtos
+                {cms.marcas.length} marca(s) — exibidas em "Navegue por marcas" e no cadastro de Produtos
               </Typography>
             }
+            contentClassName="p-0"
           >
-            {cms.marcas.length === 0 && (
-              <Typography variant="body2" className="py-8 text-center text-muted-foreground">
-                Nenhuma marca cadastrada — use o formulário ao lado.
-              </Typography>
-            )}
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {cms.marcas.map((m, idx) => (
-                <div
-                  key={m.id}
-                  className="flex items-center gap-3 rounded-xl border border-border bg-secondary/20 p-3"
-                >
-                  <div className="grid h-14 w-20 shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-white p-2">
-                    {m.logo ? (
-                      <img
-                        src={resolverUrlPreview(m.logo)}
-                        alt={m.nome}
-                        className="max-h-full max-w-full object-contain"
-                      />
-                    ) : (
-                      <span className="text-[11px] font-bold text-slate-500">{m.nome}</span>
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <TextField size="small" fullWidth
-                      value={m.nome}
-                      onChange={(e) => atualizarMarca(idx, { nome: e.target.value })} />
-                    <div className="flex items-center gap-1">
-                      <Button
-                        component="label"
-                        variant="outlined"
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ width: 96 }}>Logo</TableCell>
+                  <TableCell>Nome da marca</TableCell>
+                  <TableCell sx={{ width: 80 }} align="center">Ativa</TableCell>
+                  <TableCell sx={{ width: 110 }} align="right">Ações</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {cms.marcas.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center" sx={{ py: 8, color: "text.secondary" }}>
+                      Nenhuma marca cadastrada — use o formulário ao lado.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {cms.marcas.map((m, idx) => (
+                  <TableRow key={m.id} hover>
+                    <TableCell>
+                      <div className="grid h-10 w-[72px] place-items-center overflow-hidden rounded-md border border-border bg-white p-1">
+                        {m.logo ? (
+                          <img
+                            src={resolverUrlPreview(m.logo)}
+                            alt={m.nome}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        ) : (
+                          <span className="truncate px-0.5 text-[9px] font-bold text-slate-500">
+                            {m.nome || "—"}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <TextField
                         size="small"
-                        startIcon={<ImagePlus className="h-3 w-3" />}
-                        sx={{ fontSize: 11, px: 1, whiteSpace: "nowrap" }}
-                      >
-                        Trocar logo
-                        <input
-                          type="file"
-                          hidden
-                          accept="image/*"
-                          onChange={(e) =>
-                            void uploadImagem(
-                              e.target.files?.[0],
-                              `marca-${m.id}`,
-                              "marca",
-                              (url) => atualizarMarca(idx, { logo: url }),
-                            )
-                          }
-                        />
-                      </Button>
-                      <FormControlLabel
-                        control={<Checkbox size="small" checked={m.ativa} onChange={(e) => atualizarMarca(idx, { ativa: e.target.checked })} />}
-                        label={<Typography variant="caption">Ativa</Typography>}
-                        sx={{ mr: 0 }}
+                        fullWidth
+                        value={m.nome}
+                        onChange={(e) => atualizarMarca(idx, { nome: e.target.value })}
                       />
-                      <IconButton size="small" color="error" type="button" onClick={() => void excluirMarca(idx)} aria-label={`Excluir ${m.nome}`}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </IconButton>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Checkbox
+                        size="small"
+                        checked={m.ativa}
+                        onChange={(e) => atualizarMarca(idx, { ativa: e.target.checked })}
+                        sx={{ p: 0.5 }}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <div className="flex items-center justify-end gap-0.5">
+                        <IconButton
+                          component="label"
+                          size="small"
+                          disabled={uploadingKey === `marca-${m.id}`}
+                          title="Trocar logo"
+                        >
+                          {uploadingKey === `marca-${m.id}` ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <ImagePlus className="h-3.5 w-3.5" />
+                          )}
+                          <input
+                            type="file"
+                            hidden
+                            accept="image/*"
+                            onChange={(e) =>
+                              void uploadImagem(
+                                e.target.files?.[0],
+                                `marca-${m.id}`,
+                                "marca",
+                                (url) => atualizarMarca(idx, { logo: url }),
+                              )
+                            }
+                          />
+                        </IconButton>
+                        <IconButton size="small" color="error" type="button" onClick={() => void excluirMarca(idx)} title={`Excluir ${m.nome}`}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </IconButton>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </Metabox>
         </div>
       )}
