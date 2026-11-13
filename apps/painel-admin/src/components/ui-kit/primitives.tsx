@@ -1,4 +1,10 @@
 import type { ReactNode } from "react";
+import Card from "@mui/material/Card";
+import Chip from "@mui/material/Chip";
+import Stack from "@mui/material/Stack";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import type { SxProps, Theme } from "@mui/material/styles";
 
 export function SectionCard({
   children,
@@ -8,11 +14,13 @@ export function SectionCard({
   className?: string;
 }) {
   return (
-    <div
-      className={`rounded-3xl bg-card border border-border shadow-[var(--shadow-card)] p-4 sm:p-5 lg:p-6 ${className}`}
+    <Card
+      className={className}
+      variant="outlined"
+      sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5, lg: 3 }, boxShadow: "var(--shadow-card)" }}
     >
       {children}
-    </div>
+    </Card>
   );
 }
 
@@ -26,94 +34,127 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <h1 className="truncate text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+    <Stack
+      direction={{ xs: "column", sm: "row" }}
+      spacing={1.5}
+      alignItems={{ sm: "center" }}
+      justifyContent="space-between"
+      sx={{ borderBottom: 1, borderColor: "divider", pb: 2 }}
+    >
+      <Box minWidth={0}>
+        <Typography
+          variant="h5"
+          component="h1"
+          noWrap
+          fontWeight={700}
+          letterSpacing="-0.02em"
+          sx={{ fontSize: { xs: 20, sm: 24 } }}
+        >
           {title}
-        </h1>
+        </Typography>
         {subtitle && (
-          <p className="mt-0.5 truncate text-xs text-muted-foreground sm:text-sm">{subtitle}</p>
+          <Typography variant="body2" color="text.secondary" noWrap mt={0.25}>
+            {subtitle}
+          </Typography>
         )}
-      </div>
-      {action && <div className="flex shrink-0 flex-wrap items-center gap-2">{action}</div>}
-    </div>
+      </Box>
+      {action && (
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap flexShrink={0}>
+          {action}
+        </Stack>
+      )}
+    </Stack>
   );
 }
 
-const SUCCESS = "bg-[#26488C] text-[#F2F2F2] dark:bg-[#88ABF2] dark:text-[#272728]";
-const WARN = "bg-[var(--pill-warn-bg)] text-[var(--pill-warn-fg)]";
-const DANGER = "bg-[var(--pill-danger-bg)] text-[var(--pill-danger-fg)]";
-const INFO = "bg-[var(--pill-info-bg)] text-[var(--pill-info-fg)]";
-const NEUTRAL = "bg-secondary text-muted-foreground";
+type PillTone = "primary" | "warning" | "error" | "info" | "default";
 
-const statusStyles: Record<string, string> = {
+const statusTones: Record<string, PillTone> = {
   // pedidos
-  aguardando_pagamento: WARN,
-  confirmado: SUCCESS,
-  em_separacao: INFO,
-  faturado: INFO,
-  enviado: INFO,
-  entregue: SUCCESS,
-  concluido: SUCCESS,
-  cancelado: NEUTRAL,
+  aguardando_pagamento: "warning",
+  confirmado: "primary",
+  em_separacao: "info",
+  faturado: "info",
+  enviado: "info",
+  entregue: "primary",
+  concluido: "primary",
+  cancelado: "default",
   // orçamentos
-  rascunho: NEUTRAL,
-  em_analise: WARN,
-  aprovado: SUCCESS,
-  recusado: DANGER,
-  expirado: NEUTRAL,
-  convertido: SUCCESS,
+  rascunho: "default",
+  em_analise: "warning",
+  aprovado: "primary",
+  recusado: "error",
+  expirado: "default",
+  convertido: "primary",
   // oportunidades
-  lead: INFO,
-  qualificacao: INFO,
-  proposta: WARN,
-  negociacao: WARN,
-  ganha: SUCCESS,
-  perdida: DANGER,
+  lead: "info",
+  qualificacao: "info",
+  proposta: "warning",
+  negociacao: "warning",
+  ganha: "primary",
+  perdida: "error",
   // OS
-  aberta: INFO,
-  em_andamento: WARN,
-  aguardando_material: WARN,
-  concluida: SUCCESS,
-  cancelada: NEUTRAL,
+  aberta: "info",
+  em_andamento: "warning",
+  aguardando_material: "warning",
+  concluida: "primary",
+  cancelada: "default",
   // NF
-  autorizada: SUCCESS,
-  rejeitada: DANGER,
-  denegada: DANGER,
+  autorizada: "primary",
+  rejeitada: "error",
+  denegada: "error",
   // documentos fiscais (operations-api — StatusFiscalDocumento)
-  requested: INFO,
-  processing: INFO,
-  authorized: SUCCESS,
-  rejected: DANGER,
-  cancelled: NEUTRAL,
-  cancellation_pending: WARN,
-  requires_reconciliation: WARN,
-  error: DANGER,
+  requested: "info",
+  processing: "info",
+  authorized: "primary",
+  rejected: "error",
+  cancelled: "default",
+  cancellation_pending: "warning",
+  requires_reconciliation: "warning",
+  error: "error",
   // pagamentos
-  pendente: WARN,
-  pago: SUCCESS,
-  vencido: DANGER,
-  estornado: NEUTRAL,
+  pendente: "warning",
+  pago: "primary",
+  vencido: "error",
+  estornado: "default",
   // cadastros
-  ativo: SUCCESS,
-  inativo: NEUTRAL,
-  prospecto: INFO,
-  urgente: DANGER,
-  alta: WARN,
-  normal: INFO,
-  baixa: NEUTRAL,
+  ativo: "primary",
+  inativo: "default",
+  prospecto: "info",
+  urgente: "error",
+  alta: "warning",
+  normal: "info",
+  baixa: "default",
+};
+
+const toneSx: Record<PillTone, SxProps<Theme>> = {
+  primary: { bgcolor: "#26488c", color: "#f2f2f2" },
+  warning: { bgcolor: "rgb(217 72 110 / 0.14)", color: "#d9486e" },
+  error: { bgcolor: "rgb(217 37 70 / 0.14)", color: "#d92546" },
+  info: { bgcolor: "rgb(136 171 242 / 0.18)", color: "#26488c" },
+  default: { bgcolor: "action.hover", color: "text.secondary" },
 };
 
 export function StatusPill({ status, label }: { status: string; label?: string }) {
-  const key = status.toLowerCase();
-  const cls = statusStyles[key] ?? NEUTRAL;
+  const tone = statusTones[status.toLowerCase()] ?? "default";
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium capitalize ${cls}`}
-    >
-      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
-      {label ?? status.replaceAll("_", " ")}
-    </span>
+    <Chip
+      size="small"
+      sx={{
+        ...toneSx[tone],
+        textTransform: "capitalize",
+        fontSize: 12,
+        height: 26,
+        "& .MuiChip-label": { px: 1 },
+      }}
+      icon={
+        <Box
+          component="span"
+          sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "currentColor", opacity: 0.7 }}
+        />
+      }
+      label={label ?? status.replaceAll("_", " ")}
+    />
   );
 }
 
@@ -133,31 +174,46 @@ export function StatCard({
   sub?: string;
 }) {
   const trendColor =
-    trend === "up"
-      ? "text-success"
-      : trend === "down"
-        ? "text-destructive"
-        : "text-muted-foreground";
+    trend === "up" ? "primary.main" : trend === "down" ? "error.main" : "text.secondary";
   const arrow = trend === "up" ? "↑" : trend === "down" ? "↓" : "→";
   return (
     <SectionCard>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack direction="row" alignItems="center" spacing={1}>
           {icon && (
-            <div className="grid place-items-center w-8 h-8 rounded-full bg-secondary">{icon}</div>
+            <Box
+              sx={{
+                display: "grid",
+                placeItems: "center",
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                bgcolor: "action.hover",
+              }}
+            >
+              {icon}
+            </Box>
           )}
-          <span className="text-sm text-muted-foreground">{label}</span>
-        </div>
-      </div>
-      <div className="mt-4 text-3xl font-bold tracking-tight">{value}</div>
-      <div className="mt-2 flex items-center gap-2 text-xs">
+          <Typography variant="body2" color="text.secondary">
+            {label}
+          </Typography>
+        </Stack>
+      </Stack>
+      <Typography variant="h4" fontWeight={700} letterSpacing="-0.02em" mt={2}>
+        {value}
+      </Typography>
+      <Stack direction="row" alignItems="center" spacing={1} mt={1}>
         {delta && (
-          <span className={`${trendColor} font-semibold`}>
+          <Typography variant="caption" fontWeight={600} sx={{ color: trendColor }}>
             {arrow} {delta}
-          </span>
+          </Typography>
         )}
-        {sub && <span className="text-muted-foreground">{sub}</span>}
-      </div>
+        {sub && (
+          <Typography variant="caption" color="text.secondary">
+            {sub}
+          </Typography>
+        )}
+      </Stack>
     </SectionCard>
   );
 }

@@ -2,6 +2,21 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Loader2, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
+import InputAdornment from "@mui/material/InputAdornment";
+import MenuItem from "@mui/material/MenuItem";
+import Pagination from "@mui/material/Pagination";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 
 import { api } from "@/lib/api";
 import { brl, fmtData, qty, statusLabel } from "@/lib/format";
@@ -90,7 +105,7 @@ function Celula({ linha, c }: { linha: Linha; c: Coluna }) {
 /**
  * Listagem server-side config-driven — estados: loading, vazio, erro com retry, paginação.
  * Eventos realtime reconciliam via REST silenciosamente (sem skeleton).
- * Delega a camada de dados ao `useResourceList` compartilhado.
+ * Delega a camada de dados ao `useResourceList` compartilhado. UI 100% MUI.
  */
 export function ListaPage({ cfg }: { cfg: ListaCfg }) {
   const navigate = useNavigate();
@@ -138,170 +153,185 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
   };
 
   const detalhe = cfg.detalhePrefixo;
+  const colSpan = cfg.colunas.length + (cfg.excluir ? 1 : 0);
 
   return (
     <>
       <PageHeader
         title={cfg.titulo}
         action={
-          <div className="flex items-center gap-2">
+          <Stack direction="row" spacing={1} alignItems="center">
             {cfg.busca && (
-              <div className="flex items-center gap-2 rounded-2xl bg-secondary/60 px-3 py-2">
-                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <input
-                  type="search"
-                  value={busca}
-                  onChange={(e) => onBusca(e.target.value)}
-                  placeholder="Buscar…"
-                  aria-label="Buscar"
-                  className="w-36 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                />
-              </div>
+              <TextField
+                size="small"
+                type="search"
+                value={busca}
+                onChange={(e) => onBusca(e.target.value)}
+                placeholder="Buscar…"
+                aria-label="Buscar"
+                sx={{ width: 180, "& .MuiOutlinedInput-root": { bgcolor: "action.hover" } }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search size={16} />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
             )}
             {cfg.filtro && (
-              <select
+              <TextField
+                select
+                size="small"
                 aria-label={cfg.filtro.rotulo}
                 value={filtroValor}
                 onChange={(e) => {
                   setFiltroValor(e.target.value);
                   setPaginaNum(1);
                 }}
-                className="rounded-2xl bg-secondary/60 px-3 py-2 text-sm outline-none"
+                sx={{ minWidth: 160, "& .MuiOutlinedInput-root": { bgcolor: "action.hover" } }}
               >
-                <option value="">{cfg.filtro.rotulo}: todos</option>
+                <MenuItem value="">{cfg.filtro.rotulo}: todos</MenuItem>
                 {cfg.filtro.opcoes.map((o) => (
-                  <option key={o.valor} value={o.valor}>
+                  <MenuItem key={o.valor} value={o.valor}>
                     {o.rotulo}
-                  </option>
+                  </MenuItem>
                 ))}
-              </select>
+              </TextField>
             )}
             {cfg.novaRota && (
-              <Link
+              <Button
+                component={Link}
                 to={cfg.novaRota as "/"}
-                className="inline-flex items-center gap-1.5 rounded-full bg-lime px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+                variant="contained"
+                startIcon={<Plus size={16} />}
               >
-                <Plus className="h-4 w-4" /> Novo
-              </Link>
+                Novo
+              </Button>
             )}
-          </div>
+          </Stack>
         }
       />
 
       {erro && (
-        <div className="flex items-center justify-between gap-3 rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          <span>{erro}</span>
-          <button
-            onClick={recarregar}
-            className="inline-flex items-center gap-1.5 rounded-full border border-destructive/30 px-3 py-1 text-xs font-semibold hover:bg-destructive/10"
-          >
-            <RefreshCw className="h-3.5 w-3.5" /> Tentar novamente
-          </button>
-        </div>
+        <Alert
+          severity="error"
+          sx={{ borderRadius: 3 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              startIcon={<RefreshCw size={14} />}
+              onClick={recarregar}
+            >
+              Tentar novamente
+            </Button>
+          }
+        >
+          {erro}
+        </Alert>
       )}
 
       <SectionCard className="overflow-hidden p-0">
-        <div className="overflow-x-auto">
-          <table className={`w-full text-sm ${carregando ? "opacity-55" : ""}`}>
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+        <TableContainer>
+          <Table size="small" sx={{ opacity: carregando ? 0.55 : 1 }}>
+            <TableHead>
+              <TableRow>
                 {cfg.colunas.map((c) => (
-                  <th key={c.campo} className="px-4 py-3 font-semibold">
-                    {c.rotulo}
-                  </th>
+                  <TableCell key={c.campo}>{c.rotulo}</TableCell>
                 ))}
-                {cfg.excluir && <th className="px-4 py-3 text-right font-semibold">Ações</th>}
-              </tr>
-            </thead>
-            <tbody>
+                {cfg.excluir && <TableCell align="right">Ações</TableCell>}
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {carregando && !pagina ? (
                 [1, 2, 3, 4, 5].map((i) => (
-                  <tr key={i} className="border-b border-border/60">
+                  <TableRow key={i}>
                     {cfg.colunas.map((c) => (
-                      <td key={c.campo} className="px-4 py-3.5">
-                        <span className="block h-4 w-2/3 animate-pulse rounded bg-secondary" />
-                      </td>
+                      <TableCell key={c.campo}>
+                        <Skeleton width="66%" />
+                      </TableCell>
                     ))}
                     {cfg.excluir && (
-                      <td className="px-4 py-3.5 text-right">
-                        <span className="ml-auto block h-4 w-16 animate-pulse rounded bg-secondary" />
-                      </td>
+                      <TableCell align="right">
+                        <Skeleton width={64} sx={{ ml: "auto" }} />
+                      </TableCell>
                     )}
-                  </tr>
+                  </TableRow>
                 ))
               ) : pagina && pagina.itens.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={cfg.colunas.length + (cfg.excluir ? 1 : 0)}
-                    className="px-4 py-10 text-center text-muted-foreground"
-                  >
-                    Nenhum registro.
-                  </td>
-                </tr>
+                <TableRow>
+                  <TableCell colSpan={colSpan} align="center" sx={{ py: 5 }}>
+                    <Typography color="text.secondary" variant="body2">
+                      Nenhum registro.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
               ) : (
                 pagina?.itens.map((linha) => {
                   const id = (linha["id"] as number | string | undefined) ?? idDe(linha);
                   const excluindo = excluindoId === id;
                   return (
-                    <tr
+                    <TableRow
                       key={idDe(linha)}
+                      hover
                       onClick={() => detalhe && navigate({ to: `${detalhe}/${idDe(linha)}` as "/" })}
-                      className={`border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40 ${detalhe ? "cursor-pointer" : ""}`}
+                      sx={detalhe ? { cursor: "pointer" } : undefined}
                     >
                       {cfg.colunas.map((c) => (
-                        <td key={c.campo} className="px-4 py-3">
+                        <TableCell key={c.campo}>
                           <Celula linha={linha} c={c} />
-                        </td>
+                        </TableCell>
                       ))}
                       {cfg.excluir && (
-                        <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
+                        <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="error"
                             disabled={excluindo}
                             onClick={(e) => void aoExcluir(e, linha)}
-                            className="inline-flex items-center gap-1 rounded-full border border-[#D92546]/30 bg-card px-2.5 py-1 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10 disabled:opacity-50"
+                            startIcon={
+                              excluindo ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={14} />
+                              )
+                            }
                           >
-                            {excluindo ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3.5 w-3.5" />
-                            )}
-                            {cfg.excluir.rotulo ?? "Excluir"}
-                          </button>
-                        </td>
+                            {cfg.excluir?.rotulo ?? "Excluir"}
+                          </Button>
+                        </TableCell>
                       )}
-                    </tr>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
 
         {pagina && pagina.total_paginas > 1 && (
-          <div className="flex items-center justify-between border-t border-border px-4 py-3">
-            <span className="text-xs text-muted-foreground">{pagina.total} registro(s)</span>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: pagina.total_paginas }, (_, i) => i + 1)
-                .slice(
-                  Math.max(0, Math.min(paginaNum - 3, pagina.total_paginas - 5)),
-                  Math.max(5, Math.min(paginaNum + 2, pagina.total_paginas)),
-                )
-                .map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPaginaNum(p)}
-                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
-                      p === paginaNum
-                        ? "bg-lime text-primary-foreground"
-                        : "text-muted-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-            </div>
-          </div>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ borderTop: 1, borderColor: "divider", px: 2, py: 1.5 }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              {pagina.total} registro(s)
+            </Typography>
+            <Pagination
+              count={pagina.total_paginas}
+              page={paginaNum}
+              onChange={(_, p) => setPaginaNum(p)}
+              color="primary"
+              size="small"
+              shape="rounded"
+            />
+          </Stack>
         )}
       </SectionCard>
     </>

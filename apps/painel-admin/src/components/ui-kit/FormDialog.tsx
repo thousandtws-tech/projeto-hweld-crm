@@ -1,15 +1,15 @@
 import type { FormEvent, ReactNode } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import FormControl from "@mui/material/FormControl";
+import FormLabel from "@mui/material/FormLabel";
+import Typography from "@mui/material/Typography";
 
 export const fieldClass =
-  "mt-1 w-full rounded-2xl border border-border bg-secondary/60 px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20 placeholder:text-muted-foreground";
+  "mt-1 w-full rounded-xl border border-border bg-secondary/60 px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20 placeholder:text-muted-foreground";
 
 export function FormField({
   label,
@@ -21,12 +21,13 @@ export function FormField({
   wide?: boolean;
 }) {
   return (
-    <label
-      className={`block text-xs font-medium text-muted-foreground ${wide ? "sm:col-span-2" : ""}`}
+    <FormControl
+      fullWidth
+      sx={{ gridColumn: wide ? { sm: "span 2" } : undefined, gap: 0.5 }}
     >
-      {label}
+      <FormLabel sx={{ fontSize: 12, color: "text.secondary" }}>{label}</FormLabel>
       {children}
-    </label>
+    </FormControl>
   );
 }
 
@@ -48,32 +49,36 @@ export function FormDialog({
   children: ReactNode;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto rounded-3xl border-border bg-card p-0 gap-0 shadow-[var(--shadow-pop)]">
-        <DialogHeader className="border-b border-border p-5 text-left sm:p-6">
-          <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <form onSubmit={onSubmit}>
-          <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">{children}</div>
-          <div className="flex justify-end gap-2 border-t border-border p-4 sm:px-6">
-            <Button
-              type="button"
-              variant="outline"
-              className="rounded-full"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="rounded-full bg-lime text-primary-foreground hover:bg-lime/90"
-            >
-              {submitLabel}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
+    <Dialog
+      open={open}
+      onClose={() => onOpenChange(false)}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{ paper: { sx: { borderRadius: 3, maxHeight: "90vh" } } }}
+    >
+      <DialogTitle sx={{ borderBottom: 1, borderColor: "divider", pb: 2 }}>
+        <Typography variant="h6" component="div" fontWeight={700}>
+          {title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {description}
+        </Typography>
+      </DialogTitle>
+      <form onSubmit={onSubmit}>
+        <DialogContent
+          sx={{ display: "grid", gap: 2, gridTemplateColumns: { sm: "1fr 1fr" }, py: 3 }}
+        >
+          {children}
+        </DialogContent>
+        <DialogActions sx={{ borderTop: 1, borderColor: "divider", px: 3, py: 2 }}>
+          <Button variant="outlined" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button type="submit" variant="contained">
+            {submitLabel}
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 }

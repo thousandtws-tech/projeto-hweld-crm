@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { StatusPill } from "@/components/ui-kit/primitives";
 
 export type DetailField = { label: string; value: ReactNode; wide?: boolean };
@@ -34,50 +35,78 @@ export function DetailDialog({
   actions?: ReactNode;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg rounded-3xl border-border bg-card p-0 gap-0 overflow-hidden shadow-[var(--shadow-pop)]">
-        <DialogHeader className="space-y-2 border-b border-border p-5 sm:p-6 text-left">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <DialogTitle className="truncate text-xl font-bold tracking-tight">
-                {title}
-              </DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
-                {subtitle ?? "Record details"}
-              </DialogDescription>
-            </div>
-            {status && <StatusPill status={status} />}
-          </div>
-          {headline && (
-            <div>
-              <div className="text-3xl font-bold tracking-tight">{headline}</div>
-              {headlineLabel && (
-                <div className="text-xs text-muted-foreground mt-1">{headlineLabel}</div>
-              )}
-            </div>
-          )}
-        </DialogHeader>
+    <Dialog
+      open={open}
+      onClose={() => onOpenChange(false)}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+    >
+      <DialogTitle sx={{ borderBottom: 1, borderColor: "divider", pb: 2 }}>
+        <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
+          <Box minWidth={0}>
+            <Typography variant="h6" component="div" fontWeight={700} noWrap>
+              {title}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {subtitle ?? "Detalhes do registro"}
+            </Typography>
+          </Box>
+          {status && <StatusPill status={status} />}
+        </Stack>
+        {headline && (
+          <Box mt={1}>
+            <Typography variant="h4" fontWeight={700} letterSpacing="-0.02em">
+              {headline}
+            </Typography>
+            {headlineLabel && (
+              <Typography variant="caption" color="text.secondary" mt={0.5} display="block">
+                {headlineLabel}
+              </Typography>
+            )}
+          </Box>
+        )}
+      </DialogTitle>
 
-        <div className="max-h-[60vh] overflow-y-auto p-5 sm:p-6 space-y-5">
+      <DialogContent sx={{ maxHeight: "60vh", py: 3 }}>
+        <Stack spacing={3}>
           {fields.length > 0 && (
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
+            <Box
+              component="dl"
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                columnGap: 2,
+                rowGap: 2,
+                m: 0,
+              }}
+            >
               {fields.map((f) => (
-                <div key={f.label} className={f.wide ? "col-span-2" : ""}>
-                  <dt className="text-xs text-muted-foreground">{f.label}</dt>
-                  <dd className="mt-1 text-sm font-medium break-words">{f.value}</dd>
-                </div>
+                <Box key={f.label} sx={f.wide ? { gridColumn: "span 2" } : undefined}>
+                  <Typography component="dt" variant="caption" color="text.secondary">
+                    {f.label}
+                  </Typography>
+                  <Typography
+                    component="dd"
+                    variant="body2"
+                    fontWeight={500}
+                    sx={{ m: 0, mt: 0.5, wordBreak: "break-word" }}
+                  >
+                    {f.value}
+                  </Typography>
+                </Box>
               ))}
-            </dl>
+            </Box>
           )}
           {children}
-        </div>
-
-        {actions && (
-          <div className="flex flex-wrap justify-end gap-2 border-t border-border p-4 sm:px-6">
-            {actions}
-          </div>
-        )}
+        </Stack>
       </DialogContent>
+
+      {actions && (
+        <DialogActions sx={{ borderTop: 1, borderColor: "divider", px: 3, py: 2 }}>
+          {actions}
+        </DialogActions>
+      )}
     </Dialog>
   );
 }
@@ -91,17 +120,14 @@ export function DetailAction({
   onClick?: () => void;
   variant?: "ghost" | "primary";
 }) {
-  const cls =
-    variant === "primary"
-      ? "bg-lime text-primary-foreground"
-      : "border border-border bg-card text-foreground";
   return (
-    <button
+    <Button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium ${cls}`}
+      variant={variant === "primary" ? "contained" : "outlined"}
+      size="small"
     >
       {children}
-    </button>
+    </Button>
   );
 }
