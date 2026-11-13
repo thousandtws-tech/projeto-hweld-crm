@@ -6,6 +6,7 @@ import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
 import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import type { Contato, Empresa, Produto } from "@/lib/models";
 import { catalogoService, crmService, pedidosService } from "@/lib/services";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/vendas/pedidos/novo")({
   component: PedidoNovoPage,
@@ -140,72 +141,62 @@ function PedidoNovoPage() {
         <SectionCard>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <FormField label="Empresa">
-              <select
-                className={fieldClass}
+              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                 required
                 value={f.empresa_id}
-                onChange={(e) => aoTrocarEmpresa(e.target.value)}
-              >
+                onChange={(e) => aoTrocarEmpresa(e.target.value)}>
                 <option value="">—</option>
                 {empresas.map((e) => (
                   <option key={e.id} value={e.id}>
                     {e.nome_fantasia || e.razao_social}
                   </option>
                 ))}
-              </select>
+              </TextField>
             </FormField>
             <FormField label="Contato">
-              <select
-                className={fieldClass}
+              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                 required
                 value={f.contato_id}
-                onChange={(e) => setF({ ...f, contato_id: e.target.value })}
-              >
+                onChange={(e) => setF({ ...f, contato_id: e.target.value })}>
                 <option value="">—</option>
                 {contatos.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.nome}
                   </option>
                 ))}
-              </select>
+              </TextField>
             </FormField>
             <FormField label="Condição de pagamento">
-              <input
-                className={fieldClass}
+              <TextField size="small" fullWidth
                 placeholder="ex.: faturado 30dd"
                 value={f.condicao_pagamento}
-                onChange={(e) => setF({ ...f, condicao_pagamento: e.target.value })}
-              />
+                onChange={(e) => setF({ ...f, condicao_pagamento: e.target.value })} />
             </FormField>
             <FormField label="End. faturamento">
-              <select
-                className={fieldClass}
+              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                 required
                 value={f.endereco_faturamento_id}
-                onChange={(e) => setF({ ...f, endereco_faturamento_id: e.target.value })}
-              >
+                onChange={(e) => setF({ ...f, endereco_faturamento_id: e.target.value })}>
                 <option value="">—</option>
                 {enderecos.map((e) => (
                   <option key={String(e["id"])} value={String(e["id"])}>
                     {enderecoLabel(e)}
                   </option>
                 ))}
-              </select>
+              </TextField>
             </FormField>
             <FormField label="End. entrega">
-              <select
-                className={fieldClass}
+              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                 required
                 value={f.endereco_entrega_id}
-                onChange={(e) => setF({ ...f, endereco_entrega_id: e.target.value })}
-              >
+                onChange={(e) => setF({ ...f, endereco_entrega_id: e.target.value })}>
                 <option value="">—</option>
                 {enderecos.map((e) => (
                   <option key={String(e["id"])} value={String(e["id"])}>
                     {enderecoLabel(e)}
                   </option>
                 ))}
-              </select>
+              </TextField>
             </FormField>
           </div>
         </SectionCard>
@@ -236,48 +227,40 @@ function PedidoNovoPage() {
                 {itens.map((item, idx) => (
                   <tr key={idx} className="border-b border-border/60 last:border-0">
                     <td className="px-4 py-2">
-                      <select
-                        className={fieldClass}
+                      <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                         value={item.produto_id ?? ""}
                         onChange={(e) =>
                           escolherProduto(idx, e.target.value ? Number(e.target.value) : null)
                         }
-                        aria-label="Produto"
-                      >
+                        aria-label="Produto">
                         <option value="">—</option>
                         {produtos.map((p) => (
                           <option key={p.id} value={p.id}>
                             {p.sku} · {p.nome}
                           </option>
                         ))}
-                      </select>
+                      </TextField>
                     </td>
                     <td className="px-4 py-2">
-                      <input
-                        className={`${fieldClass} w-20`}
+                      <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001" } }}
                         type="number"
-                        step="0.001"
+                       
                         value={item.quantidade}
-                        onChange={(e) => setItem(idx, { quantidade: e.target.value })}
-                      />
+                        onChange={(e) => setItem(idx, { quantidade: e.target.value })} />
                     </td>
                     <td className="px-4 py-2">
-                      <input
-                        className={`${fieldClass} w-24`}
+                      <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }}
                         type="number"
-                        step="0.01"
+                       
                         value={item.preco_unitario}
-                        onChange={(e) => setItem(idx, { preco_unitario: e.target.value })}
-                      />
+                        onChange={(e) => setItem(idx, { preco_unitario: e.target.value })} />
                     </td>
                     <td className="px-4 py-2">
-                      <input
-                        className={`${fieldClass} w-24`}
+                      <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }}
                         type="number"
-                        step="0.01"
+                       
                         value={item.desconto}
-                        onChange={(e) => setItem(idx, { desconto: e.target.value })}
-                      />
+                        onChange={(e) => setItem(idx, { desconto: e.target.value })} />
                     </td>
                     <td className="px-4 py-2">
                       <button
@@ -298,12 +281,10 @@ function PedidoNovoPage() {
         <SectionCard>
           <label className="block text-xs font-medium text-muted-foreground">
             Observações
-            <textarea
-              className={`${fieldClass} mt-1`}
+            <TextField size="small" fullWidth multiline minRows={3}
               rows={2}
               value={f.observacoes}
-              onChange={(e) => setF({ ...f, observacoes: e.target.value })}
-            />
+              onChange={(e) => setF({ ...f, observacoes: e.target.value })} />
           </label>
         </SectionCard>
 

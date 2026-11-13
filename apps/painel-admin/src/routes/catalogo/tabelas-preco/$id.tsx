@@ -9,6 +9,7 @@ import type { Produto, TabelaPreco } from "@/lib/models";
 import { catalogoService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
 import { useRealtimeEvent } from "@/lib/use-realtime";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/catalogo/tabelas-preco/$id")({
   beforeLoad: exigePerfil("admin", "vendedor"),
@@ -76,30 +77,26 @@ function TabelaPrecoPage() {
           <PageHeader title={tabela.nome} subtitle={tabela.descricao ?? undefined} />
           <SectionCard className="p-0 overflow-hidden">
             <form onSubmit={definir} className="flex flex-wrap items-end gap-2 px-5 pt-4">
-              <select
-                className={`${fieldClass} w-auto min-w-56`}
+              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                 required
                 value={fPreco.produto_id}
                 onChange={(e) => setFPreco({ ...fPreco, produto_id: e.target.value })}
-                aria-label="Produto"
-              >
+                aria-label="Produto">
                 <option value="">Produto…</option>
                 {produtos.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.sku} · {p.nome}
                   </option>
                 ))}
-              </select>
-              <input
-                className={`${fieldClass} w-28`}
+              </TextField>
+              <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }}
                 type="number"
-                step="0.01"
+               
                 required
                 placeholder="Preço"
                 aria-label="Preço"
                 value={fPreco.preco}
-                onChange={(e) => setFPreco({ ...fPreco, preco: e.target.value })}
-              />
+                onChange={(e) => setFPreco({ ...fPreco, preco: e.target.value })} />
               <button className="rounded-full bg-lime px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
                 Definir
               </button>

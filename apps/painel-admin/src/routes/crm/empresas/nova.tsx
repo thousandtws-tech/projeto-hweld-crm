@@ -16,6 +16,7 @@ import {
 import { consultarCnpjReceita, ErroConsultaCnpj, type DadosCnpjReceita } from "@/lib/brasilapi";
 import type { TabelaPreco } from "@/lib/models";
 import { catalogoService, crmService } from "@/lib/services";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/crm/empresas/nova")({
   component: EmpresaNovaPage,
@@ -274,19 +275,10 @@ function EmpresaNovaPage() {
             <FormField label="CNPJ">
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <input
-                    className={`${fieldClass} pr-8 ${
-                      cnpjDigitos.length > 0 &&
-                      ((cnpjCompleto && !cnpjValido) ||
-                        (!cnpjCompleto && cnpjDigitos.length > 0 && cnpjDigitos.length < 14))
-                        ? "border-[#D92546]/60"
-                        : ""
-                    }`}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { inputMode: "numeric" } }}
                     value={f.cnpj}
                     onChange={(e) => setF((p) => ({ ...p, cnpj: cnpjMask(e.target.value) }))}
-                    placeholder="00.000.000/0000-00"
-                    inputMode="numeric"
-                  />
+                    placeholder="00.000.000/0000-00" />
                   {cnpjCompleto && cnpjValido && !consultando && (
                     <Check className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-primary" />
                   )}
@@ -314,105 +306,84 @@ function EmpresaNovaPage() {
             </FormField>
 
             <FormField label="Inscrição Estadual (IE)">
-              <input
-                className={fieldClass}
+              <TextField size="small" fullWidth
                 value={f.inscricao_estadual}
                 onChange={(e) => setF((p) => ({ ...p, inscricao_estadual: e.target.value }))}
-                placeholder="Isento ou número"
-              />
+                placeholder="Isento ou número" />
             </FormField>
 
             <FormField label="Status inicial">
-              <select
-                className={fieldClass}
+              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                 value={f.status}
-                onChange={(e) => setF((p) => ({ ...p, status: e.target.value }))}
-              >
+                onChange={(e) => setF((p) => ({ ...p, status: e.target.value }))}>
                 <option value="prospecto">Prospecto</option>
                 <option value="ativo">Ativo</option>
-              </select>
+              </TextField>
             </FormField>
 
             <FormField label="Tabela de preço">
-              <select
-                className={fieldClass}
+              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                 value={f.tabela_preco_id}
-                onChange={(e) => setF((p) => ({ ...p, tabela_preco_id: e.target.value }))}
-              >
+                onChange={(e) => setF((p) => ({ ...p, tabela_preco_id: e.target.value }))}>
                 <option value="">Padrão do catálogo</option>
                 {tabelas.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.nome}
                   </option>
                 ))}
-              </select>
+              </TextField>
             </FormField>
 
             <FormField label="Razão social *" wide>
-              <input
-                className={fieldClass}
+              <TextField size="small" fullWidth
                 required
                 value={f.razao_social}
                 onChange={(e) => setF((p) => ({ ...p, razao_social: e.target.value }))}
-                placeholder="Nome empresarial oficial"
-              />
+                placeholder="Nome empresarial oficial" />
             </FormField>
 
             <FormField label="Nome fantasia" wide>
-              <input
-                className={fieldClass}
+              <TextField size="small" fullWidth
                 value={f.nome_fantasia}
                 onChange={(e) => setF((p) => ({ ...p, nome_fantasia: e.target.value }))}
-                placeholder="Como a empresa é conhecida"
-              />
+                placeholder="Como a empresa é conhecida" />
             </FormField>
 
             <FormField label="Segmento">
-              <input
-                className={fieldClass}
+              <TextField size="small" fullWidth
                 value={f.segmento}
                 onChange={(e) => setF((p) => ({ ...p, segmento: e.target.value }))}
-                placeholder="Ex.: Metalurgia, Indústria"
-              />
+                placeholder="Ex.: Metalurgia, Indústria" />
             </FormField>
 
             <FormField label="Telefone">
-              <input
-                className={fieldClass}
+              <TextField size="small" fullWidth slotProps={{ htmlInput: { inputMode: "tel" } }}
                 value={f.telefone}
                 onChange={(e) => setF((p) => ({ ...p, telefone: telefoneMask(e.target.value) }))}
-                placeholder="(00) 00000-0000"
-                inputMode="tel"
-              />
+                placeholder="(00) 00000-0000" />
             </FormField>
 
             <FormField label="E-mail corporativo">
-              <input
-                className={fieldClass}
+              <TextField size="small" fullWidth
                 type="email"
                 value={f.email}
                 onChange={(e) => setF((p) => ({ ...p, email: e.target.value }))}
-                placeholder="contato@empresa.com.br"
-              />
+                placeholder="contato@empresa.com.br" />
             </FormField>
 
             <FormField label="Site">
-              <input
-                className={fieldClass}
+              <TextField size="small" fullWidth
                 value={f.site}
                 onChange={(e) => setF((p) => ({ ...p, site: e.target.value }))}
-                placeholder="https://..."
-              />
+                placeholder="https://..." />
             </FormField>
 
             <FormField label="Observações internas" wide>
-              <textarea
-                className={fieldClass}
+              <TextField size="small" fullWidth multiline minRows={3}
                 rows={2}
                 value={f.observacoes}
                 onChange={(e) => setF((p) => ({ ...p, observacoes: e.target.value }))}
-                placeholder="Notas sobre perfil de compra, condições comerciais ou referências…"
-              />
+                placeholder="Notas sobre perfil de compra, condições comerciais ou referências…" />
             </FormField>
           </div>
         </SectionCard>
@@ -439,60 +410,45 @@ function EmpresaNovaPage() {
           {incluirEndereco && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <FormField label="CEP *">
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth slotProps={{ htmlInput: { inputMode: "numeric" } }}
                   required={incluirEndereco}
                   value={fEnd.cep}
                   onChange={(e) => setFEnd((p) => ({ ...p, cep: cepMask(e.target.value) }))}
-                  placeholder="00000-000"
-                  inputMode="numeric"
-                />
+                  placeholder="00000-000" />
               </FormField>
               <FormField label="Logradouro" wide>
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth
                   value={fEnd.logradouro}
-                  onChange={(e) => setFEnd((p) => ({ ...p, logradouro: e.target.value }))}
-                />
+                  onChange={(e) => setFEnd((p) => ({ ...p, logradouro: e.target.value }))} />
               </FormField>
               <FormField label="Número">
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth
                   value={fEnd.numero}
-                  onChange={(e) => setFEnd((p) => ({ ...p, numero: e.target.value }))}
-                />
+                  onChange={(e) => setFEnd((p) => ({ ...p, numero: e.target.value }))} />
               </FormField>
               <FormField label="Complemento">
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth
                   value={fEnd.complemento}
-                  onChange={(e) => setFEnd((p) => ({ ...p, complemento: e.target.value }))}
-                />
+                  onChange={(e) => setFEnd((p) => ({ ...p, complemento: e.target.value }))} />
               </FormField>
               <FormField label="Bairro">
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth
                   value={fEnd.bairro}
-                  onChange={(e) => setFEnd((p) => ({ ...p, bairro: e.target.value }))}
-                />
+                  onChange={(e) => setFEnd((p) => ({ ...p, bairro: e.target.value }))} />
               </FormField>
               <FormField label="Cidade *">
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth
                   required={incluirEndereco}
                   value={fEnd.cidade}
-                  onChange={(e) => setFEnd((p) => ({ ...p, cidade: e.target.value }))}
-                />
+                  onChange={(e) => setFEnd((p) => ({ ...p, cidade: e.target.value }))} />
               </FormField>
               <FormField label="UF *">
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth slotProps={{ htmlInput: { maxLength: 2 } }}
                   required={incluirEndereco}
-                  maxLength={2}
+                 
                   value={fEnd.uf}
                   onChange={(e) => setFEnd((p) => ({ ...p, uf: e.target.value.toUpperCase() }))}
-                  placeholder="SP"
-                />
+                  placeholder="SP" />
               </FormField>
             </div>
           )}
@@ -520,38 +476,30 @@ function EmpresaNovaPage() {
           {incluirContato && (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <FormField label="Nome *" wide>
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth
                   required={incluirContato}
                   value={fContato.nome}
-                  onChange={(e) => setFContato((p) => ({ ...p, nome: e.target.value }))}
-                />
+                  onChange={(e) => setFContato((p) => ({ ...p, nome: e.target.value }))} />
               </FormField>
               <FormField label="Cargo">
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth
                   value={fContato.cargo}
                   onChange={(e) => setFContato((p) => ({ ...p, cargo: e.target.value }))}
-                  placeholder="Ex.: Compras, Engenharia"
-                />
+                  placeholder="Ex.: Compras, Engenharia" />
               </FormField>
               <FormField label="Telefone / WhatsApp">
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth
                   value={fContato.telefone}
                   onChange={(e) =>
                     setFContato((p) => ({ ...p, telefone: telefoneMask(e.target.value) }))
                   }
-                  placeholder="(00) 00000-0000"
-                />
+                  placeholder="(00) 00000-0000" />
               </FormField>
               <FormField label="E-mail do contato" wide>
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth
                   type="email"
                   value={fContato.email}
-                  onChange={(e) => setFContato((p) => ({ ...p, email: e.target.value }))}
-                />
+                  onChange={(e) => setFContato((p) => ({ ...p, email: e.target.value }))} />
               </FormField>
             </div>
           )}

@@ -18,6 +18,7 @@ import type {
 import { catalogoService, crmService, orcamentosService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import { useAuth } from "@/store/auth-store";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/vendas/orcamentos/$id")({
   component: OrcamentoPage,
@@ -374,8 +375,7 @@ function OrcamentoPage() {
                         <td className="px-4 py-2.5">
                           {editavel ? (
                             <div className="space-y-1.5">
-                              <select
-                                className={fieldClass}
+                              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                                 value={item.produto_id || ""}
                                 onChange={(e) =>
                                   escolherProduto(
@@ -383,21 +383,18 @@ function OrcamentoPage() {
                                     e.target.value ? Number(e.target.value) : null,
                                   )
                                 }
-                                aria-label="Produto"
-                              >
+                                aria-label="Produto">
                                 <option value="">Selecione um produto…</option>
                                 {produtos.map((p) => (
                                   <option key={p.id} value={p.id}>
                                     {p.sku} · {p.nome}
                                   </option>
                                 ))}
-                              </select>
-                              <input
-                                className={fieldClass}
+                              </TextField>
+                              <TextField size="small" fullWidth
                                 placeholder="Descrição personalizada na proposta"
                                 value={item.descricao}
-                                onChange={(e) => setItem(idx, { descricao: e.target.value })}
-                              />
+                                onChange={(e) => setItem(idx, { descricao: e.target.value })} />
                             </div>
                           ) : (
                             <span className="font-medium">{item.descricao}</span>
@@ -405,42 +402,36 @@ function OrcamentoPage() {
                         </td>
                         <td className="px-4 py-2.5 align-top">
                           {editavel ? (
-                            <input
-                              className={`${fieldClass} w-24 tabular-nums`}
+                            <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: "0.001" } }}
                               type="number"
-                              step="0.001"
-                              min="0.001"
+                             
+                             
                               value={item.quantidade}
-                              onChange={(e) => setItem(idx, { quantidade: e.target.value })}
-                            />
+                              onChange={(e) => setItem(idx, { quantidade: e.target.value })} />
                           ) : (
                             <span className="tabular-nums">{item.quantidade}</span>
                           )}
                         </td>
                         <td className="px-4 py-2.5 align-top">
                           {editavel ? (
-                            <input
-                              className={`${fieldClass} w-28 tabular-nums`}
+                            <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                               type="number"
-                              step="0.01"
-                              min="0"
+                             
+                             
                               value={item.preco_unitario}
-                              onChange={(e) => setItem(idx, { preco_unitario: e.target.value })}
-                            />
+                              onChange={(e) => setItem(idx, { preco_unitario: e.target.value })} />
                           ) : (
                             <span className="tabular-nums">{brl(item.preco_unitario)}</span>
                           )}
                         </td>
                         <td className="px-4 py-2.5 align-top">
                           {editavel ? (
-                            <input
-                              className={`${fieldClass} w-24 tabular-nums`}
+                            <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                               type="number"
-                              step="0.01"
-                              min="0"
+                             
+                             
                               value={item.desconto}
-                              onChange={(e) => setItem(idx, { desconto: e.target.value })}
-                            />
+                              onChange={(e) => setItem(idx, { desconto: e.target.value })} />
                           ) : (
                             <span className="tabular-nums">{brl(item.desconto)}</span>
                           )}
@@ -473,33 +464,29 @@ function OrcamentoPage() {
               <div className="flex flex-wrap items-end gap-3">
                 <label className="text-xs font-medium text-muted-foreground">
                   Desconto geral (R$)
-                  <input
-                    className={`${fieldClass} w-28 tabular-nums`}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                     type="number"
-                    step="0.01"
-                    min="0"
+                   
+                   
                     disabled={!editavel}
                     value={desconto}
                     onChange={(e) => {
                       setDesconto(e.target.value);
                       setDirty(true);
-                    }}
-                  />
+                    }} />
                 </label>
                 <label className="text-xs font-medium text-muted-foreground">
                   Frete (R$)
-                  <input
-                    className={`${fieldClass} w-28 tabular-nums`}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                     type="number"
-                    step="0.01"
-                    min="0"
+                   
+                   
                     disabled={!editavel}
                     value={frete}
                     onChange={(e) => {
                       setFrete(e.target.value);
                       setDirty(true);
-                    }}
-                  />
+                    }} />
                 </label>
               </div>
 

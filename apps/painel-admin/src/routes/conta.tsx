@@ -18,6 +18,7 @@ import {
 } from "@/lib/services";
 import { claimsSessaoAtual, refreshTokens } from "@/lib/session";
 import { useAuth } from "@/store/auth-store";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/conta")({
   component: ContaPage,
@@ -519,41 +520,33 @@ function ContaPage() {
             <form onSubmit={submitTrocarSenha} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-3">
                 <FormField label="Senha atual">
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth
                     type={mostrarSenhas ? "text" : "password"}
                     required
                     autoComplete="current-password"
                     value={f.senha_atual}
-                    onChange={(e) => setF({ ...f, senha_atual: e.target.value })}
-                  />
+                    onChange={(e) => setF({ ...f, senha_atual: e.target.value })} />
                 </FormField>
 
                 <FormField label="Nova senha (mín. 6)">
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { minLength: 6 } }}
                     type={mostrarSenhas ? "text" : "password"}
                     required
-                    minLength={6}
+                   
                     autoComplete="new-password"
                     value={f.nova_senha}
-                    onChange={(e) => setF({ ...f, nova_senha: e.target.value })}
-                  />
+                    onChange={(e) => setF({ ...f, nova_senha: e.target.value })} />
                 </FormField>
 
                 <FormField label="Confirmar nova senha">
-                  <input
-                    className={`${fieldClass} ${
-                      (mismatch || igualAtual) && touched ? "border-[#D92546]" : ""
-                    }`}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { minLength: 6 } }}
                     type={mostrarSenhas ? "text" : "password"}
                     required
-                    minLength={6}
+                   
                     autoComplete="new-password"
                     value={f.confirmar}
                     onChange={(e) => setF({ ...f, confirmar: e.target.value })}
-                    onBlur={() => setTouched(true)}
-                  />
+                    onBlur={() => setTouched(true)} />
                 </FormField>
               </div>
 

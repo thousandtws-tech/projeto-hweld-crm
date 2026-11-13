@@ -18,6 +18,7 @@ import type {
 } from "@/lib/models";
 import { crmService, fiscalDocService, fiscalService, pedidosService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/fiscal/notas")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -621,12 +622,10 @@ function FiscalPage() {
       >
         <FormField label="Pedido *" wide>
           {pedidosElegiveis.length > 0 ? (
-            <select
-              className={fieldClass}
+            <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
               required
               value={pedidoId}
-              onChange={(e) => setPedidoId(e.target.value)}
-            >
+              onChange={(e) => setPedidoId(e.target.value)}>
               <option value="">Selecione um pedido…</option>
               {pedidosElegiveis.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -634,16 +633,14 @@ function FiscalPage() {
                   ({brl(p.total)})
                 </option>
               ))}
-            </select>
+            </TextField>
           ) : (
-            <input
-              className={fieldClass}
+            <TextField size="small" fullWidth
               type="number"
               required
               placeholder="ID do pedido"
               value={pedidoId}
-              onChange={(e) => setPedidoId(e.target.value)}
-            />
+              onChange={(e) => setPedidoId(e.target.value)} />
           )}
         </FormField>
       </FormDialog>
@@ -657,14 +654,12 @@ function FiscalPage() {
         onSubmit={cancelarRascunho}
       >
         <FormField label="Justificativa (obrigatório) *" wide>
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth slotProps={{ htmlInput: { minLength: 15 } }}
             required
-            minLength={15}
+           
             placeholder="Mínimo de 15 caracteres conforme exigência fiscal…"
             value={motivo}
-            onChange={(e) => setMotivo(e.target.value)}
-          />
+            onChange={(e) => setMotivo(e.target.value)} />
         </FormField>
       </FormDialog>
 
@@ -677,15 +672,13 @@ function FiscalPage() {
         onSubmit={cancelarDocumento}
       >
         <FormField label="Justificativa do cancelamento (obrigatório) *" wide>
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth slotProps={{ htmlInput: { minLength: 15, maxLength: 255 } }}
             required
-            minLength={15}
-            maxLength={255}
+           
+           
             placeholder="Mínimo de 15 caracteres conforme exigência fiscal…"
             value={motivo}
-            onChange={(e) => setMotivo(e.target.value)}
-          />
+            onChange={(e) => setMotivo(e.target.value)} />
         </FormField>
       </FormDialog>
     </>

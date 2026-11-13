@@ -48,6 +48,7 @@ import type {
 import { catalogoService, crmService, orcamentosService, usuariosService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import { useAuth } from "@/store/auth-store";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/crm/oportunidades")({
   component: OportunidadesPage,
@@ -1008,67 +1009,55 @@ function OportunidadesPage() {
         onSubmit={criar}
       >
         <FormField label="Título" wide>
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             required
             value={fNovo.titulo}
-            onChange={(e) => setFNovo({ ...fNovo, titulo: e.target.value })}
-          />
+            onChange={(e) => setFNovo({ ...fNovo, titulo: e.target.value })} />
         </FormField>
         <FormField label="Empresa">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             required
             value={fNovo.empresa_id}
-            onChange={(e) => setFNovo({ ...fNovo, empresa_id: e.target.value, contato_id: "" })}
-          >
+            onChange={(e) => setFNovo({ ...fNovo, empresa_id: e.target.value, contato_id: "" })}>
             <option value="">—</option>
             {[...empresas.values()].map((emp) => (
               <option key={emp.id} value={emp.id}>
                 {emp.nome_fantasia || emp.razao_social}
               </option>
             ))}
-          </select>
+          </TextField>
         </FormField>
         <FormField label="Contato">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             value={fNovo.contato_id}
             onChange={(e) => setFNovo({ ...fNovo, contato_id: e.target.value })}
-            disabled={!fNovo.empresa_id}
-          >
+            disabled={!fNovo.empresa_id}>
             <option value="">—</option>
             {contatosDaEmpresaNovo.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.nome}
               </option>
             ))}
-          </select>
+          </TextField>
         </FormField>
         <FormField label="Valor estimado">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
             type="number"
-            step="0.01"
-            min="0"
+           
+           
             value={fNovo.valor_estimado}
-            onChange={(e) => setFNovo({ ...fNovo, valor_estimado: e.target.value })}
-          />
+            onChange={(e) => setFNovo({ ...fNovo, valor_estimado: e.target.value })} />
         </FormField>
         <FormField label="Previsão de fechamento">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             type="date"
             value={fNovo.data_prevista_fechamento}
-            onChange={(e) => setFNovo({ ...fNovo, data_prevista_fechamento: e.target.value })}
-          />
+            onChange={(e) => setFNovo({ ...fNovo, data_prevista_fechamento: e.target.value })} />
         </FormField>
         <FormField label="Origem">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             value={fNovo.origem}
-            onChange={(e) => setFNovo({ ...fNovo, origem: e.target.value })}
-          >
+            onChange={(e) => setFNovo({ ...fNovo, origem: e.target.value })}>
             <option value="">—</option>
             <option value="site">Site</option>
             <option value="telefone">Telefone</option>
@@ -1076,28 +1065,24 @@ function OportunidadesPage() {
             <option value="prospeccao">Prospecção</option>
             <option value="ecommerce">E-commerce</option>
             <option value="outro">Outro</option>
-          </select>
+          </TextField>
         </FormField>
         <FormField label="Estágio">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             value={estagioInicialNovo}
-            onChange={(e) => setEstagioInicialNovo(e.target.value as EstagioOportunidade)}
-          >
+            onChange={(e) => setEstagioInicialNovo(e.target.value as EstagioOportunidade)}>
             {ESTAGIOS.filter((e) => e !== "perdida").map((est) => (
               <option key={est} value={est}>
                 {statusLabel(est)}
               </option>
             ))}
-          </select>
+          </TextField>
         </FormField>
         <FormField label="Observações" wide>
-          <textarea
-            className={fieldClass}
+          <TextField size="small" fullWidth multiline minRows={3}
             rows={2}
             value={fNovo.descricao}
-            onChange={(e) => setFNovo({ ...fNovo, descricao: e.target.value })}
-          />
+            onChange={(e) => setFNovo({ ...fNovo, descricao: e.target.value })} />
         </FormField>
       </FormDialog>
 
@@ -1127,12 +1112,10 @@ function OportunidadesPage() {
           ))}
         </div>
         <FormField label="Motivo (obrigatório)" wide>
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             required
             value={motivoPerda}
-            onChange={(e) => setMotivoPerda(e.target.value)}
-          />
+            onChange={(e) => setMotivoPerda(e.target.value)} />
         </FormField>
       </FormDialog>
 
@@ -1596,79 +1579,67 @@ function OportunidadeSheet({
 
               <form onSubmit={salvarEdicao} className="grid gap-4 sm:grid-cols-2">
                 <FormField label="Título" wide>
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth
                     required
                     disabled={!podeEditar}
                     value={fEdit.titulo}
-                    onChange={(e) => setFEdit({ ...fEdit, titulo: e.target.value })}
-                  />
+                    onChange={(e) => setFEdit({ ...fEdit, titulo: e.target.value })} />
                 </FormField>
 
                 <FormField label="Empresa">
-                  <select
-                    className={fieldClass}
+                  <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                     disabled={!podeEditar}
                     value={fEdit.empresa_id}
                     onChange={(e) =>
                       setFEdit({ ...fEdit, empresa_id: e.target.value, contato_id: "" })
-                    }
-                  >
+                    }>
                     {[...empresas.values()].map((emp) => (
                       <option key={emp.id} value={emp.id}>
                         {emp.nome_fantasia || emp.razao_social}
                       </option>
                     ))}
-                  </select>
+                  </TextField>
                 </FormField>
 
                 <FormField label="Contato">
-                  <select
-                    className={fieldClass}
+                  <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                     disabled={!podeEditar}
                     value={fEdit.contato_id}
-                    onChange={(e) => setFEdit({ ...fEdit, contato_id: e.target.value })}
-                  >
+                    onChange={(e) => setFEdit({ ...fEdit, contato_id: e.target.value })}>
                     <option value="">—</option>
                     {contatosEmpresa.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.nome}
                       </option>
                     ))}
-                  </select>
+                  </TextField>
                 </FormField>
 
                 <FormField label="Valor estimado">
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                     type="number"
-                    step="0.01"
-                    min="0"
+                   
+                   
                     disabled={!podeEditar}
                     value={fEdit.valor_estimado}
-                    onChange={(e) => setFEdit({ ...fEdit, valor_estimado: e.target.value })}
-                  />
+                    onChange={(e) => setFEdit({ ...fEdit, valor_estimado: e.target.value })} />
                 </FormField>
 
                 <FormField label="Previsão de fechamento">
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth
                     type="date"
                     disabled={!podeEditar}
                     value={fEdit.data_prevista_fechamento}
                     onChange={(e) =>
                       setFEdit({ ...fEdit, data_prevista_fechamento: e.target.value })
-                    }
-                  />
+                    } />
                 </FormField>
 
                 <FormField label="Origem" wide>
-                  <select
-                    className={fieldClass}
+                  <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                     disabled={!podeEditar}
                     value={fEdit.origem}
-                    onChange={(e) => setFEdit({ ...fEdit, origem: e.target.value })}
-                  >
+                    onChange={(e) => setFEdit({ ...fEdit, origem: e.target.value })}>
                     <option value="">—</option>
                     <option value="site">Site</option>
                     <option value="telefone">Telefone</option>
@@ -1676,17 +1647,15 @@ function OportunidadeSheet({
                     <option value="prospeccao">Prospecção</option>
                     <option value="ecommerce">E-commerce</option>
                     <option value="outro">Outro</option>
-                  </select>
+                  </TextField>
                 </FormField>
 
                 <FormField label="Descrição / Observações" wide>
-                  <textarea
-                    className={fieldClass}
+                  <TextField size="small" fullWidth multiline minRows={3}
                     rows={3}
                     disabled={!podeEditar}
                     value={fEdit.descricao}
-                    onChange={(e) => setFEdit({ ...fEdit, descricao: e.target.value })}
-                  />
+                    onChange={(e) => setFEdit({ ...fEdit, descricao: e.target.value })} />
                 </FormField>
 
                 {podeEditar && (
@@ -1710,11 +1679,9 @@ function OportunidadeSheet({
                   className="grid gap-3 rounded-2xl border border-border p-4 sm:grid-cols-2"
                 >
                   <FormField label="Tipo">
-                    <select
-                      className={fieldClass}
+                    <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                       value={fInteracao.tipo}
-                      onChange={(e) => setFInteracao({ ...fInteracao, tipo: e.target.value })}
-                    >
+                      onChange={(e) => setFInteracao({ ...fInteracao, tipo: e.target.value })}>
                       <option value="ligacao">Ligação</option>
                       <option value="whatsapp">WhatsApp</option>
                       <option value="email">E-mail</option>
@@ -1722,43 +1689,35 @@ function OportunidadeSheet({
                       <option value="visita">Visita</option>
                       <option value="nota_interna">Nota interna</option>
                       <option value="outro">Outro</option>
-                    </select>
+                    </TextField>
                   </FormField>
                   <FormField label="Assunto">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       value={fInteracao.assunto}
-                      onChange={(e) => setFInteracao({ ...fInteracao, assunto: e.target.value })}
-                    />
+                      onChange={(e) => setFInteracao({ ...fInteracao, assunto: e.target.value })} />
                   </FormField>
                   <FormField label="Descrição" wide>
-                    <textarea
-                      className={fieldClass}
+                    <TextField size="small" fullWidth multiline minRows={3}
                       rows={2}
                       required={!fInteracao.assunto.trim()}
                       value={fInteracao.descricao}
-                      onChange={(e) => setFInteracao({ ...fInteracao, descricao: e.target.value })}
-                    />
+                      onChange={(e) => setFInteracao({ ...fInteracao, descricao: e.target.value })} />
                   </FormField>
                   <FormField label="Próxima ação">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       value={fInteracao.proxima_acao}
                       onChange={(e) =>
                         setFInteracao({ ...fInteracao, proxima_acao: e.target.value })
-                      }
-                    />
+                      } />
                   </FormField>
                   <FormField label="Data da próxima ação">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       type="datetime-local"
                       required={Boolean(fInteracao.proxima_acao.trim())}
                       value={fInteracao.proxima_acao_em}
                       onChange={(e) =>
                         setFInteracao({ ...fInteracao, proxima_acao_em: e.target.value })
-                      }
-                    />
+                      } />
                   </FormField>
                   <div className="flex justify-end sm:col-span-2">
                     <button
@@ -1823,56 +1782,46 @@ function OportunidadeSheet({
                   className="grid gap-3 rounded-2xl border border-border p-4 sm:grid-cols-2"
                 >
                   <FormField label="Produto inicial" wide>
-                    <select
-                      className={fieldClass}
+                    <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                       required
                       value={fOrc.produto_id}
-                      onChange={(e) => selecionarProdutoOrc(e.target.value)}
-                    >
+                      onChange={(e) => selecionarProdutoOrc(e.target.value)}>
                       <option value="">—</option>
                       {produtos.map((p) => (
                         <option key={p.id} value={p.id}>
                           {p.sku} · {p.nome} ({brl(p.preco_venda)})
                         </option>
                       ))}
-                    </select>
+                    </TextField>
                   </FormField>
                   <FormField label="Quantidade">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: "0.001" } }}
                       type="number"
-                      step="0.001"
-                      min="0.001"
+                     
+                     
                       required
                       value={fOrc.quantidade}
-                      onChange={(e) => setFOrc({ ...fOrc, quantidade: e.target.value })}
-                    />
+                      onChange={(e) => setFOrc({ ...fOrc, quantidade: e.target.value })} />
                   </FormField>
                   <FormField label="Preço unitário">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                       type="number"
-                      step="0.01"
-                      min="0"
+                     
+                     
                       required
                       value={fOrc.preco_unitario}
-                      onChange={(e) => setFOrc({ ...fOrc, preco_unitario: e.target.value })}
-                    />
+                      onChange={(e) => setFOrc({ ...fOrc, preco_unitario: e.target.value })} />
                   </FormField>
                   <FormField label="Validade">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       type="date"
                       value={fOrc.valido_ate}
-                      onChange={(e) => setFOrc({ ...fOrc, valido_ate: e.target.value })}
-                    />
+                      onChange={(e) => setFOrc({ ...fOrc, valido_ate: e.target.value })} />
                   </FormField>
                   <FormField label="Condição de pagamento">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       value={fOrc.condicao_pagamento}
-                      onChange={(e) => setFOrc({ ...fOrc, condicao_pagamento: e.target.value })}
-                    />
+                      onChange={(e) => setFOrc({ ...fOrc, condicao_pagamento: e.target.value })} />
                   </FormField>
                   <div className="flex justify-end gap-2 sm:col-span-2">
                     <button

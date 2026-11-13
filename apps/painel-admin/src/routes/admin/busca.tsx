@@ -10,6 +10,7 @@ import { brl } from "@/lib/format";
 import type { ItemBuscaStaff } from "@/lib/models";
 import { buscaService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/admin/busca")({
   beforeLoad: exigePerfil("admin"),
@@ -63,13 +64,11 @@ function BuscaPage() {
           }}
           className="flex gap-2"
         >
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             placeholder="Buscar produtos…"
             aria-label="Buscar"
             value={termo}
-            onChange={(e) => setTermo(e.target.value)}
-          />
+            onChange={(e) => setTermo(e.target.value)} />
           <button className="rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
             Buscar
           </button>

@@ -9,6 +9,7 @@ import type { OrdemServico, Produto } from "@/lib/models";
 import { catalogoService, crmService, osService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
 import { useRealtimeEvent } from "@/lib/use-realtime";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/operacao/ordens-servico/$id")({
   beforeLoad: exigePerfil("admin", "tecnico"),
@@ -213,30 +214,26 @@ function OsDetalhePage() {
                 <form onSubmit={consumir} className="grid gap-3">
                   <label className="text-xs font-medium text-muted-foreground">
                     Produto
-                    <select
-                      className={fieldClass}
+                    <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                       required
                       value={fMat.produto_id}
-                      onChange={(e) => setFMat({ ...fMat, produto_id: e.target.value })}
-                    >
+                      onChange={(e) => setFMat({ ...fMat, produto_id: e.target.value })}>
                       <option value="">—</option>
                       {produtos.map((p) => (
                         <option key={p.id} value={p.id}>
                           {p.sku} · {p.nome}
                         </option>
                       ))}
-                    </select>
+                    </TextField>
                   </label>
                   <label className="text-xs font-medium text-muted-foreground">
                     Quantidade
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001" } }}
                       type="number"
-                      step="0.001"
+                     
                       required
                       value={fMat.quantidade}
-                      onChange={(e) => setFMat({ ...fMat, quantidade: e.target.value })}
-                    />
+                      onChange={(e) => setFMat({ ...fMat, quantidade: e.target.value })} />
                   </label>
                   <button className="rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
                     Consumir

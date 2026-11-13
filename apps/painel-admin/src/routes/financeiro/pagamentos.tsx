@@ -13,6 +13,7 @@ import type { Pagamento, Pedido, StatusPagamento } from "@/lib/models";
 import { financeiroService } from "@/lib/services";
 import { useEmpresasNomes } from "@/lib/use-empresas";
 import { useResourceList } from "@/lib/use-resource-list";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/financeiro/pagamentos")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -412,34 +413,29 @@ function PagamentosPage() {
       >
         <FormField label="Pedido *" wide>
           {pedidosSemParcelas.length > 0 ? (
-            <select
-              className={fieldClass}
+            <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
               required
               value={fParc.pedido_id}
-              onChange={(e) => setFParc({ ...fParc, pedido_id: e.target.value })}
-            >
+              onChange={(e) => setFParc({ ...fParc, pedido_id: e.target.value })}>
               <option value="">Selecione um pedido…</option>
               {pedidosSemParcelas.map((ped) => (
                 <option key={ped.id} value={ped.id}>
                   #{ped.id} · {pedidoLabel(ped.id)} — {brl(ped.total)}
                 </option>
               ))}
-            </select>
+            </TextField>
           ) : (
-            <input
-              className={fieldClass}
+            <TextField size="small" fullWidth
               type="number"
               required
               placeholder="ID do pedido"
               value={fParc.pedido_id}
-              onChange={(e) => setFParc({ ...fParc, pedido_id: e.target.value })}
-            />
+              onChange={(e) => setFParc({ ...fParc, pedido_id: e.target.value })} />
           )}
         </FormField>
 
         <FormField label="Forma de pagamento">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             value={fParc.forma_pagamento_id}
             onChange={(e) => {
               const novaForma = FORMAS_PAGAMENTO.find((f) => f.id === Number(e.target.value));
@@ -448,48 +444,41 @@ function PagamentosPage() {
                 forma_pagamento_id: e.target.value,
                 quantidade: novaForma && !novaForma.permiteParcelamento ? "1" : fParc.quantidade,
               });
-            }}
-          >
+            }}>
             {FORMAS_PAGAMENTO.map((f) => (
               <option key={f.id} value={f.id}>
                 {f.nome} {f.permiteParcelamento ? `(até ${f.maxParcelas}x)` : "(à vista)"}
               </option>
             ))}
-          </select>
+          </TextField>
         </FormField>
 
         <FormField label="Nº de parcelas">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth slotProps={{ htmlInput: { min: "1", max: formaSelecionadaParc?.maxParcelas ?? 12 } }}
             type="number"
-            min="1"
-            max={formaSelecionadaParc?.maxParcelas ?? 12}
+           
+           
             disabled={formaSelecionadaParc && !formaSelecionadaParc.permiteParcelamento}
             required
             value={fParc.quantidade}
-            onChange={(e) => setFParc({ ...fParc, quantidade: e.target.value })}
-          />
+            onChange={(e) => setFParc({ ...fParc, quantidade: e.target.value })} />
         </FormField>
 
         <FormField label="1º vencimento *">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             type="date"
             required
             value={fParc.primeiro_vencimento}
-            onChange={(e) => setFParc({ ...fParc, primeiro_vencimento: e.target.value })}
-          />
+            onChange={(e) => setFParc({ ...fParc, primeiro_vencimento: e.target.value })} />
         </FormField>
 
         <FormField label="Intervalo entre parcelas (dias)">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth slotProps={{ htmlInput: { min: "1" } }}
             type="number"
-            min="1"
+           
             placeholder="30"
             value={fParc.intervalo_dias}
-            onChange={(e) => setFParc({ ...fParc, intervalo_dias: e.target.value })}
-          />
+            onChange={(e) => setFParc({ ...fParc, intervalo_dias: e.target.value })} />
         </FormField>
 
         {previaParcelaValor !== null && (
@@ -516,26 +505,22 @@ function PagamentosPage() {
         onSubmit={baixar}
       >
         <FormField label="Forma de pagamento recebida *" wide>
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             required
             value={fBaixa.forma_pagamento_id}
-            onChange={(e) => setFBaixa({ ...fBaixa, forma_pagamento_id: e.target.value })}
-          >
+            onChange={(e) => setFBaixa({ ...fBaixa, forma_pagamento_id: e.target.value })}>
             {FORMAS_PAGAMENTO.map((f) => (
               <option key={f.id} value={f.id}>
                 {f.nome}
               </option>
             ))}
-          </select>
+          </TextField>
         </FormField>
         <FormField label="Observação (comprovante / NSU)" wide>
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             placeholder="Opcional — requer caixa aberto para registrar o recebimento"
             value={fBaixa.observacao}
-            onChange={(e) => setFBaixa({ ...fBaixa, observacao: e.target.value })}
-          />
+            onChange={(e) => setFBaixa({ ...fBaixa, observacao: e.target.value })} />
         </FormField>
       </FormDialog>
 
@@ -553,13 +538,11 @@ function PagamentosPage() {
         onSubmit={estornar}
       >
         <FormField label="Motivo do estorno (obrigatório) *" wide>
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             required
             placeholder="Descreva a razão do estorno no caixa…"
             value={motivo}
-            onChange={(e) => setMotivo(e.target.value)}
-          />
+            onChange={(e) => setMotivo(e.target.value)} />
         </FormField>
       </FormDialog>
     </>

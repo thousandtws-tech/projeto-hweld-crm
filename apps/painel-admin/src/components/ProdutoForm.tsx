@@ -8,6 +8,7 @@ import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { processarEEnviarImagem } from "@/lib/midia";
 import type { Categoria, Produto, ProdutoImagem } from "@/lib/models";
 import { catalogoService, estoqueService } from "@/lib/services";
+import TextField from "@mui/material/TextField";
 
 const vazio = {
   sku: "",
@@ -632,8 +633,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
 
             {/* Opção secundária para colar URL externa */}
             <div className="flex gap-1.5 pt-1">
-              <input
-                className={`${fieldClass} mt-0 py-1.5 text-xs`}
+              <TextField size="small" fullWidth
                 placeholder="Ou cole uma URL de imagem (https://...)"
                 value={urlExterna}
                 onChange={(e) => setUrlExterna(e.target.value)}
@@ -642,8 +642,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                     e.preventDefault();
                     void adicionarPorUrl();
                   }
-                }}
-              />
+                }} />
               <button
                 type="button"
                 disabled={!urlExterna.trim() || enviandoArquivos}
@@ -661,35 +660,31 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
               <h2 className="mb-4 text-sm font-semibold">Identificação</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <FormField label="SKU *">
-                  <input className={fieldClass} required value={f.sku} onChange={set("sku")} />
+                  <TextField size="small" fullWidth required value={f.sku} onChange={set("sku")} />
                 </FormField>
                 <FormField label="Nome do produto *" wide>
-                  <input className={fieldClass} required value={f.nome} onChange={set("nome")} />
+                  <TextField size="small" fullWidth required value={f.nome} onChange={set("nome")} />
                 </FormField>
                 <FormField label="Categoria *">
-                  <select
-                    className={fieldClass}
+                  <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                     required
                     value={f.categoria_id}
-                    onChange={set("categoria_id")}
-                  >
+                    onChange={set("categoria_id")}>
                     <option value="">Selecione…</option>
                     {categorias.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.nome}
                       </option>
                     ))}
-                  </select>
+                  </TextField>
                 </FormField>
                 <FormField label="Marca">
                   <>
-                    <input
-                      className={fieldClass}
-                      list="lista-marcas-cms"
+                    <TextField size="small" fullWidth slotProps={{ htmlInput: { list: "lista-marcas-cms" } }}
+                     
                       placeholder="Selecione ou digite…"
                       value={f.marca}
-                      onChange={set("marca")}
-                    />
+                      onChange={set("marca")} />
                     <datalist id="lista-marcas-cms">
                       {marcasCms.map((nomeMarca) => (
                         <option key={nomeMarca} value={nomeMarca} />
@@ -698,12 +693,10 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                   </>
                 </FormField>
                 <FormField label="Unidade (kg, cx, un…)">
-                  <input
-                    className={fieldClass}
-                    maxLength={6}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { maxLength: 6 } }}
+                   
                     value={f.unidade_medida}
-                    onChange={set("unidade_medida")}
-                  />
+                    onChange={set("unidade_medida")} />
                 </FormField>
               </div>
             </SectionCard>
@@ -712,45 +705,37 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
               <h2 className="mb-4 text-sm font-semibold">Comercial & Estoque</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <FormField label="Preço de venda (R$) *">
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                     required
                     type="number"
-                    step="0.01"
-                    min="0"
+                   
+                   
                     value={f.preco_venda}
-                    onChange={set("preco_venda")}
-                  />
+                    onChange={set("preco_venda")} />
                 </FormField>
                 <FormField label="Preço de custo (R$)">
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                     type="number"
-                    step="0.01"
-                    min="0"
+                   
+                   
                     value={f.preco_custo}
-                    onChange={set("preco_custo")}
-                  />
+                    onChange={set("preco_custo")} />
                 </FormField>
                 <FormField label="Estoque disponível (saldo)">
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: "0" } }}
                     type="number"
-                    step="0.001"
-                    min="0"
+                   
+                   
                     value={estoqueDisponivel}
-                    onChange={(e) => setEstoqueDisponivel(e.target.value)}
-                  />
+                    onChange={(e) => setEstoqueDisponivel(e.target.value)} />
                 </FormField>
                 <FormField label="Estoque mínimo">
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: "0" } }}
                     type="number"
-                    step="0.001"
-                    min="0"
+                   
+                   
                     value={f.estoque_minimo}
-                    onChange={set("estoque_minimo")}
-                  />
+                    onChange={set("estoque_minimo")} />
                 </FormField>
 
                 <div className="flex flex-wrap items-center gap-5 pt-1 sm:col-span-2 lg:col-span-4">
@@ -769,20 +754,16 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                 </div>
 
                 <FormField label="Descrição curta (resumo da vitrine)" wide>
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth
                     value={f.descricao_curta}
-                    onChange={set("descricao_curta")}
-                  />
+                    onChange={set("descricao_curta")} />
                 </FormField>
 
                 <FormField label="Especificação técnica detalhada" wide>
-                  <textarea
-                    className={fieldClass}
+                  <TextField size="small" fullWidth multiline minRows={3}
                     rows={3}
                     value={f.descricao_tecnica}
-                    onChange={set("descricao_tecnica")}
-                  />
+                    onChange={set("descricao_tecnica")} />
                 </FormField>
               </div>
             </SectionCard>
@@ -791,61 +772,49 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
               <h2 className="mb-4 text-sm font-semibold">Fiscal & Dimensões</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <FormField label="NCM (8 dígitos)">
-                  <input
-                    className={fieldClass}
-                    maxLength={8}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { maxLength: 8 } }}
+                   
                     placeholder="83112000"
                     value={f.ncm}
-                    onChange={set("ncm")}
-                  />
+                    onChange={set("ncm")} />
                 </FormField>
                 <FormField label="Origem mercadoria">
-                  <select
-                    className={fieldClass}
+                  <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                     value={f.origem_mercadoria}
-                    onChange={set("origem_mercadoria")}
-                  >
+                    onChange={set("origem_mercadoria")}>
                     <option value="">0 — Nacional</option>
                     <option value="0">0 — Nacional</option>
                     <option value="1">1 — Importada</option>
                     <option value="2">2 — Estrangeira (mercado interno)</option>
-                  </select>
+                  </TextField>
                 </FormField>
                 <FormField label="Peso (kg)">
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001" } }}
                     type="number"
-                    step="0.001"
+                   
                     value={f.peso_kg}
-                    onChange={set("peso_kg")}
-                  />
+                    onChange={set("peso_kg")} />
                 </FormField>
                 <FormField label="Dimensões A×L×C (cm)">
                   <div className="flex gap-1">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }}
                       type="number"
-                      step="0.01"
+                     
                       placeholder="A"
                       value={f.altura_cm}
-                      onChange={set("altura_cm")}
-                    />
-                    <input
-                      className={fieldClass}
+                      onChange={set("altura_cm")} />
+                    <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }}
                       type="number"
-                      step="0.01"
+                     
                       placeholder="L"
                       value={f.largura_cm}
-                      onChange={set("largura_cm")}
-                    />
-                    <input
-                      className={fieldClass}
+                      onChange={set("largura_cm")} />
+                    <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }}
                       type="number"
-                      step="0.01"
+                     
                       placeholder="C"
                       value={f.comprimento_cm}
-                      onChange={set("comprimento_cm")}
-                    />
+                      onChange={set("comprimento_cm")} />
                   </div>
                 </FormField>
               </div>

@@ -8,6 +8,7 @@ import type { Usuario } from "@/lib/models";
 import { usuariosService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
 import { useResourceList } from "@/lib/use-resource-list";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/admin/usuarios")({
   beforeLoad: exigePerfil("admin"),
@@ -177,47 +178,39 @@ function UsuariosPage() {
         onSubmit={salvar}
       >
         <FormField label="Nome">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             required
             value={f.nome}
-            onChange={(e) => setF({ ...f, nome: e.target.value })}
-          />
+            onChange={(e) => setF({ ...f, nome: e.target.value })} />
         </FormField>
         <FormField label="E-mail">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             type="email"
             required
             value={f.email}
-            onChange={(e) => setF({ ...f, email: e.target.value })}
-          />
+            onChange={(e) => setF({ ...f, email: e.target.value })} />
         </FormField>
         {!editando && (
           <FormField label="Senha">
-            <input
-              className={fieldClass}
+            <TextField size="small" fullWidth slotProps={{ htmlInput: { minLength: 6 } }}
               type="password"
               required
-              minLength={6}
+             
               autoComplete="new-password"
               value={f.senha}
-              onChange={(e) => setF({ ...f, senha: e.target.value })}
-            />
+              onChange={(e) => setF({ ...f, senha: e.target.value })} />
           </FormField>
         )}
         <FormField label="Perfil">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             value={f.perfil}
-            onChange={(e) => setF({ ...f, perfil: e.target.value })}
-          >
+            onChange={(e) => setF({ ...f, perfil: e.target.value })}>
             <option value="admin">Admin</option>
             <option value="vendedor">Vendedor</option>
             <option value="financeiro">Financeiro</option>
             <option value="estoque">Estoque</option>
             <option value="tecnico">Técnico</option>
-          </select>
+          </TextField>
         </FormField>
       </FormDialog>
     </>

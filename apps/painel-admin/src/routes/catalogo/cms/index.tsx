@@ -14,6 +14,7 @@ import {
 import type { CardDuoCms, CardTrioCms, CmsLoja, MarcaCms, SeloCms, SlideBannerCms } from "@/lib/models";
 import { catalogoService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/catalogo/cms/")({
   beforeLoad: exigePerfil("admin", "estoque", "vendedor"),
@@ -338,24 +339,20 @@ function CmsLojaPage() {
             <form onSubmit={(e) => void adicionarMarca(e)} className="grid gap-3 sm:grid-cols-12">
               <div className="sm:col-span-4">
                 <FormField label="Nome da Marca *">
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth
                     required
                     placeholder="Ex.: Vonder, Makita, ESAB…"
                     value={novaMarcaNome}
-                    onChange={(e) => setNovaMarcaNome(e.target.value)}
-                  />
+                    onChange={(e) => setNovaMarcaNome(e.target.value)} />
                 </FormField>
               </div>
               <div className="sm:col-span-5">
                 <FormField label="Logo da Marca (Upload ou URL)">
                   <div className="flex gap-2">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       placeholder="https://... ou envie arquivo ao lado"
                       value={novaMarcaLogo}
-                      onChange={(e) => setNovaMarcaLogo(e.target.value)}
-                    />
+                      onChange={(e) => setNovaMarcaLogo(e.target.value)} />
                     <label className="mt-1 inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-2 text-xs font-semibold hover:bg-secondary">
                       {uploadingKey === "nova-marca" ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -414,11 +411,9 @@ function CmsLojaPage() {
                   </div>
 
                   <div className="min-w-0 flex-1 space-y-1.5">
-                    <input
-                      className={`${fieldClass} mt-0 py-1 text-xs font-semibold`}
+                    <TextField size="small" fullWidth
                       value={m.nome}
-                      onChange={(e) => atualizarMarca(idx, { nome: e.target.value })}
-                    />
+                      onChange={(e) => atualizarMarca(idx, { nome: e.target.value })} />
                     <div className="flex items-center gap-1.5">
                       <label className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-medium hover:bg-secondary">
                         <ImagePlus className="h-3 w-3" /> Trocar logo
@@ -558,26 +553,20 @@ function CmsLojaPage() {
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <FormField label="URL do Banner Desktop *">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       value={s.bg_image}
-                      onChange={(e) => atualizarSlide(idx, { bg_image: e.target.value })}
-                    />
+                      onChange={(e) => atualizarSlide(idx, { bg_image: e.target.value })} />
                   </FormField>
                   <FormField label="URL do Banner Mobile (opcional)">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       value={s.image_mobile}
-                      onChange={(e) => atualizarSlide(idx, { image_mobile: e.target.value })}
-                    />
+                      onChange={(e) => atualizarSlide(idx, { image_mobile: e.target.value })} />
                   </FormField>
                   <FormField label="Link de Destino ao clicar" wide>
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       placeholder="/busca"
                       value={s.button_link}
-                      onChange={(e) => atualizarSlide(idx, { button_link: e.target.value })}
-                    />
+                      onChange={(e) => atualizarSlide(idx, { button_link: e.target.value })} />
                   </FormField>
                 </div>
               </div>
@@ -656,19 +645,15 @@ function CmsLojaPage() {
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <FormField label="URL da Imagem do Banner *" wide>
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       value={c.imagem_url}
-                      onChange={(e) => atualizarTrio(idx, { imagem_url: e.target.value })}
-                    />
+                      onChange={(e) => atualizarTrio(idx, { imagem_url: e.target.value })} />
                   </FormField>
                   <FormField label="Link de Destino ao clicar" wide>
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       placeholder="/busca"
                       value={c.botao_link}
-                      onChange={(e) => atualizarTrio(idx, { botao_link: e.target.value })}
-                    />
+                      onChange={(e) => atualizarTrio(idx, { botao_link: e.target.value })} />
                   </FormField>
                 </div>
               </div>
@@ -747,19 +732,15 @@ function CmsLojaPage() {
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <FormField label="URL da Imagem do Banner *" wide>
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       value={c.imagem_url}
-                      onChange={(e) => atualizarDuo(idx, { imagem_url: e.target.value })}
-                    />
+                      onChange={(e) => atualizarDuo(idx, { imagem_url: e.target.value })} />
                   </FormField>
                   <FormField label="Link de Destino ao clicar" wide>
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       placeholder="/busca"
                       value={c.botao_link}
-                      onChange={(e) => atualizarDuo(idx, { botao_link: e.target.value })}
-                    />
+                      onChange={(e) => atualizarDuo(idx, { botao_link: e.target.value })} />
                   </FormField>
                 </div>
               </div>
@@ -844,34 +825,26 @@ function CmsLojaPage() {
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <FormField label="Título *">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       value={s.titulo}
-                      onChange={(e) => atualizarSelo(idx, { titulo: e.target.value })}
-                    />
+                      onChange={(e) => atualizarSelo(idx, { titulo: e.target.value })} />
                   </FormField>
                   <FormField label="Descrição (opcional)">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       value={s.descricao}
-                      onChange={(e) => atualizarSelo(idx, { descricao: e.target.value })}
-                    />
+                      onChange={(e) => atualizarSelo(idx, { descricao: e.target.value })} />
                   </FormField>
                   <FormField label="URL do Ícone (upload ou assets/externa)" wide>
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       placeholder="/api/v1/midia/… ou assets/header/icons/icon-x.png"
                       value={s.icone_url}
-                      onChange={(e) => atualizarSelo(idx, { icone_url: e.target.value })}
-                    />
+                      onChange={(e) => atualizarSelo(idx, { icone_url: e.target.value })} />
                   </FormField>
                   <FormField label="Link de Destino ao clicar">
-                    <input
-                      className={fieldClass}
+                    <TextField size="small" fullWidth
                       placeholder="/busca ou https://…"
                       value={s.link}
-                      onChange={(e) => atualizarSelo(idx, { link: e.target.value })}
-                    />
+                      onChange={(e) => atualizarSelo(idx, { link: e.target.value })} />
                   </FormField>
                   <FormField label="Abertura do link">
                     <label className="flex h-10 items-center gap-2 text-xs font-medium">

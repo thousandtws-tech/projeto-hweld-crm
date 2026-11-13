@@ -10,6 +10,7 @@ import { processarEEnviarComPreset } from "@/lib/midia";
 import type { Categoria } from "@/lib/models";
 import { catalogoService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/catalogo/categorias/")({
   beforeLoad: exigePerfil("admin", "estoque"),
@@ -298,42 +299,34 @@ function CategoriasPage() {
                   {enviandoImg ? "Enviando…" : "Enviar arquivo do computador"}
                 </button>
               </div>
-              <input
-                className={`${fieldClass} mt-0 py-1.5 text-xs`}
+              <TextField size="small" fullWidth
                 placeholder="Ou cole a URL da imagem (https://...)"
                 value={f.imagem_url}
-                onChange={(e) => setF({ ...f, imagem_url: e.target.value })}
-              />
+                onChange={(e) => setF({ ...f, imagem_url: e.target.value })} />
             </div>
           </div>
         </div>
 
         <FormField label="Nome *" wide>
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             required
             value={f.nome}
-            onChange={(e) => setF({ ...f, nome: e.target.value })}
-          />
+            onChange={(e) => setF({ ...f, nome: e.target.value })} />
         </FormField>
 
         <FormField label="Slug">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             placeholder="Gerado automaticamente"
             value={f.slug}
-            onChange={(e) => setF({ ...f, slug: e.target.value })}
-          />
+            onChange={(e) => setF({ ...f, slug: e.target.value })} />
         </FormField>
 
         <FormField label="Categoria pai">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             value={f.categoria_pai_id}
             onChange={(e) =>
               setF({ ...f, categoria_pai_id: e.target.value === "" ? "" : Number(e.target.value) })
-            }
-          >
+            }>
             <option value="">Raiz (departamento principal)</option>
             {todas
               .filter((c) => !editando || c.id !== editando.id)
@@ -342,25 +335,21 @@ function CategoriasPage() {
                   {c.nome}
                 </option>
               ))}
-          </select>
+          </TextField>
         </FormField>
 
         <FormField label="Descrição" wide>
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             placeholder="Resumo da linha de produtos desta categoria…"
             value={f.descricao}
-            onChange={(e) => setF({ ...f, descricao: e.target.value })}
-          />
+            onChange={(e) => setF({ ...f, descricao: e.target.value })} />
         </FormField>
 
         <FormField label="Ordem de exibição">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             type="number"
             value={f.ordem}
-            onChange={(e) => setF({ ...f, ordem: Number(e.target.value) })}
-          />
+            onChange={(e) => setF({ ...f, ordem: Number(e.target.value) })} />
         </FormField>
 
         <FormField label="">

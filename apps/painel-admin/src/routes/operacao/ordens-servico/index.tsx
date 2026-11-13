@@ -12,6 +12,7 @@ import { crmService, osService, pedidosService } from "@/lib/services";
 import { useEmpresasMap } from "@/lib/use-empresas";
 import { useResourceList } from "@/lib/use-resource-list";
 import { useAuth } from "@/store/auth-store";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/operacao/ordens-servico/")({
   beforeLoad: exigePerfil("admin", "tecnico"),
@@ -372,106 +373,90 @@ function OrdensServicoIndexPage() {
         onSubmit={criarOs}
       >
         <FormField label="Empresa (Cliente) *">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             required
             value={fNovo.empresa_id}
             onChange={(e) =>
               setFNovo({ ...fNovo, empresa_id: e.target.value, contato_id: "", pedido_id: "" })
-            }
-          >
+            }>
             <option value="">Selecione…</option>
             {[...empresas.values()].map((emp) => (
               <option key={emp.id} value={emp.id}>
                 {emp.nome_fantasia || emp.razao_social}
               </option>
             ))}
-          </select>
+          </TextField>
         </FormField>
 
         <FormField label="Contato na empresa">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             value={fNovo.contato_id}
             onChange={(e) => setFNovo({ ...fNovo, contato_id: e.target.value })}
-            disabled={!fNovo.empresa_id}
-          >
+            disabled={!fNovo.empresa_id}>
             <option value="">— Opcional —</option>
             {contatosDaEmpresa.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.nome}
               </option>
             ))}
-          </select>
+          </TextField>
         </FormField>
 
         <FormField label="Pedido vinculado">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             value={fNovo.pedido_id}
             onChange={(e) => setFNovo({ ...fNovo, pedido_id: e.target.value })}
-            disabled={!fNovo.empresa_id}
-          >
+            disabled={!fNovo.empresa_id}>
             <option value="">— Opcional —</option>
             {pedidosDaEmpresa.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.numero} ({brl(p.total)})
               </option>
             ))}
-          </select>
+          </TextField>
         </FormField>
 
         <FormField label="Prioridade">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             value={fNovo.prioridade}
-            onChange={(e) => setFNovo({ ...fNovo, prioridade: e.target.value as PrioridadeOs })}
-          >
+            onChange={(e) => setFNovo({ ...fNovo, prioridade: e.target.value as PrioridadeOs })}>
             <option value="baixa">Baixa</option>
             <option value="normal">Normal</option>
             <option value="alta">Alta</option>
             <option value="urgente">Urgente</option>
-          </select>
+          </TextField>
         </FormField>
 
         <FormField label="Previsão de conclusão">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             type="date"
             value={fNovo.prevista_em}
-            onChange={(e) => setFNovo({ ...fNovo, prevista_em: e.target.value })}
-          />
+            onChange={(e) => setFNovo({ ...fNovo, prevista_em: e.target.value })} />
         </FormField>
 
         <FormField label="Valor de mão de obra (R$)">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
             type="number"
-            step="0.01"
-            min="0"
+           
+           
             placeholder="0,00"
             value={fNovo.valor_mao_obra}
-            onChange={(e) => setFNovo({ ...fNovo, valor_mao_obra: e.target.value })}
-          />
+            onChange={(e) => setFNovo({ ...fNovo, valor_mao_obra: e.target.value })} />
         </FormField>
 
         <FormField label="Descrição do serviço / equipamento *" wide>
-          <textarea
-            className={fieldClass}
+          <TextField size="small" fullWidth multiline minRows={3}
             rows={3}
             required
             placeholder="Descreva o equipamento, defeito relatado ou serviço solicitado…"
             value={fNovo.descricao}
-            onChange={(e) => setFNovo({ ...fNovo, descricao: e.target.value })}
-          />
+            onChange={(e) => setFNovo({ ...fNovo, descricao: e.target.value })} />
         </FormField>
 
         <FormField label="Observações técnicas" wide>
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             value={fNovo.observacoes}
-            onChange={(e) => setFNovo({ ...fNovo, observacoes: e.target.value })}
-          />
+            onChange={(e) => setFNovo({ ...fNovo, observacoes: e.target.value })} />
         </FormField>
       </FormDialog>
     </>

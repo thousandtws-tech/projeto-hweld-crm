@@ -19,6 +19,7 @@ import { catalogoService, crmService, orcamentosService } from "@/lib/services";
 import { useEmpresasMap } from "@/lib/use-empresas";
 import { useResourceList } from "@/lib/use-resource-list";
 import { useAuth } from "@/store/auth-store";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/vendas/orcamentos/")({
   component: OrcamentosIndexPage,
@@ -586,69 +587,59 @@ function OrcamentosIndexPage() {
         onSubmit={criarOrcamento}
       >
         <FormField label="Empresa (Cliente) *">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             required
             value={fNovo.empresa_id}
-            onChange={(e) => void aoEscolherEmpresaNovo(e.target.value)}
-          >
+            onChange={(e) => void aoEscolherEmpresaNovo(e.target.value)}>
             <option value="">Selecione…</option>
             {[...empresas.values()].map((emp) => (
               <option key={emp.id} value={emp.id}>
                 {emp.nome_fantasia || emp.razao_social}
               </option>
             ))}
-          </select>
+          </TextField>
         </FormField>
 
         <FormField label="Contato (necessário p/ converter em pedido)">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             value={fNovo.contato_id}
             onChange={(e) => setFNovo({ ...fNovo, contato_id: e.target.value })}
-            disabled={!fNovo.empresa_id}
-          >
+            disabled={!fNovo.empresa_id}>
             <option value="">—</option>
             {contatosDaEmpresaNovo.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.nome}
               </option>
             ))}
-          </select>
+          </TextField>
         </FormField>
 
         <FormField label="Oportunidade vinculada">
-          <select
-            className={fieldClass}
+          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
             value={fNovo.oportunidade_id}
             onChange={(e) => setFNovo({ ...fNovo, oportunidade_id: e.target.value })}
-            disabled={!fNovo.empresa_id}
-          >
+            disabled={!fNovo.empresa_id}>
             <option value="">— Opcional —</option>
             {opsDaEmpresaNovo.map((op) => (
               <option key={op.id} value={op.id}>
                 {op.titulo}
               </option>
             ))}
-          </select>
+          </TextField>
         </FormField>
 
         <FormField label="Validade">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             type="date"
             value={fNovo.valido_ate}
-            onChange={(e) => setFNovo({ ...fNovo, valido_ate: e.target.value })}
-          />
+            onChange={(e) => setFNovo({ ...fNovo, valido_ate: e.target.value })} />
         </FormField>
 
         <FormField label="Condição de pagamento" wide>
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             placeholder="Ex.: 28/56/84 DDL ou Boleto 30 dias"
             value={fNovo.condicao_pagamento}
-            onChange={(e) => setFNovo({ ...fNovo, condicao_pagamento: e.target.value })}
-          />
+            onChange={(e) => setFNovo({ ...fNovo, condicao_pagamento: e.target.value })} />
         </FormField>
 
         {/* Itens iniciais do orçamento */}
@@ -683,40 +674,34 @@ function OrcamentosIndexPage() {
                 key={idx}
                 className="grid grid-cols-1 gap-2 rounded-2xl border border-border/70 bg-secondary/20 p-2.5 sm:grid-cols-[1fr_76px_96px_auto]"
               >
-                <select
+                <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                   aria-label="Produto"
-                  className={fieldClass}
                   required
                   value={item.produto_id}
-                  onChange={(e) => escolherProdutoNovo(idx, e.target.value)}
-                >
+                  onChange={(e) => escolherProdutoNovo(idx, e.target.value)}>
                   <option value="">Selecione um produto…</option>
                   {produtos.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.sku} · {p.nome} ({brl(p.preco_venda)})
                     </option>
                   ))}
-                </select>
-                <input
+                </TextField>
+                <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: "0.001" } }}
                   aria-label="Quantidade"
-                  className={fieldClass}
                   type="number"
-                  step="0.001"
-                  min="0.001"
+                 
+                 
                   placeholder="Qtd"
                   value={item.quantidade}
-                  onChange={(e) => atualizarItemNovo(idx, { quantidade: e.target.value })}
-                />
-                <input
+                  onChange={(e) => atualizarItemNovo(idx, { quantidade: e.target.value })} />
+                <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                   aria-label="Preço unitário"
-                  className={fieldClass}
                   type="number"
-                  step="0.01"
-                  min="0"
+                 
+                 
                   placeholder="Preço"
                   value={item.preco_unitario}
-                  onChange={(e) => atualizarItemNovo(idx, { preco_unitario: e.target.value })}
-                />
+                  onChange={(e) => atualizarItemNovo(idx, { preco_unitario: e.target.value })} />
                 {itensNovo.length > 1 && (
                   <button
                     type="button"
@@ -732,25 +717,21 @@ function OrcamentosIndexPage() {
         </div>
 
         <FormField label="Desconto geral (R$)">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
             type="number"
-            step="0.01"
-            min="0"
+           
+           
             value={fNovo.desconto}
-            onChange={(e) => setFNovo({ ...fNovo, desconto: e.target.value })}
-          />
+            onChange={(e) => setFNovo({ ...fNovo, desconto: e.target.value })} />
         </FormField>
 
         <FormField label="Frete (R$)">
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
             type="number"
-            step="0.01"
-            min="0"
+           
+           
             value={fNovo.frete}
-            onChange={(e) => setFNovo({ ...fNovo, frete: e.target.value })}
-          />
+            onChange={(e) => setFNovo({ ...fNovo, frete: e.target.value })} />
         </FormField>
       </FormDialog>
     </>

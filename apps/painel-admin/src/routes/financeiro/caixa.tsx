@@ -24,6 +24,7 @@ import { exigePerfil } from "@/lib/guards";
 import type { Caixa, CaixaMovimentacao } from "@/lib/models";
 import { financeiroService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/financeiro/caixa")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -362,37 +363,31 @@ function CaixaPage() {
             >
               <label className="text-xs font-medium text-muted-foreground">
                 Tipo
-                <select
-                  className={fieldClass}
+                <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                   value={fLanc.tipo}
-                  onChange={(e) => setFLanc({ ...fLanc, tipo: e.target.value })}
-                >
+                  onChange={(e) => setFLanc({ ...fLanc, tipo: e.target.value })}>
                   <option value="suprimento">Suprimento (+)</option>
                   <option value="sangria">Sangria (−)</option>
                   <option value="despesa">Despesa (−)</option>
-                </select>
+                </TextField>
               </label>
               <label className="text-xs font-medium text-muted-foreground">
                 Valor (R$)
-                <input
-                  className={`${fieldClass} tabular-nums`}
+                <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0.01" } }}
                   type="number"
-                  step="0.01"
-                  min="0.01"
+                 
+                 
                   required
                   placeholder="0,00"
                   value={fLanc.valor}
-                  onChange={(e) => setFLanc({ ...fLanc, valor: e.target.value })}
-                />
+                  onChange={(e) => setFLanc({ ...fLanc, valor: e.target.value })} />
               </label>
               <label className="text-xs font-medium text-muted-foreground">
                 Histórico / Descrição
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth
                   placeholder="Ex.: Reforço de troco, retirada p/ cofre, frete motoboy…"
                   value={fLanc.descricao}
-                  onChange={(e) => setFLanc({ ...fLanc, descricao: e.target.value })}
-                />
+                  onChange={(e) => setFLanc({ ...fLanc, descricao: e.target.value })} />
               </label>
               <button
                 type="submit"
@@ -509,16 +504,14 @@ function CaixaPage() {
               </p>
 
               <form onSubmit={abrirCaixa} className="mt-4 flex flex-col gap-2 sm:flex-row">
-                <input
-                  className={`${fieldClass} mt-0 flex-1 tabular-nums`}
+                <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                   type="number"
-                  step="0.01"
-                  min="0"
+                 
+                 
                   required
                   placeholder="Valor de abertura (R$)"
                   value={valorAbertura}
-                  onChange={(e) => setValorAbertura(e.target.value)}
-                />
+                  onChange={(e) => setValorAbertura(e.target.value)} />
                 <button
                   type="submit"
                   className="rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
@@ -633,15 +626,13 @@ function CaixaPage() {
         </div>
 
         <FormField label="Valor físico apurado em caixa (R$) *" wide>
-          <input
-            className={`${fieldClass} tabular-nums`}
+          <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
             type="number"
-            step="0.01"
-            min="0"
+           
+           
             required
             value={valorInformado}
-            onChange={(e) => setValorInformado(e.target.value)}
-          />
+            onChange={(e) => setValorInformado(e.target.value)} />
         </FormField>
 
         <div className="sm:col-span-2 flex items-center justify-between rounded-2xl border border-border px-3.5 py-2.5 text-xs">

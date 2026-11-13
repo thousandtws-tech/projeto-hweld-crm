@@ -9,6 +9,7 @@ import { exigePerfil } from "@/lib/guards";
 import type { TabelaPreco } from "@/lib/models";
 import { catalogoService } from "@/lib/services";
 import { useResourceList } from "@/lib/use-resource-list";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/catalogo/tabelas-preco/")({
   beforeLoad: exigePerfil("admin", "vendedor"),
@@ -194,21 +195,17 @@ function TabelasPrecoIndexPage() {
         onSubmit={salvar}
       >
         <FormField label="Nome da tabela *" wide>
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             required
             placeholder="Ex.: Atacado Serralheria, Parceiro Industrial, VIP"
             value={f.nome}
-            onChange={(e) => setF({ ...f, nome: e.target.value })}
-          />
+            onChange={(e) => setF({ ...f, nome: e.target.value })} />
         </FormField>
         <FormField label="Descrição" wide>
-          <input
-            className={fieldClass}
+          <TextField size="small" fullWidth
             placeholder="Condições ou perfil de clientes elegíveis…"
             value={f.descricao}
-            onChange={(e) => setF({ ...f, descricao: e.target.value })}
-          />
+            onChange={(e) => setF({ ...f, descricao: e.target.value })} />
         </FormField>
         <FormField label="" wide>
           <label className="mt-1 flex items-center gap-2 text-sm text-foreground">

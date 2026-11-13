@@ -12,6 +12,7 @@ import { catalogoService, estoqueService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import { useResourceList } from "@/lib/use-resource-list";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/estoque")({
   beforeLoad: exigePerfil("admin", "estoque"),
@@ -178,52 +179,44 @@ function EstoquePage() {
         >
           <label className="text-xs font-medium text-muted-foreground">
             Produto
-            <select
-              className={fieldClass}
+            <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
               required
               value={f.produto_id}
-              onChange={(e) => setF({ ...f, produto_id: e.target.value })}
-            >
+              onChange={(e) => setF({ ...f, produto_id: e.target.value })}>
               <option value="">—</option>
               {produtos.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.sku} · {p.nome}
                 </option>
               ))}
-            </select>
+            </TextField>
           </label>
           <label className="text-xs font-medium text-muted-foreground">
             Tipo
-            <select
-              className={fieldClass}
+            <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
               value={f.tipo}
-              onChange={(e) => setF({ ...f, tipo: e.target.value })}
-            >
+              onChange={(e) => setF({ ...f, tipo: e.target.value })}>
               {/* backend só aceita lançamento manual desses dois — reserva/saída
                   nascem de pedidos e ordens de serviço */}
               <option value="entrada">Entrada</option>
               <option value="ajuste">Ajuste</option>
-            </select>
+            </TextField>
           </label>
           <label className="text-xs font-medium text-muted-foreground">
             Quantidade
-            <input
-              className={fieldClass}
+            <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: f.tipo === "ajuste" ? undefined : "0.001" } }}
               type="number"
-              step="0.001"
-              min={f.tipo === "ajuste" ? undefined : "0.001"}
+             
+             
               required
               value={f.quantidade}
-              onChange={(e) => setF({ ...f, quantidade: e.target.value })}
-            />
+              onChange={(e) => setF({ ...f, quantidade: e.target.value })} />
           </label>
           <label className="text-xs font-medium text-muted-foreground">
             Motivo
-            <input
-              className={fieldClass}
+            <TextField size="small" fullWidth
               value={f.motivo}
-              onChange={(e) => setF({ ...f, motivo: e.target.value })}
-            />
+              onChange={(e) => setF({ ...f, motivo: e.target.value })} />
           </label>
           <button className="rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
             Lançar

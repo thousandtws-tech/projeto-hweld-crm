@@ -17,6 +17,7 @@ import { exigePerfil } from "@/lib/guards";
 import type { ConfigFiscal } from "@/lib/models";
 import { fiscalService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
+import TextField from "@mui/material/TextField";
 
 export const Route = createFileRoute("/fiscal/configuracao")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -195,56 +196,47 @@ function ConfigFiscalPage() {
           <form onSubmit={salvar} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Ambiente SEFAZ *">
-                <select
-                  className={fieldClass}
+                <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                   value={form.ambiente}
                   onChange={(e) =>
                     setForm((f) => ({
                       ...f,
                       ambiente: e.target.value as ConfigFiscal["ambiente"],
                     }))
-                  }
-                >
+                  }>
                   <option value="homologacao">Homologação (testes)</option>
                   <option value="producao">Produção (validade jurídica)</option>
-                </select>
+                </TextField>
               </FormField>
               <FormField label="Série da NF-e">
-                <input
-                  className={fieldClass}
-                  maxLength={3}
+                <TextField size="small" fullWidth slotProps={{ htmlInput: { maxLength: 3 } }}
+                 
                   placeholder="Ex.: 1"
                   value={form.serie_nf}
-                  onChange={(e) => setForm((f) => ({ ...f, serie_nf: e.target.value }))}
-                />
+                  onChange={(e) => setForm((f) => ({ ...f, serie_nf: e.target.value }))} />
               </FormField>
               <FormField label="Regime tributário (CRT) *">
-                <select
-                  className={fieldClass}
+                <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
                   value={form.regime_tributario}
-                  onChange={(e) => setForm((f) => ({ ...f, regime_tributario: e.target.value }))}
-                >
+                  onChange={(e) => setForm((f) => ({ ...f, regime_tributario: e.target.value }))}>
                   <option value="">Selecione…</option>
                   <option value="1">1 — Simples Nacional</option>
                   <option value="2">2 — Simples, excesso de sublimite</option>
                   <option value="3">3 — Regime Normal</option>
-                </select>
+                </TextField>
               </FormField>
               <FormField label="CSC — ID">
-                <input
-                  className={fieldClass}
-                  maxLength={20}
+                <TextField size="small" fullWidth slotProps={{ htmlInput: { maxLength: 20 } }}
+                 
                   placeholder="Identificador do CSC"
                   value={form.csc_id}
-                  onChange={(e) => setForm((f) => ({ ...f, csc_id: e.target.value }))}
-                />
+                  onChange={(e) => setForm((f) => ({ ...f, csc_id: e.target.value }))} />
               </FormField>
               <FormField
                 label={cfg?.csc_configurado ? "CSC — Token (gravado; vazio mantém)" : "CSC — Token"}
                 wide
               >
-                <input
-                  className={fieldClass}
+                <TextField size="small" fullWidth
                   type="password"
                   autoComplete="off"
                   placeholder={
@@ -253,8 +245,7 @@ function ConfigFiscalPage() {
                       : "Token do Código de Segurança do Contribuinte"
                   }
                   value={form.csc_token}
-                  onChange={(e) => setForm((f) => ({ ...f, csc_token: e.target.value }))}
-                />
+                  onChange={(e) => setForm((f) => ({ ...f, csc_token: e.target.value }))} />
               </FormField>
             </div>
             <button
@@ -344,21 +335,17 @@ function ConfigFiscalPage() {
               />
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField label="Senha do certificado">
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth
                     type="password"
                     autoComplete="off"
                     value={certSenha}
-                    onChange={(e) => setCertSenha(e.target.value)}
-                  />
+                    onChange={(e) => setCertSenha(e.target.value)} />
                 </FormField>
                 <FormField label="Validade (AAAA-MM-DD)">
-                  <input
-                    className={fieldClass}
+                  <TextField size="small" fullWidth
                     type="date"
                     value={certValidade}
-                    onChange={(e) => setCertValidade(e.target.value)}
-                  />
+                    onChange={(e) => setCertValidade(e.target.value)} />
                 </FormField>
               </div>
             </div>
