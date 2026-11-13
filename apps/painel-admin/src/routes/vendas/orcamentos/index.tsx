@@ -20,6 +20,7 @@ import { useEmpresasMap } from "@/lib/use-empresas";
 import { useResourceList } from "@/lib/use-resource-list";
 import { useAuth } from "@/store/auth-store";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/vendas/orcamentos/")({
   component: OrcamentosIndexPage,
@@ -402,16 +403,11 @@ function OrcamentosIndexPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <select
-            aria-label="Ordenar"
-            value={ordenacao}
-            onChange={(e) => setOrdenacao(e.target.value as typeof ordenacao)}
-            className="rounded-2xl border border-border bg-card px-3 py-1.5 text-xs text-foreground outline-none"
-          >
-            <option value="recentes">Ordenar: Mais recentes</option>
-            <option value="maior_valor">Ordenar: Maior valor</option>
-            <option value="validade">Ordenar: Validade</option>
-          </select>
+          <TextField size="small" select aria-label="Ordenar" value={ordenacao} onChange={(e) => setOrdenacao(e.target.value as typeof ordenacao)}>
+            <MenuItem value="recentes">Ordenar: Mais recentes</MenuItem>
+            <MenuItem value="maior_valor">Ordenar: Maior valor</MenuItem>
+            <MenuItem value="validade">Ordenar: Validade</MenuItem>
+          </TextField>
 
           <button
             type="button"
@@ -587,43 +583,43 @@ function OrcamentosIndexPage() {
         onSubmit={criarOrcamento}
       >
         <FormField label="Empresa (Cliente) *">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             required
             value={fNovo.empresa_id}
             onChange={(e) => void aoEscolherEmpresaNovo(e.target.value)}>
-            <option value="">Selecione…</option>
+            <MenuItem value="">Selecione…</MenuItem>
             {[...empresas.values()].map((emp) => (
-              <option key={emp.id} value={emp.id}>
+              <MenuItem key={emp.id} value={String(emp.id)}>
                 {emp.nome_fantasia || emp.razao_social}
-              </option>
+              </MenuItem>
             ))}
           </TextField>
         </FormField>
 
         <FormField label="Contato (necessário p/ converter em pedido)">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             value={fNovo.contato_id}
             onChange={(e) => setFNovo({ ...fNovo, contato_id: e.target.value })}
             disabled={!fNovo.empresa_id}>
-            <option value="">—</option>
+            <MenuItem value="">—</MenuItem>
             {contatosDaEmpresaNovo.map((c) => (
-              <option key={c.id} value={c.id}>
+              <MenuItem key={c.id} value={String(c.id)}>
                 {c.nome}
-              </option>
+              </MenuItem>
             ))}
           </TextField>
         </FormField>
 
         <FormField label="Oportunidade vinculada">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             value={fNovo.oportunidade_id}
             onChange={(e) => setFNovo({ ...fNovo, oportunidade_id: e.target.value })}
             disabled={!fNovo.empresa_id}>
-            <option value="">— Opcional —</option>
+            <MenuItem value="">— Opcional —</MenuItem>
             {opsDaEmpresaNovo.map((op) => (
-              <option key={op.id} value={op.id}>
+              <MenuItem key={op.id} value={String(op.id)}>
                 {op.titulo}
-              </option>
+              </MenuItem>
             ))}
           </TextField>
         </FormField>
@@ -674,16 +670,16 @@ function OrcamentosIndexPage() {
                 key={idx}
                 className="grid grid-cols-1 gap-2 rounded-2xl border border-border/70 bg-secondary/20 p-2.5 sm:grid-cols-[1fr_76px_96px_auto]"
               >
-                <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                <TextField size="small" fullWidth select
                   aria-label="Produto"
                   required
                   value={item.produto_id}
                   onChange={(e) => escolherProdutoNovo(idx, e.target.value)}>
-                  <option value="">Selecione um produto…</option>
+                  <MenuItem value="">Selecione um produto…</MenuItem>
                   {produtos.map((p) => (
-                    <option key={p.id} value={p.id}>
+                    <MenuItem key={p.id} value={String(p.id)}>
                       {p.sku} · {p.nome} ({brl(p.preco_venda)})
-                    </option>
+                    </MenuItem>
                   ))}
                 </TextField>
                 <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: "0.001" } }}

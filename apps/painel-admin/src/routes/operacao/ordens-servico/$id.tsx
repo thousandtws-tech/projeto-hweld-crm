@@ -10,6 +10,7 @@ import { catalogoService, crmService, osService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/operacao/ordens-servico/$id")({
   beforeLoad: exigePerfil("admin", "tecnico"),
@@ -214,15 +215,15 @@ function OsDetalhePage() {
                 <form onSubmit={consumir} className="grid gap-3">
                   <label className="text-xs font-medium text-muted-foreground">
                     Produto
-                    <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                    <TextField size="small" fullWidth select
                       required
                       value={fMat.produto_id}
                       onChange={(e) => setFMat({ ...fMat, produto_id: e.target.value })}>
-                      <option value="">—</option>
+                      <MenuItem value="">—</MenuItem>
                       {produtos.map((p) => (
-                        <option key={p.id} value={p.id}>
+                        <MenuItem key={p.id} value={String(p.id)}>
                           {p.sku} · {p.nome}
-                        </option>
+                        </MenuItem>
                       ))}
                     </TextField>
                   </label>

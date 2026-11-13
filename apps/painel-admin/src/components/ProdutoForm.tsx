@@ -9,6 +9,7 @@ import { processarEEnviarImagem } from "@/lib/midia";
 import type { Categoria, Produto, ProdutoImagem } from "@/lib/models";
 import { catalogoService, estoqueService } from "@/lib/services";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 const vazio = {
   sku: "",
@@ -666,15 +667,15 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                   <TextField size="small" fullWidth required value={f.nome} onChange={set("nome")} />
                 </FormField>
                 <FormField label="Categoria *">
-                  <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                  <TextField size="small" fullWidth select
                     required
                     value={f.categoria_id}
                     onChange={set("categoria_id")}>
-                    <option value="">Selecione…</option>
+                    <MenuItem value="">Selecione…</MenuItem>
                     {categorias.map((c) => (
-                      <option key={c.id} value={c.id}>
+                      <MenuItem key={c.id} value={String(c.id)}>
                         {c.nome}
-                      </option>
+                      </MenuItem>
                     ))}
                   </TextField>
                 </FormField>
@@ -687,7 +688,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                       onChange={set("marca")} />
                     <datalist id="lista-marcas-cms">
                       {marcasCms.map((nomeMarca) => (
-                        <option key={nomeMarca} value={nomeMarca} />
+                        <MenuItem key={nomeMarca} value={String(nomeMarca)} />
                       ))}
                     </datalist>
                   </>
@@ -779,13 +780,13 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                     onChange={set("ncm")} />
                 </FormField>
                 <FormField label="Origem mercadoria">
-                  <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                  <TextField size="small" fullWidth select
                     value={f.origem_mercadoria}
                     onChange={set("origem_mercadoria")}>
-                    <option value="">0 — Nacional</option>
-                    <option value="0">0 — Nacional</option>
-                    <option value="1">1 — Importada</option>
-                    <option value="2">2 — Estrangeira (mercado interno)</option>
+                    <MenuItem value="">0 — Nacional</MenuItem>
+                    <MenuItem value="0">0 — Nacional</MenuItem>
+                    <MenuItem value="1">1 — Importada</MenuItem>
+                    <MenuItem value="2">2 — Estrangeira (mercado interno)</MenuItem>
                   </TextField>
                 </FormField>
                 <FormField label="Peso (kg)">

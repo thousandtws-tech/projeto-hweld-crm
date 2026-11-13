@@ -9,14 +9,14 @@ import { brl, fmtDataHora, statusLabel } from "@/lib/format";
 import type { Contato, Empresa, Oportunidade, TabelaPreco } from "@/lib/models";
 import { catalogoService, crmService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/crm/empresas/$id")({
   component: Empresa360Page,
 });
 
 type Linha = Record<string, unknown>;
-
-const inputClass = fieldClass;
 
 /** Empresa 360 — dados, contatos (+portal), endereços, oportunidades, timeline. */
 function Empresa360Page() {
@@ -259,53 +259,32 @@ function EditarEmpresaButton({
         onSubmit={salvar}
       >
         <FormField label="Razão social" wide>
-          <input
-            className={inputClass}
-            required
-            value={f.razao_social}
-            onChange={(e) => setF({ ...f, razao_social: e.target.value })}
-          />
+          <TextField size="small" fullWidth required value={f.razao_social} onChange={(e) => setF({ ...f, razao_social: e.target.value })} />
         </FormField>
         <FormField label="Nome fantasia">
-          <input
-            className={inputClass}
-            value={f.nome_fantasia}
-            onChange={(e) => setF({ ...f, nome_fantasia: e.target.value })}
-          />
+          <TextField size="small" fullWidth value={f.nome_fantasia} onChange={(e) => setF({ ...f, nome_fantasia: e.target.value })} />
         </FormField>
         <FormField label="CNPJ">
-          <input
-            className={inputClass}
-            value={f.cnpj}
-            onChange={(e) => setF({ ...f, cnpj: e.target.value })}
-          />
+          <TextField size="small" fullWidth value={f.cnpj} onChange={(e) => setF({ ...f, cnpj: e.target.value })} />
         </FormField>
         <FormField label="Status">
-          <select
-            className={inputClass}
-            value={f.status}
-            onChange={(e) => setF({ ...f, status: e.target.value })}
-          >
-            <option value="prospecto">Prospecto</option>
-            <option value="ativo">Ativo</option>
-            <option value="inativo">Inativo</option>
-          </select>
+          <TextField size="small" fullWidth select value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}>
+            <MenuItem value="prospecto">Prospecto</MenuItem>
+            <MenuItem value="ativo">Ativo</MenuItem>
+            <MenuItem value="inativo">Inativo</MenuItem>
+          </TextField>
         </FormField>
         <FormField label="Tabela de preço">
-          <select
-            className={inputClass}
-            value={f.tabela_preco_id ?? ""}
-            onChange={(e) =>
+          <TextField size="small" fullWidth select value={f.tabela_preco_id ?? ""} onChange={(e) =>
               setF({ ...f, tabela_preco_id: e.target.value ? Number(e.target.value) : null })
-            }
-          >
-            <option value="">Padrão</option>
+            }>
+            <MenuItem value="">Padrão</MenuItem>
             {tabelas.map((t) => (
-              <option key={t.id} value={t.id}>
+              <MenuItem key={t.id} value={String(t.id)}>
                 {t.nome}
-              </option>
+              </MenuItem>
             ))}
-          </select>
+          </TextField>
         </FormField>
       </FormDialog>
     </>
@@ -430,34 +409,16 @@ function ContatosTab({
         onSubmit={criar}
       >
         <FormField label="Nome">
-          <input
-            className={inputClass}
-            required
-            value={f.nome}
-            onChange={(e) => setF({ ...f, nome: e.target.value })}
-          />
+          <TextField size="small" fullWidth required value={f.nome} onChange={(e) => setF({ ...f, nome: e.target.value })} />
         </FormField>
         <FormField label="Cargo">
-          <input
-            className={inputClass}
-            value={f.cargo}
-            onChange={(e) => setF({ ...f, cargo: e.target.value })}
-          />
+          <TextField size="small" fullWidth value={f.cargo} onChange={(e) => setF({ ...f, cargo: e.target.value })} />
         </FormField>
         <FormField label="E-mail">
-          <input
-            className={inputClass}
-            type="email"
-            value={f.email}
-            onChange={(e) => setF({ ...f, email: e.target.value })}
-          />
+          <TextField size="small" fullWidth type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
         </FormField>
         <FormField label="Telefone">
-          <input
-            className={inputClass}
-            value={f.telefone}
-            onChange={(e) => setF({ ...f, telefone: e.target.value })}
-          />
+          <TextField size="small" fullWidth value={f.telefone} onChange={(e) => setF({ ...f, telefone: e.target.value })} />
         </FormField>
         <FormField label="" wide>
           <label className="mt-1 flex items-center gap-2 text-sm text-foreground">
@@ -480,15 +441,7 @@ function ContatosTab({
         onSubmit={ativarPortal}
       >
         <FormField label="Senha inicial" wide>
-          <input
-            className={inputClass}
-            type="password"
-            required
-            minLength={6}
-            autoComplete="new-password"
-            value={senhaPortal}
-            onChange={(e) => setSenhaPortal(e.target.value)}
-          />
+          <TextField size="small" fullWidth type="password" required autoComplete="new-password" value={senhaPortal} onChange={(e) => setSenhaPortal(e.target.value)} slotProps={{ htmlInput: { minLength: 6 } }} />
         </FormField>
       </FormDialog>
     </SectionCard>
@@ -569,61 +522,29 @@ function EnderecosTab({
         onSubmit={salvar}
       >
         <FormField label="Tipo">
-          <select
-            className={inputClass}
-            value={f.tipo}
-            onChange={(e) => setF({ ...f, tipo: e.target.value })}
-          >
-            <option value="fiscal">Fiscal</option>
-            <option value="entrega">Entrega</option>
-            <option value="correspondencia">Correspondência</option>
-          </select>
+          <TextField size="small" fullWidth select value={f.tipo} onChange={(e) => setF({ ...f, tipo: e.target.value })}>
+            <MenuItem value="fiscal">Fiscal</MenuItem>
+            <MenuItem value="entrega">Entrega</MenuItem>
+            <MenuItem value="correspondencia">Correspondência</MenuItem>
+          </TextField>
         </FormField>
         <FormField label="Logradouro" wide>
-          <input
-            className={inputClass}
-            value={f.logradouro}
-            onChange={(e) => setF({ ...f, logradouro: e.target.value })}
-          />
+          <TextField size="small" fullWidth value={f.logradouro} onChange={(e) => setF({ ...f, logradouro: e.target.value })} />
         </FormField>
         <FormField label="Número">
-          <input
-            className={inputClass}
-            value={f.numero}
-            onChange={(e) => setF({ ...f, numero: e.target.value })}
-          />
+          <TextField size="small" fullWidth value={f.numero} onChange={(e) => setF({ ...f, numero: e.target.value })} />
         </FormField>
         <FormField label="Bairro">
-          <input
-            className={inputClass}
-            value={f.bairro}
-            onChange={(e) => setF({ ...f, bairro: e.target.value })}
-          />
+          <TextField size="small" fullWidth value={f.bairro} onChange={(e) => setF({ ...f, bairro: e.target.value })} />
         </FormField>
         <FormField label="CEP">
-          <input
-            className={inputClass}
-            required
-            value={f.cep}
-            onChange={(e) => setF({ ...f, cep: e.target.value })}
-          />
+          <TextField size="small" fullWidth required value={f.cep} onChange={(e) => setF({ ...f, cep: e.target.value })} />
         </FormField>
         <FormField label="Cidade">
-          <input
-            className={inputClass}
-            required
-            value={f.cidade}
-            onChange={(e) => setF({ ...f, cidade: e.target.value })}
-          />
+          <TextField size="small" fullWidth required value={f.cidade} onChange={(e) => setF({ ...f, cidade: e.target.value })} />
         </FormField>
         <FormField label="UF">
-          <input
-            className={inputClass}
-            required
-            maxLength={2}
-            value={f.uf}
-            onChange={(e) => setF({ ...f, uf: e.target.value })}
-          />
+          <TextField size="small" fullWidth required value={f.uf} onChange={(e) => setF({ ...f, uf: e.target.value })} slotProps={{ htmlInput: { maxLength: 2 } }} />
         </FormField>
         <FormField label="" wide>
           <label className="mt-1 flex items-center gap-2 text-sm text-foreground">
@@ -703,34 +624,21 @@ function TimelineTab({
         onSubmit={salvar}
       >
         <FormField label="Tipo">
-          <select
-            className={inputClass}
-            value={f.tipo}
-            onChange={(e) => setF({ ...f, tipo: e.target.value })}
-          >
-            <option value="ligacao">Ligação</option>
-            <option value="email">E-mail</option>
-            <option value="whatsapp">WhatsApp</option>
-            <option value="reuniao">Reunião</option>
-            <option value="visita">Visita</option>
-            <option value="nota_interna">Nota interna</option>
-            <option value="outro">Outro</option>
-          </select>
+          <TextField size="small" fullWidth select value={f.tipo} onChange={(e) => setF({ ...f, tipo: e.target.value })}>
+            <MenuItem value="ligacao">Ligação</MenuItem>
+            <MenuItem value="email">E-mail</MenuItem>
+            <MenuItem value="whatsapp">WhatsApp</MenuItem>
+            <MenuItem value="reuniao">Reunião</MenuItem>
+            <MenuItem value="visita">Visita</MenuItem>
+            <MenuItem value="nota_interna">Nota interna</MenuItem>
+            <MenuItem value="outro">Outro</MenuItem>
+          </TextField>
         </FormField>
         <FormField label="Assunto">
-          <input
-            className={inputClass}
-            value={f.assunto}
-            onChange={(e) => setF({ ...f, assunto: e.target.value })}
-          />
+          <TextField size="small" fullWidth value={f.assunto} onChange={(e) => setF({ ...f, assunto: e.target.value })} />
         </FormField>
         <FormField label="Descrição" wide>
-          <textarea
-            className={inputClass}
-            rows={3}
-            value={f.descricao}
-            onChange={(e) => setF({ ...f, descricao: e.target.value })}
-          />
+          <TextField size="small" fullWidth multiline minRows={3} rows={3} value={f.descricao} onChange={(e) => setF({ ...f, descricao: e.target.value })} />
         </FormField>
       </FormDialog>
     </SectionCard>

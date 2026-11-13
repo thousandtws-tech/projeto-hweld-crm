@@ -14,6 +14,7 @@ import { financeiroService } from "@/lib/services";
 import { useEmpresasNomes } from "@/lib/use-empresas";
 import { useResourceList } from "@/lib/use-resource-list";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/financeiro/pagamentos")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -413,15 +414,15 @@ function PagamentosPage() {
       >
         <FormField label="Pedido *" wide>
           {pedidosSemParcelas.length > 0 ? (
-            <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+            <TextField size="small" fullWidth select
               required
               value={fParc.pedido_id}
               onChange={(e) => setFParc({ ...fParc, pedido_id: e.target.value })}>
-              <option value="">Selecione um pedido…</option>
+              <MenuItem value="">Selecione um pedido…</MenuItem>
               {pedidosSemParcelas.map((ped) => (
-                <option key={ped.id} value={ped.id}>
+                <MenuItem key={ped.id} value={String(ped.id)}>
                   #{ped.id} · {pedidoLabel(ped.id)} — {brl(ped.total)}
-                </option>
+                </MenuItem>
               ))}
             </TextField>
           ) : (
@@ -435,7 +436,7 @@ function PagamentosPage() {
         </FormField>
 
         <FormField label="Forma de pagamento">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             value={fParc.forma_pagamento_id}
             onChange={(e) => {
               const novaForma = FORMAS_PAGAMENTO.find((f) => f.id === Number(e.target.value));
@@ -446,9 +447,9 @@ function PagamentosPage() {
               });
             }}>
             {FORMAS_PAGAMENTO.map((f) => (
-              <option key={f.id} value={f.id}>
+              <MenuItem key={f.id} value={String(f.id)}>
                 {f.nome} {f.permiteParcelamento ? `(até ${f.maxParcelas}x)` : "(à vista)"}
-              </option>
+              </MenuItem>
             ))}
           </TextField>
         </FormField>
@@ -505,14 +506,14 @@ function PagamentosPage() {
         onSubmit={baixar}
       >
         <FormField label="Forma de pagamento recebida *" wide>
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             required
             value={fBaixa.forma_pagamento_id}
             onChange={(e) => setFBaixa({ ...fBaixa, forma_pagamento_id: e.target.value })}>
             {FORMAS_PAGAMENTO.map((f) => (
-              <option key={f.id} value={f.id}>
+              <MenuItem key={f.id} value={String(f.id)}>
                 {f.nome}
-              </option>
+              </MenuItem>
             ))}
           </TextField>
         </FormField>

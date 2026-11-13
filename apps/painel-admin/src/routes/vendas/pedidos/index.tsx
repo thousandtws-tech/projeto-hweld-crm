@@ -10,6 +10,8 @@ import { pedidosService } from "@/lib/services";
 import { useEmpresasNomes } from "@/lib/use-empresas";
 import { useResourceList } from "@/lib/use-resource-list";
 import { useAuth } from "@/store/auth-store";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/vendas/pedidos/")({
   component: PedidosIndexPage,
@@ -155,17 +157,12 @@ function PedidosIndexPage() {
           </div>
         </div>
 
-        <select
-          aria-label="Origem"
-          value={filtroOrigem}
-          onChange={(e) => setOrigem(e.target.value)}
-          className="rounded-2xl border border-border bg-card px-3 py-1.5 text-xs text-foreground outline-none"
-        >
-          <option value="">Origem: todas</option>
-          <option value="ecommerce">E-commerce B2B</option>
-          <option value="orcamento">Orçamento</option>
-          <option value="manual">Manual</option>
-        </select>
+        <TextField size="small" select aria-label="Origem" value={filtroOrigem} onChange={(e) => setOrigem(e.target.value)}>
+          <MenuItem value="">Origem: todas</MenuItem>
+          <MenuItem value="ecommerce">E-commerce B2B</MenuItem>
+          <MenuItem value="orcamento">Orçamento</MenuItem>
+          <MenuItem value="manual">Manual</MenuItem>
+        </TextField>
       </div>
 
       {l.erro && (

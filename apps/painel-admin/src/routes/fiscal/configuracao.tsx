@@ -18,6 +18,7 @@ import type { ConfigFiscal } from "@/lib/models";
 import { fiscalService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/fiscal/configuracao")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -196,7 +197,7 @@ function ConfigFiscalPage() {
           <form onSubmit={salvar} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Ambiente SEFAZ *">
-                <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                <TextField size="small" fullWidth select
                   value={form.ambiente}
                   onChange={(e) =>
                     setForm((f) => ({
@@ -204,8 +205,8 @@ function ConfigFiscalPage() {
                       ambiente: e.target.value as ConfigFiscal["ambiente"],
                     }))
                   }>
-                  <option value="homologacao">Homologação (testes)</option>
-                  <option value="producao">Produção (validade jurídica)</option>
+                  <MenuItem value="homologacao">Homologação (testes)</MenuItem>
+                  <MenuItem value="producao">Produção (validade jurídica)</MenuItem>
                 </TextField>
               </FormField>
               <FormField label="Série da NF-e">
@@ -216,13 +217,13 @@ function ConfigFiscalPage() {
                   onChange={(e) => setForm((f) => ({ ...f, serie_nf: e.target.value }))} />
               </FormField>
               <FormField label="Regime tributário (CRT) *">
-                <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                <TextField size="small" fullWidth select
                   value={form.regime_tributario}
                   onChange={(e) => setForm((f) => ({ ...f, regime_tributario: e.target.value }))}>
-                  <option value="">Selecione…</option>
-                  <option value="1">1 — Simples Nacional</option>
-                  <option value="2">2 — Simples, excesso de sublimite</option>
-                  <option value="3">3 — Regime Normal</option>
+                  <MenuItem value="">Selecione…</MenuItem>
+                  <MenuItem value="1">1 — Simples Nacional</MenuItem>
+                  <MenuItem value="2">2 — Simples, excesso de sublimite</MenuItem>
+                  <MenuItem value="3">3 — Regime Normal</MenuItem>
                 </TextField>
               </FormField>
               <FormField label="CSC — ID">

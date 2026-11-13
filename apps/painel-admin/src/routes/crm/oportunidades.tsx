@@ -55,6 +55,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/crm/oportunidades")({
   component: OportunidadesPage,
@@ -728,16 +729,16 @@ function OportunidadesPage() {
             aria-label="Origem"
             value={filtroOrigem}
             onChange={(e) => setFiltroOrigem(e.target.value)}
-            slotProps={{ select: { native: true } }}
+           
             sx={{ minWidth: 150 }}
           >
-            <option value="">Origem: todas</option>
-            <option value="site">Site</option>
-            <option value="telefone">Telefone</option>
-            <option value="indicacao">Indicação</option>
-            <option value="prospeccao">Prospecção</option>
-            <option value="ecommerce">E-commerce</option>
-            <option value="outro">Outro</option>
+            <MenuItem value="">Origem: todas</MenuItem>
+            <MenuItem value="site">Site</MenuItem>
+            <MenuItem value="telefone">Telefone</MenuItem>
+            <MenuItem value="indicacao">Indicação</MenuItem>
+            <MenuItem value="prospeccao">Prospecção</MenuItem>
+            <MenuItem value="ecommerce">E-commerce</MenuItem>
+            <MenuItem value="outro">Outro</MenuItem>
           </TextField>
 
           <TextField
@@ -746,13 +747,13 @@ function OportunidadesPage() {
             aria-label="Prazo"
             value={filtroPrazo}
             onChange={(e) => setFiltroPrazo(e.target.value as FiltroPrazo)}
-            slotProps={{ select: { native: true } }}
+           
             sx={{ minWidth: 160 }}
           >
-            <option value="todos">Prazo: todos</option>
-            <option value="atrasadas">Atrasadas ({metricas.emAtencao})</option>
-            <option value="semana">Próximos 7 dias</option>
-            <option value="estagnadas">Estagnadas</option>
+            <MenuItem value="todos">Prazo: todos</MenuItem>
+            <MenuItem value="atrasadas">Atrasadas ({metricas.emAtencao})</MenuItem>
+            <MenuItem value="semana">Próximos 7 dias</MenuItem>
+            <MenuItem value="estagnadas">Estagnadas</MenuItem>
           </TextField>
         </Stack>
 
@@ -766,13 +767,13 @@ function OportunidadesPage() {
               setOrdenacao(e.target.value as OrdenacaoFunil);
               setOrdemIntraColuna({});
             }}
-            slotProps={{ select: { native: true } }}
+           
             sx={{ minWidth: 170 }}
           >
-            <option value="relevancia">Ordenar: Prioridade</option>
-            <option value="maior_valor">Ordenar: Maior valor</option>
-            <option value="fechamento">Ordenar: Fechamento</option>
-            <option value="recentes">Ordenar: Recentes</option>
+            <MenuItem value="relevancia">Ordenar: Prioridade</MenuItem>
+            <MenuItem value="maior_valor">Ordenar: Maior valor</MenuItem>
+            <MenuItem value="fechamento">Ordenar: Fechamento</MenuItem>
+            <MenuItem value="recentes">Ordenar: Recentes</MenuItem>
           </TextField>
 
           <Button
@@ -997,28 +998,28 @@ function OportunidadesPage() {
             onChange={(e) => setFNovo({ ...fNovo, titulo: e.target.value })} />
         </FormField>
         <FormField label="Empresa">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             required
             value={fNovo.empresa_id}
             onChange={(e) => setFNovo({ ...fNovo, empresa_id: e.target.value, contato_id: "" })}>
-            <option value="">—</option>
+            <MenuItem value="">—</MenuItem>
             {[...empresas.values()].map((emp) => (
-              <option key={emp.id} value={emp.id}>
+              <MenuItem key={emp.id} value={String(emp.id)}>
                 {emp.nome_fantasia || emp.razao_social}
-              </option>
+              </MenuItem>
             ))}
           </TextField>
         </FormField>
         <FormField label="Contato">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             value={fNovo.contato_id}
             onChange={(e) => setFNovo({ ...fNovo, contato_id: e.target.value })}
             disabled={!fNovo.empresa_id}>
-            <option value="">—</option>
+            <MenuItem value="">—</MenuItem>
             {contatosDaEmpresaNovo.map((c) => (
-              <option key={c.id} value={c.id}>
+              <MenuItem key={c.id} value={String(c.id)}>
                 {c.nome}
-              </option>
+              </MenuItem>
             ))}
           </TextField>
         </FormField>
@@ -1037,26 +1038,26 @@ function OportunidadesPage() {
             onChange={(e) => setFNovo({ ...fNovo, data_prevista_fechamento: e.target.value })} />
         </FormField>
         <FormField label="Origem">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             value={fNovo.origem}
             onChange={(e) => setFNovo({ ...fNovo, origem: e.target.value })}>
-            <option value="">—</option>
-            <option value="site">Site</option>
-            <option value="telefone">Telefone</option>
-            <option value="indicacao">Indicação</option>
-            <option value="prospeccao">Prospecção</option>
-            <option value="ecommerce">E-commerce</option>
-            <option value="outro">Outro</option>
+            <MenuItem value="">—</MenuItem>
+            <MenuItem value="site">Site</MenuItem>
+            <MenuItem value="telefone">Telefone</MenuItem>
+            <MenuItem value="indicacao">Indicação</MenuItem>
+            <MenuItem value="prospeccao">Prospecção</MenuItem>
+            <MenuItem value="ecommerce">E-commerce</MenuItem>
+            <MenuItem value="outro">Outro</MenuItem>
           </TextField>
         </FormField>
         <FormField label="Estágio">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             value={estagioInicialNovo}
             onChange={(e) => setEstagioInicialNovo(e.target.value as EstagioOportunidade)}>
             {ESTAGIOS.filter((e) => e !== "perdida").map((est) => (
-              <option key={est} value={est}>
+              <MenuItem key={est} value={String(est)}>
                 {statusLabel(est)}
-              </option>
+              </MenuItem>
             ))}
           </TextField>
         </FormField>
@@ -1569,30 +1570,30 @@ function OportunidadeSheet({
                 </FormField>
 
                 <FormField label="Empresa">
-                  <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                  <TextField size="small" fullWidth select
                     disabled={!podeEditar}
                     value={fEdit.empresa_id}
                     onChange={(e) =>
                       setFEdit({ ...fEdit, empresa_id: e.target.value, contato_id: "" })
                     }>
                     {[...empresas.values()].map((emp) => (
-                      <option key={emp.id} value={emp.id}>
+                      <MenuItem key={emp.id} value={String(emp.id)}>
                         {emp.nome_fantasia || emp.razao_social}
-                      </option>
+                      </MenuItem>
                     ))}
                   </TextField>
                 </FormField>
 
                 <FormField label="Contato">
-                  <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                  <TextField size="small" fullWidth select
                     disabled={!podeEditar}
                     value={fEdit.contato_id}
                     onChange={(e) => setFEdit({ ...fEdit, contato_id: e.target.value })}>
-                    <option value="">—</option>
+                    <MenuItem value="">—</MenuItem>
                     {contatosEmpresa.map((c) => (
-                      <option key={c.id} value={c.id}>
+                      <MenuItem key={c.id} value={String(c.id)}>
                         {c.nome}
-                      </option>
+                      </MenuItem>
                     ))}
                   </TextField>
                 </FormField>
@@ -1618,17 +1619,17 @@ function OportunidadeSheet({
                 </FormField>
 
                 <FormField label="Origem" wide>
-                  <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                  <TextField size="small" fullWidth select
                     disabled={!podeEditar}
                     value={fEdit.origem}
                     onChange={(e) => setFEdit({ ...fEdit, origem: e.target.value })}>
-                    <option value="">—</option>
-                    <option value="site">Site</option>
-                    <option value="telefone">Telefone</option>
-                    <option value="indicacao">Indicação</option>
-                    <option value="prospeccao">Prospecção</option>
-                    <option value="ecommerce">E-commerce</option>
-                    <option value="outro">Outro</option>
+                    <MenuItem value="">—</MenuItem>
+                    <MenuItem value="site">Site</MenuItem>
+                    <MenuItem value="telefone">Telefone</MenuItem>
+                    <MenuItem value="indicacao">Indicação</MenuItem>
+                    <MenuItem value="prospeccao">Prospecção</MenuItem>
+                    <MenuItem value="ecommerce">E-commerce</MenuItem>
+                    <MenuItem value="outro">Outro</MenuItem>
                   </TextField>
                 </FormField>
 
@@ -1661,16 +1662,16 @@ function OportunidadeSheet({
                   className="grid gap-3 rounded-2xl border border-border p-4 sm:grid-cols-2"
                 >
                   <FormField label="Tipo">
-                    <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                    <TextField size="small" fullWidth select
                       value={fInteracao.tipo}
                       onChange={(e) => setFInteracao({ ...fInteracao, tipo: e.target.value })}>
-                      <option value="ligacao">Ligação</option>
-                      <option value="whatsapp">WhatsApp</option>
-                      <option value="email">E-mail</option>
-                      <option value="reuniao">Reunião</option>
-                      <option value="visita">Visita</option>
-                      <option value="nota_interna">Nota interna</option>
-                      <option value="outro">Outro</option>
+                      <MenuItem value="ligacao">Ligação</MenuItem>
+                      <MenuItem value="whatsapp">WhatsApp</MenuItem>
+                      <MenuItem value="email">E-mail</MenuItem>
+                      <MenuItem value="reuniao">Reunião</MenuItem>
+                      <MenuItem value="visita">Visita</MenuItem>
+                      <MenuItem value="nota_interna">Nota interna</MenuItem>
+                      <MenuItem value="outro">Outro</MenuItem>
                     </TextField>
                   </FormField>
                   <FormField label="Assunto">
@@ -1764,15 +1765,15 @@ function OportunidadeSheet({
                   className="grid gap-3 rounded-2xl border border-border p-4 sm:grid-cols-2"
                 >
                   <FormField label="Produto inicial" wide>
-                    <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                    <TextField size="small" fullWidth select
                       required
                       value={fOrc.produto_id}
                       onChange={(e) => selecionarProdutoOrc(e.target.value)}>
-                      <option value="">—</option>
+                      <MenuItem value="">—</MenuItem>
                       {produtos.map((p) => (
-                        <option key={p.id} value={p.id}>
+                        <MenuItem key={p.id} value={String(p.id)}>
                           {p.sku} · {p.nome} ({brl(p.preco_venda)})
-                        </option>
+                        </MenuItem>
                       ))}
                     </TextField>
                   </FormField>

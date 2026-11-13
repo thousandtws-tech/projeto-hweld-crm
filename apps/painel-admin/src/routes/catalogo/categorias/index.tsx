@@ -11,6 +11,7 @@ import type { Categoria } from "@/lib/models";
 import { catalogoService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/catalogo/categorias/")({
   beforeLoad: exigePerfil("admin", "estoque"),
@@ -322,18 +323,18 @@ function CategoriasPage() {
         </FormField>
 
         <FormField label="Categoria pai">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             value={f.categoria_pai_id}
             onChange={(e) =>
               setF({ ...f, categoria_pai_id: e.target.value === "" ? "" : Number(e.target.value) })
             }>
-            <option value="">Raiz (departamento principal)</option>
+            <MenuItem value="">Raiz (departamento principal)</MenuItem>
             {todas
               .filter((c) => !editando || c.id !== editando.id)
               .map((c) => (
-                <option key={c.id} value={c.id}>
+                <MenuItem key={c.id} value={String(c.id)}>
                   {c.nome}
-                </option>
+                </MenuItem>
               ))}
           </TextField>
         </FormField>

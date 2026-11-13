@@ -7,6 +7,7 @@ import { FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import type { Contato, Empresa, Produto } from "@/lib/models";
 import { catalogoService, crmService, pedidosService } from "@/lib/services";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/vendas/pedidos/novo")({
   component: PedidoNovoPage,
@@ -141,28 +142,28 @@ function PedidoNovoPage() {
         <SectionCard>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <FormField label="Empresa">
-              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+              <TextField size="small" fullWidth select
                 required
                 value={f.empresa_id}
                 onChange={(e) => aoTrocarEmpresa(e.target.value)}>
-                <option value="">—</option>
+                <MenuItem value="">—</MenuItem>
                 {empresas.map((e) => (
-                  <option key={e.id} value={e.id}>
+                  <MenuItem key={e.id} value={String(e.id)}>
                     {e.nome_fantasia || e.razao_social}
-                  </option>
+                  </MenuItem>
                 ))}
               </TextField>
             </FormField>
             <FormField label="Contato">
-              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+              <TextField size="small" fullWidth select
                 required
                 value={f.contato_id}
                 onChange={(e) => setF({ ...f, contato_id: e.target.value })}>
-                <option value="">—</option>
+                <MenuItem value="">—</MenuItem>
                 {contatos.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <MenuItem key={c.id} value={String(c.id)}>
                     {c.nome}
-                  </option>
+                  </MenuItem>
                 ))}
               </TextField>
             </FormField>
@@ -173,28 +174,28 @@ function PedidoNovoPage() {
                 onChange={(e) => setF({ ...f, condicao_pagamento: e.target.value })} />
             </FormField>
             <FormField label="End. faturamento">
-              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+              <TextField size="small" fullWidth select
                 required
                 value={f.endereco_faturamento_id}
                 onChange={(e) => setF({ ...f, endereco_faturamento_id: e.target.value })}>
-                <option value="">—</option>
+                <MenuItem value="">—</MenuItem>
                 {enderecos.map((e) => (
-                  <option key={String(e["id"])} value={String(e["id"])}>
+                  <MenuItem key={String(e["id"])} value={String(e["id"])}>
                     {enderecoLabel(e)}
-                  </option>
+                  </MenuItem>
                 ))}
               </TextField>
             </FormField>
             <FormField label="End. entrega">
-              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+              <TextField size="small" fullWidth select
                 required
                 value={f.endereco_entrega_id}
                 onChange={(e) => setF({ ...f, endereco_entrega_id: e.target.value })}>
-                <option value="">—</option>
+                <MenuItem value="">—</MenuItem>
                 {enderecos.map((e) => (
-                  <option key={String(e["id"])} value={String(e["id"])}>
+                  <MenuItem key={String(e["id"])} value={String(e["id"])}>
                     {enderecoLabel(e)}
-                  </option>
+                  </MenuItem>
                 ))}
               </TextField>
             </FormField>
@@ -227,17 +228,17 @@ function PedidoNovoPage() {
                 {itens.map((item, idx) => (
                   <tr key={idx} className="border-b border-border/60 last:border-0">
                     <td className="px-4 py-2">
-                      <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                      <TextField size="small" fullWidth select
                         value={item.produto_id ?? ""}
                         onChange={(e) =>
                           escolherProduto(idx, e.target.value ? Number(e.target.value) : null)
                         }
                         aria-label="Produto">
-                        <option value="">—</option>
+                        <MenuItem value="">—</MenuItem>
                         {produtos.map((p) => (
-                          <option key={p.id} value={p.id}>
+                          <MenuItem key={p.id} value={String(p.id)}>
                             {p.sku} · {p.nome}
-                          </option>
+                          </MenuItem>
                         ))}
                       </TextField>
                     </td>

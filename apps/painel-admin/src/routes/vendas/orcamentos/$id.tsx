@@ -19,6 +19,7 @@ import { catalogoService, crmService, orcamentosService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import { useAuth } from "@/store/auth-store";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/vendas/orcamentos/$id")({
   component: OrcamentoPage,
@@ -375,7 +376,7 @@ function OrcamentoPage() {
                         <td className="px-4 py-2.5">
                           {editavel ? (
                             <div className="space-y-1.5">
-                              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                              <TextField size="small" fullWidth select
                                 value={item.produto_id || ""}
                                 onChange={(e) =>
                                   escolherProduto(
@@ -384,11 +385,11 @@ function OrcamentoPage() {
                                   )
                                 }
                                 aria-label="Produto">
-                                <option value="">Selecione um produto…</option>
+                                <MenuItem value="">Selecione um produto…</MenuItem>
                                 {produtos.map((p) => (
-                                  <option key={p.id} value={p.id}>
+                                  <MenuItem key={p.id} value={String(p.id)}>
                                     {p.sku} · {p.nome}
-                                  </option>
+                                  </MenuItem>
                                 ))}
                               </TextField>
                               <TextField size="small" fullWidth

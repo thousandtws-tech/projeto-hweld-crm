@@ -19,6 +19,7 @@ import type {
 import { crmService, fiscalDocService, fiscalService, pedidosService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/fiscal/notas")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -622,16 +623,16 @@ function FiscalPage() {
       >
         <FormField label="Pedido *" wide>
           {pedidosElegiveis.length > 0 ? (
-            <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+            <TextField size="small" fullWidth select
               required
               value={pedidoId}
               onChange={(e) => setPedidoId(e.target.value)}>
-              <option value="">Selecione um pedido…</option>
+              <MenuItem value="">Selecione um pedido…</MenuItem>
               {pedidosElegiveis.map((p) => (
-                <option key={p.id} value={p.id}>
+                <MenuItem key={p.id} value={String(p.id)}>
                   #{p.id} · {p.numero} — {empresas.get(p.empresa_id) ?? `Empresa #${p.empresa_id}`}{" "}
                   ({brl(p.total)})
-                </option>
+                </MenuItem>
               ))}
             </TextField>
           ) : (

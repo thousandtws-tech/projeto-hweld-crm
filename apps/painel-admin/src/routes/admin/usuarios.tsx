@@ -9,6 +9,7 @@ import { usuariosService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
 import { useResourceList } from "@/lib/use-resource-list";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/admin/usuarios")({
   beforeLoad: exigePerfil("admin"),
@@ -202,14 +203,14 @@ function UsuariosPage() {
           </FormField>
         )}
         <FormField label="Perfil">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             value={f.perfil}
             onChange={(e) => setF({ ...f, perfil: e.target.value })}>
-            <option value="admin">Admin</option>
-            <option value="vendedor">Vendedor</option>
-            <option value="financeiro">Financeiro</option>
-            <option value="estoque">Estoque</option>
-            <option value="tecnico">Técnico</option>
+            <MenuItem value="admin">Admin</MenuItem>
+            <MenuItem value="vendedor">Vendedor</MenuItem>
+            <MenuItem value="financeiro">Financeiro</MenuItem>
+            <MenuItem value="estoque">Estoque</MenuItem>
+            <MenuItem value="tecnico">Técnico</MenuItem>
           </TextField>
         </FormField>
       </FormDialog>

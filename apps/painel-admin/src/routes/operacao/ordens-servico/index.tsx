@@ -13,6 +13,7 @@ import { useEmpresasMap } from "@/lib/use-empresas";
 import { useResourceList } from "@/lib/use-resource-list";
 import { useAuth } from "@/store/auth-store";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/operacao/ordens-servico/")({
   beforeLoad: exigePerfil("admin", "tecnico"),
@@ -237,18 +238,13 @@ function OrdensServicoIndexPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <select
-            aria-label="Prioridade"
-            value={filtroPrioridade}
-            onChange={(e) => setFiltroPrioridade(e.target.value)}
-            className="rounded-2xl border border-border bg-card px-3 py-1.5 text-xs text-foreground outline-none"
-          >
-            <option value="">Prioridade: todas</option>
-            <option value="urgente">Urgente</option>
-            <option value="alta">Alta</option>
-            <option value="normal">Normal</option>
-            <option value="baixa">Baixa</option>
-          </select>
+          <TextField size="small" select aria-label="Prioridade" value={filtroPrioridade} onChange={(e) => setFiltroPrioridade(e.target.value)}>
+            <MenuItem value="">Prioridade: todas</MenuItem>
+            <MenuItem value="urgente">Urgente</MenuItem>
+            <MenuItem value="alta">Alta</MenuItem>
+            <MenuItem value="normal">Normal</MenuItem>
+            <MenuItem value="baixa">Baixa</MenuItem>
+          </TextField>
 
           <button
             type="button"
@@ -373,57 +369,57 @@ function OrdensServicoIndexPage() {
         onSubmit={criarOs}
       >
         <FormField label="Empresa (Cliente) *">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             required
             value={fNovo.empresa_id}
             onChange={(e) =>
               setFNovo({ ...fNovo, empresa_id: e.target.value, contato_id: "", pedido_id: "" })
             }>
-            <option value="">Selecione…</option>
+            <MenuItem value="">Selecione…</MenuItem>
             {[...empresas.values()].map((emp) => (
-              <option key={emp.id} value={emp.id}>
+              <MenuItem key={emp.id} value={String(emp.id)}>
                 {emp.nome_fantasia || emp.razao_social}
-              </option>
+              </MenuItem>
             ))}
           </TextField>
         </FormField>
 
         <FormField label="Contato na empresa">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             value={fNovo.contato_id}
             onChange={(e) => setFNovo({ ...fNovo, contato_id: e.target.value })}
             disabled={!fNovo.empresa_id}>
-            <option value="">— Opcional —</option>
+            <MenuItem value="">— Opcional —</MenuItem>
             {contatosDaEmpresa.map((c) => (
-              <option key={c.id} value={c.id}>
+              <MenuItem key={c.id} value={String(c.id)}>
                 {c.nome}
-              </option>
+              </MenuItem>
             ))}
           </TextField>
         </FormField>
 
         <FormField label="Pedido vinculado">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             value={fNovo.pedido_id}
             onChange={(e) => setFNovo({ ...fNovo, pedido_id: e.target.value })}
             disabled={!fNovo.empresa_id}>
-            <option value="">— Opcional —</option>
+            <MenuItem value="">— Opcional —</MenuItem>
             {pedidosDaEmpresa.map((p) => (
-              <option key={p.id} value={p.id}>
+              <MenuItem key={p.id} value={String(p.id)}>
                 {p.numero} ({brl(p.total)})
-              </option>
+              </MenuItem>
             ))}
           </TextField>
         </FormField>
 
         <FormField label="Prioridade">
-          <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+          <TextField size="small" fullWidth select
             value={fNovo.prioridade}
             onChange={(e) => setFNovo({ ...fNovo, prioridade: e.target.value as PrioridadeOs })}>
-            <option value="baixa">Baixa</option>
-            <option value="normal">Normal</option>
-            <option value="alta">Alta</option>
-            <option value="urgente">Urgente</option>
+            <MenuItem value="baixa">Baixa</MenuItem>
+            <MenuItem value="normal">Normal</MenuItem>
+            <MenuItem value="alta">Alta</MenuItem>
+            <MenuItem value="urgente">Urgente</MenuItem>
           </TextField>
         </FormField>
 

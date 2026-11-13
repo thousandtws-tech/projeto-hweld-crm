@@ -25,6 +25,7 @@ import type { Caixa, CaixaMovimentacao } from "@/lib/models";
 import { financeiroService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/financeiro/caixa")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -363,12 +364,12 @@ function CaixaPage() {
             >
               <label className="text-xs font-medium text-muted-foreground">
                 Tipo
-                <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+                <TextField size="small" fullWidth select
                   value={fLanc.tipo}
                   onChange={(e) => setFLanc({ ...fLanc, tipo: e.target.value })}>
-                  <option value="suprimento">Suprimento (+)</option>
-                  <option value="sangria">Sangria (−)</option>
-                  <option value="despesa">Despesa (−)</option>
+                  <MenuItem value="suprimento">Suprimento (+)</MenuItem>
+                  <MenuItem value="sangria">Sangria (−)</MenuItem>
+                  <MenuItem value="despesa">Despesa (−)</MenuItem>
                 </TextField>
               </label>
               <label className="text-xs font-medium text-muted-foreground">
@@ -416,20 +417,15 @@ function CaixaPage() {
                   />
                 </div>
 
-                <select
-                  aria-label="Filtrar por tipo"
-                  value={filtroTipo}
-                  onChange={(e) => setFiltroTipo(e.target.value)}
-                  className="rounded-xl border border-border bg-card px-2.5 py-1 text-xs outline-none"
-                >
-                  <option value="">Todos os tipos</option>
-                  <option value="recebimento">Recebimento</option>
-                  <option value="venda">Venda</option>
-                  <option value="suprimento">Suprimento</option>
-                  <option value="sangria">Sangria</option>
-                  <option value="despesa">Despesa</option>
-                  <option value="estorno">Estorno</option>
-                </select>
+                <TextField size="small" select aria-label="Filtrar por tipo" value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
+                  <MenuItem value="">Todos os tipos</MenuItem>
+                  <MenuItem value="recebimento">Recebimento</MenuItem>
+                  <MenuItem value="venda">Venda</MenuItem>
+                  <MenuItem value="suprimento">Suprimento</MenuItem>
+                  <MenuItem value="sangria">Sangria</MenuItem>
+                  <MenuItem value="despesa">Despesa</MenuItem>
+                  <MenuItem value="estorno">Estorno</MenuItem>
+                </TextField>
               </div>
             </div>
 

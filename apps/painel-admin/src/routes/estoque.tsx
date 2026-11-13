@@ -13,6 +13,7 @@ import { exigePerfil } from "@/lib/guards";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import { useResourceList } from "@/lib/use-resource-list";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/estoque")({
   beforeLoad: exigePerfil("admin", "estoque"),
@@ -179,27 +180,27 @@ function EstoquePage() {
         >
           <label className="text-xs font-medium text-muted-foreground">
             Produto
-            <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+            <TextField size="small" fullWidth select
               required
               value={f.produto_id}
               onChange={(e) => setF({ ...f, produto_id: e.target.value })}>
-              <option value="">—</option>
+              <MenuItem value="">—</MenuItem>
               {produtos.map((p) => (
-                <option key={p.id} value={p.id}>
+                <MenuItem key={p.id} value={String(p.id)}>
                   {p.sku} · {p.nome}
-                </option>
+                </MenuItem>
               ))}
             </TextField>
           </label>
           <label className="text-xs font-medium text-muted-foreground">
             Tipo
-            <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+            <TextField size="small" fullWidth select
               value={f.tipo}
               onChange={(e) => setF({ ...f, tipo: e.target.value })}>
               {/* backend só aceita lançamento manual desses dois — reserva/saída
                   nascem de pedidos e ordens de serviço */}
-              <option value="entrada">Entrada</option>
-              <option value="ajuste">Ajuste</option>
+              <MenuItem value="entrada">Entrada</MenuItem>
+              <MenuItem value="ajuste">Ajuste</MenuItem>
             </TextField>
           </label>
           <label className="text-xs font-medium text-muted-foreground">

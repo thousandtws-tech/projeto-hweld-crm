@@ -15,6 +15,7 @@ import type { CardDuoCms, CardTrioCms, CmsLoja, MarcaCms, SeloCms, SlideBannerCm
 import { catalogoService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/catalogo/cms/")({
   beforeLoad: exigePerfil("admin", "estoque", "vendedor"),
@@ -318,16 +319,12 @@ function CmsLojaPage() {
 
         <div className="flex items-center gap-2 text-xs">
           <span className="font-semibold text-muted-foreground">Auto-Ajuste no Upload:</span>
-          <select
-            value={modoAjuste}
-            onChange={(e) => setModoAjuste(e.target.value as ModoAutoAjuste)}
-            className="rounded-xl border border-border bg-secondary/40 px-3 py-1.5 text-xs font-semibold text-foreground outline-none"
-          >
-            <option value="smart-banner">Smart Fit (Encaixe Total sem cortar bordas)</option>
-            <option value="cover">Smart Crop (Preencher 100% centralizado)</option>
-            <option value="contain">Contain (Manter imagem inteira + borda suave)</option>
-            <option value="proporcional">Proporção Original da Arte</option>
-          </select>
+          <TextField size="small" select value={modoAjuste} onChange={(e) => setModoAjuste(e.target.value as ModoAutoAjuste)}>
+            <MenuItem value="smart-banner">Smart Fit (Encaixe Total sem cortar bordas)</MenuItem>
+            <MenuItem value="cover">Smart Crop (Preencher 100% centralizado)</MenuItem>
+            <MenuItem value="contain">Contain (Manter imagem inteira + borda suave)</MenuItem>
+            <MenuItem value="proporcional">Proporção Original da Arte</MenuItem>
+          </TextField>
         </div>
       </div>
 

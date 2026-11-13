@@ -10,6 +10,7 @@ import { catalogoService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 
 export const Route = createFileRoute("/catalogo/tabelas-preco/$id")({
   beforeLoad: exigePerfil("admin", "vendedor"),
@@ -77,16 +78,16 @@ function TabelaPrecoPage() {
           <PageHeader title={tabela.nome} subtitle={tabela.descricao ?? undefined} />
           <SectionCard className="p-0 overflow-hidden">
             <form onSubmit={definir} className="flex flex-wrap items-end gap-2 px-5 pt-4">
-              <TextField size="small" fullWidth select slotProps={{ select: { native: true } }}
+              <TextField size="small" fullWidth select
                 required
                 value={fPreco.produto_id}
                 onChange={(e) => setFPreco({ ...fPreco, produto_id: e.target.value })}
                 aria-label="Produto">
-                <option value="">Produto…</option>
+                <MenuItem value="">Produto…</MenuItem>
                 {produtos.map((p) => (
-                  <option key={p.id} value={p.id}>
+                  <MenuItem key={p.id} value={String(p.id)}>
                     {p.sku} · {p.nome}
-                  </option>
+                  </MenuItem>
                 ))}
               </TextField>
               <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }}
