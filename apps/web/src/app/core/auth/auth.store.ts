@@ -11,7 +11,6 @@ interface ClaimsJwt {
   tipo: 'staff' | 'portal';
 }
 
-/** Decodifica o payload do JWT (base64url) — só para UX; a autorização é do backend. */
 function tipoDoToken(token: string): string | null {
   try {
     const payload = token.split('.')[1];
@@ -37,12 +36,6 @@ export interface CadastroPortalReq {
   telefone?: string | null;
 }
 
-/**
- * Sessão do portal B2B (token `portal:<contato_id>`).
- * Access token em memória + sessionStorage (persiste reload, morre com a aba).
- * Refresh opaco — o backend rotaciona a cada uso e invalida a sessão
- * se um refresh revogado for reutilizado (nesse caso: logout forçado).
- */
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
   private http = inject(HttpClient);
@@ -68,7 +61,6 @@ export class AuthStore {
     await this.carregarPerfil();
   }
 
-  /** Auto-cadastro B2B — cria empresa + contato e já entra logado. */
   async cadastrar(dados: CadastroPortalReq): Promise<void> {
     const res = await firstValueFrom(
       this.http.post<LoginPortalResp>(`${this.api}/auth/portal/cadastro`, dados),
@@ -77,10 +69,8 @@ export class AuthStore {
     await this.carregarPerfil();
   }
 
-  /** Aplica tokens + semeia o perfil com o contato retornado pelo login. */
   private aplicarSessaoPortal(res: LoginPortalResp, email: string): void {
     this.setTokens(res);
-    // O login já traz { id, nome, empresa_id } — semeia o perfil mesmo sem GET /portal/me.
     this.perfil.set({
       contato: {
         id: res.contato.id,
@@ -112,7 +102,7 @@ export class AuthStore {
     }
   }
 
-  /** Renova o access token rotacionando o refresh. Falha = sessão encerrada. */
+
   async refresh(): Promise<boolean> {
     const refreshToken = this._refreshToken();
     if (!refreshToken) return false;
@@ -136,7 +126,6 @@ export class AuthStore {
           this.http.post(`${this.api}/auth/logout`, { refresh_token: refreshToken }),
         );
       } catch {
-        /* logout local mesmo se a chamada falhar */
       }
     }
     this.limpar();

@@ -37,12 +37,14 @@ import type { Contato, Empresa, Oportunidade, Perfil, Produto } from "@/lib/mode
 import { buscaService, catalogoService, crmService } from "@/lib/services";
 import { useNotificacoes } from "@/lib/use-notificacoes";
 import { useAuth } from "@/store/auth-store";
+import Avatar from "@mui/material/Avatar";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
+import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import InputBase from "@mui/material/InputBase";
@@ -50,6 +52,9 @@ import MuiLink from "@mui/material/Link";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import ListSubheader from "@mui/material/ListSubheader";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
@@ -223,12 +228,39 @@ function Logo() {
   );
 }
 
+const navItemSx = {
+  borderRadius: 2,
+  px: 1.5,
+  py: 0.75,
+  mb: 0.25,
+  minHeight: 40,
+  color: "text.secondary",
+  "& .MuiListItemIcon-root": { minWidth: 34, color: "text.secondary" },
+  "&:hover": { bgcolor: "action.hover" },
+  "&.Mui-selected": {
+    bgcolor: "rgba(38, 72, 140, 0.08)",
+    color: "primary.main",
+    fontWeight: 600,
+    boxShadow: "inset 3px 0 0 0 #26488c",
+    "& .MuiListItemIcon-root": { color: "primary.main" },
+    "&:hover": { bgcolor: "rgba(38, 72, 140, 0.13)" },
+  },
+} as const;
+
+const subheaderSx = {
+  bgcolor: "transparent",
+  lineHeight: "26px",
+  px: 1.5,
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: "0.1em",
+  color: "text.secondary",
+  textTransform: "uppercase",
+} as const;
+
 function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   const { user, pode, signOut } = useAuth();
   const navigate = useNavigate();
-  const itemBase =
-    "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-colors";
-  const itemSx = { py: "10px", px: "12px", borderRadius: "16px" } as const;
 
   const handleSignOut = async () => {
     await signOut();
@@ -236,85 +268,92 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
     navigate({ to: "/login" });
   };
 
+  const isActive = (to: string) =>
+    to === "/dashboard"
+      ? pathname === "/dashboard" || pathname === "/"
+      : pathname.startsWith(to);
+
   return (
-    <>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Logo />
-      <Box component="nav" className="mt-4 flex flex-col gap-4">
+      <Box component="nav" sx={{ mt: 3, flex: 1 }}>
         {NAV.map((secao) => {
           const itens = secao.itens.filter((i) => !i.perfis || pode(...i.perfis));
           if (itens.length === 0) return null;
           return (
-            <div key={secao.secao}>
-              <Typography
-                variant="overline"
-                component="p"
-                className="px-3 pb-1 text-[13px] font-bold tracking-[0.12em] text-muted-foreground"
-              >
+            <Box key={secao.secao} sx={{ mb: 1.5 }}>
+              <ListSubheader disableGutters sx={subheaderSx}>
                 {secao.secao}
-              </Typography>
-              <List disablePadding className="flex flex-col gap-0.5">
+              </ListSubheader>
+              <List disablePadding>
                 {itens.map((item) => {
-                  const active =
-                    item.to === "/dashboard"
-                      ? pathname === "/dashboard" || pathname === "/"
-                      : pathname.startsWith(item.to);
                   const Icon = item.icon;
                   return (
-                    <ListItem key={item.to} disablePadding>
-                      <ListItemButton
-                        component={Link}
-                        to={item.to as "/"}
-                        onClick={onNavigate}
-                        selected={active}
-                        sx={itemSx}
-                        className={`${itemBase} ${
-                          active
-                            ? "bg-lime text-primary-foreground"
-                            : "text-foreground hover:bg-secondary"
-                        }`}
-                      >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{item.label}</span>
-                      </ListItemButton>
-                    </ListItem>
+                    <ListItemButton
+                      key={item.to}
+                      component={Link}
+                      to={item.to as "/"}
+                      onClick={onNavigate}
+                      selected={isActive(item.to)}
+                      sx={navItemSx}
+                    >
+                      <ListItemIcon>
+                        <Icon size={17} strokeWidth={2} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.label}
+                        primaryTypographyProps={{ fontSize: 13.5, fontWeight: 500, noWrap: true }}
+                      />
+                    </ListItemButton>
                   );
                 })}
               </List>
-            </div>
+            </Box>
           );
         })}
       </Box>
 
-      <List disablePadding className="mt-auto space-y-1 pt-6">
-        <ListItem disablePadding>
-          <ListItemButton
-            component={Link}
-            to="/conta"
-            onClick={onNavigate}
-            selected={pathname === "/conta"}
-            className={`${itemBase} ${pathname === "/conta" ? "bg-lime text-primary-foreground" : "text-foreground hover:bg-secondary"}`}
-            sx={itemSx}
+      <Divider sx={{ my: 1.5 }} />
+
+      <List disablePadding>
+        <ListItemButton
+          component={Link}
+          to="/conta"
+          onClick={onNavigate}
+          selected={pathname === "/conta"}
+          sx={{ ...navItemSx, mb: 0.5 }}
+        >
+          <Avatar
+            sx={{ width: 30, height: 30, mr: 1.25, fontSize: 12, fontWeight: 700, bgcolor: "primary.main" }}
           >
-            <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-secondary text-[10px] font-bold">
-              {(user?.perfil?.[0] ?? "?").toUpperCase()}
-            </div>
-            <span className="min-w-0 flex-1 truncate">
-              {user?.nome ?? `#${user?.id ?? "?"}`}
-              <span className="ml-1.5 text-xs capitalize text-muted-foreground">{user?.perfil}</span>
-            </span>
-          </ListItemButton>
-        </ListItem>
-        <ListItem disablePadding>
-          <ListItemButton
-            onClick={handleSignOut}
-            className={`${itemBase} w-full text-foreground hover:bg-secondary`}
-            sx={itemSx}
-          >
-            <LogOut className="h-4 w-4" /> Sair
-          </ListItemButton>
-        </ListItem>
+            {(user?.perfil?.[0] ?? "?").toUpperCase()}
+          </Avatar>
+          <ListItemText
+            primary={user?.nome ?? `#${user?.id ?? "?"}`}
+            secondary={user?.perfil}
+            primaryTypographyProps={{ fontSize: 13.5, fontWeight: 600, noWrap: true }}
+            secondaryTypographyProps={{ fontSize: 11, sx: { textTransform: "capitalize" } }}
+          />
+        </ListItemButton>
+        <ListItemButton
+          onClick={handleSignOut}
+          sx={{
+            ...navItemSx,
+            color: "error.main",
+            "& .MuiListItemIcon-root": { minWidth: 34, color: "error.main" },
+            "&:hover": { bgcolor: "rgba(217, 37, 70, 0.07)" },
+          }}
+        >
+          <ListItemIcon>
+            <LogOut size={17} strokeWidth={2} />
+          </ListItemIcon>
+          <ListItemText
+            primary="Sair"
+            primaryTypographyProps={{ fontSize: 13.5, fontWeight: 500 }}
+          />
+        </ListItemButton>
       </List>
-    </>
+    </Box>
   );
 }
 
