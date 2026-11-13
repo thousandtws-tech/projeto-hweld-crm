@@ -15,7 +15,7 @@ export const hweldTheme = createTheme({
     background: { default: "#f2f2f2", paper: "#ffffff" },
     text: { primary: "#272728", secondary: "#5f6368" },
   },
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: 8 },
   typography: {
     fontFamily:
       '"Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -24,7 +24,7 @@ export const hweldTheme = createTheme({
   components: {
     MuiButton: {
       styleOverrides: {
-        root: { borderRadius: 999, boxShadow: "none" },
+        root: { borderRadius: 8, boxShadow: "none" },
       },
     },
     MuiChip: {
@@ -34,7 +34,7 @@ export const hweldTheme = createTheme({
     },
     MuiOutlinedInput: {
       styleOverrides: {
-        root: { borderRadius: 12, backgroundColor: "#fff" },
+        root: { borderRadius: 8, backgroundColor: "#fff" },
       },
     },
     MuiTableCell: {

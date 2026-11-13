@@ -47,7 +47,7 @@ export function Toaster(_props?: { position?: string; richColors?: boolean }) {
           variant="filled"
           severity={atual.sev}
           onClose={() => setFila((f) => f.slice(1))}
-          sx={{ borderRadius: 2, alignItems: "center" }}
+          sx={{ borderRadius: 1, alignItems: "center" }}
         >
           {atual.msg}
           {atual.desc ? ` — ${atual.desc}` : ""}

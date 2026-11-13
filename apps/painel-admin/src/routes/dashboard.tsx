@@ -162,7 +162,7 @@ const grade = { stroke: "var(--border)", strokeDasharray: "3 3" };
 const tooltipCss = {
   backgroundColor: "var(--card)",
   border: "1px solid var(--border)",
-  borderRadius: "0.75rem",
+  borderRadius: "0.5rem",
   fontSize: "12px",
 };
 

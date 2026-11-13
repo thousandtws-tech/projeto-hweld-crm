@@ -17,7 +17,7 @@ export function SectionCard({
     <Card
       className={className}
       variant="outlined"
-      sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5, lg: 3 }, boxShadow: "var(--shadow-card)" }}
+      sx={{ borderRadius: "8px", p: { xs: 2, sm: 2.5, lg: 3 }, boxShadow: "var(--shadow-card)" }}
     >
       {children}
     </Card>
@@ -42,7 +42,7 @@ export function Metabox({
     <Card
       variant="outlined"
       className={className}
-      sx={{ borderRadius: 3, boxShadow: "var(--shadow-card)", overflow: "hidden" }}
+      sx={{ borderRadius: "8px", boxShadow: "var(--shadow-card)", overflow: "hidden" }}
     >
       <Box
         sx={{

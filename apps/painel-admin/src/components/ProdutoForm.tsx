@@ -527,7 +527,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
           {/* Dados do produto — painel com abas (padrão WooCommerce) */}
           <Card
             variant="outlined"
-            sx={{ borderRadius: 3, boxShadow: "var(--shadow-card)", overflow: "hidden" }}
+            sx={{ borderRadius: "8px", boxShadow: "var(--shadow-card)", overflow: "hidden" }}
           >
             <Box
               sx={{

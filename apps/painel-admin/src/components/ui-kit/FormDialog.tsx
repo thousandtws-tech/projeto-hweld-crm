@@ -55,7 +55,7 @@ export function FormDialog({
       onClose={() => onOpenChange(false)}
       maxWidth="sm"
       fullWidth
-      slotProps={{ paper: { sx: { borderRadius: 3, maxHeight: "90vh" } } }}
+      slotProps={{ paper: { sx: { borderRadius: "8px", maxHeight: "90vh" } } }}
     >
       <DialogTitle sx={{ borderBottom: 1, borderColor: "divider", pb: 2 }}>
         <Typography variant="h6" component="div" fontWeight={700}>

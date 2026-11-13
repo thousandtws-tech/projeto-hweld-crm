@@ -47,7 +47,7 @@
 }
 
 :root {
-  --radius: 1rem;
+  --radius: 0.375rem;
   /* ── HWeld — paleta oficial (ASEF v1.0) ────────────────────
      vermelho #D92546 · rosa #D9486E · azul #26488C
      azul claro #88ABF2 / #A0C4F2 · gelo #F2F2F2 · carvão #272728 */
@@ -212,7 +212,7 @@
 .rkk-board .rkk-column-outer .rkk-column {
   padding: 0;
   gap: 0;
-  border-radius: 1.5rem;
+  border-radius: 0.5rem;
 }
 .rkk-board .rkk-column-outer .rkk-column .rkk-column-wrapper {
   gap: 0;
@@ -233,7 +233,7 @@
 .rkk-board .rkk-column-shadow {
   background-color: color-mix(in srgb, var(--primary) 10%, var(--secondary));
   border: 1.5px dashed var(--primary);
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .rkk-board .rkk-column-outer {

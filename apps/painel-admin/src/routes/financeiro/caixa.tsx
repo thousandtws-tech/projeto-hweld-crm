@@ -638,7 +638,7 @@ function CaixaPage() {
             gap: 1,
             border: 1,
             borderColor: "divider",
-            borderRadius: 4,
+            borderRadius: 1,
             bgcolor: "action.hover",
             p: 1.5,
           }}
@@ -680,7 +680,7 @@ function CaixaPage() {
             gridColumn: { sm: "span 2" },
             border: 1,
             borderColor: "divider",
-            borderRadius: 4,
+            borderRadius: 1,
             px: 1.75,
             py: 1.25,
           }}
@@ -736,7 +736,7 @@ function CaixaPage() {
                     gap: 1,
                     border: 1,
                     borderColor: "divider",
-                    borderRadius: 4,
+                    borderRadius: 1,
                     bgcolor: "action.hover",
                     p: 1.5,
                   }}

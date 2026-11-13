@@ -229,7 +229,7 @@ function Logo() {
 }
 
 const navItemSx = {
-  borderRadius: 2,
+  borderRadius: 1,
   px: 1.5,
   py: 0.75,
   mb: 0.25,

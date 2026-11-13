@@ -40,7 +40,7 @@ export function DetailDialog({
       onClose={() => onOpenChange(false)}
       maxWidth="sm"
       fullWidth
-      slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+      slotProps={{ paper: { sx: { borderRadius: "8px" } } }}
     >
       <DialogTitle sx={{ borderBottom: 1, borderColor: "divider", pb: 2 }}>
         <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>

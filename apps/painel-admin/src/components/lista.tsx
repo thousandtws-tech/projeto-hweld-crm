@@ -219,7 +219,7 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
       {erro && (
         <Alert
           severity="error"
-          sx={{ borderRadius: 3 }}
+          sx={{ borderRadius: "8px" }}
           action={
             <Button
               color="inherit"

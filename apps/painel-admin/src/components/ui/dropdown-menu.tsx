@@ -58,7 +58,7 @@ function DropdownMenuContent({
       onClose={ctx.close}
       anchorOrigin={{ vertical: "bottom", horizontal: h }}
       transformOrigin={{ vertical: "top", horizontal: h }}
-      slotProps={{ paper: { sx: { borderRadius: 2, minWidth: 176 } } }}
+      slotProps={{ paper: { sx: { borderRadius: 1, minWidth: 176 } } }}
     >
       {children}
     </Menu>
@@ -132,7 +132,7 @@ function DropdownMenuSubContent({
       onClose={sub.close}
       anchorOrigin={{ vertical: "top", horizontal: "right" }}
       transformOrigin={{ vertical: "top", horizontal: "left" }}
-      slotProps={{ paper: { sx: { borderRadius: 2, minWidth: 160 } } }}
+      slotProps={{ paper: { sx: { borderRadius: 1, minWidth: 160 } } }}
     >
       {children}
     </Menu>
