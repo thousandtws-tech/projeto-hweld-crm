@@ -1,11 +1,8 @@
 name: CI
 
-# Build + testes de cada serviço/app — roda em todo push e PR.
-# A suíte de integração/E2E contra produção fica em e2e-producao.yml.
-
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
 
 concurrency:
