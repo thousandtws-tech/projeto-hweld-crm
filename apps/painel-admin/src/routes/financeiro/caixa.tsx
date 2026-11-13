@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
-import { downloadCsv, FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
+import { downloadCsv, FormDialog, FormField } from "@/components/ui-kit/FormDialog";
 import {
   Sheet,
   SheetContent,
@@ -26,6 +26,20 @@ import { financeiroService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import Stack from "@mui/material/Stack";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 
 export const Route = createFileRoute("/financeiro/caixa")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -274,34 +288,36 @@ function CaixaPage() {
             : "Controle de abertura, movimentações, sangria e conciliação de fechamento"
         }
         action={
-          <div className="flex items-center gap-2">
+          <Stack direction="row" alignItems="center" spacing={1}>
             {caixa && razao.linhas.length > 0 && (
-              <button
-                type="button"
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<Download size={14} />}
                 onClick={() => exportarExtratoCsv(razao.linhas, caixa.id)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary"
               >
-                <Download className="h-3.5 w-3.5" /> Exportar CSV
-              </button>
+                Exportar CSV
+              </Button>
             )}
             {caixa && (
-              <button
-                type="button"
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
                 onClick={abrirModalFechamento}
-                className="rounded-full bg-[#D92546] px-4 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
               >
                 Fechar caixa
-              </button>
+              </Button>
             )}
-            <button
-              type="button"
+            <IconButton
+              size="small"
               onClick={() => void carregar()}
               aria-label="Atualizar"
-              className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
+              disabled={carregando}
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} />
-            </button>
-          </div>
+              <RefreshCw className={carregando ? "animate-spin" : ""} size={14} />
+            </IconButton>
+          </Stack>
         }
       />
 
@@ -310,112 +326,120 @@ function CaixaPage() {
           {/* 1. Resumo Contábil da Sessão Aberta — 4 cards tipográficos limpos */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <SectionCard>
-              <div className="text-xs text-muted-foreground">Fundo de abertura</div>
-              <div className="mt-2 text-2xl font-bold tabular-nums tracking-tight">
+              <Typography variant="caption" color="text.secondary">Fundo de abertura</Typography>
+              <Typography variant="h5" fontWeight={700} sx={{ mt: 1, fontVariantNumeric: "tabular-nums" }}>
                 {brl(caixa.valor_abertura)}
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }} display="block">
                 Aberto às {fmtDataHora(caixa.aberto_em)}
-              </div>
+              </Typography>
             </SectionCard>
 
             <SectionCard>
-              <div className="text-xs text-muted-foreground">Entradas na sessão</div>
-              <div className="mt-2 text-2xl font-bold tabular-nums tracking-tight text-primary">
+              <Typography variant="caption" color="text.secondary">Entradas na sessão</Typography>
+              <Typography variant="h5" fontWeight={700} color="primary" sx={{ mt: 1, fontVariantNumeric: "tabular-nums" }}>
                 +{brl(razao.entradas.toFixed(2))}
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }} display="block">
                 Recebimentos: {brl(razao.porTipo.recebimento.toFixed(2))} · Suprimentos:{" "}
                 {brl(razao.porTipo.suprimento.toFixed(2))}
-              </div>
+              </Typography>
             </SectionCard>
 
             <SectionCard>
-              <div className="text-xs text-muted-foreground">Saídas na sessão</div>
-              <div className="mt-2 text-2xl font-bold tabular-nums tracking-tight text-[#D92546]">
+              <Typography variant="caption" color="text.secondary">Saídas na sessão</Typography>
+              <Typography variant="h5" fontWeight={700} sx={{ mt: 1, color: "#D92546", fontVariantNumeric: "tabular-nums" }}>
                 −{brl(razao.saidas.toFixed(2))}
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }} display="block">
                 Sangrias: {brl(razao.porTipo.sangria.toFixed(2))} · Despesas:{" "}
                 {brl(razao.porTipo.despesa.toFixed(2))}
-              </div>
+              </Typography>
             </SectionCard>
 
             <SectionCard>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Saldo calculado atual</span>
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography variant="caption" color="text.secondary">Saldo calculado atual</Typography>
                 <StatusPill status="ativo" label="Aberto" />
-              </div>
-              <div className="mt-2 text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
+              </Stack>
+              <Typography variant="h5" fontWeight={700} sx={{ mt: 1, fontVariantNumeric: "tabular-nums" }}>
                 {brl(razao.saldoAtual.toFixed(2))}
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }} display="block">
                 {movs.length} lançamento(s) registrado(s)
-              </div>
+              </Typography>
             </SectionCard>
           </div>
 
           {/* 2. Lançamento Manual (Suprimento, Sangria, Despesa) */}
           <SectionCard>
-            <h2 className="mb-3 text-sm font-bold">Lançar movimentação manual</h2>
-            <form
+            <Typography variant="subtitle2" sx={{ mb: 1.5 }}>Lançar movimentação manual</Typography>
+            <Box
+              component="form"
               onSubmit={lancar}
-              className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[180px_160px_1fr_auto]"
+              sx={{
+                display: "grid",
+                alignItems: "end",
+                gap: 1.5,
+                gridTemplateColumns: { xs: "1fr 1fr", lg: "180px 160px 1fr auto" },
+              }}
             >
-              <label className="text-xs font-medium text-muted-foreground">
-                Tipo
-                <TextField size="small" fullWidth select
-                  value={fLanc.tipo}
-                  onChange={(e) => setFLanc({ ...fLanc, tipo: e.target.value })}>
-                  <MenuItem value="suprimento">Suprimento (+)</MenuItem>
-                  <MenuItem value="sangria">Sangria (−)</MenuItem>
-                  <MenuItem value="despesa">Despesa (−)</MenuItem>
-                </TextField>
-              </label>
-              <label className="text-xs font-medium text-muted-foreground">
-                Valor (R$)
-                <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0.01" } }}
-                  type="number"
-                 
-                 
-                  required
-                  placeholder="0,00"
-                  value={fLanc.valor}
-                  onChange={(e) => setFLanc({ ...fLanc, valor: e.target.value })} />
-              </label>
-              <label className="text-xs font-medium text-muted-foreground">
-                Histórico / Descrição
-                <TextField size="small" fullWidth
-                  placeholder="Ex.: Reforço de troco, retirada p/ cofre, frete motoboy…"
-                  value={fLanc.descricao}
-                  onChange={(e) => setFLanc({ ...fLanc, descricao: e.target.value })} />
-              </label>
-              <button
+              <TextField size="small" fullWidth select label="Tipo"
+                value={fLanc.tipo}
+                onChange={(e) => setFLanc({ ...fLanc, tipo: e.target.value })}>
+                <MenuItem value="suprimento">Suprimento (+)</MenuItem>
+                <MenuItem value="sangria">Sangria (−)</MenuItem>
+                <MenuItem value="despesa">Despesa (−)</MenuItem>
+              </TextField>
+              <TextField size="small" fullWidth label="Valor (R$)" slotProps={{ htmlInput: { step: "0.01", min: "0.01" } }}
+                type="number"
+                required
+                placeholder="0,00"
+                value={fLanc.valor}
+                onChange={(e) => setFLanc({ ...fLanc, valor: e.target.value })} />
+              <TextField size="small" fullWidth label="Histórico / Descrição"
+                placeholder="Ex.: Reforço de troco, retirada p/ cofre, frete motoboy…"
+                value={fLanc.descricao}
+                onChange={(e) => setFLanc({ ...fLanc, descricao: e.target.value })} />
+              <Button
                 type="submit"
+                variant="contained"
                 disabled={lancando || !fLanc.valor}
-                className="rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
               >
                 {lancando ? "Lançando…" : "Lançar"}
-              </button>
-            </form>
+              </Button>
+            </Box>
           </SectionCard>
 
           {/* 3. Livro-Razão (Extrato com Saldo Acumulado) */}
           <SectionCard className="overflow-hidden p-0">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 px-5 py-3.5">
-              <span className="text-sm font-bold">Livro-razão da sessão</span>
+            <Stack
+              direction="row"
+              flexWrap="wrap"
+              alignItems="center"
+              justifyContent="space-between"
+              spacing={1}
+              sx={{ borderBottom: 1, borderColor: "divider", px: 2.5, py: 1.75 }}
+            >
+              <Typography variant="subtitle2">Livro-razão da sessão</Typography>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary/30 px-2.5 py-1">
-                  <Search className="h-3.5 w-3.5 text-muted-foreground" />
-                  <input
-                    type="search"
-                    value={buscaMov}
-                    onChange={(e) => setBuscaMov(e.target.value)}
-                    placeholder="Filtrar descrição…"
-                    className="w-36 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
-                  />
-                </div>
+              <Stack direction="row" flexWrap="wrap" alignItems="center" spacing={1}>
+                <TextField
+                  size="small"
+                  placeholder="Filtrar descrição…"
+                  value={buscaMov}
+                  onChange={(e) => setBuscaMov(e.target.value)}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Search size={14} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                  sx={{ width: 180 }}
+                />
 
                 <TextField size="small" select aria-label="Filtrar por tipo" value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
                   <MenuItem value="">Todos os tipos</MenuItem>
@@ -426,106 +450,101 @@ function CaixaPage() {
                   <MenuItem value="despesa">Despesa</MenuItem>
                   <MenuItem value="estorno">Estorno</MenuItem>
                 </TextField>
-              </div>
-            </div>
+              </Stack>
+            </Stack>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-secondary/20 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="px-5 py-2.5 font-semibold">Horário</th>
-                    <th className="px-4 py-2.5 font-semibold">Tipo</th>
-                    <th className="px-4 py-2.5 font-semibold">Descrição / Origem</th>
-                    <th className="px-4 py-2.5 text-right font-semibold">Movimento</th>
-                    <th className="px-5 py-2.5 text-right font-semibold">Saldo após</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <Box sx={{ overflowX: "auto" }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Horário</TableCell>
+                    <TableCell>Tipo</TableCell>
+                    <TableCell>Descrição / Origem</TableCell>
+                    <TableCell align="right">Movimento</TableCell>
+                    <TableCell align="right">Saldo após</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {linhasFiltradas.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-5 py-8 text-center text-muted-foreground">
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 6, color: "text.secondary" }}>
                         Nenhuma movimentação encontrada.
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ) : (
                     linhasFiltradas.map((m) => {
                       const entrada = TIPO_SINAL.has(m.tipo);
                       return (
-                        <tr key={m.id} className="border-b border-border/60 last:border-0">
-                          <td className="px-5 py-2.5 text-xs text-muted-foreground">
+                        <TableRow key={m.id} hover>
+                          <TableCell sx={{ color: "text.secondary", fontSize: "0.75rem", whiteSpace: "nowrap" }}>
                             {fmtDataHora(m.created_at)}
-                          </td>
-                          <td className="px-4 py-2.5">
+                          </TableCell>
+                          <TableCell>
                             <StatusPill
                               status={TIPO_COR[m.tipo] ?? "draft"}
                               label={TIPO_LABEL[m.tipo] ?? m.tipo}
                             />
-                          </td>
-                          <td className="px-4 py-2.5">
-                            <span>{m.descricao || "—"}</span>
+                          </TableCell>
+                          <TableCell>
+                            {m.descricao || "—"}
                             {m.pagamento_id && (
-                              <span className="ml-2 text-xs text-muted-foreground">
+                              <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
                                 (Parcela #{m.pagamento_id})
-                              </span>
+                              </Typography>
                             )}
-                          </td>
-                          <td
-                            className={`px-4 py-2.5 text-right font-semibold tabular-nums ${
-                              entrada ? "text-primary" : "text-[#D92546]"
-                            }`}
+                          </TableCell>
+                          <TableCell
+                            align="right"
+                            sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: entrada ? "primary.main" : "#D92546" }}
                           >
                             {entrada ? "+" : "−"}
                             {brl(m.valor)}
-                          </td>
-                          <td className="px-5 py-2.5 text-right font-medium tabular-nums text-muted-foreground">
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums", color: "text.secondary" }}>
                             {brl(m.saldoApos.toFixed(2))}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       );
                     })
                   )}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </Box>
           </SectionCard>
         </>
       ) : (
         !carregando && (
           <SectionCard>
-            <div className="mx-auto max-w-md py-6 text-center">
-              <h2 className="text-base font-bold">Nenhum caixa aberto no momento</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
+            <Box sx={{ mx: "auto", maxWidth: 400, py: 3, textAlign: "center" }}>
+              <Typography variant="subtitle1" fontWeight={700}>Nenhum caixa aberto no momento</Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
                 Informe o fundo de troco inicial para iniciar as operações financeiras e permitir
                 baixas de parcelas.
-              </p>
+              </Typography>
 
-              <form onSubmit={abrirCaixa} className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <Box component="form" onSubmit={abrirCaixa} sx={{ mt: 2, display: "flex", gap: 1, flexDirection: { xs: "column", sm: "row" } }}>
                 <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                   type="number"
-                 
-                 
                   required
                   placeholder="Valor de abertura (R$)"
                   value={valorAbertura}
                   onChange={(e) => setValorAbertura(e.target.value)} />
-                <button
-                  type="submit"
-                  className="rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-                >
+                <Button type="submit" variant="contained" sx={{ whiteSpace: "nowrap" }}>
                   Abrir caixa
-                </button>
-              </form>
+                </Button>
+              </Box>
 
               {sugestaoTrocoAnterior && (
-                <button
-                  type="button"
+                <Button
+                  variant="text"
+                  size="small"
                   onClick={() => setValorAbertura(sugestaoTrocoAnterior)}
-                  className="mt-2.5 text-xs font-medium text-primary hover:underline"
+                  sx={{ mt: 1.5, textTransform: "none" }}
                 >
                   Usar saldo do último fechamento ({brl(sugestaoTrocoAnterior)})
-                </button>
+                </Button>
               )}
-            </div>
+            </Box>
           </SectionCard>
         )
       )}
@@ -533,63 +552,72 @@ function CaixaPage() {
       {/* 4. Histórico de Sessões Anteriores (Clicável para auditar movimentações) */}
       {historico.length > 0 && (
         <SectionCard className="overflow-hidden p-0">
-          <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
-            <span className="text-sm font-bold">Sessões encerradas</span>
-            <span className="text-xs text-muted-foreground">
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ borderBottom: 1, borderColor: "divider", px: 2.5, py: 1.75 }}
+          >
+            <Typography variant="subtitle2">Sessões encerradas</Typography>
+            <Typography variant="caption" color="text.secondary">
               Clique em uma sessão para ver o extrato completo
-            </span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-secondary/20 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-5 py-2.5 font-semibold">Sessão</th>
-                  <th className="px-4 py-2.5 font-semibold">Abertura</th>
-                  <th className="px-4 py-2.5 font-semibold">Fechamento</th>
-                  <th className="px-4 py-2.5 text-right font-semibold">Fundo inicial</th>
-                  <th className="px-4 py-2.5 text-right font-semibold">Calculado</th>
-                  <th className="px-4 py-2.5 text-right font-semibold">Informado</th>
-                  <th className="px-5 py-2.5 text-right font-semibold">Diferença</th>
-                </tr>
-              </thead>
-              <tbody>
+            </Typography>
+          </Stack>
+          <Box sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Sessão</TableCell>
+                  <TableCell>Abertura</TableCell>
+                  <TableCell>Fechamento</TableCell>
+                  <TableCell align="right">Fundo inicial</TableCell>
+                  <TableCell align="right">Calculado</TableCell>
+                  <TableCell align="right">Informado</TableCell>
+                  <TableCell align="right">Diferença</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {historico.map((c) => {
                   const dif = num(c.diferenca);
                   return (
-                    <tr
+                    <TableRow
                       key={c.id}
+                      hover
                       onClick={() => void inspecionarSessao(c)}
-                      className="cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
+                      sx={{ cursor: "pointer" }}
                     >
-                      <td className="px-5 py-2.5 font-medium">#{c.id}</td>
-                      <td className="px-5 py-2.5 text-xs text-muted-foreground">
+                      <TableCell sx={{ fontWeight: 500 }}>#{c.id}</TableCell>
+                      <TableCell sx={{ color: "text.secondary", fontSize: "0.75rem", whiteSpace: "nowrap" }}>
                         {fmtDataHora(c.aberto_em)}
-                      </td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">
+                      </TableCell>
+                      <TableCell sx={{ color: "text.secondary", fontSize: "0.75rem", whiteSpace: "nowrap" }}>
                         {fmtDataHora(c.fechado_em)}
-                      </td>
-                      <td className="px-4 py-2.5 text-right tabular-nums">
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>
                         {brl(c.valor_abertura)}
-                      </td>
-                      <td className="px-4 py-2.5 text-right tabular-nums">
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>
                         {brl(c.valor_fechamento_calculado)}
-                      </td>
-                      <td className="px-4 py-2.5 text-right tabular-nums">
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>
                         {brl(c.valor_fechamento_informado)}
-                      </td>
-                      <td
-                        className={`px-5 py-2.5 text-right font-semibold tabular-nums ${
-                          dif < 0 ? "text-[#D92546]" : dif > 0 ? "text-[#D9486E]" : "text-primary"
-                        }`}
+                      </TableCell>
+                      <TableCell
+                        align="right"
+                        sx={{
+                          fontWeight: 600,
+                          fontVariantNumeric: "tabular-nums",
+                          color: dif < 0 ? "#D92546" : dif > 0 ? "#D9486E" : "primary.main",
+                        }}
                       >
                         {dif > 0 ? `+${brl(c.diferenca)}` : brl(c.diferenca)}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </Box>
         </SectionCard>
       )}
 
@@ -602,24 +630,37 @@ function CaixaPage() {
         submitLabel={fechando ? "Fechando…" : "Confirmar fechamento"}
         onSubmit={fechar}
       >
-        <div className="sm:col-span-2 grid grid-cols-3 gap-2 rounded-2xl border border-border bg-secondary/30 p-3 text-xs">
-          <div>
-            <span className="text-muted-foreground">Abertura</span>
-            <div className="mt-0.5 font-bold tabular-nums">{brl(caixa?.valor_abertura)}</div>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Entradas / Saídas</span>
-            <div className="mt-0.5 font-bold tabular-nums">
-              +{brl(razao.entradas.toFixed(2))} / −{brl(razao.saidas.toFixed(2))}
-            </div>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Saldo esperado</span>
-            <div className="mt-0.5 font-bold tabular-nums text-primary">
-              {brl(razao.saldoAtual.toFixed(2))}
-            </div>
-          </div>
-        </div>
+        <Box
+          sx={{
+            gridColumn: { sm: "span 2" },
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 1,
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 4,
+            bgcolor: "action.hover",
+            p: 1.5,
+          }}
+        >
+          {[
+            ["Abertura", brl(caixa?.valor_abertura)],
+            ["Entradas / Saídas", `+${brl(razao.entradas.toFixed(2))} / −${brl(razao.saidas.toFixed(2))}`],
+            ["Saldo esperado", brl(razao.saldoAtual.toFixed(2))],
+          ].map(([k, v], i) => (
+            <Box key={k}>
+              <Typography variant="caption" color="text.secondary" display="block">{k}</Typography>
+              <Typography
+                variant="body2"
+                fontWeight={700}
+                color={i === 2 ? "primary" : undefined}
+                sx={{ mt: 0.5, fontVariantNumeric: "tabular-nums" }}
+              >
+                {v}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
 
         <FormField label="Valor físico apurado em caixa (R$) *" wide>
           <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
@@ -631,18 +672,34 @@ function CaixaPage() {
             onChange={(e) => setValorInformado(e.target.value)} />
         </FormField>
 
-        <div className="sm:col-span-2 flex items-center justify-between rounded-2xl border border-border px-3.5 py-2.5 text-xs">
-          <span className="text-muted-foreground">Resultado da conferência:</span>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{
+            gridColumn: { sm: "span 2" },
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 4,
+            px: 1.75,
+            py: 1.25,
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">Resultado da conferência:</Typography>
           {diferencaPrevia === 0 ? (
-            <strong className="text-primary">Caixa batendo exatamente (R$ 0,00)</strong>
+            <Typography variant="caption" fontWeight={700} color="primary">
+              Caixa batendo exatamente (R$ 0,00)
+            </Typography>
           ) : diferencaPrevia < 0 ? (
-            <strong className="text-[#D92546]">
+            <Typography variant="caption" fontWeight={700} sx={{ color: "#D92546" }}>
               Quebra / Falta de {brl(Math.abs(diferencaPrevia).toFixed(2))}
-            </strong>
+            </Typography>
           ) : (
-            <strong className="text-[#D9486E]">Sobra de +{brl(diferencaPrevia.toFixed(2))}</strong>
+            <Typography variant="caption" fontWeight={700} sx={{ color: "#D9486E" }}>
+              Sobra de +{brl(diferencaPrevia.toFixed(2))}
+            </Typography>
           )}
-        </div>
+        </Stack>
       </FormDialog>
 
       {/* Gaveta de Auditoria de Sessão Encerrada */}
@@ -657,12 +714,12 @@ function CaixaPage() {
           {sessaoInspecionada && (
             <>
               <SheetHeader className="border-b border-border px-6 pt-6 pb-4 text-left">
-                <div className="flex items-center gap-2">
+                <Stack direction="row" alignItems="center" spacing={1}>
                   <StatusPill status="inativo" label="Fechado" />
-                  <span className="text-xs text-muted-foreground">
+                  <Typography variant="caption" color="text.secondary">
                     Sessão #{sessaoInspecionada.id}
-                  </span>
-                </div>
+                  </Typography>
+                </Stack>
                 <SheetTitle className="mt-1 text-lg font-bold">
                   Extrato da Sessão #{sessaoInspecionada.id}
                 </SheetTitle>
@@ -671,92 +728,106 @@ function CaixaPage() {
                   {fmtDataHora(sessaoInspecionada.fechado_em)}
                 </SheetDescription>
 
-                <div className="mt-3 grid grid-cols-3 gap-2 rounded-2xl border border-border bg-secondary/30 p-3 text-xs">
-                  <div>
-                    <span className="text-muted-foreground">Calculado</span>
-                    <div className="mt-0.5 font-bold tabular-nums">
-                      {brl(sessaoInspecionada.valor_fechamento_calculado)}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Informado</span>
-                    <div className="mt-0.5 font-bold tabular-nums">
-                      {brl(sessaoInspecionada.valor_fechamento_informado)}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Diferença</span>
-                    <div
-                      className={`mt-0.5 font-bold tabular-nums ${
-                        num(sessaoInspecionada.diferenca) !== 0 ? "text-[#D92546]" : "text-primary"
-                      }`}
-                    >
-                      {brl(sessaoInspecionada.diferenca)}
-                    </div>
-                  </div>
-                </div>
+                <Box
+                  sx={{
+                    mt: 1.5,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: 1,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 4,
+                    bgcolor: "action.hover",
+                    p: 1.5,
+                  }}
+                >
+                  {[
+                    ["Calculado", brl(sessaoInspecionada.valor_fechamento_calculado), false],
+                    ["Informado", brl(sessaoInspecionada.valor_fechamento_informado), false],
+                    ["Diferença", brl(sessaoInspecionada.diferenca), num(sessaoInspecionada.diferenca) !== 0],
+                  ].map(([k, v, alerta]) => (
+                    <Box key={k as string}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {k as string}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight={700}
+                        sx={{ mt: 0.5, fontVariantNumeric: "tabular-nums", color: alerta ? "#D92546" : "primary.main" }}
+                      >
+                        {v as string}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
               </SheetHeader>
 
-              <div className="flex-1 overflow-y-auto px-6 py-4">
+              <Box sx={{ flex: 1, overflowY: "auto", px: 3, py: 2 }}>
                 {carregandoInspecao ? (
-                  <p className="py-8 text-center text-xs text-muted-foreground">
+                  <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ py: 4 }}>
                     Carregando movimentações…
-                  </p>
+                  </Typography>
                 ) : !razaoInspecao || razaoInspecao.linhas.length === 0 ? (
-                  <p className="py-8 text-center text-xs text-muted-foreground">
+                  <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ py: 4 }}>
                     Nenhuma movimentação registrada nesta sessão.
-                  </p>
+                  </Typography>
                 ) : (
                   <>
-                    <div className="mb-3 flex justify-end">
-                      <button
-                        type="button"
+                    <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1.5 }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<Download size={14} />}
                         onClick={() =>
                           exportarExtratoCsv(razaoInspecao.linhas, sessaoInspecionada.id)
                         }
-                        className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium hover:bg-secondary"
                       >
-                        <Download className="h-3.5 w-3.5" /> Exportar CSV
-                      </button>
-                    </div>
-                    <ul className="divide-y divide-border/60 text-xs">
+                        Exportar CSV
+                      </Button>
+                    </Stack>
+                    <List disablePadding dense>
                       {razaoInspecao.linhas.map((m) => {
                         const entrada = TIPO_SINAL.has(m.tipo);
                         return (
-                          <li key={m.id} className="flex items-center justify-between py-2.5">
-                            <div className="min-w-0 pr-3">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold capitalize">
-                                  {TIPO_LABEL[m.tipo] ?? m.tipo}
-                                </span>
-                                <span className="text-muted-foreground">
-                                  {fmtDataHora(m.created_at)}
-                                </span>
-                              </div>
-                              <div className="mt-0.5 truncate text-muted-foreground">
-                                {m.descricao || "—"}
-                              </div>
-                            </div>
-                            <div className="text-right tabular-nums">
-                              <div
-                                className={`font-semibold ${
-                                  entrada ? "text-primary" : "text-[#D92546]"
-                                }`}
-                              >
-                                {entrada ? "+" : "−"}
-                                {brl(m.valor)}
-                              </div>
-                              <div className="text-[11px] text-muted-foreground">
-                                Saldo: {brl(m.saldoApos.toFixed(2))}
-                              </div>
-                            </div>
-                          </li>
+                          <ListItem key={m.id} divider disableGutters
+                            secondaryAction={
+                              <Box sx={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                                <Typography
+                                  variant="caption"
+                                  fontWeight={600}
+                                  sx={{ color: entrada ? "primary.main" : "#D92546" }}
+                                  display="block"
+                                >
+                                  {entrada ? "+" : "−"}
+                                  {brl(m.valor)}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" display="block">
+                                  Saldo: {brl(m.saldoApos.toFixed(2))}
+                                </Typography>
+                              </Box>
+                            }
+                          >
+                            <ListItemText
+                              primary={
+                                <>
+                                  <Typography component="span" variant="caption" fontWeight={600} sx={{ textTransform: "capitalize" }}>
+                                    {TIPO_LABEL[m.tipo] ?? m.tipo}
+                                  </Typography>{" "}
+                                  <Typography component="span" variant="caption" color="text.secondary">
+                                    {fmtDataHora(m.created_at)}
+                                  </Typography>
+                                </>
+                              }
+                              secondary={m.descricao || "—"}
+                              secondaryTypographyProps={{ variant: "caption", noWrap: true }}
+                            />
+                          </ListItem>
                         );
                       })}
-                    </ul>
+                    </List>
                   </>
                 )}
-              </div>
+              </Box>
             </>
           )}
         </SheetContent>
