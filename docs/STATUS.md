@@ -185,7 +185,7 @@ integrações. Atualizado em 2026-11-13.
 | Integração | Status | Detalhe |
 |---|---|---|
 | PostgreSQL | ✅ prod | Railway plugin; `hweld` (Rust) + `hweld_ops` (Java) no mesmo server |
-| Elasticsearch 8 | ✅ prod | `hweld_produtos`, privado (`elasticsearch.railway.internal`) |
+| Elasticsearch | 🟡 código pronto | **Elastic Cloud Serverless** — `ELASTICSEARCH_URL` + `ELASTICSEARCH_API_KEY` a configurar no Railway. Auto-detecta serverless pela URL `.elastic.cloud` (sem shard/replica na criação; `refresh_interval` ≥5s) |
 | Realtime engine | ✅ prod | Rust `/ingest` → PubSub → SSE/WS |
 | Rust ↔ Java | ✅ | JWT repassado p/ posse; `X-Service-Token`; outbox→relay→`eventos-financeiros` |
 | Focus NFe v2 | 🟡 código pronto | falta credenciais/habilitação de produção |

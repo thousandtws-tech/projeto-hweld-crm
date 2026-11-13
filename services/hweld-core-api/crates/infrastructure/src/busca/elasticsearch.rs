@@ -32,11 +32,16 @@ fn erro_es(e: elasticsearch::Error) -> ErroApp {
 fn erro_ser(e: serde_json::Error) -> ErroApp {
     ErroApp::interno(CTX, e)
 }
-fn definicao_indice() -> Value {
-    json!({
+fn definicao_indice(serverless: bool) -> Value {
+    // Elastic Cloud Serverless rejeita settings de infra (`number_of_shards`,
+    // `number_of_replicas`, allocation) — a plataforma decide.
+    let settings_infra = if serverless {
+        json!({})
+    } else {
+        json!({ "number_of_shards": 1, "number_of_replicas": 0 })
+    };
+    let mut def = json!({
         "settings": {
-            "number_of_shards": 1,
-            "number_of_replicas": 0,
             "analysis": {
                 "normalizer": {
                     "minusc": { "type": "custom", "filter": ["lowercase", "fold_pt"] }
@@ -103,7 +108,11 @@ fn definicao_indice() -> Value {
                 "criado_em":      { "type": "date" }
             }
         }
-    })
+    });
+    for (k, v) in settings_infra.as_object().unwrap() {
+        def["settings"][k] = v.clone();
+    }
+    def
 }
 
 fn query_busca(consulta: &ConsultaBuscaProdutos) -> Value {
@@ -281,6 +290,7 @@ fn buckets(aggs: &Value, nome: &str) -> Vec<FacetaContagem> {
 pub struct BuscaElastic {
     client: Elasticsearch,
     indice: String,
+    serverless: bool,
 }
 
 impl BuscaElastic {
@@ -290,13 +300,17 @@ impl BuscaElastic {
         // Deadline por request: sem isso um ES degradado segura a task do
         // handler (e a conexão do pool) indefinidamente.
         let mut builder = TransportBuilder::new(pool).timeout(Duration::from_millis(1500));
-        if let (Some(u), Some(p)) = (&config.usuario, &config.senha) {
+        if let Some(api_key) = &config.api_key {
+            // Elastic Cloud: header `Authorization: ApiKey <base64(id:secret)>`.
+            builder = builder.auth(Credentials::EncodedApiKey(api_key.clone()));
+        } else if let (Some(u), Some(p)) = (&config.usuario, &config.senha) {
             builder = builder.auth(Credentials::Basic(u.clone(), p.clone()));
         }
         let transport = builder.build()?;
         Ok(Self {
             client: Elasticsearch::new(transport),
             indice: config.indice_produtos.clone(),
+            serverless: config.serverless,
         })
     }
 
@@ -317,7 +331,7 @@ impl BuscaElastic {
             .client
             .indices()
             .create(IndicesCreateParts::Index(self.indice.as_str()))
-            .body(definicao_indice())
+            .body(definicao_indice(self.serverless))
             .send()
             .await
             .map_err(erro_es)?;
@@ -328,6 +342,13 @@ impl BuscaElastic {
     }
 
     async fn definir_refresh(&self, intervalo: &str) -> Resultado<()> {
+        // Serverless: refresh_interval só aceita -1 ou >= 5s — o "1s" de
+        // self-hosted vira "5s" (delay de visibilidade um pouco maior).
+        let intervalo = if self.serverless && intervalo != "-1" {
+            "5s"
+        } else {
+            intervalo
+        };
         self.client
             .indices()
             .put_settings(IndicesPutSettingsParts::Index(&[self.indice.as_str()]))
@@ -537,7 +558,7 @@ impl MotorBusca for BuscaElastic {
         self.client
             .indices()
             .create(IndicesCreateParts::Index(self.indice.as_str()))
-            .body(definicao_indice())
+            .body(definicao_indice(self.serverless))
             .send()
             .await
             .map_err(erro_es)?

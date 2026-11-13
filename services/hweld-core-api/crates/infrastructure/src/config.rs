@@ -24,6 +24,14 @@ pub struct ConfigBusca {
     pub indice_produtos: String,
     pub usuario: Option<String>,
     pub senha: Option<String>,
+    /// API key codificada (`id:secret` em base64) — Elastic Cloud.
+    /// Tem precedência sobre usuario/senha quando presente.
+    pub api_key: Option<String>,
+    /// Elastic Cloud Serverless: sem settings de shard/replica na criação do
+    /// índice e `refresh_interval` mínimo de 5s (`-1` continua permitido).
+    /// Auto-deduzido de URLs `*.elastic.cloud`; `ELASTICSEARCH_SERVERLESS`
+    /// força o valor quando preciso.
+    pub serverless: bool,
     /// Cria o índice com settings/mappings no boot quando não existir.
     pub ensure_index: bool,
 }
@@ -156,13 +164,27 @@ impl Config {
                 email: env("ADMIN_EMAIL").unwrap_or_else(|| "admin@hweld.local".into()),
                 senha: env("ADMIN_SENHA").unwrap_or_else(|| "admin".into()),
             },
-            busca: ConfigBusca {
-                url: env("ELASTICSEARCH_URL"),
-                indice_produtos: env("ELASTICSEARCH_INDEX_PRODUTOS")
-                    .unwrap_or_else(|| "hweld_produtos".into()),
-                usuario: env("ELASTICSEARCH_USERNAME"),
-                senha: env("ELASTICSEARCH_PASSWORD"),
-                ensure_index: env_parse("ES_ENSURE_INDEX", true)?,
+            busca: {
+                let es_url = env("ELASTICSEARCH_URL");
+                let serverless = match env("ELASTICSEARCH_SERVERLESS") {
+                    Some(v) => v.parse::<bool>().map_err(|e| {
+                        ErroConfig(format!("ELASTICSEARCH_SERVERLESS: {e}"))
+                    })?,
+                    None => es_url
+                        .as_deref()
+                        .map(|u| u.contains(".elastic.cloud"))
+                        .unwrap_or(false),
+                };
+                ConfigBusca {
+                    url: es_url,
+                    indice_produtos: env("ELASTICSEARCH_INDEX_PRODUTOS")
+                        .unwrap_or_else(|| "hweld_produtos".into()),
+                    usuario: env("ELASTICSEARCH_USERNAME"),
+                    senha: env("ELASTICSEARCH_PASSWORD"),
+                    api_key: env("ELASTICSEARCH_API_KEY"),
+                    serverless,
+                    ensure_index: env_parse("ES_ENSURE_INDEX", true)?,
+                }
             },
             motor: ConfigMotor {
                 url: env("MOTOR_URL").unwrap_or_else(|| "http://localhost:4100".into()),
