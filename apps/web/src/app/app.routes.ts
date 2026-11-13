@@ -16,6 +16,11 @@ export const routes: Routes = [
     title: 'Entrar — HWeld',
   },
   {
+    path: 'cadastro',
+    loadComponent: () => import('./features/auth/cadastro').then((m) => m.CadastroPage),
+    title: 'Criar conta — HWeld',
+  },
+  {
     path: '',
     component: Shell,
     children: [

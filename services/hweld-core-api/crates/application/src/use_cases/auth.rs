@@ -3,15 +3,17 @@
 use std::sync::Arc;
 
 use hweld_domain::acesso::usuario::Usuario;
-use hweld_domain::crm::contato::Contato;
+use hweld_domain::crm::contato::{Contato, ContatoInput};
+use hweld_domain::crm::empresa::EmpresaInput;
 use hweld_domain::shared::id::Id;
 use tracing::instrument;
 
 use hweld_domain::acesso::sessao::{Dispositivo, SessaoAutenticada};
+use hweld_domain::shared::erro::ErroDominio;
 
 use crate::erro::{ErroApp, Resultado};
 use crate::ports::acesso::RepositorioUsuarios;
-use crate::ports::crm::RepositorioContatos;
+use crate::ports::crm::{RepositorioContatos, RepositorioEmpresas};
 use crate::ports::seguranca::{
     ContextoSessao, EmissorTokens, HasherSenha, ParTokens, RepositorioSessoes, SujeitoToken,
     TipoSujeito,
@@ -22,6 +24,7 @@ const HASH_DUMMY: &str = "$argon2id$v=19$m=19456,t=2,p=1$c29tZXNhbHRzb21lc2FsdA$
 pub struct ServicoAuth {
     usuarios: Arc<dyn RepositorioUsuarios>,
     contatos: Arc<dyn RepositorioContatos>,
+    empresas: Arc<dyn RepositorioEmpresas>,
     hasher: Arc<dyn HasherSenha>,
     tokens: Arc<dyn EmissorTokens>,
     sessoes: Arc<dyn RepositorioSessoes>,
@@ -36,6 +39,7 @@ impl ServicoAuth {
     pub fn novo(
         usuarios: Arc<dyn RepositorioUsuarios>,
         contatos: Arc<dyn RepositorioContatos>,
+        empresas: Arc<dyn RepositorioEmpresas>,
         hasher: Arc<dyn HasherSenha>,
         tokens: Arc<dyn EmissorTokens>,
         sessoes: Arc<dyn RepositorioSessoes>,
@@ -43,6 +47,7 @@ impl ServicoAuth {
         Self {
             usuarios,
             contatos,
+            empresas,
             hasher,
             tokens,
             sessoes,
@@ -112,6 +117,69 @@ impl ServicoAuth {
             }
             None => Err(ErroApp::nao_autenticado("credenciais inválidas")),
         }
+    }
+
+    /// Auto-cadastro público do portal B2B (estilo e-commerce): cria a empresa
+    /// + contato principal já com acesso ao portal e emite tokens (login direto).
+    /// Sem aprovação — se a política mudar para revisão, criar com
+    /// `acesso_portal: false` e notificar o staff.
+    #[instrument(skip(self, senha), fields(email = %email))]
+    pub async fn cadastro_portal(
+        &self,
+        nome: &str,
+        email: &str,
+        senha: &str,
+        empresa: EmpresaInput,
+        telefone: Option<String>,
+        ctx: &ContextoSessao,
+    ) -> Resultado<SessaoPortal> {
+        let email = email.trim().to_lowercase();
+        if senha.len() < 8 {
+            return Err(ErroApp::Dominio(ErroDominio::valor_invalido(
+                "senha",
+                "mínimo de 8 caracteres",
+            )));
+        }
+        if self.contatos.buscar_por_email(&email).await?.is_some() {
+            return Err(ErroApp::conflito("e-mail já cadastrado"));
+        }
+
+        let empresa = self.empresas.criar(empresa.validar()?).await?;
+        let contato = self
+            .contatos
+            .criar(
+                ContatoInput {
+                    empresa_id: empresa.id,
+                    nome: nome.trim().to_string(),
+                    cargo: None,
+                    email: Some(email.clone()),
+                    telefone,
+                    whatsapp: None,
+                    is_principal: true,
+                    acesso_portal: true,
+                    observacoes: None,
+                }
+                .validar()?,
+            )
+            .await?;
+
+        let hash = self.hasher.hash(senha).await?;
+        self.contatos
+            .definir_acesso_portal(contato.id, true, Some(&hash))
+            .await?;
+
+        let tokens = self
+            .tokens
+            .emitir_par(
+                SujeitoToken {
+                    tipo: TipoSujeito::Portal,
+                    id: contato.id.valor(),
+                    perfil: None,
+                },
+                ctx,
+            )
+            .await?;
+        Ok(SessaoPortal { tokens, contato })
     }
 
     pub async fn refresh(&self, refresh_token: &str, ctx: &ContextoSessao) -> Resultado<ParTokens> {

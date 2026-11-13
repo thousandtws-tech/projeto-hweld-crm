@@ -1,0 +1,154 @@
+<div class="login-page">
+  <section class="painel-form">
+    <div class="topo">
+      <img class="logo" src="assets/auth/logo-hweld.png" alt="HWeld" />
+      <span class="linha-topo" aria-hidden="true"></span>
+    </div>
+    <div class="form-col">
+      <h1 class="titulo">Criar conta</h1>
+
+      <form class="form" [formGroup]="form" (ngSubmit)="criar()">
+        @if (erro()) {
+          <div class="alerta-erro" role="alert">
+            <span class="material-symbols-outlined">error</span>
+            <span>{{ erro() }}</span>
+          </div>
+        }
+
+        <div class="grupo-form">
+          <h2 class="subtitulo">Seus dados</h2>
+          <div class="campos">
+            <div class="campo" [class.invalid]="invalido('nome')">
+              <input
+                id="nome"
+                type="text"
+                formControlName="nome"
+                placeholder="Nome completo"
+                autocomplete="name"
+              />
+            </div>
+            <div class="campo" [class.invalid]="invalido('email')">
+              <img src="assets/auth/icon-mail.svg" alt="" class="campo-icone" />
+              <input
+                id="email"
+                type="email"
+                formControlName="email"
+                placeholder="Seu e-mail"
+                autocomplete="username"
+              />
+            </div>
+            @if (invalido('email')) {
+              <p class="campo-erro">Informe um e-mail válido.</p>
+            }
+            <div class="campo" [class.invalid]="invalido('telefone')">
+              <input
+                id="telefone"
+                type="tel"
+                formControlName="telefone"
+                placeholder="Telefone / WhatsApp (opcional)"
+                autocomplete="tel"
+              />
+            </div>
+            <div class="campo" [class.invalid]="invalido('senha')">
+              <img src="assets/auth/icon-lock.svg" alt="" class="campo-icone campo-icone-lock" />
+              <input
+                id="senha"
+                type="password"
+                formControlName="senha"
+                placeholder="Senha (mín. 8 caracteres)"
+                autocomplete="new-password"
+              />
+            </div>
+            @if (invalido('senha')) {
+              <p class="campo-erro">A senha precisa de pelo menos 8 caracteres.</p>
+            }
+            <div class="campo" [class.invalid]="senhasDivergem()">
+              <img src="assets/auth/icon-lock.svg" alt="" class="campo-icone campo-icone-lock" />
+              <input
+                id="confirmarSenha"
+                type="password"
+                formControlName="confirmarSenha"
+                placeholder="Confirmar senha"
+                autocomplete="new-password"
+              />
+            </div>
+            @if (senhasDivergem()) {
+              <p class="campo-erro">As senhas não conferem.</p>
+            }
+          </div>
+        </div>
+
+        <div class="grupo-form">
+          <h2 class="subtitulo">Dados da empresa</h2>
+          <div class="campos">
+            <div class="campo" [class.invalid]="invalido('razaoSocial')">
+              <input
+                id="razaoSocial"
+                type="text"
+                formControlName="razaoSocial"
+                placeholder="Razão social"
+                autocomplete="organization"
+              />
+            </div>
+            @if (invalido('razaoSocial')) {
+              <p class="campo-erro">Informe a razão social.</p>
+            }
+            <div class="campo">
+              <input
+                id="nomeFantasia"
+                type="text"
+                formControlName="nomeFantasia"
+                placeholder="Nome fantasia (opcional)"
+              />
+            </div>
+            <div class="campo">
+              <input
+                id="cnpj"
+                type="text"
+                formControlName="cnpj"
+                placeholder="CNPJ (opcional)"
+                inputmode="numeric"
+              />
+            </div>
+          </div>
+        </div>
+
+        <button
+          hwButton
+          size="lg"
+          type="submit"
+          class="btn-entrar"
+          [loading]="enviando()"
+          texto="Criando conta…"
+          [disabled]="form.invalid || senhasDivergem()"
+        >
+          Criar conta
+        </button>
+
+        <p class="termos">
+          Ao criar a conta você concorda com os
+          <a routerLink="/privacidade">termos e a política de privacidade</a>.
+        </p>
+      </form>
+
+      <p class="cadastro">
+        Já possui acesso?
+        <a routerLink="/login">Entrar</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="painel-visual" aria-hidden="true">
+    <img class="bg" src="assets/auth/login-ilustracao.png" alt="" />
+    <blockquote class="citacao">
+      <img class="aspas" src="assets/auth/quote-mark.svg" alt="" />
+      <div class="citacao-texto">
+        <p>
+          Toda grande obra começa com uma <strong>boa solda</strong> — e o
+          <strong>parceiro certo</strong>.
+        </p>
+        <cite>– Equipe HWeld</cite>
+      </div>
+    </blockquote>
+  </section>
+</div>

@@ -94,6 +94,19 @@ pub struct CriarUsuarioReq {
     pub perfil: Perfil,
 }
 
+/// Auto-cadastro do portal B2B — cria empresa + contato principal e
+/// já retorna tokens (login direto, estilo e-commerce).
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct CadastroPortalReq {
+    pub nome: String,
+    pub email: String,
+    pub senha: String,
+    pub razao_social: String,
+    pub nome_fantasia: Option<String>,
+    pub cnpj: Option<String>,
+    pub telefone: Option<String>,
+}
+
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct AtualizarUsuarioReq {
     pub nome: Option<String>,

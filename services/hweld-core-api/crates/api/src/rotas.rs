@@ -112,6 +112,7 @@ pub fn configurar(cfg: &mut web::ServiceConfig, docs_habilitados: bool) {
                     .wrap(limite_auth())
                     .service(auth::login_staff)
                     .service(auth::login_portal)
+                    .service(auth::cadastro_portal)
                     .service(auth::refresh)
                     .service(auth::logout)
                     .service(auth::trocar_senha)

@@ -3,10 +3,11 @@ use actix_web::{delete, get, post, web, HttpRequest, HttpResponse};
 use hweld_application::ports::seguranca::ContextoSessao;
 use hweld_application::use_cases::auth::SessaoPortal;
 use hweld_domain::acesso::sessao::SessaoAutenticada;
+use hweld_domain::crm::empresa::{EmpresaInput, StatusEmpresa};
 use hweld_domain::shared::id::Id;
 use serde::Serialize;
 
-use crate::dto::{LoginReq, RefreshReq, TrocarSenhaReq};
+use crate::dto::{CadastroPortalReq, LoginReq, RefreshReq, TrocarSenhaReq};
 use crate::estado::AppState;
 use crate::extratores::{ip_cliente, AuthStaff};
 
@@ -125,6 +126,59 @@ pub async fn login_portal(
         .await?;
     tracing::info!(ip = ?ip_cliente(&req), contato = contato.id.valor(), "login portal");
     Ok(HttpResponse::Ok().json(PortalLoginResp {
+        tokens: tokens_resp(&tokens),
+        contato: ContatoResp {
+            id: contato.id.valor(),
+            nome: contato.nome,
+            empresa_id: contato.empresa_id.valor(),
+        },
+    }))
+}
+
+/// Auto-cadastro do portal B2B — empresa + contato principal, login direto.
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/portal/cadastro",
+    tag = "Auth",
+    request_body = CadastroPortalReq,
+    responses(
+        (status = 201, body = PortalLoginResp),
+        (status = 409, description = "e-mail já cadastrado"),
+        (status = 422, description = "dados inválidos"),
+    ),
+)]
+#[post("/portal/cadastro")]
+pub async fn cadastro_portal(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    body: web::Json<CadastroPortalReq>,
+) -> Resposta<HttpResponse> {
+    let empresa = EmpresaInput {
+        razao_social: body.razao_social.clone(),
+        nome_fantasia: body.nome_fantasia.clone(),
+        cnpj: body.cnpj.clone(),
+        inscricao_estadual: None,
+        segmento: None,
+        telefone: body.telefone.clone(),
+        email: Some(body.email.trim().to_lowercase()),
+        site: None,
+        status: StatusEmpresa::Ativo,
+        tabela_preco_id: None,
+        observacoes: None,
+    };
+    let SessaoPortal { tokens, contato } = state
+        .auth
+        .cadastro_portal(
+            &body.nome,
+            &body.email,
+            &body.senha,
+            empresa,
+            body.telefone.clone(),
+            &ctx_de(&req),
+        )
+        .await?;
+    tracing::info!(contato = contato.id.valor(), "cadastro portal");
+    Ok(HttpResponse::Created().json(PortalLoginResp {
         tokens: tokens_resp(&tokens),
         contato: ContatoResp {
             id: contato.id.valor(),

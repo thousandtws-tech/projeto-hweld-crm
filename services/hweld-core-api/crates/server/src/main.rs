@@ -338,6 +338,7 @@ fn montar_estado(
         auth: ServicoAuth::novo(
             usuarios_repo.clone(),
             contatos_repo.clone(),
+            empresas_repo.clone(),
             hasher.clone(),
             tokens,
             sessoes,

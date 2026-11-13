@@ -27,6 +27,16 @@ interface LoginPortalResp extends Tokens {
   contato: { id: number; nome: string; empresa_id: number };
 }
 
+export interface CadastroPortalReq {
+  nome: string;
+  email: string;
+  senha: string;
+  razao_social: string;
+  nome_fantasia: string | null;
+  cnpj: string | null;
+  telefone: string | null;
+}
+
 /**
  * Sessão do portal B2B (token `portal:<contato_id>`).
  * Access token em memória + sessionStorage (persiste reload, morre com a aba).
@@ -55,6 +65,15 @@ export class AuthStore {
       this.http.post<LoginPortalResp>(`${this.api}/auth/portal/login`, { email, senha }),
     );
     this.aplicarSessaoPortal(res, email);
+    await this.carregarPerfil();
+  }
+
+  /** Auto-cadastro B2B — cria empresa + contato e já entra logado. */
+  async cadastrar(dados: CadastroPortalReq): Promise<void> {
+    const res = await firstValueFrom(
+      this.http.post<LoginPortalResp>(`${this.api}/auth/portal/cadastro`, dados),
+    );
+    this.aplicarSessaoPortal(res, dados.email);
     await this.carregarPerfil();
   }
 
