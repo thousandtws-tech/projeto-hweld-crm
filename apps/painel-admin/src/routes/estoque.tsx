@@ -152,87 +152,10 @@ function EstoquePage() {
         </Alert>
       )}
 
-      {baixos.length > 0 && mostrarBaixos && (
-        <Metabox title="Produtos abaixo do mínimo" className="mb-5" contentClassName="p-0">
-          <Table size="small" className="w-full text-sm">
-            <TableHead>
-              <TableRow >
-                <TableCell >Produto</TableCell>
-                <TableCell align="right">Disponível</TableCell>
-                <TableCell align="right">Reservado</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {/* backend já envia o produto junto do saldo */}
-              {baixos.map((s) => (
-                <TableRow key={s.produto.id}>
-                  <TableCell >
-                    <Link
-                      to={`/catalogo/produtos/${s.produto.id}` as "/"}
-                      className="font-medium hover:underline"
-                    >
-                      {s.produto.sku} · {s.produto.nome}
-                    </Link>
-                  </TableCell>
-                  <TableCell align="right">
-                    {qty(s.saldo.quantidade_disponivel)}
-                  </TableCell>
-                  <TableCell align="right">
-                    {qty(s.saldo.quantidade_reservada)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Metabox>
-      )}
-
-      <Metabox title="Lançar movimentação" className="mb-5">
-        <Box component="form"
-          onSubmit={lancar}
-          className="grid items-end gap-5 sm:grid-cols-2 lg:grid-cols-[1fr_180px_160px_1fr_auto]"
-        >
-          <FormField label="Produto *">
-            <TextField size="small" fullWidth select
-              required
-              value={f.produto_id}
-              onChange={(e) => setF({ ...f, produto_id: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
-              <MenuItem value="">—</MenuItem>
-              {produtos.map((p) => (
-                <MenuItem key={p.id} value={String(p.id)}>
-                  {p.sku} · {p.nome}
-                </MenuItem>
-              ))}
-            </TextField>
-          </FormField>
-          <FormField label="Tipo">
-            <TextField size="small" fullWidth select
-              value={f.tipo}
-              onChange={(e) => setF({ ...f, tipo: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
-              {/* backend só aceita lançamento manual desses dois — reserva/saída
-                  nascem de pedidos e ordens de serviço */}
-              <MenuItem value="entrada">Entrada</MenuItem>
-              <MenuItem value="ajuste">Ajuste</MenuItem>
-            </TextField>
-          </FormField>
-          <FormField label="Quantidade *">
-            <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: f.tipo === "ajuste" ? undefined : "0.001" } }}
-              type="number"
-              required
-              value={f.quantidade}
-              onChange={(e) => setF({ ...f, quantidade: e.target.value })} />
-          </FormField>
-          <FormField label="Motivo">
-            <TextField size="small" fullWidth
-              value={f.motivo}
-              onChange={(e) => setF({ ...f, motivo: e.target.value })} />
-          </FormField>
-          <Button variant="contained" type="submit" sx={{ mb: 0.5 }}>Lançar</Button>
-        </Box>
-      </Metabox>
-
-      <Metabox
-        title="Extrato"
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* Coluna principal — ledger append-only */}
+        <Metabox
+        title="Extrato de movimentações"
         action={
           <span className="font-normal text-muted-foreground text-xs">
             append-only — correção é novo lançamento
@@ -299,7 +222,91 @@ function EstoquePage() {
             />
           </div>
         )}
-      </Metabox>
+        </Metabox>
+
+        {/* Sidebar — ação rápida + alertas, padrão WooCommerce */}
+        <div className="space-y-5">
+          <Metabox title="Lançar movimentação">
+            <Box component="form" onSubmit={lancar} className="space-y-5">
+              <FormField label="Produto *">
+                <TextField size="small" fullWidth select
+                  required
+                  value={f.produto_id}
+                  onChange={(e) => setF({ ...f, produto_id: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
+                  <MenuItem value="">Selecione…</MenuItem>
+                  {produtos.map((p) => (
+                    <MenuItem key={p.id} value={String(p.id)}>
+                      {p.sku} · {p.nome}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </FormField>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField label="Tipo">
+                  <TextField size="small" fullWidth select
+                    value={f.tipo}
+                    onChange={(e) => setF({ ...f, tipo: e.target.value })} slotProps={{ select: { displayEmpty: true } }}>
+                    {/* backend só aceita lançamento manual desses dois — reserva/saída
+                        nascem de pedidos e ordens de serviço */}
+                    <MenuItem value="entrada">Entrada</MenuItem>
+                    <MenuItem value="ajuste">Ajuste</MenuItem>
+                  </TextField>
+                </FormField>
+                <FormField label="Quantidade *">
+                  <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: f.tipo === "ajuste" ? undefined : "0.001" } }}
+                    type="number"
+                    required
+                    value={f.quantidade}
+                    onChange={(e) => setF({ ...f, quantidade: e.target.value })} />
+                </FormField>
+              </div>
+              <FormField label="Motivo">
+                <TextField size="small" fullWidth
+                  value={f.motivo}
+                  onChange={(e) => setF({ ...f, motivo: e.target.value })}
+                  placeholder="Opcional — ex.: balanço, compra, perda" />
+              </FormField>
+              <Button variant="contained" type="submit" fullWidth>Lançar</Button>
+            </Box>
+          </Metabox>
+
+          {baixos.length > 0 && mostrarBaixos && (
+            <Metabox
+              title="Abaixo do mínimo"
+              action={
+                <Typography variant="caption" color="warning.main" fontWeight={600}>
+                  {baixos.length} produto(s)
+                </Typography>
+              }
+              contentClassName="p-0"
+            >
+              {/* backend já envia o produto junto do saldo */}
+              {baixos.map((s, i) => (
+                <Link
+                  key={s.produto.id}
+                  to={`/catalogo/produtos/${s.produto.id}` as "/"}
+                  className={`flex items-center justify-between gap-3 px-5 py-3 text-sm transition hover:bg-secondary/60 ${
+                    i > 0 ? "border-t border-border/60" : ""
+                  }`}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{s.produto.nome}</span>
+                    <span className="block text-xs text-muted-foreground">{s.produto.sku}</span>
+                  </span>
+                  <span className="shrink-0 text-right text-xs">
+                    <span className="block font-semibold tabular-nums text-destructive">
+                      {qty(s.saldo.quantidade_disponivel)} disp.
+                    </span>
+                    <span className="block tabular-nums text-muted-foreground">
+                      {qty(s.saldo.quantidade_reservada)} reserv.
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </Metabox>
+          )}
+        </div>
+      </div>
     </>
   );
 }
