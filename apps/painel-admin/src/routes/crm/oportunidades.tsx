@@ -48,7 +48,13 @@ import type {
 import { catalogoService, crmService, orcamentosService, usuariosService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import { useAuth } from "@/store/auth-store";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 export const Route = createFileRoute("/crm/oportunidades")({
   component: OportunidadesPage,
@@ -663,89 +669,67 @@ function OportunidadesPage() {
         title="Oportunidades"
         subtitle={`Pipeline aberto: ${brl(metricas.pipelineAberto.toFixed(2))} · Ponderado: ${brl(metricas.forecastPonderado.toFixed(2))} · Ganho: ${brl(metricas.totalGanho.toFixed(2))} (${metricas.taxaConversao}%)`}
         action={
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center rounded-full border border-border bg-card p-1 text-xs">
-              <button
-                type="button"
-                onClick={() => setModoVisao("kanban")}
-                className={`rounded-full  px-3 py-1 font-medium transition ${
-                  modoVisao === "kanban"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Kanban
-              </button>
-              <button
-                type="button"
-                onClick={() => setModoVisao("lista")}
-                className={`rounded-full px-3 py-1 font-medium transition ${
-                  modoVisao === "lista"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Lista
-              </button>
-            </div>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap alignItems="center">
+            <ToggleButtonGroup
+              size="small"
+              exclusive
+              value={modoVisao}
+              onChange={(_, v) => v && setModoVisao(v)}
+              sx={{ "& .MuiToggleButton-root": { px: 1.5, py: 0.25, fontSize: 12 } }}
+            >
+              <ToggleButton value="kanban">Kanban</ToggleButton>
+              <ToggleButton value="lista">Lista</ToggleButton>
+            </ToggleButtonGroup>
 
             {podeEditar && (
-              <button
-                type="button"
-                onClick={() => abrirModalNovo("lead")}
-                className="rounded-full bg-lime px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-              >
+              <Button variant="contained" size="small" onClick={() => abrirModalNovo("lead")}>
                 + Oportunidade
-              </button>
+              </Button>
             )}
-          </div>
+          </Stack>
         }
       />
 
-      {/* Barra de controles minimalista */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-1 flex-wrap items-center gap-2">
-          <div className="flex min-w-52 flex-1 sm:max-w-xs items-center gap-2 rounded-2xl border border-border bg-card px-3 py-1.5">
-            <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <input
-              type="search"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar oportunidade ou empresa…"
-              className="w-full bg-transparent text-xs sm:text-sm outline-none placeholder:text-muted-foreground"
-            />
-          </div>
+      {/* Barra de controles */}
+      <Stack direction="row" flexWrap="wrap" useFlexGap spacing={1} alignItems="center" justifyContent="space-between">
+        <Stack direction="row" flexWrap="wrap" useFlexGap spacing={1} alignItems="center" flex={1}>
+          <TextField
+            size="small"
+            type="search"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar oportunidade ou empresa…"
+            sx={{ minWidth: 210, flex: { xs: 1, sm: "0 1 auto" } }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search size={14} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
 
-          <div className="inline-flex items-center rounded-2xl border border-border bg-card p-0.5 text-xs">
-            <button
-              type="button"
-              onClick={() => setFiltroResponsavel("todos")}
-              className={`rounded-xl px-2.5 py-1 font-medium transition ${
-                filtroResponsavel === "todos"
-                  ? "bg-secondary text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Todas
-            </button>
-            <button
-              type="button"
-              onClick={() => setFiltroResponsavel("meus")}
-              className={`rounded-xl px-2.5 py-1 font-medium transition ${
-                filtroResponsavel === "meus"
-                  ? "bg-secondary text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Minhas
-            </button>
-          </div>
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={filtroResponsavel}
+            onChange={(_, v) => v && setFiltroResponsavel(v)}
+            sx={{ "& .MuiToggleButton-root": { px: 1.25, py: 0.25, fontSize: 12 } }}
+          >
+            <ToggleButton value="todos">Todas</ToggleButton>
+            <ToggleButton value="meus">Minhas</ToggleButton>
+          </ToggleButtonGroup>
 
-          <select
+          <TextField
+            select
+            size="small"
             aria-label="Origem"
             value={filtroOrigem}
             onChange={(e) => setFiltroOrigem(e.target.value)}
-            className="rounded-2xl border border-border bg-card px-3 py-1.5 text-xs text-foreground outline-none"
+            slotProps={{ select: { native: true } }}
+            sx={{ minWidth: 150 }}
           >
             <option value="">Origem: todas</option>
             <option value="site">Site</option>
@@ -754,69 +738,67 @@ function OportunidadesPage() {
             <option value="prospeccao">Prospecção</option>
             <option value="ecommerce">E-commerce</option>
             <option value="outro">Outro</option>
-          </select>
+          </TextField>
 
-          <select
+          <TextField
+            select
+            size="small"
             aria-label="Prazo"
             value={filtroPrazo}
             onChange={(e) => setFiltroPrazo(e.target.value as FiltroPrazo)}
-            className="rounded-2xl border border-border bg-card px-3 py-1.5 text-xs text-foreground outline-none"
+            slotProps={{ select: { native: true } }}
+            sx={{ minWidth: 160 }}
           >
             <option value="todos">Prazo: todos</option>
             <option value="atrasadas">Atrasadas ({metricas.emAtencao})</option>
             <option value="semana">Próximos 7 dias</option>
             <option value="estagnadas">Estagnadas</option>
-          </select>
-        </div>
+          </TextField>
+        </Stack>
 
-        <div className="flex items-center gap-2">
-          <select
+        <Stack direction="row" spacing={1} alignItems="center">
+          <TextField
+            select
+            size="small"
             aria-label="Ordenar"
             value={ordenacao}
             onChange={(e) => {
               setOrdenacao(e.target.value as OrdenacaoFunil);
               setOrdemIntraColuna({});
             }}
-            className="rounded-2xl border border-border bg-card px-3 py-1.5 text-xs text-foreground outline-none"
+            slotProps={{ select: { native: true } }}
+            sx={{ minWidth: 170 }}
           >
             <option value="relevancia">Ordenar: Prioridade</option>
             <option value="maior_valor">Ordenar: Maior valor</option>
             <option value="fechamento">Ordenar: Fechamento</option>
             <option value="recentes">Ordenar: Recentes</option>
-          </select>
+          </TextField>
 
-          <button
-            type="button"
+          <Button
+            size="small"
+            variant={ocultarFechadas ? "contained" : "outlined"}
             onClick={() => setOcultarFechadas((v) => !v)}
-            className={`rounded-2xl border px-3 py-1.5 text-xs font-medium transition ${
-              ocultarFechadas
-                ? "border-primary/40 bg-secondary text-foreground"
-                : "border-border bg-card text-muted-foreground hover:text-foreground"
-            }`}
           >
             {ocultarFechadas ? "Mostrar fechadas" : "Ocultar fechadas"}
-          </button>
+          </Button>
 
           {temFiltrosAtivos && (
-            <button
-              type="button"
-              onClick={limparFiltros}
-              className="px-2 py-1 text-xs font-medium text-[#D92546] hover:underline"
-            >
+            <Button size="small" color="error" onClick={limparFiltros}>
               Limpar
-            </button>
+            </Button>
           )}
 
-          <button
-            type="button"
+          <IconButton
+            size="small"
             onClick={() => void carregar()}
             aria-label="Atualizar"
-            className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
+            sx={{ border: 1, borderColor: "divider" }}
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} />
-          </button>
-        </div>
-      </div>
+            <RefreshCw size={14} className={carregando ? "animate-spin" : ""} />
+          </IconButton>
+        </Stack>
+      </Stack>
 
       {/* Visão 1: Kanban Minimalista */}
       {modoVisao === "kanban" && board && (
