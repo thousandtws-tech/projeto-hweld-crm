@@ -3,7 +3,7 @@ import { ImagePlus, Loader2, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
-import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
+import { Metabox, PageHeader, StatusPill } from "@/components/ui-kit/primitives";
 import { FormField } from "@/components/ui-kit/FormDialog";
 import { exigePerfil } from "@/lib/guards";
 import { processarEEnviarComPreset } from "@/lib/midia";
@@ -29,7 +29,6 @@ export const Route = createFileRoute("/catalogo/categorias/")({
   component: CategoriasPage,
 });
 
-/** Árvore de categorias com upload de imagem da categoria, subcategorias e ordenação. */
 function CategoriasPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [todas, setTodas] = useState<Categoria[]>([]);
@@ -147,7 +146,6 @@ function CategoriasPage() {
     }
   };
 
-  // Árvore achatada em linhas (padrão WooCommerce: tabela com indentação "—").
   const linhas: { c: Categoria; nivel: number }[] = [];
   const empilhar = (c: Categoria, nivel: number) => {
     linhas.push({ c, nivel });
@@ -168,13 +166,9 @@ function CategoriasPage() {
       />
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
-        {/* Coluna esquerda — formulário (padrão WooCommerce) */}
-        <SectionCard>
-          <Typography variant="subtitle2" className="text-sm font-bold">
-            {editando ? `Editar: ${editando.nome}` : "Adicionar nova categoria"}
-          </Typography>
+        <Metabox title={editando ? `Editar: ${editando.nome}` : "Adicionar nova categoria"}>
           {editando && (
-            <Typography variant="caption" className="mt-0.5 block text-muted-foreground">
+            <Typography variant="caption" className="mb-3 block text-muted-foreground">
               ID #{editando.id} ·{" "}
               <Button variant="text" size="small" type="button" onClick={cancelarEdicao} sx={{ p: 0, minWidth: 0, fontSize: "inherit", textTransform: "none" }}>
                 cancelar edição
@@ -182,7 +176,7 @@ function CategoriasPage() {
             </Typography>
           )}
 
-          <Box component="form" onSubmit={salvar} className="mt-4 space-y-4">
+          <Box component="form" onSubmit={salvar} className="space-y-5">
             <FormField label="Nome *">
               <TextField
                 required
@@ -315,14 +309,18 @@ function CategoriasPage() {
               {salvando ? "Salvando…" : editando ? "Atualizar categoria" : "Adicionar nova categoria"}
             </Button>
           </Box>
-        </SectionCard>
+        </Metabox>
 
         {/* Coluna direita — listagem hierárquica */}
-        <SectionCard className="overflow-hidden p-0!">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <Typography variant="subtitle2" className="text-sm font-bold">Categorias</Typography>
-            <Typography variant="caption" className="text-muted-foreground">{linhas.length} cadastrada(s)</Typography>
-          </div>
+        <Metabox
+          title="Categorias"
+          action={
+            <Typography variant="caption" className="text-muted-foreground">
+              {linhas.length} cadastrada(s)
+            </Typography>
+          }
+          contentClassName="p-0"
+        >
           <div className="overflow-x-auto">
             <Table size="small">
               <TableHead>
@@ -408,7 +406,7 @@ function CategoriasPage() {
               </TableBody>
             </Table>
           </div>
-        </SectionCard>
+        </Metabox>
       </div>
     </>
   );

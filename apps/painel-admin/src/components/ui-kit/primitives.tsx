@@ -24,6 +24,49 @@ export function SectionCard({
   );
 }
 
+/** Card estilo metabox (WooCommerce): barra de título separada por divisor + corpo. */
+export function Metabox({
+  title,
+  action,
+  children,
+  className = "",
+  contentClassName = "p-4 sm:p-5",
+}: {
+  title: ReactNode;
+  action?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  contentClassName?: string;
+}) {
+  return (
+    <Card
+      variant="outlined"
+      className={className}
+      sx={{ borderRadius: 3, boxShadow: "var(--shadow-card)", overflow: "hidden" }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+          borderBottom: 1,
+          borderColor: "divider",
+          bgcolor: "rgba(0,0,0,0.015)",
+          px: { xs: 2, sm: 2.5 },
+          py: 1.25,
+        }}
+      >
+        <Typography variant="subtitle2" fontWeight={600} color="text.primary">
+          {title}
+        </Typography>
+        {action}
+      </Box>
+      <div className={contentClassName}>{children}</div>
+    </Card>
+  );
+}
+
 export function PageHeader({
   title,
   subtitle,

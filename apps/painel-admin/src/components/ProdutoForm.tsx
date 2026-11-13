@@ -1,15 +1,30 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, ImagePlus, Loader2, Star, Trash2, Upload, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  FileText,
+  ImagePlus,
+  Loader2,
+  Package,
+  SlidersHorizontal,
+  Star,
+  Tag,
+  Trash2,
+  Truck,
+  Upload,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
-import { PageHeader, SectionCard } from "@/components/ui-kit/primitives";
+import { Metabox, PageHeader } from "@/components/ui-kit/primitives";
 import { FormField } from "@/components/ui-kit/FormDialog";
 import { processarEEnviarImagem } from "@/lib/midia";
 import type { Categoria, Produto, ProdutoImagem } from "@/lib/models";
 import { catalogoService, estoqueService } from "@/lib/services";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
 import Checkbox from "@mui/material/Checkbox";
@@ -472,7 +487,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
         {/* ============ Coluna principal (conteúdo) ============ */}
         <div className="min-w-0 space-y-4">
           {/* Identificação — título + slug + resumo (padrão Woo) */}
-          <SectionCard className="space-y-4">
+          <Metabox title="Identificação" contentClassName="p-4 sm:p-5 space-y-5">
             <FormField label="Nome do produto *">
               <TextField
                 required
@@ -507,30 +522,59 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                 onChange={set("descricao_curta")}
               />
             </FormField>
-          </SectionCard>
+          </Metabox>
 
           {/* Dados do produto — painel com abas (padrão WooCommerce) */}
-          <SectionCard className="overflow-hidden p-0!">
-            <div className="border-b border-border px-4 pt-4">
-              <Typography variant="subtitle2" className="pb-1 text-sm font-bold">
+          <Card
+            variant="outlined"
+            sx={{ borderRadius: 3, boxShadow: "var(--shadow-card)", overflow: "hidden" }}
+          >
+            <Box
+              sx={{
+                borderBottom: 1,
+                borderColor: "divider",
+                bgcolor: "rgba(0,0,0,0.015)",
+                px: { xs: 2, sm: 2.5 },
+                py: 1.25,
+              }}
+            >
+              <Typography variant="subtitle2" fontWeight={600} color="text.primary">
                 Dados do produto
               </Typography>
+            </Box>
+            <div className="flex min-h-[300px] items-stretch">
               <Tabs
+                orientation="vertical"
                 value={aba}
                 onChange={(_, v) => setAba(v)}
-                variant="scrollable"
-                scrollButtons="auto"
-                sx={{ minHeight: 40, "& .MuiTab-root": { minHeight: 40, textTransform: "none" } }}
+                sx={{
+                  minWidth: { xs: 132, sm: 156 },
+                  flexShrink: 0,
+                  borderRight: 1,
+                  borderColor: "divider",
+                  py: 1,
+                  "& .MuiTab-root": {
+                    minHeight: 44,
+                    py: 1.25,
+                    px: 2,
+                    textTransform: "none",
+                    fontWeight: 500,
+                    fontSize: 13,
+                    justifyContent: "flex-start",
+                    color: "text.secondary",
+                    "&.Mui-selected": { color: "primary.main", bgcolor: "rgba(38,72,140,0.06)" },
+                  },
+                  "& .MuiTabs-indicator": { left: 0, right: "auto", width: 3, borderRadius: 2 },
+                }}
               >
-                <Tab label="Geral" />
-                <Tab label="Preços" />
-                <Tab label="Estoque" />
-                <Tab label="Entrega" />
-                <Tab label="Fiscal" />
+                <Tab icon={<SlidersHorizontal className="h-4 w-4" />} iconPosition="start" label="Geral" />
+                <Tab icon={<Tag className="h-4 w-4" />} iconPosition="start" label="Preços" />
+                <Tab icon={<Package className="h-4 w-4" />} iconPosition="start" label="Estoque" />
+                <Tab icon={<Truck className="h-4 w-4" />} iconPosition="start" label="Entrega" />
+                <Tab icon={<FileText className="h-4 w-4" />} iconPosition="start" label="Fiscal" />
               </Tabs>
-            </div>
 
-            <div className="p-4 sm:p-5">
+              <div className="min-w-0 flex-1 p-4 sm:p-6">
               {aba === 0 && (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField label="Marca">
@@ -684,17 +728,15 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                   </FormField>
                 </div>
               )}
+              </div>
             </div>
-          </SectionCard>
+          </Card>
         </div>
 
         {/* ============ Sidebar direita (publicar, organização, imagem) ============ */}
         <div className="space-y-4">
           {/* Publicar */}
-          <SectionCard className="space-y-4">
-            <Typography variant="subtitle2" className="text-sm font-bold">
-              Publicar
-            </Typography>
+          <Metabox title="Publicar" contentClassName="p-4 sm:p-5 space-y-4">
             <div className="flex flex-col items-start">
               <FormControlLabel
                 control={<Switch checked={f.ativo} onChange={setFlag("ativo")} />}
@@ -726,13 +768,10 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                 </Button>
               )}
             </Stack>
-          </SectionCard>
+          </Metabox>
 
           {/* Organização */}
-          <SectionCard className="space-y-4">
-            <Typography variant="subtitle2" className="text-sm font-bold">
-              Organização
-            </Typography>
+          <Metabox title="Organização">
             <FormField label="Categoria *">
               <TextField
                 required
@@ -751,23 +790,21 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                 ))}
               </TextField>
             </FormField>
-          </SectionCard>
+          </Metabox>
 
           {/* Imagem do produto — galeria com capa */}
-          <SectionCard className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Typography variant="subtitle2" className="text-sm font-bold">
-                  Imagem do produto
-                </Typography>
-                <Typography variant="caption" className="text-muted-foreground">
-                  1ª foto = capa · demais = galeria
-                </Typography>
-              </div>
+          <Metabox
+            title="Imagem do produto"
+            action={
               <Typography variant="caption" className="tabular-nums text-muted-foreground">
                 {galeria.length} foto(s)
               </Typography>
-            </div>
+            }
+            contentClassName="p-4 sm:p-5 space-y-3"
+          >
+            <Typography variant="caption" className="text-muted-foreground">
+              1ª foto = capa · demais = galeria
+            </Typography>
 
             {/* Palco da imagem selecionada / dropzone */}
             <div
@@ -961,7 +998,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                 Adicionar
               </Button>
             </div>
-          </SectionCard>
+          </Metabox>
         </div>
       </Box>
     </>
