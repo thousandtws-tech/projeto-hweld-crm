@@ -36,14 +36,12 @@ import { brl, fmtDataHora } from "@/lib/format";
 import type { Contato, Empresa, Oportunidade, Perfil, Produto } from "@/lib/models";
 import { buscaService, catalogoService, crmService } from "@/lib/services";
 import { useNotificacoes } from "@/lib/use-notificacoes";
-import { useRealtimeStatus } from "@/lib/use-realtime";
 import { useAuth } from "@/store/auth-store";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import Button from "@mui/material/Button";
 import ButtonBase from "@mui/material/ButtonBase";
-import Chip from "@mui/material/Chip";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
@@ -138,11 +136,7 @@ const NAV: NavSection[] = [
   },
   {
     secao: "Administração",
-    itens: [
-      { to: "/admin/usuarios", label: "Usuários", icon: Users, perfis: ["admin"] },
-      { to: "/admin/busca", label: "Busca", icon: Search, perfis: ["admin"] },
-      { to: "/auditoria", label: "Auditoria", icon: ShieldCheck, perfis: ["admin"] },
-    ],
+    itens: [{ to: "/admin/usuarios", label: "Usuários", icon: Users, perfis: ["admin"] }],
   },
 ];
 
@@ -446,7 +440,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { theme, toggleTheme } = useTheme();
   const { user, perfil, pode, signOut } = useAuth();
-  const sseOnline = useRealtimeStatus();
   const navigate = useNavigate();
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -899,28 +892,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               )}
             </div>
 
-            {/* Direita: Status SSE + Tema + Notificações + Conta */}
+            {/* Direita: Tema + Notificações + Conta */}
             <div className="flex shrink-0 items-center gap-2">
-              <Tooltip
-                title={
-                  sseOnline ? "Conectado em tempo real (SSE)" : "Reconectando stream de eventos…"
-                }
-              >
-                <Chip
-                  size="small"
-                  variant="outlined"
-                  icon={
-                    <span
-                      className={`ml-1 h-1.5 w-1.5 rounded-full ${
-                        sseOnline ? "bg-primary" : "bg-muted-foreground/40"
-                      }`}
-                    />
-                  }
-                  label={sseOnline ? "Online" : "Offline"}
-                  className="hidden rounded-xl border-border/70 bg-secondary/30 text-[11px] font-medium text-muted-foreground md:inline-flex"
-                />
-              </Tooltip>
-
               <Tooltip title={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}>
                 <IconButton
                   aria-label={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
