@@ -18,6 +18,10 @@ import type { TabelaPreco } from "@/lib/models";
 import { catalogoService, crmService } from "@/lib/services";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 
 export const Route = createFileRoute("/crm/empresas/nova")({
   component: EmpresaNovaPage,
@@ -247,11 +251,11 @@ function EmpresaNovaPage() {
         subtitle="Digite o CNPJ para preenchimento automático via Receita Federal ou preencha manualmente"
       />
 
-      <form onSubmit={salvar} className="space-y-4">
+      <Box component="form" onSubmit={salvar} className="space-y-4">
         {/* Bloco 1: Identificação e Consulta CNPJ */}
         <SectionCard className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-sm font-bold">Dados cadastrais</h2>
+            <Typography variant="h6" component="h2" className="text-sm font-bold">Dados cadastrais</Typography>
             {dadosReceita?.situacao_cadastral && (
               <span className="text-xs text-muted-foreground">
                 Receita:{dadosReceita.nome_fantasia ? ` ${dadosReceita.nome_fantasia} ·` : ""}{" "}
@@ -284,20 +288,12 @@ function EmpresaNovaPage() {
                     <Check className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-primary" />
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void consultarCnpj()}
-                  disabled={!cnpjCompleto || !cnpjValido || consultando}
-                  title="Consultar na Receita Federal"
-                  className="mt-1 inline-flex shrink-0 items-center gap-1.5 rounded-2xl border border-border bg-secondary/60 px-3 text-xs font-medium text-foreground transition hover:bg-secondary disabled:opacity-50"
-                >
-                  {consultando ? (
+                <Button variant="outlined" size="small" type="button" onClick={() => void consultarCnpj()} disabled={!cnpjCompleto || !cnpjValido || consultando} title="Consultar na Receita Federal">{consultando ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Search className="h-3.5 w-3.5" />
                   )}
-                  {consultando ? "Consultando" : "Consultar"}
-                </button>
+                  {consultando ? "Consultando" : "Consultar"}</Button>
               </div>
               {cnpjCompleto && !cnpjValido && (
                 <span className="mt-1 block text-[11px] text-[#D92546]">
@@ -393,19 +389,15 @@ function EmpresaNovaPage() {
         <SectionCard className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold">Endereço fiscal principal</h2>
-              <p className="text-xs text-muted-foreground">
+              <Typography variant="h6" component="h2" className="text-sm font-bold">Endereço fiscal principal</Typography>
+              <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
                 Preenchido automaticamente ao consultar o CNPJ (necessário para pedidos e notas)
-              </p>
+              </Typography>
             </div>
-            <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-foreground">
-              <input
-                type="checkbox"
-                checked={incluirEndereco}
-                onChange={(e) => setIncluirEndereco(e.target.checked)}
-              />
+            <Typography component="label" className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-foreground">
+              <Checkbox checked={incluirEndereco} onChange={(e) => setIncluirEndereco(e.target.checked)} />
               Cadastrar endereço agora
-            </label>
+            </Typography>
           </div>
 
           {incluirEndereco && (
@@ -459,19 +451,15 @@ function EmpresaNovaPage() {
         <SectionCard className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold">Contato principal</h2>
-              <p className="text-xs text-muted-foreground">
+              <Typography variant="h6" component="h2" className="text-sm font-bold">Contato principal</Typography>
+              <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
                 Comprador ou responsável comercial na empresa
-              </p>
+              </Typography>
             </div>
-            <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-foreground">
-              <input
-                type="checkbox"
-                checked={incluirContato}
-                onChange={(e) => setIncluirContato(e.target.checked)}
-              />
+            <Typography component="label" className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-foreground">
+              <Checkbox checked={incluirContato} onChange={(e) => setIncluirContato(e.target.checked)} />
               Cadastrar contato agora
-            </label>
+            </Typography>
           </div>
 
           {incluirContato && (
@@ -507,13 +495,7 @@ function EmpresaNovaPage() {
         </SectionCard>
 
         <div className="flex items-center gap-2">
-          <button
-            type="submit"
-            disabled={!podeSalvar}
-            className="rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
-          >
-            {salvando ? "Salvando…" : "Criar empresa"}
-          </button>
+          <Button variant="contained" type="submit" disabled={!podeSalvar}>{salvando ? "Salvando…" : "Criar empresa"}</Button>
           <Link
             to="/crm/empresas"
             className="rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium hover:bg-secondary"
@@ -521,7 +503,7 @@ function EmpresaNovaPage() {
             Cancelar
           </Link>
         </div>
-      </form>
+      </Box>
     </>
   );
 }

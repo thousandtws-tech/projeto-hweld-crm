@@ -19,6 +19,12 @@ import {
 import { claimsSessaoAtual, refreshTokens } from "@/lib/session";
 import { useAuth } from "@/store/auth-store";
 import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 
 export const Route = createFileRoute("/conta")({
   component: ContaPage,
@@ -270,14 +276,7 @@ function ContaPage() {
         title="Minha conta"
         subtitle="Identidade, escopo de permissões, carteira atribuída e segurança da sessão"
         action={
-          <button
-            type="button"
-            onClick={() => void carregar()}
-            aria-label="Atualizar"
-            className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} />
-          </button>
+          <IconButton size="small" type="button" onClick={() => void carregar()} aria-label="Atualizar"><RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} /></IconButton>
         }
       />
 
@@ -301,16 +300,16 @@ function ContaPage() {
               />
             </div>
 
-            <dl className="space-y-2 border-t border-border/60 pt-3 text-xs">
+            <Box component="dl" className="space-y-2 border-t border-border/60 pt-3 text-xs">
               <div className="flex items-center justify-between gap-2">
-                <dt className="text-muted-foreground">E-mail</dt>
-                <dd className="truncate font-medium text-foreground">{email}</dd>
+                <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">E-mail</Typography>
+                <Typography component="dd" variant="body2" className="truncate font-medium text-foreground">{email}</Typography>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <dt className="text-muted-foreground">Perfil de acesso</dt>
-                <dd className="font-medium capitalize text-foreground">{perfil ?? "—"}</dd>
+                <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">Perfil de acesso</Typography>
+                <Typography component="dd" variant="body2" className="font-medium capitalize text-foreground">{perfil ?? "—"}</Typography>
               </div>
-            </dl>
+            </Box>
 
             {permissoes.length > 0 && (
               <div className="border-t border-border/60 pt-3">
@@ -334,7 +333,7 @@ function ContaPage() {
           {/* Suas sessões — dispositivo/IP por sessão (estilo Google/GitHub) */}
           <SectionCard className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold">Sessões ativas</h2>
+              <Typography variant="h6" component="h2" className="text-sm font-bold">Sessões ativas</Typography>
               <span className="text-xs text-muted-foreground">JWT HS256</span>
             </div>
 
@@ -355,35 +354,35 @@ function ContaPage() {
                 </span>
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">
+              <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
                 {erroSessoes
                   ? "Não foi possível carregar as sessões."
                   : "Dispositivo desta sessão ainda não identificado (sessão anterior à atualização)."}
-              </p>
+              </Typography>
             )}
 
-            <dl className="space-y-2 text-xs">
+            <Box component="dl" className="space-y-2 text-xs">
               <div className="flex items-center justify-between">
-                <dt className="text-muted-foreground">Emitido em</dt>
-                <dd className="tabular-nums font-medium">
+                <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">Emitido em</Typography>
+                <Typography component="dd" variant="body2" className="tabular-nums font-medium">
                   {claims.emitidoEm ? fmtDataHora(claims.emitidoEm.toISOString()) : "—"}
-                </dd>
+                </Typography>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-muted-foreground">Expira em</dt>
-                <dd className="tabular-nums font-medium">
+                <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">Expira em</Typography>
+                <Typography component="dd" variant="body2" className="tabular-nums font-medium">
                   {minutosRestantesJwt !== null ? `${minutosRestantesJwt} min` : "—"}
-                </dd>
+                </Typography>
               </div>
               {claims.jti && (
                 <div className="flex items-center justify-between gap-2">
-                  <dt className="text-muted-foreground">Token ID</dt>
-                  <dd className="truncate font-mono text-[11px] text-muted-foreground">
+                  <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">Token ID</Typography>
+                  <Typography component="dd" variant="body2" className="truncate font-mono text-[11px] text-muted-foreground">
                     {claims.jti.slice(0, 13)}…
-                  </dd>
+                  </Typography>
                 </div>
               )}
-            </dl>
+            </Box>
 
             {outrasSessoes.length > 0 && (
               <div className="space-y-2.5 border-t border-border/60 pt-3">
@@ -391,14 +390,7 @@ function ContaPage() {
                   <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     Outras sessões
                   </div>
-                  <button
-                    type="button"
-                    disabled={encerrandoOutras}
-                    onClick={() => void encerrarOutrasSessoes()}
-                    className="text-[11px] font-medium text-[#D92546] hover:underline disabled:opacity-50"
-                  >
-                    {encerrandoOutras ? "Encerrando…" : "Encerrar todas as outras"}
-                  </button>
+                  <Button variant="text" type="button" disabled={encerrandoOutras} onClick={() => void encerrarOutrasSessoes()}>{encerrandoOutras ? "Encerrando…" : "Encerrar todas as outras"}</Button>
                 </div>
                 {outrasSessoes.map((s) => (
                   <div key={s.id} className="flex items-center gap-3">
@@ -411,35 +403,15 @@ function ContaPage() {
                         {s.ip ?? "—"} · {tempoRelativo(s.ultimo_acesso_em)}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      disabled={encerrandoId === s.id}
-                      onClick={() => void encerrarSessaoPorId(s.id)}
-                      className="shrink-0 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:border-[#D92546]/40 hover:text-[#D92546] disabled:opacity-50"
-                    >
-                      {encerrandoId === s.id ? "…" : "Encerrar"}
-                    </button>
+                    <Button variant="outlined" size="small" type="button" disabled={encerrandoId === s.id} onClick={() => void encerrarSessaoPorId(s.id)}>{encerrandoId === s.id ? "…" : "Encerrar"}</Button>
                   </div>
                 ))}
               </div>
             )}
 
             <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                disabled={renovandoSessao}
-                onClick={() => void renovarTokenManual()}
-                className="flex-1 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-secondary disabled:opacity-50"
-              >
-                {renovandoSessao ? "Renovando…" : "Renovar token"}
-              </button>
-              <button
-                type="button"
-                onClick={() => void encerrarSessao()}
-                className="rounded-full border border-[#D92546]/30 px-3 py-1.5 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10"
-              >
-                Encerrar sessão
-              </button>
+              <Button variant="outlined" size="small" type="button" disabled={renovandoSessao} onClick={() => void renovarTokenManual()}>{renovandoSessao ? "Renovando…" : "Renovar token"}</Button>
+              <Button variant="contained" color="error" size="small" type="button" onClick={() => void encerrarSessao()}>Encerrar sessão</Button>
             </div>
           </SectionCard>
         </div>
@@ -495,17 +467,12 @@ function ContaPage() {
           <SectionCard>
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-base font-bold">Alterar senha</h2>
-                <p className="text-xs text-muted-foreground">
+                <Typography variant="h6" component="h2" className="text-base font-bold">Alterar senha</Typography>
+                <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
                   A senha é protegida com Argon2id no servidor
-                </p>
+                </Typography>
               </div>
-              <button
-                type="button"
-                onClick={() => setMostrarSenhas((v) => !v)}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-              >
-                {mostrarSenhas ? (
+              <Button variant="text" size="small" type="button" onClick={() => setMostrarSenhas((v) => !v)}>{mostrarSenhas ? (
                   <>
                     <EyeOff className="h-3.5 w-3.5" /> Ocultar
                   </>
@@ -513,11 +480,10 @@ function ContaPage() {
                   <>
                     <Eye className="h-3.5 w-3.5" /> Mostrar
                   </>
-                )}
-              </button>
+                )}</Button>
             </div>
 
-            <form onSubmit={submitTrocarSenha} className="space-y-4">
+            <Box component="form" onSubmit={submitTrocarSenha} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-3">
                 <FormField label="Senha atual">
                   <TextField size="small" fullWidth
@@ -581,33 +547,27 @@ function ContaPage() {
               )}
 
               {mismatch && touched && (
-                <p className="text-xs text-[#D92546]">
+                <Typography variant="body2" component="p" className="text-xs text-[#D92546]">
                   A confirmação não confere com a nova senha.
-                </p>
+                </Typography>
               )}
               {igualAtual && (
-                <p className="text-xs text-[#D92546]">
+                <Typography variant="body2" component="p" className="text-xs text-[#D92546]">
                   A nova senha deve ser diferente da senha atual.
-                </p>
+                </Typography>
               )}
 
               <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={!valido || salvando}
-                  className="rounded-full bg-lime px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
-                >
-                  {salvando ? "Salvando…" : "Atualizar senha"}
-                </button>
+                <Button variant="contained" type="submit" disabled={!valido || salvando}>{salvando ? "Salvando…" : "Atualizar senha"}</Button>
               </div>
-            </form>
+            </Box>
           </SectionCard>
 
           {/* 3. Trilha de Atividade / Carteira Recente */}
           {perfil === "admin" ? (
             <SectionCard className="overflow-hidden p-0">
               <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
-                <h2 className="text-sm font-bold">Sua atividade recente na auditoria</h2>
+                <Typography variant="h6" component="h2" className="text-sm font-bold">Sua atividade recente na auditoria</Typography>
                 <Link
                   to="/auditoria"
                   className="text-xs font-medium text-muted-foreground hover:text-foreground"
@@ -616,11 +576,11 @@ function ContaPage() {
                 </Link>
               </div>
               {atividade.length === 0 ? (
-                <p className="px-5 py-6 text-xs text-muted-foreground">Nenhuma ação registrada.</p>
+                <Typography variant="body2" component="p" className="px-5 py-6 text-xs text-muted-foreground">Nenhuma ação registrada.</Typography>
               ) : (
-                <ul className="divide-y divide-border/60 text-xs">
+                <List disablePadding>
                   {atividade.map((a) => (
-                    <li key={a.id} className="flex items-center justify-between px-5 py-2.5">
+                    <ListItem key={a.id}>
                       <div>
                         <span className="font-semibold uppercase text-foreground">{a.acao}</span>
                         <span className="ml-2 text-muted-foreground">
@@ -630,16 +590,16 @@ function ContaPage() {
                       <span className="tabular-nums text-muted-foreground">
                         {fmtDataHora(a.created_at)}
                       </span>
-                    </li>
+                    </ListItem>
                   ))}
-                </ul>
+                </List>
               )}
             </SectionCard>
           ) : (
             oportunidades.length > 0 && (
               <SectionCard className="overflow-hidden p-0">
                 <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
-                  <h2 className="text-sm font-bold">Suas oportunidades recentes</h2>
+                  <Typography variant="h6" component="h2" className="text-sm font-bold">Suas oportunidades recentes</Typography>
                   <Link
                     to="/crm/oportunidades"
                     className="text-xs font-medium text-muted-foreground hover:text-foreground"
@@ -647,9 +607,9 @@ function ContaPage() {
                     Abrir pipeline →
                   </Link>
                 </div>
-                <ul className="divide-y divide-border/60 text-xs">
+                <List disablePadding>
                   {oportunidades.slice(0, 5).map((op) => (
-                    <li key={op.id} className="flex items-center justify-between px-5 py-2.5">
+                    <ListItem key={op.id}>
                       <span className="truncate font-medium text-foreground">{op.titulo}</span>
                       <div className="flex items-center gap-3">
                         <span className="tabular-nums text-muted-foreground">
@@ -657,9 +617,9 @@ function ContaPage() {
                         </span>
                         <StatusPill status={op.estagio} />
                       </div>
-                    </li>
+                    </ListItem>
                   ))}
-                </ul>
+                </List>
               </SectionCard>
             )
           )}

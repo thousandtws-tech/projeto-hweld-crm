@@ -10,6 +10,16 @@ import type { TabelaPreco } from "@/lib/models";
 import { catalogoService } from "@/lib/services";
 import { useResourceList } from "@/lib/use-resource-list";
 import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Chip from "@mui/material/Chip";
+import Checkbox from "@mui/material/Checkbox";
+import Typography from "@mui/material/Typography";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
 
 export const Route = createFileRoute("/catalogo/tabelas-preco/")({
   beforeLoad: exigePerfil("admin", "vendedor"),
@@ -76,87 +86,58 @@ function TabelasPrecoIndexPage() {
         subtitle="Listas de preços diferenciadas por cliente B2B (aplicadas automaticamente no portal e em orçamentos)"
         action={
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => abrirModal()}
-              className="inline-flex items-center gap-1.5 rounded-full bg-lime px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-            >
-              <Plus className="h-4 w-4" /> Nova tabela
-            </button>
-            <button
-              type="button"
-              onClick={l.recarregar}
-              aria-label="Atualizar"
-              className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} />
-            </button>
+            <Button variant="contained" type="button" onClick={() => abrirModal()}><Plus className="h-4 w-4" /> Nova tabela</Button>
+            <IconButton size="small" type="button" onClick={l.recarregar} aria-label="Atualizar"><RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} /></IconButton>
           </div>
         }
       />
 
       <SectionCard className="overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className={`w-full text-sm ${carregando ? "opacity-60" : ""}`}>
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-5 py-3 font-semibold">#</th>
-                <th className="px-4 py-3 font-semibold">Nome</th>
-                <th className="px-4 py-3 font-semibold">Descrição</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-5 py-3 text-right font-semibold" />
-              </tr>
-            </thead>
-            <tbody>
+          <Table size="small" className={`w-full text-sm ${carregando ? "opacity-60" : ""}`}>
+            <TableHead>
+              <TableRow >
+                <TableCell >#</TableCell>
+                <TableCell >Nome</TableCell>
+                <TableCell >Descrição</TableCell>
+                <TableCell >Status</TableCell>
+                <TableCell align="right" />
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {tabelas.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-muted-foreground">
+                <TableRow >
+                  <TableCell align="center" colSpan={5}>
                     Nenhuma tabela de preço cadastrada.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 tabelas.map((t) => (
-                  <tr
-                    key={t.id}
-                    onClick={() =>
+                  <TableRow key={t.id} onClick={() =>
                       navigate({ to: `/catalogo/tabelas-preco/${t.public_id}` as "/" })
-                    }
-                    className="cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
-                  >
-                    <td className="px-5 py-3 tabular-nums text-muted-foreground">#{t.id}</td>
-                    <td className="px-4 py-3 font-semibold">{t.nome}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{t.descricao || "—"}</td>
-                    <td className="px-4 py-3">
+                    } sx={{ cursor: "pointer" }} hover>
+                    <TableCell >#{t.id}</TableCell>
+                    <TableCell >{t.nome}</TableCell>
+                    <TableCell >{t.descricao || "—"}</TableCell>
+                    <TableCell >
                       <StatusPill
                         status={t.ativa ? "ativo" : "inativo"}
                         label={t.ativa ? "Ativa" : "Inativa"}
                       />
-                    </td>
-                    <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                    </TableCell>
+                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                       <div className="inline-flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => abrirModal(t)}
-                          className="rounded-full border border-border px-3 py-1 text-xs font-medium hover:bg-secondary"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
+                        <Button variant="outlined" size="small" type="button" onClick={() => abrirModal(t)}>Editar</Button>
+                        <Button variant="text" size="small" type="button" onClick={() =>
                             navigate({ to: `/catalogo/tabelas-preco/${t.public_id}` as "/" })
-                          }
-                          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-primary hover:bg-secondary"
-                        >
-                          Preços <ArrowRight className="h-3 w-3" />
-                        </button>
+                          }>Preços <ArrowRight className="h-3 w-3" /></Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {l.pagina && l.pagina.total_paginas > 1 && (
@@ -169,17 +150,7 @@ function TabelasPrecoIndexPage() {
                   Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
                 )
                 .map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => l.setPaginaNum(p)}
-                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
-                      p === l.paginaNum
-                        ? "bg-lime text-primary-foreground"
-                        : "text-muted-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    {p}
-                  </button>
+                  <Chip label={<>{p}</>} size="small" variant={(p === l.paginaNum) ? "filled" : "outlined"} color={(p === l.paginaNum) ? "primary" : "default"} key={p} onClick={() => l.setPaginaNum(p)} />
                 ))}
             </div>
           </div>
@@ -208,14 +179,10 @@ function TabelasPrecoIndexPage() {
             onChange={(e) => setF({ ...f, descricao: e.target.value })} />
         </FormField>
         <FormField label="" wide>
-          <label className="mt-1 flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={f.ativa}
-              onChange={(e) => setF({ ...f, ativa: e.target.checked })}
-            />
+          <Typography component="label" className="mt-1 flex items-center gap-2 text-sm text-foreground">
+            <Checkbox checked={f.ativa} onChange={(e) => setF({ ...f, ativa: e.target.checked })} />
             Tabela ativa
-          </label>
+          </Typography>
         </FormField>
       </FormDialog>
     </>

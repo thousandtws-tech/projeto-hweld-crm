@@ -14,6 +14,15 @@ import { useRealtimeEvent } from "@/lib/use-realtime";
 import { useResourceList } from "@/lib/use-resource-list";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Typography from "@mui/material/Typography";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import Box from "@mui/material/Box";
 
 export const Route = createFileRoute("/estoque")({
   beforeLoad: exigePerfil("admin", "estoque"),
@@ -131,54 +140,52 @@ function EstoquePage() {
       {baixos.length > 0 && (
         <div className="rounded-2xl bg-[var(--pill-warn-bg)] px-4 py-3 text-sm text-[var(--pill-warn-fg)]">
           <strong>{baixos.length}</strong> produto(s) abaixo do mínimo.{" "}
-          <button className="font-semibold underline" onClick={() => setMostrarBaixos((v) => !v)}>
-            {mostrarBaixos ? "ocultar" : "ver"}
-          </button>
+          <Button variant="text" onClick={() => setMostrarBaixos((v) => !v)}>{mostrarBaixos ? "ocultar" : "ver"}</Button>
         </div>
       )}
 
       {baixos.length > 0 && mostrarBaixos && (
         <SectionCard className="p-0 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-5 py-2.5 font-semibold">Produto</th>
-                <th className="px-5 py-2.5 text-right font-semibold">Disponível</th>
-                <th className="px-5 py-2.5 text-right font-semibold">Reservado</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table size="small" className="w-full text-sm">
+            <TableHead>
+              <TableRow >
+                <TableCell >Produto</TableCell>
+                <TableCell align="right">Disponível</TableCell>
+                <TableCell align="right">Reservado</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {/* backend já envia o produto junto do saldo */}
               {baixos.map((s) => (
-                <tr key={s.produto.id} className="border-b border-border/60 last:border-0">
-                  <td className="px-5 py-2.5">
+                <TableRow key={s.produto.id}>
+                  <TableCell >
                     <Link
                       to={`/catalogo/produtos/${s.produto.id}` as "/"}
                       className="font-medium hover:underline"
                     >
                       {s.produto.sku} · {s.produto.nome}
                     </Link>
-                  </td>
-                  <td className="px-5 py-2.5 text-right tabular-nums">
+                  </TableCell>
+                  <TableCell align="right">
                     {qty(s.saldo.quantidade_disponivel)}
-                  </td>
-                  <td className="px-5 py-2.5 text-right tabular-nums text-muted-foreground">
+                  </TableCell>
+                  <TableCell align="right">
                     {qty(s.saldo.quantidade_reservada)}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </SectionCard>
       )}
 
       <SectionCard>
-        <h2 className="mb-3 text-sm font-semibold">Lançar movimentação</h2>
-        <form
+        <Typography variant="h6" component="h2" className="mb-3 text-sm font-semibold">Lançar movimentação</Typography>
+        <Box component="form"
           onSubmit={lancar}
           className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_180px_160px_1fr_auto]"
         >
-          <label className="text-xs font-medium text-muted-foreground">
+          <Typography component="label" className="text-xs font-medium text-muted-foreground">
             Produto
             <TextField size="small" fullWidth select
               required
@@ -191,8 +198,8 @@ function EstoquePage() {
                 </MenuItem>
               ))}
             </TextField>
-          </label>
-          <label className="text-xs font-medium text-muted-foreground">
+          </Typography>
+          <Typography component="label" className="text-xs font-medium text-muted-foreground">
             Tipo
             <TextField size="small" fullWidth select
               value={f.tipo}
@@ -202,8 +209,8 @@ function EstoquePage() {
               <MenuItem value="entrada">Entrada</MenuItem>
               <MenuItem value="ajuste">Ajuste</MenuItem>
             </TextField>
-          </label>
-          <label className="text-xs font-medium text-muted-foreground">
+          </Typography>
+          <Typography component="label" className="text-xs font-medium text-muted-foreground">
             Quantidade
             <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: f.tipo === "ajuste" ? undefined : "0.001" } }}
               type="number"
@@ -212,17 +219,15 @@ function EstoquePage() {
               required
               value={f.quantidade}
               onChange={(e) => setF({ ...f, quantidade: e.target.value })} />
-          </label>
-          <label className="text-xs font-medium text-muted-foreground">
+          </Typography>
+          <Typography component="label" className="text-xs font-medium text-muted-foreground">
             Motivo
             <TextField size="small" fullWidth
               value={f.motivo}
               onChange={(e) => setF({ ...f, motivo: e.target.value })} />
-          </label>
-          <button className="rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
-            Lançar
-          </button>
-        </form>
+          </Typography>
+          <Button variant="contained" >Lançar</Button>
+        </Box>
       </SectionCard>
 
       <SectionCard className="p-0 overflow-hidden">
@@ -232,50 +237,50 @@ function EstoquePage() {
             (append-only — correção é novo lançamento)
           </span>
         </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-              <th className="px-5 py-2.5 font-semibold">Quando</th>
-              <th className="px-5 py-2.5 font-semibold">Produto</th>
-              <th className="px-5 py-2.5 font-semibold">Tipo</th>
-              <th className="px-5 py-2.5 text-right font-semibold">Qtd</th>
-              <th className="px-5 py-2.5 text-right font-semibold">Saldo</th>
-              <th className="px-5 py-2.5 font-semibold">Origem</th>
-              <th className="px-5 py-2.5 font-semibold">Motivo</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table size="small" className="w-full text-sm">
+          <TableHead>
+            <TableRow >
+              <TableCell >Quando</TableCell>
+              <TableCell >Produto</TableCell>
+              <TableCell >Tipo</TableCell>
+              <TableCell align="right">Qtd</TableCell>
+              <TableCell align="right">Saldo</TableCell>
+              <TableCell >Origem</TableCell>
+              <TableCell >Motivo</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {movimentacoes.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">
+              <TableRow >
+                <TableCell align="center" colSpan={7}>
                   Sem movimentações.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
             {movimentacoes.map((m) => (
-              <tr key={m.id} className="border-b border-border/60 last:border-0">
-                <td className="px-5 py-2.5 text-xs text-muted-foreground">
+              <TableRow key={m.id}>
+                <TableCell >
                   {fmtDataHora(m.created_at)}
-                </td>
-                <td className="px-5 py-2.5">{nomeProduto(m.produto_id)}</td>
-                <td className="px-5 py-2.5">
+                </TableCell>
+                <TableCell >{nomeProduto(m.produto_id)}</TableCell>
+                <TableCell >
                   <StatusPill
                     status={TIPO_COR[m.tipo] ?? "draft"}
                     label={TIPO_LABEL[m.tipo] ?? m.tipo}
                   />
-                </td>
-                <td className="px-5 py-2.5 text-right tabular-nums">{qty(m.quantidade)}</td>
-                <td className="px-5 py-2.5 text-right tabular-nums text-muted-foreground">
+                </TableCell>
+                <TableCell align="right">{qty(m.quantidade)}</TableCell>
+                <TableCell align="right">
                   {qty(m.saldo_antes)} → {qty(m.saldo_depois)}
-                </td>
-                <td className="px-5 py-2.5">
+                </TableCell>
+                <TableCell >
                   <Origem m={m} />
-                </td>
-                <td className="px-5 py-2.5">{m.motivo || "—"}</td>
-              </tr>
+                </TableCell>
+                <TableCell >{m.motivo || "—"}</TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
 
         {l.pagina && l.pagina.total_paginas > 1 && (
           <div className="flex items-center justify-between border-t border-border px-4 py-3">
@@ -287,17 +292,7 @@ function EstoquePage() {
                   Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
                 )
                 .map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => l.setPaginaNum(p)}
-                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
-                      p === l.paginaNum
-                        ? "bg-lime text-primary-foreground"
-                        : "text-muted-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    {p}
-                  </button>
+                  <Chip label={<>{p}</>} size="small" variant={(p === l.paginaNum) ? "filled" : "outlined"} color={(p === l.paginaNum) ? "primary" : "default"} key={p} onClick={() => l.setPaginaNum(p)} />
                 ))}
             </div>
           </div>

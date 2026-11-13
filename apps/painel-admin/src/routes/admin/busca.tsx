@@ -11,6 +11,11 @@ import type { ItemBuscaStaff } from "@/lib/models";
 import { buscaService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
 import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 
 export const Route = createFileRoute("/admin/busca")({
   beforeLoad: exigePerfil("admin"),
@@ -57,7 +62,7 @@ function BuscaPage() {
     <>
       <PageHeader title="Busca" />
       <SectionCard>
-        <form
+        <Box component="form"
           onSubmit={(e) => {
             e.preventDefault();
             void buscar(termo);
@@ -69,32 +74,25 @@ function BuscaPage() {
             aria-label="Buscar"
             value={termo}
             onChange={(e) => setTermo(e.target.value)} />
-          <button className="rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
-            Buscar
-          </button>
-        </form>
+          <Button variant="contained" >Buscar</Button>
+        </Box>
         <hr className="my-4 border-border" />
         <div className="flex flex-wrap items-center justify-between gap-2">
           <small className="text-xs text-muted-foreground">
             Reindexar o Elasticsearch (admin). Se o ES estiver fora, a busca responde 503.
           </small>
-          <button
-            onClick={() => void reindexar()}
-            className="rounded-full border border-destructive/30 px-3.5 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/10"
-          >
-            Reindexar
-          </button>
+          <Button variant="contained" color="error" size="small" onClick={() => void reindexar()}>Reindexar</Button>
         </div>
       </SectionCard>
 
       {resultados && (
         <SectionCard>
           {resultados.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum resultado.</p>
+            <Typography variant="body2" component="p" className="text-sm text-muted-foreground">Nenhum resultado.</Typography>
           ) : (
-            <ul className="divide-y divide-border/60">
+            <List disablePadding>
               {resultados.map((i) => (
-                <li key={i.id}>
+                <ListItem key={i.id}>
                   <Link
                     to={`/catalogo/produtos/${i.public_id}` as "/"}
                     className="flex items-center justify-between gap-3 py-2.5 text-sm hover:opacity-80"
@@ -118,9 +116,9 @@ function BuscaPage() {
                       {brl(i.preco_venda)}
                     </span>
                   </Link>
-                </li>
+                </ListItem>
               ))}
-            </ul>
+            </List>
           )}
         </SectionCard>
       )}

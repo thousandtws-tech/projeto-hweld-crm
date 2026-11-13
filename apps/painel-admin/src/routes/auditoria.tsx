@@ -5,6 +5,13 @@ import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primiti
 import type { LogAuditoria } from "@/lib/models";
 import { exigePerfil } from "@/lib/guards";
 import { useResourceList } from "@/lib/use-resource-list";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
 
 export const Route = createFileRoute("/auditoria")({
   beforeLoad: exigePerfil("admin"),
@@ -27,51 +34,46 @@ function AuditoriaPage() {
     <>
       <PageHeader title="Auditoria" />
       <SectionCard className="p-0 overflow-hidden">
-        <table className={`w-full text-sm ${l.carregando ? "opacity-55" : ""}`}>
-          <thead>
-            <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+        <Table size="small" className={`w-full text-sm ${l.carregando ? "opacity-55" : ""}`}>
+          <TableHead>
+            <TableRow >
               {["Quando", "Usuário", "Entidade", "Ação", ""].map((h) => (
-                <th key={h} className="px-4 py-3 font-semibold last:text-right">
+                <TableCell align="right" key={h}>
                   {h}
-                </th>
+                </TableCell>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {logs.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+              <TableRow >
+                <TableCell align="center" colSpan={5}>
                   Sem logs.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
             {logs.map((l) => (
               <Fragment key={l.id}>
-                <tr className="border-b border-border/60">
-                  <td className="px-4 py-3">
+                <TableRow >
+                  <TableCell >
                     <small className="text-xs text-muted-foreground">{l.created_at}</small>
-                  </td>
-                  <td className="px-4 py-3">#{l.usuario_id ?? "—"}</td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell >#{l.usuario_id ?? "—"}</TableCell>
+                  <TableCell >
                     {l.entidade} #{l.entidade_id}
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell >
                     <StatusPill status="draft" label={l.acao} />
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                  </TableCell>
+                  <TableCell align="right">
                     {(l.antes != null || l.depois != null) && (
-                      <button
-                        onClick={() => setAberto(aberto === l.id ? null : l.id)}
-                        className="rounded-full border border-border px-3 py-1 text-xs font-medium hover:bg-secondary"
-                      >
-                        {aberto === l.id ? "ocultar diff" : "ver diff"}
-                      </button>
+                      <Button variant="outlined" size="small" onClick={() => setAberto(aberto === l.id ? null : l.id)}>{aberto === l.id ? "ocultar diff" : "ver diff"}</Button>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
                 {aberto === l.id && (
-                  <tr key={`${l.id}-diff`} className="border-b border-border/60 bg-secondary/30">
-                    <td colSpan={5} className="px-4 py-3">
+                  <TableRow key={`${l.id}-diff`}>
+                    <TableCell colSpan={5}>
                       <div className="grid gap-2 md:grid-cols-2">
                         <div>
                           <strong className="text-xs">Antes</strong>
@@ -86,13 +88,13 @@ function AuditoriaPage() {
                           </pre>
                         </div>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 )}
               </Fragment>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
 
         {l.pagina && l.pagina.total_paginas > 1 && (
           <div className="flex items-center justify-between border-t border-border px-4 py-3">
@@ -104,17 +106,7 @@ function AuditoriaPage() {
                   Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
                 )
                 .map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => l.setPaginaNum(p)}
-                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
-                      p === l.paginaNum
-                        ? "bg-lime text-primary-foreground"
-                        : "text-muted-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    {p}
-                  </button>
+                  <Chip label={<>{p}</>} size="small" variant={(p === l.paginaNum) ? "filled" : "outlined"} color={(p === l.paginaNum) ? "primary" : "default"} key={p} onClick={() => l.setPaginaNum(p)} />
                 ))}
             </div>
           </div>

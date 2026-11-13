@@ -9,6 +9,16 @@ import type { Empresa, ItemPedido, NotaFiscal, Pagamento, Pedido } from "@/lib/m
 import { crmService, financeiroService, fiscalService, pedidosService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import { useAuth } from "@/store/auth-store";
+import Button from "@mui/material/Button";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
 
 export const Route = createFileRoute("/vendas/pedidos/$id")({
   component: PedidoDetalhePage,
@@ -159,14 +169,7 @@ function PedidoDetalhePage() {
                 <StatusPill status={pedido.status} label={statusLabel(pedido.status)} />
                 {podeVendas &&
                   (TRANSICOES[pedido.status] ?? []).map((t) => (
-                    <button
-                      key={t.para}
-                      type="button"
-                      onClick={() => void transicionar(pedido, t.para)}
-                      className={`rounded-full px-4 py-2 text-xs font-semibold hover:opacity-90 ${t.cor}`}
-                    >
-                      {t.rotulo}
-                    </button>
+                    <Button variant="text" size="small" key={t.para} type="button" onClick={() => void transicionar(pedido, t.para)}>{t.rotulo}</Button>
                   ))}
               </div>
             }
@@ -174,21 +177,12 @@ function PedidoDetalhePage() {
 
           {/* Stepper linear */}
           {pedido.status !== "cancelado" && (
-            <ol className="flex list-none gap-0 px-1" aria-label="Progresso do pedido">
+            <List component="ol" disablePadding>
               {STEPS.map((s, i) => {
                 const feito = i < idx(pedido.status);
                 const atual = i === idx(pedido.status);
                 return (
-                  <li
-                    key={s}
-                    className={`relative flex-1 pt-6 text-center text-[11px] font-medium ${
-                      atual
-                        ? "font-bold text-foreground"
-                        : feito
-                          ? "text-primary"
-                          : "text-muted-foreground"
-                    }`}
-                  >
+                  <ListItem key={s}>
                     <span
                       className={`absolute left-1/2 top-0 h-3.5 w-3.5 -translate-x-1/2 rounded-full ${
                         atual
@@ -199,10 +193,10 @@ function PedidoDetalhePage() {
                       }`}
                     />
                     {statusLabel(s)}
-                  </li>
+                  </ListItem>
                 );
               })}
-            </ol>
+            </List>
           )}
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
@@ -211,41 +205,41 @@ function PedidoDetalhePage() {
                 <div className="border-b border-border/60 px-5 py-3.5 text-sm font-bold">
                   Itens do pedido ({(pedido.itens ?? []).length})
                 </div>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-secondary/20 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                      <th className="px-5 py-2.5 font-semibold">SKU</th>
-                      <th className="px-4 py-2.5 font-semibold">Descrição</th>
-                      <th className="px-4 py-2.5 font-semibold">Qtd</th>
-                      <th className="px-4 py-2.5 font-semibold">Unit.</th>
-                      <th className="px-4 py-2.5 font-semibold">Desc.</th>
-                      <th className="px-5 py-2.5 text-right font-semibold">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table size="small" className="w-full text-sm">
+                  <TableHead>
+                    <TableRow >
+                      <TableCell >SKU</TableCell>
+                      <TableCell >Descrição</TableCell>
+                      <TableCell >Qtd</TableCell>
+                      <TableCell >Unit.</TableCell>
+                      <TableCell >Desc.</TableCell>
+                      <TableCell align="right">Total</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {(pedido.itens ?? []).length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">
+                      <TableRow >
+                        <TableCell align="center" colSpan={6}>
                           Sem itens.
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     )}
                     {(pedido.itens ?? []).map((i, ix) => (
-                      <tr key={ix} className="border-b border-border/60 last:border-0">
-                        <td className="px-5 py-2.5 font-mono text-xs tabular-nums text-muted-foreground">
+                      <TableRow key={ix}>
+                        <TableCell >
                           {i.sku}
-                        </td>
-                        <td className="px-4 py-2.5 font-medium">{i.descricao}</td>
-                        <td className="px-4 py-2.5 tabular-nums">{i.quantidade}</td>
-                        <td className="px-4 py-2.5 tabular-nums">{brl(i.preco_unitario)}</td>
-                        <td className="px-4 py-2.5 tabular-nums">{brl(i.desconto)}</td>
-                        <td className="px-5 py-2.5 text-right font-semibold tabular-nums">
+                        </TableCell>
+                        <TableCell >{i.descricao}</TableCell>
+                        <TableCell >{i.quantidade}</TableCell>
+                        <TableCell >{brl(i.preco_unitario)}</TableCell>
+                        <TableCell >{brl(i.desconto)}</TableCell>
+                        <TableCell align="right">
                           {brl(i.total)}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </SectionCard>
 
               {/* Vínculo Financeiro e Fiscal (visível para Admin e Financeiro) */}
@@ -253,7 +247,7 @@ function PedidoDetalhePage() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <SectionCard className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold">Parcelas ({parcelas.length})</h3>
+                      <Typography variant="subtitle1" component="h3" className="text-sm font-bold">Parcelas ({parcelas.length})</Typography>
                       <Link
                         to="/financeiro/pagamentos"
                         className="text-xs font-medium text-primary hover:underline"
@@ -262,13 +256,13 @@ function PedidoDetalhePage() {
                       </Link>
                     </div>
                     {parcelas.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">
+                      <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
                         Nenhuma parcela gerada para este pedido.
-                      </p>
+                      </Typography>
                     ) : (
-                      <ul className="divide-y divide-border/60 text-xs">
+                      <List disablePadding>
                         {parcelas.map((parc) => (
-                          <li key={parc.id} className="flex items-center justify-between py-2">
+                          <ListItem key={parc.id}>
                             <span>
                               {parc.parcela}ª · Venc. {fmtData(parc.vencimento)}
                             </span>
@@ -276,23 +270,17 @@ function PedidoDetalhePage() {
                               <span className="font-semibold tabular-nums">{brl(parc.valor)}</span>
                               <StatusPill status={parc.status} label={statusLabel(parc.status)} />
                             </div>
-                          </li>
+                          </ListItem>
                         ))}
-                      </ul>
+                      </List>
                     )}
                   </SectionCard>
 
                   <SectionCard className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold">Notas Fiscais ({notas.length})</h3>
+                      <Typography variant="subtitle1" component="h3" className="text-sm font-bold">Notas Fiscais ({notas.length})</Typography>
                       {notas.length === 0 && pedido.status !== "cancelado" ? (
-                        <button
-                          type="button"
-                          onClick={() => void emitirNfRapido()}
-                          className="rounded-full border border-border px-2.5 py-1 text-xs font-medium hover:bg-secondary"
-                        >
-                          + Emitir rascunho NF
-                        </button>
+                        <Button variant="outlined" size="small" type="button" onClick={() => void emitirNfRapido()}>+ Emitir rascunho NF</Button>
                       ) : (
                         <Link
                           to="/fiscal/notas"
@@ -303,18 +291,18 @@ function PedidoDetalhePage() {
                       )}
                     </div>
                     {notas.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">
+                      <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
                         Nenhuma nota fiscal emitida para este pedido.
-                      </p>
+                      </Typography>
                     ) : (
-                      <ul className="divide-y divide-border/60 text-xs">
+                      <List disablePadding>
                         {notas.map((nf) => (
-                          <li key={nf.id} className="flex items-center justify-between py-2">
+                          <ListItem key={nf.id}>
                             <span>NF #{nf.numero || nf.id}</span>
                             <StatusPill status={nf.status} label={statusLabel(nf.status)} />
-                          </li>
+                          </ListItem>
                         ))}
-                      </ul>
+                      </List>
                     )}
                   </SectionCard>
                 </div>
@@ -323,19 +311,19 @@ function PedidoDetalhePage() {
 
             <SectionCard className="h-fit space-y-4">
               <div>
-                <h2 className="text-sm font-bold">Resumo financeiro</h2>
-                <dl className="mt-3 grid grid-cols-2 gap-y-2 text-sm tabular-nums">
-                  <dt className="text-muted-foreground">Subtotal</dt>
-                  <dd className="text-right">{brl(pedido.subtotal)}</dd>
-                  <dt className="text-muted-foreground">Desconto</dt>
-                  <dd className="text-right">−{brl(pedido.desconto)}</dd>
-                  <dt className="text-muted-foreground">Frete</dt>
-                  <dd className="text-right">{brl(pedido.frete)}</dd>
-                  <dt className="border-t border-border pt-2 font-bold">Total</dt>
-                  <dd className="border-t border-border pt-2 text-right text-lg font-bold">
+                <Typography variant="h6" component="h2" className="text-sm font-bold">Resumo financeiro</Typography>
+                <Box component="dl" className="mt-3 grid grid-cols-2 gap-y-2 text-sm tabular-nums">
+                  <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">Subtotal</Typography>
+                  <Typography component="dd" variant="body2" className="text-right">{brl(pedido.subtotal)}</Typography>
+                  <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">Desconto</Typography>
+                  <Typography component="dd" variant="body2" className="text-right">−{brl(pedido.desconto)}</Typography>
+                  <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">Frete</Typography>
+                  <Typography component="dd" variant="body2" className="text-right">{brl(pedido.frete)}</Typography>
+                  <Typography component="dt" variant="caption" color="text.secondary" display="block" className="border-t border-border pt-2 font-bold">Total</Typography>
+                  <Typography component="dd" variant="body2" className="border-t border-border pt-2 text-right text-lg font-bold">
                     {brl(pedido.total)}
-                  </dd>
-                </dl>
+                  </Typography>
+                </Box>
               </div>
 
               <div className="space-y-3 border-t border-border pt-4 text-xs">
@@ -353,13 +341,13 @@ function PedidoDetalhePage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Condição de pagamento</span>
-                  <p className="mt-0.5 font-medium text-foreground">
+                  <Typography variant="body2" component="p" className="mt-0.5 font-medium text-foreground">
                     {pedido.condicao_pagamento || "—"}
-                  </p>
+                  </Typography>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Observações</span>
-                  <p className="mt-0.5 text-foreground">{pedido.observacoes || "—"}</p>
+                  <Typography variant="body2" component="p" className="mt-0.5 text-foreground">{pedido.observacoes || "—"}</Typography>
                 </div>
               </div>
             </SectionCard>

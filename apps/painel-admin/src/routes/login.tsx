@@ -5,6 +5,9 @@ import { z } from "zod";
 
 import { AuthField, AuthLayout, authInputClass } from "@/components/auth/AuthLayout";
 import { AuthError, useAuth } from "@/store/auth-store";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Box from "@mui/material/Box";
 
 const credentialsSchema = z.object({
   email: z.string().trim().email("Informe um e-mail válido"),
@@ -74,7 +77,7 @@ function LoginPage() {
       subtitle="Acesso restrito à equipe"
       footer={<>Problemas de acesso? Fale com um administrador.</>}
     >
-      <form onSubmit={onSubmit} className="space-y-4" noValidate>
+      <Box component="form" onSubmit={onSubmit} className="space-y-4" noValidate>
         {expired && (
           <div className="rounded-2xl bg-[var(--pill-warn-bg)] px-4 py-3 text-sm text-[var(--pill-warn-fg)]">
             Sessão expirada. Entre novamente.
@@ -87,46 +90,19 @@ function LoginPage() {
         )}
 
         <AuthField label="E-mail" error={errors.email}>
-          <input
-            type="email"
-            autoComplete="username"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="voce@hweld.com"
-            className={authInputClass}
-          />
+          <TextField size="small" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@hweld.com" />
         </AuthField>
 
         <AuthField label="Senha" error={errors.senha}>
           <div className="relative">
-            <input
-              type={showSenha ? "text" : "password"}
-              autoComplete="current-password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              placeholder="••••••••"
-              className={`${authInputClass} pr-11`}
-            />
-            <button
-              type="button"
-              aria-label={showSenha ? "Ocultar senha" : "Mostrar senha"}
-              onClick={() => setShowSenha((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              {showSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+            <TextField size="small" type={showSenha ? "text" : "password"} autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="••••••••" />
+            <Button variant="text" type="button" aria-label={showSenha ? "Ocultar senha" : "Mostrar senha"} onClick={() => setShowSenha((v) => !v)}>{showSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
           </div>
         </AuthField>
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-lime px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-        >
-          {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          {submitting ? "Entrando…" : "Entrar"}
-        </button>
-      </form>
+        <Button variant="contained" type="submit" disabled={submitting}>{submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+          {submitting ? "Entrando…" : "Entrar"}</Button>
+      </Box>
     </AuthLayout>
   );
 }

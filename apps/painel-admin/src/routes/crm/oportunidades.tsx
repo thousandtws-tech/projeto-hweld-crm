@@ -57,6 +57,16 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import MenuItem from "@mui/material/MenuItem";
 import { DateField, DateTimeField } from "@/components/ui-kit/DateField";
+import Chip from "@mui/material/Chip";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Typography from "@mui/material/Typography";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import Box from "@mui/material/Box";
 
 export const Route = createFileRoute("/crm/oportunidades")({
   component: OportunidadesPage,
@@ -851,17 +861,10 @@ function OportunidadesPage() {
                         </span>
                       )}
                       {podeEditar && est !== "perdida" && est !== "ganha" && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
+                        <IconButton size="small" type="button" onClick={(e) => {
                             e.stopPropagation();
                             abrirModalNovo(est);
-                          }}
-                          title={`Adicionar em ${cfg.titulo}`}
-                          className="grid h-6 w-6 place-items-center rounded-full text-muted-foreground transition hover:bg-card hover:text-foreground"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
+                          }} title={`Adicionar em ${cfg.titulo}`}><Plus className="h-3.5 w-3.5" /></IconButton>
                       )}
                     </div>
                   </div>
@@ -904,43 +907,39 @@ function OportunidadesPage() {
       {modoVisao === "lista" && (
         <SectionCard className="overflow-hidden p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-3 font-semibold">Título</th>
-                  <th className="px-4 py-3 font-semibold">Empresa</th>
-                  <th className="px-4 py-3 font-semibold">Estágio</th>
-                  <th className="px-4 py-3 font-semibold">Previsão</th>
-                  <th className="px-4 py-3 font-semibold">Origem</th>
-                  <th className="px-4 py-3 text-right font-semibold">Valor est.</th>
-                  <th className="px-4 py-3 text-right font-semibold" />
-                </tr>
-              </thead>
-              <tbody>
+            <Table size="small" className="w-full text-sm">
+              <TableHead>
+                <TableRow >
+                  <TableCell >Título</TableCell>
+                  <TableCell >Empresa</TableCell>
+                  <TableCell >Estágio</TableCell>
+                  <TableCell >Previsão</TableCell>
+                  <TableCell >Origem</TableCell>
+                  <TableCell align="right">Valor est.</TableCell>
+                  <TableCell align="right" />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {opsFiltradas.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                  <TableRow >
+                    <TableCell align="center" colSpan={7}>
                       Nenhuma oportunidade encontrada.
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   opsFiltradas.map((o) => {
                     const cfg = CONFIG_ESTAGIOS[o.estagio] ?? CONFIG_ESTAGIOS.lead;
                     const saude = avaliarSaudeNegocio(o);
                     return (
-                      <tr
-                        key={o.id}
-                        onClick={() => setSelecionadaId(o.id)}
-                        className="cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
-                      >
-                        <td className="px-4 py-3 font-medium">{o.titulo}</td>
-                        <td className="px-4 py-3 text-muted-foreground">
+                      <TableRow key={o.id} onClick={() => setSelecionadaId(o.id)} sx={{ cursor: "pointer" }} hover>
+                        <TableCell >{o.titulo}</TableCell>
+                        <TableCell >
                           {empresaNome(o.empresa_id)}
-                        </td>
-                        <td className="px-4 py-3">
+                        </TableCell>
+                        <TableCell >
                           <StatusPill status={o.estagio} label={cfg.titulo} />
-                        </td>
-                        <td className="px-4 py-3 text-xs">
+                        </TableCell>
+                        <TableCell >
                           <span
                             className={
                               saude.status === "atrasada"
@@ -954,31 +953,25 @@ function OportunidadesPage() {
                               ? `${fmtData(o.data_prevista_fechamento)} (${saude.rotulo})`
                               : "—"}
                           </span>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                        </TableCell>
+                        <TableCell >
                           {o.origem ? (ORIGEM_LABELS[o.origem] ?? o.origem) : "—"}
-                        </td>
-                        <td className="px-4 py-3 text-right font-medium tabular-nums">
+                        </TableCell>
+                        <TableCell align="right">
                           {o.valor_estimado != null ? brl(o.valor_estimado) : "—"}
-                        </td>
-                        <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        </TableCell>
+                        <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                           {podeEditar && cfg.proximo && (
-                            <button
-                              type="button"
-                              onClick={() => iniciarTransicao(o, cfg.proximo!)}
-                              className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium hover:bg-secondary"
-                            >
-                              {cfg.rotuloAvancar}
-                              <ChevronRight className="h-3 w-3" />
-                            </button>
+                            <Button variant="outlined" size="small" type="button" onClick={() => iniciarTransicao(o, cfg.proximo!)}>{cfg.rotuloAvancar}
+                              <ChevronRight className="h-3 w-3" /></Button>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   })
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </SectionCard>
       )}
@@ -1078,18 +1071,7 @@ function OportunidadesPage() {
       >
         <div className="sm:col-span-2 flex flex-wrap gap-1.5">
           {MOTIVOS_PERDA_SUGERIDOS.map((sugestao) => (
-            <button
-              key={sugestao}
-              type="button"
-              onClick={() => setMotivoPerda(sugestao)}
-              className={`rounded-full border px-2.5 py-1 text-xs transition ${
-                motivoPerda === sugestao
-                  ? "border-[#D92546] bg-[#D92546]/10 font-medium text-[#D92546]"
-                  : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {sugestao}
-            </button>
+            <Chip label={<>{sugestao}</>} size="small" variant={(motivoPerda === sugestao) ? "filled" : "outlined"} color={(motivoPerda === sugestao) ? "primary" : "default"} key={sugestao} onClick={() => setMotivoPerda(sugestao)} />
           ))}
         </div>
         <FormField label="Motivo (obrigatório)" wide>
@@ -1150,24 +1132,17 @@ function DealKanbanCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+          <Typography variant="body2" component="p" className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
             {o.titulo}
-          </p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">{empresaNome}</p>
+          </Typography>
+          <Typography variant="body2" component="p" className="mt-0.5 truncate text-xs text-muted-foreground">{empresaNome}</Typography>
         </div>
 
         <div className="flex shrink-0 items-center gap-1" data-no-card-open>
           {salvando && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                aria-label="Opções"
-                className="grid h-6 w-6 place-items-center rounded-lg text-muted-foreground opacity-0 transition hover:bg-secondary hover:text-foreground group-hover:opacity-100 data-[state=open]:opacity-100"
-              >
-                <MoreHorizontal className="h-3.5 w-3.5" />
-              </button>
+              <IconButton size="small" type="button" onClick={(e) => e.stopPropagation()} aria-label="Opções"><MoreHorizontal className="h-3.5 w-3.5" /></IconButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44 rounded-2xl">
               <DropdownMenuItem onSelect={onOpen}>Editar detalhes</DropdownMenuItem>
@@ -1214,7 +1189,7 @@ function DealKanbanCard({
       </div>
 
       {o.estagio === "perdida" && o.motivo_perda && (
-        <p className="mt-2 truncate text-[11px] text-[#D92546]">{o.motivo_perda}</p>
+        <Typography variant="body2" component="p" className="mt-2 truncate text-[11px] text-[#D92546]">{o.motivo_perda}</Typography>
       )}
 
       <div className="mt-3 flex items-center justify-between gap-2 pt-0.5 text-xs">
@@ -1519,19 +1494,7 @@ function OportunidadeSheet({
             {ESTAGIOS.map((est) => {
               const ativo = oportunidade.estagio === est;
               return (
-                <button
-                  key={est}
-                  type="button"
-                  disabled={!podeEditar || ativo}
-                  onClick={() => onMoverEstagio(oportunidade, est)}
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
-                    ativo
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary/60 text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {CONFIG_ESTAGIOS[est].titulo}
-                </button>
+                <Chip label={<>{CONFIG_ESTAGIOS[est].titulo}</>} size="small" variant={(ativo) ? "filled" : "outlined"} color={(ativo) ? "primary" : "default"} key={est} disabled={!podeEditar || ativo} onClick={() => onMoverEstagio(oportunidade, est)} />
               );
             })}
           </div>
@@ -1558,7 +1521,7 @@ function OportunidadeSheet({
                 </div>
               )}
 
-              <form onSubmit={salvarEdicao} className="grid gap-4 sm:grid-cols-2">
+              <Box component="form" onSubmit={salvarEdicao} className="grid gap-4 sm:grid-cols-2">
                 <FormField label="Título" wide>
                   <TextField size="small" fullWidth
                     required
@@ -1637,21 +1600,15 @@ function OportunidadeSheet({
 
                 {podeEditar && (
                   <div className="flex justify-end sm:col-span-2">
-                    <button
-                      type="submit"
-                      disabled={salvandoEdicao}
-                      className="rounded-full bg-lime px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-                    >
-                      {salvandoEdicao ? "Salvando…" : "Salvar"}
-                    </button>
+                    <Button variant="contained" type="submit" disabled={salvandoEdicao}>{salvandoEdicao ? "Salvando…" : "Salvar"}</Button>
                   </div>
                 )}
-              </form>
+              </Box>
             </TabsContent>
 
             <TabsContent value="timeline" className="mt-4 space-y-4">
               {podeEditar && (
-                <form
+                <Box component="form"
                   onSubmit={registrarInteracao}
                   className="grid gap-3 rounded-2xl border border-border p-4 sm:grid-cols-2"
                 >
@@ -1696,25 +1653,19 @@ function OportunidadeSheet({
                       } />
                   </FormField>
                   <div className="flex justify-end sm:col-span-2">
-                    <button
-                      type="submit"
-                      disabled={salvandoInteracao}
-                      className="rounded-full bg-lime px-4 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-                    >
-                      {salvandoInteracao ? "Registrando…" : "Registrar"}
-                    </button>
+                    <Button variant="contained" size="small" type="submit" disabled={salvandoInteracao}>{salvandoInteracao ? "Registrando…" : "Registrar"}</Button>
                   </div>
-                </form>
+                </Box>
               )}
 
               {carregandoDados ? (
-                <p className="py-6 text-center text-xs text-muted-foreground">Carregando…</p>
+                <Typography variant="body2" component="p" className="py-6 text-center text-xs text-muted-foreground">Carregando…</Typography>
               ) : interacoes.length === 0 ? (
-                <p className="py-6 text-center text-xs text-muted-foreground">Nenhuma interação.</p>
+                <Typography variant="body2" component="p" className="py-6 text-center text-xs text-muted-foreground">Nenhuma interação.</Typography>
               ) : (
-                <ul className="divide-y divide-border/60">
+                <List disablePadding>
                   {interacoes.map((item) => (
-                    <li key={item.id} className="py-3 text-xs">
+                    <ListItem key={item.id}>
                       <div className="flex items-center justify-between">
                         <strong className="capitalize">
                           {item.assunto || String(item.tipo).replaceAll("_", " ")}
@@ -1724,17 +1675,17 @@ function OportunidadeSheet({
                         </span>
                       </div>
                       {item.descricao && (
-                        <p className="mt-1 text-muted-foreground">{item.descricao}</p>
+                        <Typography variant="body2" component="p" className="mt-1 text-muted-foreground">{item.descricao}</Typography>
                       )}
                       {item.proxima_acao && (
-                        <p className="mt-1 font-medium text-[#D9486E]">
+                        <Typography variant="body2" component="p" className="mt-1 font-medium text-[#D9486E]">
                           Próxima ação: {item.proxima_acao}
                           {item.proxima_acao_em ? ` (${fmtDataHora(item.proxima_acao_em)})` : ""}
-                        </p>
+                        </Typography>
                       )}
-                    </li>
+                    </ListItem>
                   ))}
-                </ul>
+                </List>
               )}
             </TabsContent>
 
@@ -1742,18 +1693,12 @@ function OportunidadeSheet({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold">Orçamentos vinculados</span>
                 {podeEditar && (
-                  <button
-                    type="button"
-                    onClick={() => setNovoOrcOpen((v) => !v)}
-                    className="rounded-full bg-lime px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
-                  >
-                    {novoOrcOpen ? "Fechar" : "+ Orçamento"}
-                  </button>
+                  <Button variant="contained" size="small" type="button" onClick={() => setNovoOrcOpen((v) => !v)}>{novoOrcOpen ? "Fechar" : "+ Orçamento"}</Button>
                 )}
               </div>
 
               {novoOrcOpen && (
-                <form
+                <Box component="form"
                   onSubmit={gerarOrcamento}
                   className="grid gap-3 rounded-2xl border border-border p-4 sm:grid-cols-2"
                 >
@@ -1797,25 +1742,19 @@ function OportunidadeSheet({
                       onChange={(e) => setFOrc({ ...fOrc, condicao_pagamento: e.target.value })} />
                   </FormField>
                   <div className="flex justify-end gap-2 sm:col-span-2">
-                    <button
-                      type="submit"
-                      disabled={criandoOrc}
-                      className="rounded-full bg-lime px-4 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-                    >
-                      {criandoOrc ? "Criando…" : "Criar orçamento"}
-                    </button>
+                    <Button variant="contained" size="small" type="submit" disabled={criandoOrc}>{criandoOrc ? "Criando…" : "Criar orçamento"}</Button>
                   </div>
-                </form>
+                </Box>
               )}
 
               {orcamentos.length === 0 ? (
-                <p className="py-6 text-center text-xs text-muted-foreground">
+                <Typography variant="body2" component="p" className="py-6 text-center text-xs text-muted-foreground">
                   Nenhum orçamento vinculado.
-                </p>
+                </Typography>
               ) : (
-                <ul className="divide-y divide-border/60">
+                <List disablePadding>
                   {orcamentos.map((orc) => (
-                    <li key={orc.id} className="flex items-center justify-between py-3 text-sm">
+                    <ListItem key={orc.id}>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">#{orc.numero || orc.id}</span>
@@ -1835,9 +1774,9 @@ function OportunidadeSheet({
                           Abrir <ArrowRight className="h-3 w-3" />
                         </Link>
                       </div>
-                    </li>
+                    </ListItem>
                   ))}
-                </ul>
+                </List>
               )}
             </TabsContent>
           </Tabs>

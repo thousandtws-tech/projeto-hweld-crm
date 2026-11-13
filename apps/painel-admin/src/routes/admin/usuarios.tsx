@@ -10,6 +10,13 @@ import { exigePerfil } from "@/lib/guards";
 import { useResourceList } from "@/lib/use-resource-list";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
 
 export const Route = createFileRoute("/admin/usuarios")({
   beforeLoad: exigePerfil("admin"),
@@ -79,69 +86,50 @@ function UsuariosPage() {
       <PageHeader
         title="Usuários"
         action={
-          <button
-            onClick={() => abrir()}
-            className="rounded-full bg-lime px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-          >
-            + Usuário
-          </button>
+          <Button variant="contained" onClick={() => abrir()}>+ Usuário</Button>
         }
       />
 
       <SectionCard className="p-0 overflow-hidden">
-        <table className={`w-full text-sm ${l.carregando ? "opacity-55" : ""}`}>
-          <thead>
-            <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+        <Table size="small" className={`w-full text-sm ${l.carregando ? "opacity-55" : ""}`}>
+          <TableHead>
+            <TableRow >
               {["Nome", "E-mail", "Perfil", "Ativo", ""].map((h) => (
-                <th key={h} className="px-4 py-3 font-semibold last:text-right">
+                <TableCell align="right" key={h}>
                   {h}
-                </th>
+                </TableCell>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {usuarios.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+              <TableRow >
+                <TableCell align="center" colSpan={5}>
                   Nenhum usuário.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
             {usuarios.map((u) => (
-              <tr key={u.id} className="border-b border-border/60 last:border-0">
-                <td className="px-4 py-3 font-medium">{u.nome}</td>
-                <td className="px-4 py-3">{u.email}</td>
-                <td className="px-4 py-3">
+              <TableRow key={u.id}>
+                <TableCell >{u.nome}</TableCell>
+                <TableCell >{u.email}</TableCell>
+                <TableCell >
                   <StatusPill status="draft" label={u.perfil} />
-                </td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell >
                   <StatusPill
                     status={u.ativo ? "ativo" : "inativo"}
                     label={u.ativo ? "Sim" : "Não"}
                   />
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => abrir(u)}
-                    className="mr-2 rounded-full border border-border px-3 py-1 text-xs font-medium hover:bg-secondary"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => void alternarAtivo(u)}
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      u.ativo
-                        ? "border border-destructive/30 text-destructive hover:bg-destructive/10"
-                        : "bg-lime text-primary-foreground hover:opacity-90"
-                    }`}
-                  >
-                    {u.ativo ? "Desativar" : "Ativar"}
-                  </button>
-                </td>
-              </tr>
+                </TableCell>
+                <TableCell align="right">
+                  <Button variant="outlined" size="small" onClick={() => abrir(u)}>Editar</Button>
+                  <Chip label={<>{u.ativo ? "Desativar" : "Ativar"}</>} size="small" variant={(u.ativo) ? "filled" : "outlined"} color={(u.ativo) ? "primary" : "default"} onClick={() => void alternarAtivo(u)} />
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
 
         {l.pagina && l.pagina.total_paginas > 1 && (
           <div className="flex items-center justify-between border-t border-border px-4 py-3">
@@ -153,17 +141,7 @@ function UsuariosPage() {
                   Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
                 )
                 .map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => l.setPaginaNum(p)}
-                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
-                      p === l.paginaNum
-                        ? "bg-lime text-primary-foreground"
-                        : "text-muted-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    {p}
-                  </button>
+                  <Chip label={<>{p}</>} size="small" variant={(p === l.paginaNum) ? "filled" : "outlined"} color={(p === l.paginaNum) ? "primary" : "default"} key={p} onClick={() => l.setPaginaNum(p)} />
                 ))}
             </div>
           </div>

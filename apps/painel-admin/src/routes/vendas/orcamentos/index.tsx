@@ -22,6 +22,14 @@ import { useAuth } from "@/store/auth-store";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import { DateField } from "@/components/ui-kit/DateField";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Chip from "@mui/material/Chip";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
 
 export const Route = createFileRoute("/vendas/orcamentos/")({
   component: OrcamentosIndexPage,
@@ -343,13 +351,7 @@ function OrcamentosIndexPage() {
         subtitle={`Em negociação: ${brl(metricas.valorEmAberto.toFixed(2))} (${metricas.emAbertoCount}) · Aprovados p/ converter: ${brl(metricas.valorAprovado.toFixed(2))} (${metricas.aprovadosCount}) · Convertidos: ${brl(metricas.valorConvertido.toFixed(2))}`}
         action={
           podeEditar && (
-            <button
-              type="button"
-              onClick={abrirModalNovo}
-              className="inline-flex items-center gap-1.5 rounded-full bg-lime px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-            >
-              <Plus className="h-4 w-4" /> Novo orçamento
-            </button>
+            <Button variant="contained" type="button" onClick={abrirModalNovo}><Plus className="h-4 w-4" /> Novo orçamento</Button>
           )
         }
       />
@@ -359,45 +361,18 @@ function OrcamentosIndexPage() {
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <div className="flex min-w-52 flex-1 sm:max-w-xs items-center gap-2 rounded-2xl border border-border bg-card px-3 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <input
-              type="search"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar por nº ou empresa…"
-              className="w-full bg-transparent text-xs sm:text-sm outline-none placeholder:text-muted-foreground"
-            />
+            <TextField size="small" type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nº ou empresa…" />
           </div>
 
           <div className="flex flex-wrap items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setFiltroStatus("")}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                filtroStatus === ""
-                  ? "bg-primary text-primary-foreground"
-                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Todos ({l.pagina?.total ?? l.itens.length})
-            </button>
+            <Chip label={<>Todos ({l.pagina?.total ?? l.itens.length})</>} size="small" variant={(filtroStatus === "") ? "filled" : "outlined"} color={(filtroStatus === "") ? "primary" : "default"} onClick={() => setFiltroStatus("")} />
             {STATUS_ORCAMENTO.map((st) => {
               // Contadores refletem a página atual — o backend não expõe
               // totais por status sem endpoint dedicado.
               const count = l.itens.filter((o) => o.status === st).length;
               if (count === 0 && filtroStatus !== st) return null;
               return (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => setFiltroStatus(filtroStatus === st ? "" : st)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                    filtroStatus === st
-                      ? "bg-primary text-primary-foreground"
-                      : "border border-border bg-card text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {statusLabel(st)} ({count})
-                </button>
+                <Chip label={<>{statusLabel(st)} ({count})</>} size="small" variant={(filtroStatus === st) ? "filled" : "outlined"} color={(filtroStatus === st) ? "primary" : "default"} key={st} onClick={() => setFiltroStatus(filtroStatus === st ? "" : st)} />
               );
             })}
           </div>
@@ -410,39 +385,32 @@ function OrcamentosIndexPage() {
             <MenuItem value="validade">Ordenar: Validade</MenuItem>
           </TextField>
 
-          <button
-            type="button"
-            onClick={() => void carregar()}
-            aria-label="Atualizar"
-            className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} />
-          </button>
+          <IconButton size="small" type="button" onClick={() => void carregar()} aria-label="Atualizar"><RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} /></IconButton>
         </div>
       </div>
 
       {/* Tabela de Orçamentos */}
       <SectionCard className="overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className={`w-full text-sm ${carregando ? "opacity-60" : ""}`}>
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3 font-semibold">Nº</th>
-                <th className="px-4 py-3 font-semibold">Empresa</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Condição</th>
-                <th className="px-4 py-3 font-semibold">Validade</th>
-                <th className="px-4 py-3 text-right font-semibold">Total</th>
-                <th className="px-4 py-3 text-right font-semibold" />
-              </tr>
-            </thead>
-            <tbody>
+          <Table size="small" className={`w-full text-sm ${carregando ? "opacity-60" : ""}`}>
+            <TableHead>
+              <TableRow >
+                <TableCell >Nº</TableCell>
+                <TableCell >Empresa</TableCell>
+                <TableCell >Status</TableCell>
+                <TableCell >Condição</TableCell>
+                <TableCell >Validade</TableCell>
+                <TableCell align="right">Total</TableCell>
+                <TableCell align="right" />
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {orcamentosFiltrados.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                <TableRow >
+                  <TableCell align="center" colSpan={7}>
                     Nenhum orçamento encontrado.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 orcamentosFiltrados.map((o) => {
                   const diasVal = diasAteValidade(o.valido_ate);
@@ -452,20 +420,16 @@ function OrcamentosIndexPage() {
                   const acao = ACAO_RAPIDA[o.status as StatusOrcamento];
 
                   return (
-                    <tr
-                      key={o.id}
-                      onClick={() => navigate({ to: `/vendas/orcamentos/${o.id}` as "/" })}
-                      className="cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
-                    >
-                      <td className="px-4 py-3 font-medium">
+                    <TableRow key={o.id} onClick={() => navigate({ to: `/vendas/orcamentos/${o.id}` as "/" })} sx={{ cursor: "pointer" }} hover>
+                      <TableCell >
                         #{o.numero || o.id}
                         {o.created_at && (
                           <span className="block text-[11px] font-normal text-muted-foreground">
                             {fmtData(o.created_at)}
                           </span>
                         )}
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell >
                         <Link
                           to={`/crm/empresas/${o.empresa_id}` as "/"}
                           onClick={(e) => e.stopPropagation()}
@@ -473,14 +437,14 @@ function OrcamentosIndexPage() {
                         >
                           {empresaNome(o.empresa_id)}
                         </Link>
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell >
                         <StatusPill status={o.status} label={statusLabel(o.status)} />
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                      </TableCell>
+                      <TableCell >
                         {o.condicao_pagamento || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-xs">
+                      </TableCell>
+                      <TableCell >
                         {o.valido_ate ? (
                           <span
                             className={
@@ -503,31 +467,19 @@ function OrcamentosIndexPage() {
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                      </TableCell>
+                      <TableCell align="right">
                         {brl(o.total)}
-                      </td>
-                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      </TableCell>
+                      <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                         <div className="inline-flex items-center gap-1.5">
                           {podeEditar && acao && (
-                            <button
-                              type="button"
-                              onClick={() => void transicionarRapido(o, acao.para)}
-                              className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium hover:bg-secondary"
-                            >
-                              {acao.rotulo}
-                              <ChevronRight className="h-3 w-3" />
-                            </button>
+                            <Button variant="outlined" size="small" type="button" onClick={() => void transicionarRapido(o, acao.para)}>{acao.rotulo}
+                              <ChevronRight className="h-3 w-3" /></Button>
                           )}
                           {podeEditar && o.status === "aprovado" && !o.convertido_pedido_id && (
-                            <button
-                              type="button"
-                              onClick={() => void converterRapido(o)}
-                              className="inline-flex items-center gap-1 rounded-full bg-lime px-3 py-1 text-xs font-semibold text-primary-foreground hover:opacity-90"
-                            >
-                              Converter em pedido
-                              <ArrowRight className="h-3 w-3" />
-                            </button>
+                            <Button variant="contained" size="small" type="button" onClick={() => void converterRapido(o)}>Converter em pedido
+                              <ArrowRight className="h-3 w-3" /></Button>
                           )}
                           {o.convertido_pedido_id && (
                             <Link
@@ -538,13 +490,13 @@ function OrcamentosIndexPage() {
                             </Link>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {l.pagina && l.pagina.total_paginas > 1 && (
@@ -557,17 +509,7 @@ function OrcamentosIndexPage() {
                   Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
                 )
                 .map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => l.setPaginaNum(p)}
-                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
-                      p === l.paginaNum
-                        ? "bg-lime text-primary-foreground"
-                        : "text-muted-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    {p}
-                  </button>
+                  <Chip label={<>{p}</>} size="small" variant={(p === l.paginaNum) ? "filled" : "outlined"} color={(p === l.paginaNum) ? "primary" : "default"} key={p} onClick={() => l.setPaginaNum(p)} />
                 ))}
             </div>
           </div>
@@ -642,9 +584,7 @@ function OrcamentosIndexPage() {
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Itens do orçamento
             </span>
-            <button
-              type="button"
-              onClick={() =>
+            <Button variant="outlined" size="small" type="button" onClick={() =>
                 setItensNovo((l) => [
                   ...l,
                   {
@@ -655,11 +595,7 @@ function OrcamentosIndexPage() {
                     desconto: "0",
                   },
                 ])
-              }
-              className="rounded-full border border-border px-2.5 py-1 text-xs font-medium hover:bg-secondary"
-            >
-              + Adicionar item
-            </button>
+              }>+ Adicionar item</Button>
           </div>
 
           <div className="space-y-2">
@@ -697,13 +633,7 @@ function OrcamentosIndexPage() {
                   value={item.preco_unitario}
                   onChange={(e) => atualizarItemNovo(idx, { preco_unitario: e.target.value })} />
                 {itensNovo.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setItensNovo((l) => l.filter((_, i) => i !== idx))}
-                    className="mt-1 rounded-xl border border-border px-2.5 text-xs text-[#D92546] hover:bg-[#D92546]/10"
-                  >
-                    ×
-                  </button>
+                  <Button variant="contained" color="error" size="small" type="button" onClick={() => setItensNovo((l) => l.filter((_, i) => i !== idx))}>×</Button>
                 )}
               </div>
             ))}

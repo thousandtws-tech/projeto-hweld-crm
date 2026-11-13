@@ -38,6 +38,12 @@ import { buscaService, catalogoService, crmService } from "@/lib/services";
 import { useNotificacoes } from "@/lib/use-notificacoes";
 import { useRealtimeStatus } from "@/lib/use-realtime";
 import { useAuth } from "@/store/auth-store";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Typography from "@mui/material/Typography";
 
 type NavItem = { to: string; label: string; icon: LucideIcon; perfis?: Perfil[] };
 type NavSection = { secao: string; itens: NavItem[] };
@@ -236,9 +242,9 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
           if (itens.length === 0) return null;
           return (
             <div key={secao.secao}>
-              <p className="px-3 pb-1 text-[13px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+              <Typography variant="body2" component="p" className="px-3 pb-1 text-[13px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
                 {secao.secao}
-              </p>
+              </Typography>
               <div className="flex flex-col gap-0.5">
                 {itens.map((item) => {
                   const active =
@@ -282,12 +288,7 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
             <span className="ml-1.5 text-xs capitalize text-muted-foreground">{user?.perfil}</span>
           </span>
         </Link>
-        <button
-          onClick={handleSignOut}
-          className={`${itemBase} w-full text-foreground hover:bg-secondary`}
-        >
-          <LogOut className="h-4 w-4" /> Sair
-        </button>
+        <Button variant="text" onClick={handleSignOut}><LogOut className="h-4 w-4" /> Sair</Button>
       </div>
     </>
   );
@@ -310,24 +311,17 @@ function Sino() {
 
   return (
     <div className="relative">
-      <button
-        type="button"
-        aria-label="Notificações"
-        onClick={() => {
+      <Button variant="outlined" type="button" aria-label="Notificações" onClick={() => {
           setAberto((v) => {
             if (!v) void svc.atualizar();
             return !v;
           });
-        }}
-        className="relative grid h-9 w-9 place-items-center rounded-xl border border-border/70 bg-secondary/40 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-      >
-        <Bell className="h-4 w-4" />
+        }}><Bell className="h-4 w-4" />
         {svc.naoLidas > 0 && (
           <span className="absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-white">
             {svc.naoLidas > 99 ? "99+" : svc.naoLidas}
           </span>
-        )}
-      </button>
+        )}</Button>
       {aberto && (
         <Panel onClose={() => setAberto(false)}>
           <div className="flex items-center justify-between border-b border-border/60 px-2.5 pt-1 pb-2">
@@ -335,35 +329,21 @@ function Sino() {
               Notificações {svc.naoLidas > 0 ? `(${svc.naoLidas})` : ""}
             </span>
             {svc.itens.length > 0 && (
-              <button
-                type="button"
-                onClick={() => void svc.marcarTodas()}
-                className="text-xs font-medium text-primary hover:underline"
-              >
-                Limpar todas
-              </button>
+              <Button variant="text" size="small" type="button" onClick={() => void svc.marcarTodas()}>Limpar todas</Button>
             )}
           </div>
-          <ul className="mt-1 max-h-80 space-y-0.5 overflow-y-auto scrollbar-none">
+          <List disablePadding>
             {svc.itens.length === 0 && (
-              <li className="py-6 text-center text-xs text-muted-foreground">
+              <ListItem>
                 Tudo em dia! Nenhuma notificação pendente.
-              </li>
+              </ListItem>
             )}
             {svc.itens.map((n) => (
-              <li
-                key={n.id}
-                className="flex items-start gap-1 rounded-xl bg-secondary/40 px-2 py-2 transition hover:bg-secondary"
-              >
-                <button
-                  type="button"
-                  onClick={() => {
+              <ListItem key={n.id}>
+                <Button variant="text" type="button" onClick={() => {
                     setAberto(false);
                     void svc.abrir(n);
-                  }}
-                  className="flex min-w-0 flex-1 items-start gap-2.5 text-left"
-                >
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  }}><span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-semibold text-foreground">
                       {n.titulo}
@@ -374,23 +354,14 @@ function Sino() {
                     <span className="mt-0.5 block text-[10px] text-muted-foreground/70">
                       {fmtDataHora(n.created_at)}
                     </span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  title="Marcar como lida e remover"
-                  aria-label="Marcar como lida e remover"
-                  onClick={(e) => {
+                  </span></Button>
+                <IconButton size="small" type="button" title="Marcar como lida e remover" aria-label="Marcar como lida e remover" onClick={(e) => {
                     e.stopPropagation();
                     void svc.dispensar(n.id);
-                  }}
-                  className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600"
-                >
-                  <Check className="h-3.5 w-3.5" />
-                </button>
-              </li>
+                  }}><Check className="h-3.5 w-3.5" /></IconButton>
+              </ListItem>
             ))}
-          </ul>
+          </List>
         </Panel>
       )}
     </div>
@@ -660,13 +631,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               onClick={() => setMenuOpen(false)}
             />
             <aside className="relative z-10 flex w-[80%] max-w-xs flex-col bg-card border-r border-border p-5 overflow-y-auto scrollbar-none">
-              <button
-                aria-label="Fechar menu"
-                onClick={() => setMenuOpen(false)}
-                className="absolute right-4 top-4 grid place-items-center w-9 h-9 rounded-full bg-secondary/60"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <IconButton size="small" aria-label="Fechar menu" onClick={() => setMenuOpen(false)}><X className="h-4 w-4" /></IconButton>
               <SidebarContent pathname={pathname} onNavigate={() => setMenuOpen(false)} />
             </aside>
           </div>
@@ -678,14 +643,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <header className="sticky top-3 z-30 flex h-14 items-center justify-between gap-3 rounded-2xl border border-border bg-card/95 px-3.5 shadow-[var(--shadow-card)] backdrop-blur-md sm:px-4">
             {/* Esquerda: Menu Mobile + Breadcrumb Hierárquico */}
             <div className="flex min-w-0 items-center gap-2.5">
-              <button
-                type="button"
-                aria-label="Abrir menu"
-                onClick={() => setMenuOpen(true)}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border/70 bg-secondary/40 text-muted-foreground hover:bg-secondary hover:text-foreground lg:hidden"
-              >
-                <Menu className="h-4 w-4" />
-              </button>
+              <IconButton size="small" type="button" aria-label="Abrir menu" onClick={() => setMenuOpen(true)}><Menu className="h-4 w-4" /></IconButton>
 
               <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
                 {crumbs.map((c, idx) => {
@@ -729,30 +687,15 @@ export function AppShell({ children }: { children: ReactNode }) {
                 }`}
               >
                 <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <input
-                  ref={inputBuscaRef}
-                  value={search}
-                  onChange={(e) => {
+                <TextField size="small" ref={inputBuscaRef} value={search} onChange={(e) => {
                     setSearch(e.target.value);
                     setBuscaAberta(true);
-                  }}
-                  onFocus={() => setBuscaAberta(true)}
-                  onKeyDown={onInputKeyDown}
-                  placeholder="Buscar empresas, oportunidades, produtos…"
-                  aria-label="Busca global"
-                  className="min-w-0 flex-1 bg-transparent text-xs sm:text-sm outline-none placeholder:text-muted-foreground"
-                />
+                  }} onFocus={() => setBuscaAberta(true)} onKeyDown={onInputKeyDown} placeholder="Buscar empresas, oportunidades, produtos…" aria-label="Busca global" />
                 {search ? (
-                  <button
-                    type="button"
-                    onClick={() => {
+                  <IconButton size="small" type="button" onClick={() => {
                       setSearch("");
                       inputBuscaRef.current?.focus();
-                    }}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                    }}><X className="h-3.5 w-3.5" /></IconButton>
                 ) : (
                   <kbd className="hidden shrink-0 rounded border border-border bg-card px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-block">
                     Ctrl K
@@ -765,11 +708,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <div className="fixed inset-0 z-40" onClick={() => setBuscaAberta(false)} />
                   <div className="absolute inset-x-0 top-[calc(100%+0.4rem)] z-50 max-h-96 overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-[var(--shadow-pop)]">
                     {buscando && itensOmnibox.length === 0 ? (
-                      <p className="px-3 py-3 text-xs text-muted-foreground">Buscando…</p>
+                      <Typography variant="body2" component="p" className="px-3 py-3 text-xs text-muted-foreground">Buscando…</Typography>
                     ) : itensOmnibox.length === 0 ? (
-                      <p className="px-3 py-3 text-xs text-muted-foreground">
+                      <Typography variant="body2" component="p" className="px-3 py-3 text-xs text-muted-foreground">
                         Nenhum resultado para &ldquo;{search.trim()}&rdquo;
-                      </p>
+                      </Typography>
                     ) : (
                       (() => {
                         let ultimoGrupo = "";
@@ -784,15 +727,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                                   {item.grupo}
                                 </div>
                               )}
-                              <button
-                                type="button"
-                                onMouseEnter={() => setIndiceAtivo(idx)}
-                                onClick={() => executarItemOmnibox(item)}
-                                className={`flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-2 text-left text-xs transition ${
-                                  ativo ? "bg-secondary text-foreground" : "text-foreground"
-                                }`}
-                              >
-                                <span className="min-w-0 flex-1">
+                              <Button variant="text" size="small" type="button" onMouseEnter={() => setIndiceAtivo(idx)} onClick={() => executarItemOmnibox(item)}><span className="min-w-0 flex-1">
                                   <span className="block truncate font-medium">{item.titulo}</span>
                                   {item.subtitulo && (
                                     <span className="block truncate text-[11px] text-muted-foreground">
@@ -804,8 +739,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                                   <span className="shrink-0 font-semibold tabular-nums text-muted-foreground">
                                     {item.direita}
                                   </span>
-                                )}
-                              </button>
+                                )}</Button>
                             </div>
                           );
                         });
@@ -843,32 +777,18 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {sseOnline ? "Online" : "Offline"}
               </span>
 
-              <button
-                type="button"
-                onClick={toggleTheme}
-                aria-label={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
-                className="grid h-9 w-9 place-items-center rounded-xl border border-border/70 bg-secondary/40 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-              >
-                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </button>
+              <Button variant="outlined" type="button" onClick={toggleTheme} aria-label={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}>{theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</Button>
 
               <Sino />
 
               <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setUserMenuOpen((v) => !v)}
-                  aria-label={`Conta de ${perfil ?? "usuário"}`}
-                  className="flex h-9 items-center gap-2 rounded-xl border border-border/70 bg-secondary/40 pl-1.5 pr-2.5 transition hover:bg-secondary"
-                >
-                  <span className="grid h-6 w-6 place-items-center rounded-lg bg-primary text-[11px] font-bold text-primary-foreground">
+                <Button variant="outlined" type="button" onClick={() => setUserMenuOpen((v) => !v)} aria-label={`Conta de ${perfil ?? "usuário"}`}><span className="grid h-6 w-6 place-items-center rounded-lg bg-primary text-[11px] font-bold text-primary-foreground">
                     {(user?.nome?.[0] ?? perfil?.[0] ?? "?").toUpperCase()}
                   </span>
                   <span className="hidden max-w-28 truncate text-xs font-semibold sm:block">
                     {user?.nome ?? `#${user?.id ?? "?"}`}
                   </span>
-                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                </button>
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /></Button>
                 {userMenuOpen && (
                   <Panel onClose={() => setUserMenuOpen(false)}>
                     <div className="border-b border-border/60 px-3 py-2">
@@ -886,13 +806,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       >
                         Minha conta
                       </Link>
-                      <button
-                        type="button"
-                        onClick={() => void sair()}
-                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/10"
-                      >
-                        <LogOut className="h-3.5 w-3.5" /> Sair
-                      </button>
+                      <Button variant="contained" color="error" size="small" type="button" onClick={() => void sair()}><LogOut className="h-3.5 w-3.5" /> Sair</Button>
                     </div>
                   </Panel>
                 )}

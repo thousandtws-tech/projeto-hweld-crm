@@ -10,6 +10,12 @@ import type { Categoria, Produto, ProdutoImagem } from "@/lib/models";
 import { catalogoService, estoqueService } from "@/lib/services";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Checkbox from "@mui/material/Checkbox";
+import Typography from "@mui/material/Typography";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Box from "@mui/material/Box";
 
 const vazio = {
   sku: "",
@@ -448,27 +454,21 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
         subtitle="Dados técnicos, precificação e galeria de imagens (capa principal + sub-imagens)"
         action={
           edicao && (
-            <button
-              type="button"
-              onClick={() => void arquivar()}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#D92546]/30 px-4 py-1.5 text-xs font-semibold text-[#D92546] hover:bg-[#D92546]/10"
-            >
-              <Trash2 className="h-3.5 w-3.5" /> Excluir produto
-            </button>
+            <Button variant="contained" color="error" size="small" type="button" onClick={() => void arquivar()}><Trash2 className="h-3.5 w-3.5" /> Excluir produto</Button>
           )
         }
       />
 
-      <form onSubmit={salvar} className="space-y-4">
+      <Box component="form" onSubmit={salvar} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[380px_1fr]">
           {/* Coluna Esquerda: Galeria de E-commerce (Foto Principal + Sub-imagens) */}
           <SectionCard className="h-fit space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-bold">Fotos do produto</h2>
-                <p className="text-xs text-muted-foreground">
+                <Typography variant="h6" component="h2" className="text-sm font-bold">Fotos do produto</Typography>
+                <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
                   1ª foto = capa principal · demais = sub-imagens
-                </p>
+                </Typography>
               </div>
               <span className="text-xs font-medium tabular-nums text-muted-foreground">
                 {galeria.length} foto(s)
@@ -510,32 +510,14 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                         <Star className="h-3 w-3 fill-current" /> Capa principal
                       </span>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => void definirComoPrincipal(indicePreview)}
-                        className="inline-flex items-center gap-1 rounded-full border border-border bg-card/95 px-2.5 py-1 text-[11px] font-semibold text-foreground shadow-xs hover:bg-primary hover:text-primary-foreground"
-                      >
-                        <Star className="h-3 w-3" /> Definir como capa
-                      </button>
+                      <Button variant="contained" size="small" type="button" onClick={() => void definirComoPrincipal(indicePreview)}><Star className="h-3 w-3" /> Definir como capa</Button>
                     )}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => void removerDaGaleria(indicePreview)}
-                    title="Remover esta imagem"
-                    className="absolute right-2.5 top-2.5 grid h-7 w-7 place-items-center rounded-full bg-[#D92546] text-white shadow-xs transition hover:opacity-90"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                  <IconButton size="small" type="button" onClick={() => void removerDaGaleria(indicePreview)} title="Remover esta imagem"><X className="h-3.5 w-3.5" /></IconButton>
                 </>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex h-full w-full flex-col items-center justify-center gap-2 p-6 text-center text-muted-foreground hover:text-foreground"
-                >
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl border border-border bg-card">
+                <Button variant="text" type="button" onClick={() => fileInputRef.current?.click()}><div className="grid h-12 w-12 place-items-center rounded-2xl border border-border bg-card">
                     <Upload className="h-5 w-5" />
                   </div>
                   <div className="text-xs font-semibold text-foreground">
@@ -543,8 +525,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                   </div>
                   <span className="text-[11px] text-muted-foreground">
                     Suporta múltiplos arquivos (PNG, JPG, WebP)
-                  </span>
-                </button>
+                  </span></Button>
               )}
             </div>
 
@@ -554,16 +535,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                 const selecionada = idx === indicePreview;
                 return (
                   <div key={img.tempKey} className="group relative aspect-square">
-                    <button
-                      type="button"
-                      onClick={() => setIndicePreview(idx)}
-                      className={`relative h-full w-full overflow-hidden rounded-xl border bg-secondary/20 transition ${
-                        selecionada
-                          ? "border-2 border-primary ring-2 ring-primary/20"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <img
+                    <Button variant="outlined" type="button" onClick={() => setIndicePreview(idx)}><img
                         src={img.url}
                         alt={img.alt_text || `Foto ${idx + 1}`}
                         className="h-full w-full object-cover"
@@ -572,31 +544,16 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                         <span className="absolute bottom-0 inset-x-0 bg-primary/90 py-0.5 text-center text-[9px] font-bold uppercase text-primary-foreground">
                           Capa
                         </span>
-                      )}
-                    </button>
+                      )}</Button>
 
                     {/* Setas de reordenação no hover */}
                     {galeria.length > 1 && selecionada && (
                       <div className="absolute -bottom-1.5 inset-x-0 flex justify-center gap-1">
                         {idx > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => void moverMiniatura(idx, -1)}
-                            title="Mover para esquerda"
-                            className="grid h-4 w-4 place-items-center rounded-full border border-border bg-card text-foreground shadow-2xs"
-                          >
-                            <ArrowLeft className="h-2.5 w-2.5" />
-                          </button>
+                          <IconButton size="small" type="button" onClick={() => void moverMiniatura(idx, -1)} title="Mover para esquerda"><ArrowLeft className="h-2.5 w-2.5" /></IconButton>
                         )}
                         {idx < galeria.length - 1 && (
-                          <button
-                            type="button"
-                            onClick={() => void moverMiniatura(idx, 1)}
-                            title="Mover para direita"
-                            className="grid h-4 w-4 place-items-center rounded-full border border-border bg-card text-foreground shadow-2xs"
-                          >
-                            <ArrowRight className="h-2.5 w-2.5" />
-                          </button>
+                          <IconButton size="small" type="button" onClick={() => void moverMiniatura(idx, 1)} title="Mover para direita"><ArrowRight className="h-2.5 w-2.5" /></IconButton>
                         )}
                       </div>
                     )}
@@ -605,22 +562,14 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
               })}
 
               {/* Slot "+" para adicionar mais sub-imagens */}
-              <button
-                type="button"
-                disabled={enviandoArquivos}
-                onClick={() => fileInputRef.current?.click()}
-                title="Adicionar mais fotos"
-                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border bg-secondary/20 text-muted-foreground transition hover:border-primary hover:text-foreground disabled:opacity-50"
-              >
-                {enviandoArquivos ? (
+              <Button variant="outlined" type="button" disabled={enviandoArquivos} onClick={() => fileInputRef.current?.click()} title="Adicionar mais fotos">{enviandoArquivos ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <>
                     <ImagePlus className="h-4 w-4" />
                     <span className="text-[10px] font-medium">+ Foto</span>
                   </>
-                )}
-              </button>
+                )}</Button>
             </div>
 
             <input
@@ -644,21 +593,14 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                     void adicionarPorUrl();
                   }
                 }} />
-              <button
-                type="button"
-                disabled={!urlExterna.trim() || enviandoArquivos}
-                onClick={() => void adicionarPorUrl()}
-                className="shrink-0 rounded-2xl border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-secondary disabled:opacity-50"
-              >
-                Adicionar
-              </button>
+              <Button variant="outlined" size="small" type="button" disabled={!urlExterna.trim() || enviandoArquivos} onClick={() => void adicionarPorUrl()}>Adicionar</Button>
             </div>
           </SectionCard>
 
           {/* Coluna Direita: Dados do Produto */}
           <div className="space-y-4">
             <SectionCard>
-              <h2 className="mb-4 text-sm font-semibold">Identificação</h2>
+              <Typography variant="h6" component="h2" className="mb-4 text-sm font-semibold">Identificação</Typography>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <FormField label="SKU *">
                   <TextField size="small" fullWidth required value={f.sku} onChange={set("sku")} />
@@ -703,7 +645,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
             </SectionCard>
 
             <SectionCard>
-              <h2 className="mb-4 text-sm font-semibold">Comercial & Estoque</h2>
+              <Typography variant="h6" component="h2" className="mb-4 text-sm font-semibold">Comercial & Estoque</Typography>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <FormField label="Preço de venda (R$) *">
                   <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
@@ -747,10 +689,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                       ["controla_estoque", "Controlar saldo de estoque"],
                     ] as const
                   ).map(([k, label]) => (
-                    <label key={k} className="flex cursor-pointer items-center gap-2 text-sm">
-                      <input type="checkbox" checked={f[k]} onChange={setFlag(k)} />
-                      {label}
-                    </label>
+                    <FormControlLabel control={<Checkbox checked={f[k]} onChange={setFlag(k)} />} label={"{label}"} />
                   ))}
                 </div>
 
@@ -770,7 +709,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
             </SectionCard>
 
             <SectionCard>
-              <h2 className="mb-4 text-sm font-semibold">Fiscal & Dimensões</h2>
+              <Typography variant="h6" component="h2" className="mb-4 text-sm font-semibold">Fiscal & Dimensões</Typography>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <FormField label="NCM (8 dígitos)">
                   <TextField size="small" fullWidth slotProps={{ htmlInput: { maxLength: 8 } }}
@@ -822,13 +761,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
             </SectionCard>
 
             <div className="flex items-center gap-2">
-              <button
-                type="submit"
-                disabled={!valido || salvando || enviandoArquivos}
-                className="rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
-              >
-                {salvando ? "Salvando…" : "Salvar produto"}
-              </button>
+              <Button variant="contained" type="submit" disabled={!valido || salvando || enviandoArquivos}>{salvando ? "Salvando…" : "Salvar produto"}</Button>
               <Link
                 to="/catalogo/produtos"
                 className="rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium hover:bg-secondary"
@@ -838,7 +771,7 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
             </div>
           </div>
         </div>
-      </form>
+      </Box>
     </>
   );
 }

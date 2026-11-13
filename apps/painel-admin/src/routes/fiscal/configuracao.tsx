@@ -20,6 +20,9 @@ import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import { DateField } from "@/components/ui-kit/DateField";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 
 export const Route = createFileRoute("/fiscal/configuracao")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -175,7 +178,7 @@ function ConfigFiscalPage() {
         <status.Icone className={`mt-0.5 h-4 w-4 shrink-0 ${status.cor}`} />
         <div className="min-w-0 space-y-1">
           <div className={`text-xs font-bold ${status.cor}`}>{status.rotulo}</div>
-          <p className="text-xs text-muted-foreground">{status.descricao}</p>
+          <Typography variant="body2" component="p" className="text-xs text-muted-foreground">{status.descricao}</Typography>
           {cfg && cfg.pendencias.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-1">
               {cfg.pendencias.map((p) => (
@@ -194,8 +197,8 @@ function ConfigFiscalPage() {
       <div className={`grid grid-cols-1 gap-4 lg:grid-cols-2 ${carregando ? "opacity-60" : ""}`}>
         {/* Parâmetros de transmissão */}
         <SectionCard>
-          <h2 className="mb-4 text-sm font-semibold">Parâmetros de transmissão</h2>
-          <form onSubmit={salvar} className="space-y-4">
+          <Typography variant="h6" component="h2" className="mb-4 text-sm font-semibold">Parâmetros de transmissão</Typography>
+          <Box component="form" onSubmit={salvar} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField label="Ambiente SEFAZ *">
                 <TextField size="small" fullWidth select
@@ -250,70 +253,51 @@ function ConfigFiscalPage() {
                   onChange={(e) => setForm((f) => ({ ...f, csc_token: e.target.value }))} />
               </FormField>
             </div>
-            <button
-              type="submit"
-              disabled={salvando || carregando}
-              className="rounded-full bg-lime px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
-            >
-              {salvando ? "Salvando…" : "Salvar configuração"}
-            </button>
-          </form>
+            <Button variant="contained" type="submit" disabled={salvando || carregando}>{salvando ? "Salvando…" : "Salvar configuração"}</Button>
+          </Box>
         </SectionCard>
 
         {/* Certificado digital A1 */}
         <SectionCard>
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+          <Typography variant="h6" component="h2" className="mb-4 flex items-center gap-2 text-sm font-semibold">
             <FileKey2 className="h-4 w-4 text-muted-foreground" /> Certificado digital A1
-          </h2>
+          </Typography>
 
           {cfg?.certificado_configurado ? (
             <div className="space-y-4">
-              <dl className="space-y-2 text-sm">
+              <Box component="dl" className="space-y-2 text-sm">
                 <div className="flex justify-between gap-4 border-b border-border/60 pb-2">
-                  <dt className="text-muted-foreground">Arquivo</dt>
-                  <dd className="font-medium">{cfg.certificado_nome ?? "certificado.pfx"}</dd>
+                  <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">Arquivo</Typography>
+                  <Typography component="dd" variant="body2" className="font-medium">{cfg.certificado_nome ?? "certificado.pfx"}</Typography>
                 </div>
                 <div className="flex justify-between gap-4 border-b border-border/60 pb-2">
-                  <dt className="text-muted-foreground">Validade declarada</dt>
-                  <dd className="font-medium tabular-nums">
+                  <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">Validade declarada</Typography>
+                  <Typography component="dd" variant="body2" className="font-medium tabular-nums">
                     {cfg.certificado_validade
                       ? new Date(`${cfg.certificado_validade}T00:00:00`).toLocaleDateString("pt-BR")
                       : "—"}
-                  </dd>
+                  </Typography>
                 </div>
                 <div className="flex justify-between gap-4 border-b border-border/60 pb-2">
-                  <dt className="text-muted-foreground">Fingerprint SHA-256</dt>
-                  <dd
+                  <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-muted-foreground">Fingerprint SHA-256</Typography>
+                  <Typography component="dd" variant="body2"
                     className="font-mono text-xs text-muted-foreground"
                     title={cfg.certificado_sha256 ?? ""}
                   >
                     {cfg.certificado_sha256 ? `${cfg.certificado_sha256.slice(0, 20)}…` : "—"}
-                  </dd>
+                  </Typography>
                 </div>
-              </dl>
-              <button
-                type="button"
-                onClick={() => void removerCertificado()}
-                disabled={removendoCert}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#D92546]/30 px-4 py-1.5 text-xs font-semibold text-[#D92546] hover:bg-[#D92546]/10 disabled:opacity-50"
-              >
-                {removendoCert ? (
+              </Box>
+              <Button variant="contained" color="error" size="small" type="button" onClick={() => void removerCertificado()} disabled={removendoCert}>{removendoCert ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   <Trash2 className="h-3.5 w-3.5" />
                 )}
-                Remover certificado
-              </button>
+                Remover certificado</Button>
             </div>
           ) : (
             <div className="space-y-4">
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                disabled={enviandoCert}
-                className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-secondary/20 px-6 py-8 text-center text-muted-foreground transition hover:border-primary hover:text-foreground disabled:opacity-50"
-              >
-                {enviandoCert ? (
+              <Button variant="outlined" type="button" onClick={() => fileRef.current?.click()} disabled={enviandoCert}>{enviandoCert ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <Upload className="h-5 w-5" />
@@ -323,8 +307,7 @@ function ConfigFiscalPage() {
                 </span>
                 <span className="text-[11px]">
                   O arquivo é gravado no banco — a API nunca devolve os bytes nem a senha
-                </span>
-              </button>
+                </span></Button>
               <input
                 ref={fileRef}
                 type="file"

@@ -20,6 +20,13 @@ import { useRealtimeEvent } from "@/lib/use-realtime";
 import { useAuth } from "@/store/auth-store";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
 
 export const Route = createFileRoute("/vendas/orcamentos/$id")({
   component: OrcamentoPage,
@@ -272,23 +279,10 @@ function OrcamentoPage() {
                 <StatusPill status={orc.status} label={statusLabel(orc.status)} />
                 {podeEditar &&
                   (TRANSICOES[orc.status] ?? []).map((t) => (
-                    <button
-                      key={t.para}
-                      type="button"
-                      onClick={() => void transicionar(orc, t.para)}
-                      className={`rounded-full px-4 py-2 text-xs font-semibold transition hover:opacity-90 ${t.cor}`}
-                    >
-                      {t.rotulo}
-                    </button>
+                    <Button variant="text" size="small" key={t.para} type="button" onClick={() => void transicionar(orc, t.para)}>{t.rotulo}</Button>
                   ))}
                 {podeEditar && orc.status === "aprovado" && !orc.convertido_pedido_id && (
-                  <button
-                    type="button"
-                    onClick={() => void converter(orc)}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-lime px-4 py-2 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
-                  >
-                    Converter em pedido <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
+                  <Button variant="contained" size="small" type="button" onClick={() => void converter(orc)}>Converter em pedido <ArrowRight className="h-3.5 w-3.5" /></Button>
                 )}
                 {orc.convertido_pedido_id && (
                   <Link
@@ -342,38 +336,32 @@ function OrcamentoPage() {
             <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
               <span className="text-sm font-bold">Itens do orçamento</span>
               {editavel && (
-                <button
-                  type="button"
-                  onClick={addItem}
-                  className="inline-flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-xs font-semibold hover:bg-secondary"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Item
-                </button>
+                <Button variant="outlined" size="small" type="button" onClick={addItem}><Plus className="h-3.5 w-3.5" /> Item</Button>
               )}
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-secondary/20 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                    <th className="min-w-60 px-4 py-2.5 font-semibold">Produto / Descrição</th>
-                    <th className="px-4 py-2.5 font-semibold">Qtd</th>
-                    <th className="px-4 py-2.5 font-semibold">Preço unit.</th>
-                    <th className="px-4 py-2.5 font-semibold">Desc. item</th>
-                    <th className="px-4 py-2.5 text-right font-semibold">Subtotal</th>
-                    <th className="w-12 px-4 py-2.5" />
-                  </tr>
-                </thead>
-                <tbody>
+              <Table size="small" className="w-full text-sm">
+                <TableHead>
+                  <TableRow >
+                    <TableCell >Produto / Descrição</TableCell>
+                    <TableCell >Qtd</TableCell>
+                    <TableCell >Preço unit.</TableCell>
+                    <TableCell >Desc. item</TableCell>
+                    <TableCell align="right">Subtotal</TableCell>
+                    <TableCell  />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {itens.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                    <TableRow >
+                      <TableCell align="center" colSpan={6}>
                         Nenhum item neste orçamento.
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ) : (
                     itens.map((item, idx) => (
-                      <tr key={idx} className="border-b border-border/60 last:border-0">
-                        <td className="px-4 py-2.5">
+                      <TableRow key={idx}>
+                        <TableCell >
                           {editavel ? (
                             <div className="space-y-1.5">
                               <TextField size="small" fullWidth select
@@ -400,8 +388,8 @@ function OrcamentoPage() {
                           ) : (
                             <span className="font-medium">{item.descricao}</span>
                           )}
-                        </td>
-                        <td className="px-4 py-2.5 align-top">
+                        </TableCell>
+                        <TableCell >
                           {editavel ? (
                             <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001", min: "0.001" } }}
                               type="number"
@@ -412,8 +400,8 @@ function OrcamentoPage() {
                           ) : (
                             <span className="tabular-nums">{item.quantidade}</span>
                           )}
-                        </td>
-                        <td className="px-4 py-2.5 align-top">
+                        </TableCell>
+                        <TableCell >
                           {editavel ? (
                             <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                               type="number"
@@ -424,8 +412,8 @@ function OrcamentoPage() {
                           ) : (
                             <span className="tabular-nums">{brl(item.preco_unitario)}</span>
                           )}
-                        </td>
-                        <td className="px-4 py-2.5 align-top">
+                        </TableCell>
+                        <TableCell >
                           {editavel ? (
                             <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                               type="number"
@@ -436,34 +424,28 @@ function OrcamentoPage() {
                           ) : (
                             <span className="tabular-nums">{brl(item.desconto)}</span>
                           )}
-                        </td>
-                        <td className="px-4 py-2.5 text-right font-semibold tabular-nums align-top pt-4">
+                        </TableCell>
+                        <TableCell align="right">
                           {brl(totalItem(item).toFixed(2))}
-                        </td>
-                        <td className="px-4 py-2.5 align-top pt-3.5">
+                        </TableCell>
+                        <TableCell >
                           {editavel && itens.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => {
+                            <Button variant="contained" color="error" size="small" type="button" onClick={() => {
                                 setItens((l) => l.filter((_, i) => i !== idx));
                                 setDirty(true);
-                              }}
-                              className="rounded-full border border-[#D92546]/30 px-2.5 py-1 text-xs text-[#D92546] hover:bg-[#D92546]/10"
-                            >
-                              ×
-                            </button>
+                              }}>×</Button>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))
                   )}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
 
             <div className="flex flex-wrap items-end justify-between gap-4 border-t border-border/60 bg-secondary/15 px-5 py-4">
               <div className="flex flex-wrap items-end gap-3">
-                <label className="text-xs font-medium text-muted-foreground">
+                <Typography component="label" className="text-xs font-medium text-muted-foreground">
                   Desconto geral (R$)
                   <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                     type="number"
@@ -475,8 +457,8 @@ function OrcamentoPage() {
                       setDesconto(e.target.value);
                       setDirty(true);
                     }} />
-                </label>
-                <label className="text-xs font-medium text-muted-foreground">
+                </Typography>
+                <Typography component="label" className="text-xs font-medium text-muted-foreground">
                   Frete (R$)
                   <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01", min: "0" } }}
                     type="number"
@@ -488,7 +470,7 @@ function OrcamentoPage() {
                       setFrete(e.target.value);
                       setDirty(true);
                     }} />
-                </label>
+                </Typography>
               </div>
 
               <div className="text-right space-y-0.5">
@@ -506,14 +488,7 @@ function OrcamentoPage() {
                 <span className="text-xs text-muted-foreground">
                   {dirty ? "Alterações pendentes de salvamento" : "Itens sincronizados"}
                 </span>
-                <button
-                  type="button"
-                  disabled={salvando}
-                  onClick={() => void salvar()}
-                  className="rounded-full bg-lime px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
-                >
-                  {salvando ? "Salvando…" : "Salvar itens"}
-                </button>
+                <Button variant="contained" type="button" disabled={salvando} onClick={() => void salvar()}>{salvando ? "Salvando…" : "Salvar itens"}</Button>
               </div>
             )}
           </SectionCard>

@@ -15,6 +15,14 @@ import { useAuth } from "@/store/auth-store";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import { DateField } from "@/components/ui-kit/DateField";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Chip from "@mui/material/Chip";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
 
 export const Route = createFileRoute("/operacao/ordens-servico/")({
   beforeLoad: exigePerfil("admin", "tecnico"),
@@ -181,13 +189,7 @@ function OrdensServicoIndexPage() {
         title="Ordens de serviço"
         subtitle={`Em atendimento: ${resumo.emFila} · Prioridade alta/urgente: ${resumo.urgentes} · Concluídas: ${resumo.concluidas}`}
         action={
-          <button
-            type="button"
-            onClick={abrirModalNovo}
-            className="inline-flex items-center gap-1.5 rounded-full bg-lime px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" /> Nova OS
-          </button>
+          <Button variant="contained" type="button" onClick={abrirModalNovo}><Plus className="h-4 w-4" /> Nova OS</Button>
         }
       />
 
@@ -196,43 +198,16 @@ function OrdensServicoIndexPage() {
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <div className="flex min-w-52 flex-1 sm:max-w-xs items-center gap-2 rounded-2xl border border-border bg-card px-3 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <input
-              type="search"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar nº, empresa ou descrição…"
-              className="w-full bg-transparent text-xs sm:text-sm outline-none placeholder:text-muted-foreground"
-            />
+            <TextField size="small" type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar nº, empresa ou descrição…" />
           </div>
 
           <div className="flex flex-wrap items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setFiltroStatus("")}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                filtroStatus === ""
-                  ? "bg-primary text-primary-foreground"
-                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Todas ({l.pagina?.total ?? l.itens.length})
-            </button>
+            <Chip label={<>Todas ({l.pagina?.total ?? l.itens.length})</>} size="small" variant={(filtroStatus === "") ? "filled" : "outlined"} color={(filtroStatus === "") ? "primary" : "default"} onClick={() => setFiltroStatus("")} />
             {STATUS_OS.map((st) => {
               const count = l.itens.filter((o) => o.status === st).length;
               if (count === 0 && filtroStatus !== st) return null;
               return (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => setFiltroStatus(filtroStatus === st ? "" : st)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                    filtroStatus === st
-                      ? "bg-primary text-primary-foreground"
-                      : "border border-border bg-card text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {statusLabel(st)} ({count})
-                </button>
+                <Chip label={<>{statusLabel(st)} ({count})</>} size="small" variant={(filtroStatus === st) ? "filled" : "outlined"} color={(filtroStatus === st) ? "primary" : "default"} key={st} onClick={() => setFiltroStatus(filtroStatus === st ? "" : st)} />
               );
             })}
           </div>
@@ -247,90 +222,73 @@ function OrdensServicoIndexPage() {
             <MenuItem value="baixa">Baixa</MenuItem>
           </TextField>
 
-          <button
-            type="button"
-            onClick={() => void carregar()}
-            aria-label="Atualizar"
-            className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} />
-          </button>
+          <IconButton size="small" type="button" onClick={() => void carregar()} aria-label="Atualizar"><RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} /></IconButton>
         </div>
       </div>
 
       <SectionCard className="overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className={`w-full text-sm ${carregando ? "opacity-60" : ""}`}>
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3 font-semibold">OS</th>
-                <th className="px-4 py-3 font-semibold">Empresa</th>
-                <th className="px-4 py-3 font-semibold">Serviço / Escopo</th>
-                <th className="px-4 py-3 font-semibold">Prioridade</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Previsão</th>
-                <th className="px-4 py-3 text-right font-semibold">Total</th>
-                <th className="px-4 py-3 text-right font-semibold" />
-              </tr>
-            </thead>
-            <tbody>
+          <Table size="small" className={`w-full text-sm ${carregando ? "opacity-60" : ""}`}>
+            <TableHead>
+              <TableRow >
+                <TableCell >OS</TableCell>
+                <TableCell >Empresa</TableCell>
+                <TableCell >Serviço / Escopo</TableCell>
+                <TableCell >Prioridade</TableCell>
+                <TableCell >Status</TableCell>
+                <TableCell >Previsão</TableCell>
+                <TableCell align="right">Total</TableCell>
+                <TableCell align="right" />
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {ordensFiltradas.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
+                <TableRow >
+                  <TableCell align="center" colSpan={8}>
                     Nenhuma ordem de serviço encontrada.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 ordensFiltradas.map((o) => {
                   const acao = ACAO_RAPIDA_OS[o.status as StatusOs];
                   return (
-                    <tr
-                      key={o.id}
-                      onClick={() => navigate({ to: `/operacao/ordens-servico/${o.id}` as "/" })}
-                      className="cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
-                    >
-                      <td className="px-4 py-3 font-medium">
+                    <TableRow key={o.id} onClick={() => navigate({ to: `/operacao/ordens-servico/${o.id}` as "/" })} sx={{ cursor: "pointer" }} hover>
+                      <TableCell >
                         #{o.numero || o.id}
                         {o.pedido_id && (
                           <span className="block text-[11px] font-normal text-muted-foreground">
                             Pedido #{o.pedido_id}
                           </span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 font-medium">{empresaNome(o.empresa_id)}</td>
-                      <td className="max-w-xs truncate px-4 py-3 text-muted-foreground">
+                      </TableCell>
+                      <TableCell >{empresaNome(o.empresa_id)}</TableCell>
+                      <TableCell >
                         {o.descricao || "—"}
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell >
                         <StatusPill status={o.prioridade} label={o.prioridade} />
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell >
                         <StatusPill status={o.status} label={statusLabel(o.status)} />
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                      </TableCell>
+                      <TableCell >
                         {fmtData(o.prevista_em)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium tabular-nums">
+                      </TableCell>
+                      <TableCell align="right">
                         {brl(o.valor_total ?? o.valor_mao_obra)}
-                      </td>
-                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      </TableCell>
+                      <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                         {acao && (
-                          <button
-                            type="button"
-                            onClick={() => void transicionarRapido(o, acao.para)}
-                            className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium hover:bg-secondary"
-                          >
-                            {acao.rotulo}
-                            <ChevronRight className="h-3 w-3" />
-                          </button>
+                          <Button variant="outlined" size="small" type="button" onClick={() => void transicionarRapido(o, acao.para)}>{acao.rotulo}
+                            <ChevronRight className="h-3 w-3" /></Button>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {l.pagina && l.pagina.total_paginas > 1 && (
@@ -343,17 +301,7 @@ function OrdensServicoIndexPage() {
                   Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
                 )
                 .map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => l.setPaginaNum(p)}
-                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
-                      p === l.paginaNum
-                        ? "bg-lime text-primary-foreground"
-                        : "text-muted-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    {p}
-                  </button>
+                  <Chip label={<>{p}</>} size="small" variant={(p === l.paginaNum) ? "filled" : "outlined"} color={(p === l.paginaNum) ? "primary" : "default"} key={p} onClick={() => l.setPaginaNum(p)} />
                 ))}
             </div>
           </div>

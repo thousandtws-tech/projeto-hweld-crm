@@ -12,6 +12,12 @@ import { catalogoService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Checkbox from "@mui/material/Checkbox";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Typography from "@mui/material/Typography";
 
 export const Route = createFileRoute("/catalogo/categorias/")({
   beforeLoad: exigePerfil("admin", "estoque"),
@@ -136,7 +142,7 @@ function CategoriasPage() {
   const renderNo = (c: Categoria, nivel: number): React.ReactNode => {
     const subcategorias = filhos(c.id);
     return (
-      <li key={c.id}>
+      <ListItem key={c.id}>
         <div
           className="flex items-center justify-between gap-3 border-b border-border/60 py-3 text-sm transition-colors hover:bg-secondary/30 px-3 rounded-xl"
           style={{ marginLeft: nivel * 24 }}
@@ -165,43 +171,24 @@ function CategoriasPage() {
                 {!c.ativa && <StatusPill status="inativo" label="Inativa" />}
               </div>
               {c.descricao && (
-                <p className="truncate text-xs text-muted-foreground">{c.descricao}</p>
+                <Typography variant="body2" component="p" className="truncate text-xs text-muted-foreground">{c.descricao}</Typography>
               )}
             </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => abrir(undefined, c.id)}
-              className="rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
-            >
-              + Subcategoria
-            </button>
-            <button
-              type="button"
-              onClick={() => abrir(c)}
-              className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium hover:bg-secondary"
-            >
-              Editar
-            </button>
-            <button
-              type="button"
-              disabled={excluindoId === c.id}
-              onClick={() => void excluir(c)}
-              className="inline-flex items-center gap-1 rounded-full border border-[#D92546]/30 bg-card px-2.5 py-1 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10 disabled:opacity-50"
-            >
-              {excluindoId === c.id ? (
+            <Button variant="outlined" size="small" type="button" onClick={() => abrir(undefined, c.id)}>+ Subcategoria</Button>
+            <Button variant="outlined" size="small" type="button" onClick={() => abrir(c)}>Editar</Button>
+            <Button variant="contained" color="error" size="small" type="button" disabled={excluindoId === c.id} onClick={() => void excluir(c)}>{excluindoId === c.id ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <Trash2 className="h-3.5 w-3.5" />
               )}
-              Excluir
-            </button>
+              Excluir</Button>
           </div>
         </div>
-        {subcategorias.length > 0 && <ul>{subcategorias.map((f) => renderNo(f, nivel + 1))}</ul>}
-      </li>
+        {subcategorias.length > 0 && <List disablePadding>{subcategorias.map((f) => renderNo(f, nivel + 1))}</List>}
+      </ListItem>
     );
   };
 
@@ -212,32 +199,19 @@ function CategoriasPage() {
         subtitle="Estrutura hierárquica de departamentos, subcategorias e imagens da vitrine B2B"
         action={
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => abrir()}
-              className="inline-flex items-center gap-1.5 rounded-full bg-lime px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-            >
-              <Plus className="h-4 w-4" /> Nova categoria
-            </button>
-            <button
-              type="button"
-              onClick={() => void carregar()}
-              aria-label="Atualizar"
-              className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} />
-            </button>
+            <Button variant="contained" type="button" onClick={() => abrir()}><Plus className="h-4 w-4" /> Nova categoria</Button>
+            <IconButton size="small" type="button" onClick={() => void carregar()} aria-label="Atualizar"><RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} /></IconButton>
           </div>
         }
       />
 
       <SectionCard>
         {raizes.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
+          <Typography variant="body2" component="p" className="py-8 text-center text-sm text-muted-foreground">
             Nenhuma categoria cadastrada.
-          </p>
+          </Typography>
         ) : (
-          <ul className="space-y-0.5">{raizes.map((c) => renderNo(c, 0))}</ul>
+          <List disablePadding>{raizes.map((c) => renderNo(c, 0))}</List>
         )}
       </SectionCard>
 
@@ -262,14 +236,7 @@ function CategoriasPage() {
                   alt={f.nome || "Categoria"}
                   className="h-16 w-16 rounded-xl border border-border object-cover bg-card"
                 />
-                <button
-                  type="button"
-                  onClick={() => setF({ ...f, imagem_url: "" })}
-                  aria-label="Remover imagem"
-                  className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-[#D92546] text-white shadow-xs"
-                >
-                  <X className="h-3 w-3" />
-                </button>
+                <IconButton size="small" type="button" onClick={() => setF({ ...f, imagem_url: "" })} aria-label="Remover imagem"><X className="h-3 w-3" /></IconButton>
               </div>
             ) : (
               <div className="grid h-16 w-16 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground">
@@ -286,19 +253,12 @@ function CategoriasPage() {
                   className="hidden"
                   onChange={(e) => void aoSelecionarArquivo(e.target.files?.[0])}
                 />
-                <button
-                  type="button"
-                  disabled={enviandoImg}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary"
-                >
-                  {enviandoImg ? (
+                <Button variant="outlined" size="small" type="button" disabled={enviandoImg} onClick={() => fileInputRef.current?.click()}>{enviandoImg ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <ImagePlus className="h-3.5 w-3.5" />
                   )}
-                  {enviandoImg ? "Enviando…" : "Enviar arquivo do computador"}
-                </button>
+                  {enviandoImg ? "Enviando…" : "Enviar arquivo do computador"}</Button>
               </div>
               <TextField size="small" fullWidth
                 placeholder="Ou cole a URL da imagem (https://...)"
@@ -354,14 +314,10 @@ function CategoriasPage() {
         </FormField>
 
         <FormField label="">
-          <label className="mt-6 flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={f.ativa}
-              onChange={(e) => setF({ ...f, ativa: e.target.checked })}
-            />
+          <Typography component="label" className="mt-6 flex items-center gap-2 text-sm text-foreground">
+            <Checkbox checked={f.ativa} onChange={(e) => setF({ ...f, ativa: e.target.checked })} />
             Categoria ativa na loja
-          </label>
+          </Typography>
         </FormField>
       </FormDialog>
     </>

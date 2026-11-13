@@ -16,6 +16,12 @@ import { catalogoService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Chip from "@mui/material/Chip";
+import Checkbox from "@mui/material/Checkbox";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 
 export const Route = createFileRoute("/catalogo/cms/")({
   beforeLoad: exigePerfil("admin", "estoque", "vendedor"),
@@ -269,23 +275,9 @@ function CmsLojaPage() {
         subtitle="Gerencie as marcas parceiras e todos os banners da vitrine web com atualização em tempo real"
         action={
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={salvando}
-              onClick={() => void persistir(cms)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-lime px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
-            >
-              {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {salvando ? "Publicando…" : "Salvar e Publicar na Loja"}
-            </button>
-            <button
-              type="button"
-              onClick={() => void carregar()}
-              aria-label="Recarregar"
-              className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-            >
-              <RefreshCw className={`h-4 w-4 ${carregando ? "animate-spin" : ""}`} />
-            </button>
+            <Button variant="contained" type="button" disabled={salvando} onClick={() => void persistir(cms)}>{salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {salvando ? "Publicando…" : "Salvar e Publicar na Loja"}</Button>
+            <IconButton size="small" type="button" onClick={() => void carregar()} aria-label="Recarregar"><RefreshCw className={`h-4 w-4 ${carregando ? "animate-spin" : ""}`} /></IconButton>
           </div>
         }
       />
@@ -302,18 +294,7 @@ function CmsLojaPage() {
               ["selos", `Selos de Confiança (${cms.selos.length})`],
             ] as const
           ).map(([id, rotulo]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setAba(id)}
-              className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-                aba === id
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "border border-border bg-secondary/40 text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              {rotulo}
-            </button>
+            <Chip label={<>{rotulo}</>} size="small" variant={(aba === id) ? "filled" : "outlined"} color={(aba === id) ? "primary" : "default"} key={id} onClick={() => setAba(id)} />
           ))}
         </div>
 
@@ -332,8 +313,8 @@ function CmsLojaPage() {
       {aba === "marcas" && (
         <div className="space-y-4">
           <SectionCard>
-            <h2 className="mb-3 text-sm font-bold">Cadastrar Nova Marca</h2>
-            <form onSubmit={(e) => void adicionarMarca(e)} className="grid gap-3 sm:grid-cols-12">
+            <Typography variant="h6" component="h2" className="mb-3 text-sm font-bold">Cadastrar Nova Marca</Typography>
+            <Box component="form" onSubmit={(e) => void adicionarMarca(e)} className="grid gap-3 sm:grid-cols-12">
               <div className="sm:col-span-4">
                 <FormField label="Nome da Marca *">
                   <TextField size="small" fullWidth
@@ -350,7 +331,7 @@ function CmsLojaPage() {
                       placeholder="https://... ou envie arquivo ao lado"
                       value={novaMarcaLogo}
                       onChange={(e) => setNovaMarcaLogo(e.target.value)} />
-                    <label className="mt-1 inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-2 text-xs font-semibold hover:bg-secondary">
+                    <Typography component="label" className="mt-1 inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-2xl border border-border bg-card px-3 py-2 text-xs font-semibold hover:bg-secondary">
                       {uploadingKey === "nova-marca" ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
@@ -370,25 +351,20 @@ function CmsLojaPage() {
                           )
                         }
                       />
-                    </label>
+                    </Typography>
                   </div>
                 </FormField>
               </div>
               <div className="flex items-end sm:col-span-3">
-                <button
-                  type="submit"
-                  className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-2xl bg-lime px-4 text-xs font-semibold text-primary-foreground hover:opacity-90"
-                >
-                  <Plus className="h-4 w-4" /> Cadastrar Marca
-                </button>
+                <Button variant="contained" size="small" type="submit"><Plus className="h-4 w-4" /> Cadastrar Marca</Button>
               </div>
-            </form>
+            </Box>
           </SectionCard>
 
           <SectionCard>
-            <h2 className="mb-3 text-sm font-bold">
+            <Typography variant="h6" component="h2" className="mb-3 text-sm font-bold">
               Marcas Cadastradas (exibidas em "Navegue por marcas" e no cadastro de Produtos)
-            </h2>
+            </Typography>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {cms.marcas.map((m, idx) => (
                 <div
@@ -412,7 +388,7 @@ function CmsLojaPage() {
                       value={m.nome}
                       onChange={(e) => atualizarMarca(idx, { nome: e.target.value })} />
                     <div className="flex items-center gap-1.5">
-                      <label className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-medium hover:bg-secondary">
+                      <Typography component="label" className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-medium hover:bg-secondary">
                         <ImagePlus className="h-3 w-3" /> Trocar logo
                         <input
                           type="file"
@@ -427,22 +403,12 @@ function CmsLojaPage() {
                             )
                           }
                         />
-                      </label>
-                      <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <input
-                          type="checkbox"
-                          checked={m.ativa}
-                          onChange={(e) => atualizarMarca(idx, { ativa: e.target.checked })}
-                        />
+                      </Typography>
+                      <Typography component="label" className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Checkbox checked={m.ativa} onChange={(e) => atualizarMarca(idx, { ativa: e.target.checked })} />
                         Ativa
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => void excluirMarca(idx)}
-                        className="ml-auto inline-flex items-center gap-1 rounded-full border border-[#D92546]/30 px-2 py-1 text-[11px] font-medium text-[#D92546] hover:bg-[#D92546]/10"
-                      >
-                        <Trash2 className="h-3 w-3" /> Excluir
-                      </button>
+                      </Typography>
+                      <Button variant="contained" color="error" size="small" type="button" onClick={() => void excluirMarca(idx)}><Trash2 className="h-3 w-3" /> Excluir</Button>
                     </div>
                   </div>
                 </div>
@@ -456,13 +422,7 @@ function CmsLojaPage() {
       {aba === "slides" && (
         <div className="space-y-4">
           <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={adicionarSlide}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-secondary"
-            >
-              <Plus className="h-4 w-4" /> Adicionar Slide no Topo
-            </button>
+            <Button variant="outlined" size="small" type="button" onClick={adicionarSlide}><Plus className="h-4 w-4" /> Adicionar Slide no Topo</Button>
           </div>
 
           {cms.slides.map((s, idx) => (
@@ -472,22 +432,12 @@ function CmsLojaPage() {
                   <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
                     Slide #{idx + 1}
                   </span>
-                  <label className="flex items-center gap-2 text-xs font-medium">
-                    <input
-                      type="checkbox"
-                      checked={s.ativo}
-                      onChange={(e) => atualizarSlide(idx, { ativo: e.target.checked })}
-                    />
+                  <Typography component="label" className="flex items-center gap-2 text-xs font-medium">
+                    <Checkbox checked={s.ativo} onChange={(e) => atualizarSlide(idx, { ativo: e.target.checked })} />
                     Slide ativo na vitrine
-                  </label>
+                  </Typography>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void excluirSlide(idx)}
-                  className="inline-flex items-center gap-1 rounded-full border border-[#D92546]/30 px-3 py-1 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10"
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> Excluir Slide
-                </button>
+                <Button variant="contained" color="error" size="small" type="button" onClick={() => void excluirSlide(idx)}><Trash2 className="h-3.5 w-3.5" /> Excluir Slide</Button>
               </div>
 
               <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
@@ -506,7 +456,7 @@ function CmsLojaPage() {
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
+                    <Typography component="label" className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
                       {uploadingKey === `slide-bg-${s.id}` ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
@@ -527,8 +477,8 @@ function CmsLojaPage() {
                           )
                         }
                       />
-                    </label>
-                    <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
+                    </Typography>
+                    <Typography component="label" className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
                       <ImagePlus className="h-3.5 w-3.5" /> Banner Mobile (1080×1350)
                       <input
                         type="file"
@@ -544,7 +494,7 @@ function CmsLojaPage() {
                           )
                         }
                       />
-                    </label>
+                    </Typography>
                   </div>
                 </div>
 
@@ -576,13 +526,7 @@ function CmsLojaPage() {
       {aba === "trio" && (
         <div className="space-y-4">
           <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={adicionarTrio}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-secondary"
-            >
-              <Plus className="h-4 w-4" /> Adicionar Card no Trio
-            </button>
+            <Button variant="outlined" size="small" type="button" onClick={adicionarTrio}><Plus className="h-4 w-4" /> Adicionar Card no Trio</Button>
           </div>
 
           {cms.trio_banners.map((c, idx) => (
@@ -592,22 +536,12 @@ function CmsLojaPage() {
                   <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
                     Card #{idx + 1} · {c.titulo}
                   </span>
-                  <label className="flex items-center gap-2 text-xs font-medium">
-                    <input
-                      type="checkbox"
-                      checked={c.ativo}
-                      onChange={(e) => atualizarTrio(idx, { ativo: e.target.checked })}
-                    />
+                  <Typography component="label" className="flex items-center gap-2 text-xs font-medium">
+                    <Checkbox checked={c.ativo} onChange={(e) => atualizarTrio(idx, { ativo: e.target.checked })} />
                     Ativo
-                  </label>
+                  </Typography>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void excluirTrio(idx)}
-                  className="inline-flex items-center gap-1 rounded-full border border-[#D92546]/30 px-3 py-1 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10"
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> Excluir
-                </button>
+                <Button variant="contained" color="error" size="small" type="button" onClick={() => void excluirTrio(idx)}><Trash2 className="h-3.5 w-3.5" /> Excluir</Button>
               </div>
 
               <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
@@ -621,7 +555,7 @@ function CmsLojaPage() {
                       />
                     )}
                   </div>
-                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
+                  <Typography component="label" className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
                     <ImagePlus className="h-3.5 w-3.5" /> Auto-Ajustar Imagem (900×560)
                     <input
                       type="file"
@@ -637,7 +571,7 @@ function CmsLojaPage() {
                         )
                       }
                     />
-                  </label>
+                  </Typography>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -663,13 +597,7 @@ function CmsLojaPage() {
       {aba === "duo" && (
         <div className="space-y-4">
           <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={adicionarDuo}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-secondary"
-            >
-              <Plus className="h-4 w-4" /> Adicionar Banner Largo
-            </button>
+            <Button variant="outlined" size="small" type="button" onClick={adicionarDuo}><Plus className="h-4 w-4" /> Adicionar Banner Largo</Button>
           </div>
 
           {cms.duo_banners.map((c, idx) => (
@@ -679,22 +607,12 @@ function CmsLojaPage() {
                   <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
                     Banner Largo #{idx + 1}
                   </span>
-                  <label className="flex items-center gap-2 text-xs font-medium">
-                    <input
-                      type="checkbox"
-                      checked={c.ativo}
-                      onChange={(e) => atualizarDuo(idx, { ativo: e.target.checked })}
-                    />
+                  <Typography component="label" className="flex items-center gap-2 text-xs font-medium">
+                    <Checkbox checked={c.ativo} onChange={(e) => atualizarDuo(idx, { ativo: e.target.checked })} />
                     Ativo
-                  </label>
+                  </Typography>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void excluirDuo(idx)}
-                  className="inline-flex items-center gap-1 rounded-full border border-[#D92546]/30 px-3 py-1 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10"
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> Excluir
-                </button>
+                <Button variant="contained" color="error" size="small" type="button" onClick={() => void excluirDuo(idx)}><Trash2 className="h-3.5 w-3.5" /> Excluir</Button>
               </div>
 
               <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
@@ -708,7 +626,7 @@ function CmsLojaPage() {
                       />
                     )}
                   </div>
-                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
+                  <Typography component="label" className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
                     <ImagePlus className="h-3.5 w-3.5" /> Auto-Ajustar Imagem (1200×620)
                     <input
                       type="file"
@@ -724,7 +642,7 @@ function CmsLojaPage() {
                         )
                       }
                     />
-                  </label>
+                  </Typography>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -750,13 +668,7 @@ function CmsLojaPage() {
       {aba === "selos" && (
         <div className="space-y-4">
           <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={adicionarSelo}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold hover:bg-secondary"
-            >
-              <Plus className="h-4 w-4" /> Adicionar Selo
-            </button>
+            <Button variant="outlined" size="small" type="button" onClick={adicionarSelo}><Plus className="h-4 w-4" /> Adicionar Selo</Button>
           </div>
 
           {cms.selos.map((s, idx) => (
@@ -766,22 +678,12 @@ function CmsLojaPage() {
                   <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
                     Selo #{idx + 1} · {s.titulo}
                   </span>
-                  <label className="flex items-center gap-2 text-xs font-medium">
-                    <input
-                      type="checkbox"
-                      checked={s.ativo}
-                      onChange={(e) => atualizarSelo(idx, { ativo: e.target.checked })}
-                    />
+                  <Typography component="label" className="flex items-center gap-2 text-xs font-medium">
+                    <Checkbox checked={s.ativo} onChange={(e) => atualizarSelo(idx, { ativo: e.target.checked })} />
                     Ativo
-                  </label>
+                  </Typography>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void excluirSelo(idx)}
-                  className="inline-flex items-center gap-1 rounded-full border border-[#D92546]/30 px-3 py-1 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10"
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> Excluir
-                </button>
+                <Button variant="contained" color="error" size="small" type="button" onClick={() => void excluirSelo(idx)}><Trash2 className="h-3.5 w-3.5" /> Excluir</Button>
               </div>
 
               <div className="grid gap-4 lg:grid-cols-[160px_1fr]">
@@ -797,7 +699,7 @@ function CmsLojaPage() {
                       <span className="text-[11px] text-slate-400">Sem ícone</span>
                     )}
                   </div>
-                  <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
+                  <Typography component="label" className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
                     {uploadingKey === `selo-${s.id}` ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
@@ -817,7 +719,7 @@ function CmsLojaPage() {
                         )
                       }
                     />
-                  </label>
+                  </Typography>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -844,14 +746,10 @@ function CmsLojaPage() {
                       onChange={(e) => atualizarSelo(idx, { link: e.target.value })} />
                   </FormField>
                   <FormField label="Abertura do link">
-                    <label className="flex h-10 items-center gap-2 text-xs font-medium">
-                      <input
-                        type="checkbox"
-                        checked={s.externo}
-                        onChange={(e) => atualizarSelo(idx, { externo: e.target.checked })}
-                      />
+                    <Typography component="label" className="flex h-10 items-center gap-2 text-xs font-medium">
+                      <Checkbox checked={s.externo} onChange={(e) => atualizarSelo(idx, { externo: e.target.checked })} />
                       Abrir em nova aba (link externo)
-                    </label>
+                    </Typography>
                   </FormField>
                 </div>
               </div>

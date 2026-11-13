@@ -1,6 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { Boxes, Filter, ShoppingCart, Zap } from "lucide-react";
 import type { ReactNode } from "react";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Typography from "@mui/material/Typography";
 
 const highlights = [
   { icon: Filter, text: "Pipeline de oportunidades e orçamentos" },
@@ -44,28 +47,28 @@ export function AuthLayout({
           </Link>
 
           <div className="relative z-10 max-w-md">
-            <h1 className="text-4xl xl:text-5xl font-extrabold tracking-tight leading-[1.05]">
+            <Typography variant="h4" component="h1" className="text-4xl xl:text-5xl font-extrabold tracking-tight leading-[1.05]">
               Backoffice
               <br />
               que acompanha
               <br />a operação.
-            </h1>
-            <p className="mt-4 text-sm leading-relaxed opacity-70">
+            </Typography>
+            <Typography variant="body2" component="p" className="mt-4 text-sm leading-relaxed opacity-70">
               E-commerce B2B de soldagem — CRM, catálogo, vendas, estoque e financeiro em um só
               lugar.
-            </p>
+            </Typography>
           </div>
 
-          <ul className="relative z-10 space-y-3">
+          <List disablePadding>
             {highlights.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-center gap-3 text-sm">
+              <ListItem key={text}>
                 <span className="grid place-items-center w-8 h-8 shrink-0 rounded-full bg-lime text-primary-foreground">
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="opacity-90">{text}</span>
-              </li>
+              </ListItem>
             ))}
-          </ul>
+          </List>
 
           <div className="absolute -right-24 -top-24 w-72 h-72 rounded-full bg-lime/15" />
           <div className="absolute -left-16 -bottom-24 w-80 h-80 rounded-full bg-white/5" />
@@ -77,8 +80,8 @@ export function AuthLayout({
             <div className="lg:hidden mb-8 text-foreground">
               <LogoMark />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</h2>
-            <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
+            <Typography variant="h6" component="h2" className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</Typography>
+            <Typography variant="body2" component="p" className="mt-1.5 text-sm text-muted-foreground">{subtitle}</Typography>
 
             <div className="mt-8">{children}</div>
 
@@ -100,11 +103,11 @@ export function AuthField({
   children: ReactNode;
 }) {
   return (
-    <label className="block">
+    <Typography component="label" className="block">
       <span className="mb-1.5 block text-xs font-medium text-foreground">{label}</span>
       {children}
       {error && <span className="mt-1.5 block text-xs text-destructive">{error}</span>}
-    </label>
+    </Typography>
   );
 }
 

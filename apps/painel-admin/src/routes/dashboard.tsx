@@ -40,6 +40,16 @@ import {
 } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import { useAuth } from "@/store/auth-store";
+import IconButton from "@mui/material/IconButton";
+import Chip from "@mui/material/Chip";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Typography from "@mui/material/Typography";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
@@ -598,29 +608,11 @@ function DashboardPage() {
           <div className="flex items-center gap-2">
             <div className="inline-flex items-center rounded-full border border-border bg-card p-1 text-xs">
               {([3, 6, 12] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setJanelaMeses(m)}
-                  className={`rounded-full px-3 py-1 font-medium transition ${
-                    janelaMeses === m
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {m}M
-                </button>
+                <Chip label={<>{m}M</>} size="small" variant={(janelaMeses === m) ? "filled" : "outlined"} color={(janelaMeses === m) ? "primary" : "default"} key={m} onClick={() => setJanelaMeses(m)} />
               ))}
             </div>
 
-            <button
-              type="button"
-              onClick={recarregarTudo}
-              aria-label="Atualizar"
-              className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} />
-            </button>
+            <IconButton size="small" type="button" onClick={recarregarTudo} aria-label="Atualizar"><RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} /></IconButton>
           </div>
         }
       />
@@ -732,10 +724,10 @@ function DashboardPage() {
         <SectionCard>
           <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
             <div>
-              <h2 className="text-base font-bold">Receita</h2>
-              <p className="text-xs text-muted-foreground">
+              <Typography variant="h6" component="h2" className="text-base font-bold">Receita</Typography>
+              <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
                 Últimos {janelaMeses} meses (cancelados excluídos)
-              </p>
+              </Typography>
             </div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
@@ -798,10 +790,10 @@ function DashboardPage() {
         <SectionCard>
           <div className="mb-4 flex items-baseline justify-between gap-2">
             <div>
-              <h2 className="text-base font-bold">Pedidos por status</h2>
-              <p className="text-xs text-muted-foreground">
+              <Typography variant="h6" component="h2" className="text-base font-bold">Pedidos por status</Typography>
+              <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
                 Últimos {pedidosJanela.length} pedidos
-              </p>
+              </Typography>
             </div>
             <Link
               to="/vendas/pedidos"
@@ -851,14 +843,14 @@ function DashboardPage() {
                   </ResponsiveContainer>
                   <div className="pointer-events-none absolute inset-0 grid place-items-center">
                     <div className="text-center">
-                      <p className="text-2xl font-bold tabular-nums">{total}</p>
-                      <p className="text-[11px] text-muted-foreground">pedidos</p>
+                      <Typography variant="body2" component="p" className="text-2xl font-bold tabular-nums">{total}</Typography>
+                      <Typography variant="body2" component="p" className="text-[11px] text-muted-foreground">pedidos</Typography>
                     </div>
                   </div>
                 </div>
-                <ul className="min-w-0 flex-1 space-y-1.5">
+                <List disablePadding>
                   {dados.map((d) => (
-                    <li key={d.slug} className="flex items-center gap-2 text-xs">
+                    <ListItem key={d.slug}>
                       <span
                         className="h-2.5 w-2.5 shrink-0 rounded-full"
                         style={{
@@ -869,9 +861,9 @@ function DashboardPage() {
                         {d.status}
                       </span>
                       <span className="font-semibold tabular-nums">{d.pedidos}</span>
-                    </li>
+                    </ListItem>
                   ))}
-                </ul>
+                </List>
               </div>
             );
           })()}
@@ -883,8 +875,8 @@ function DashboardPage() {
         <SectionCard>
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold">Pipeline por etapa</h2>
-              <p className="text-xs text-muted-foreground">Volume bruto e ponderado</p>
+              <Typography variant="h6" component="h2" className="text-base font-bold">Pipeline por etapa</Typography>
+              <Typography variant="body2" component="p" className="text-xs text-muted-foreground">Volume bruto e ponderado</Typography>
             </div>
             <Link
               to="/crm/oportunidades"
@@ -895,7 +887,7 @@ function DashboardPage() {
           </div>
 
           {pipeline.length === 0 ? (
-            <p className="py-6 text-sm text-muted-foreground">Sem oportunidades abertas.</p>
+            <Typography variant="body2" component="p" className="py-6 text-sm text-muted-foreground">Sem oportunidades abertas.</Typography>
           ) : (
             <div className="space-y-3.5">
               {ESTAGIOS_ATIVOS.map((est) => {
@@ -939,8 +931,8 @@ function DashboardPage() {
         <SectionCard className="p-0 overflow-hidden">
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
             <div>
-              <h2 className="text-base font-bold">Principais clientes (Curva ABC)</h2>
-              <p className="text-xs text-muted-foreground">Concentração de faturamento (80/15/5)</p>
+              <Typography variant="h6" component="h2" className="text-base font-bold">Principais clientes (Curva ABC)</Typography>
+              <Typography variant="body2" component="p" className="text-xs text-muted-foreground">Concentração de faturamento (80/15/5)</Typography>
             </div>
             <Link
               to="/crm/empresas"
@@ -951,20 +943,20 @@ function DashboardPage() {
           </div>
 
           {clientesAbc.length === 0 ? (
-            <p className="px-5 pb-5 text-sm text-muted-foreground">Sem dados no período.</p>
+            <Typography variant="body2" component="p" className="px-5 pb-5 text-sm text-muted-foreground">Sem dados no período.</Typography>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-5 py-2 font-semibold">Empresa</th>
-                  <th className="px-3 py-2 font-semibold">Classe</th>
-                  <th className="px-5 py-2 text-right font-semibold">Volume</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table size="small" className="w-full text-sm">
+              <TableHead>
+                <TableRow >
+                  <TableCell >Empresa</TableCell>
+                  <TableCell >Classe</TableCell>
+                  <TableCell align="right">Volume</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {clientesAbc.slice(0, 5).map((c) => (
-                  <tr key={c.empresaId} className="border-b border-border/60 last:border-0">
-                    <td className="px-5 py-2.5">
+                  <TableRow key={c.empresaId}>
+                    <TableCell >
                       <Link
                         to={`/crm/empresas/${c.empresaId}` as "/"}
                         className="font-medium hover:underline block truncate max-w-48"
@@ -974,19 +966,19 @@ function DashboardPage() {
                       <span className="text-[11px] text-muted-foreground">
                         {c.pedidosCount} pedido(s) · {c.participacaoPct.toFixed(1)}%
                       </span>
-                    </td>
-                    <td className="px-3 py-2.5">
+                    </TableCell>
+                    <TableCell >
                       <span className="inline-grid h-5 w-5 place-items-center rounded-md bg-secondary text-[11px] font-bold">
                         {c.classeAbc}
                       </span>
-                    </td>
-                    <td className="px-5 py-2.5 text-right font-medium tabular-nums">
+                    </TableCell>
+                    <TableCell align="right">
                       {brl(c.receitaTotal.toFixed(2))}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </SectionCard>
       </div>
@@ -995,7 +987,7 @@ function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1fr]">
         <SectionCard className="p-0 overflow-hidden">
           <div className="flex items-center justify-between px-5 pt-5 pb-2">
-            <h2 className="text-base font-bold">Pedidos recentes</h2>
+            <Typography variant="h6" component="h2" className="text-base font-bold">Pedidos recentes</Typography>
             <Link
               to="/vendas/pedidos"
               className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
@@ -1004,47 +996,47 @@ function DashboardPage() {
             </Link>
           </div>
           {pedidosRecentes.length === 0 ? (
-            <p className="flex items-center gap-2 px-5 pb-5 text-sm text-muted-foreground">
+            <Typography variant="body2" component="p" className="flex items-center gap-2 px-5 pb-5 text-sm text-muted-foreground">
               <Inbox className="h-4 w-4" /> Nenhum pedido ainda.
-            </p>
+            </Typography>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-5 py-2 font-semibold">Nº</th>
-                  <th className="px-4 py-2 font-semibold">Cliente</th>
-                  <th className="px-4 py-2 font-semibold">Status</th>
-                  <th className="px-5 py-2 text-right font-semibold">Total</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table size="small" className="w-full text-sm">
+              <TableHead>
+                <TableRow >
+                  <TableCell >Nº</TableCell>
+                  <TableCell >Cliente</TableCell>
+                  <TableCell >Status</TableCell>
+                  <TableCell align="right">Total</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {pedidosRecentes.map((p) => (
-                  <tr key={p.id} className="border-b border-border/60 last:border-0">
-                    <td className="px-5 py-2.5">
+                  <TableRow key={p.id}>
+                    <TableCell >
                       <Link
                         to={`/vendas/pedidos/${p.id}` as "/"}
                         className="font-medium hover:underline"
                       >
                         {p.numero}
                       </Link>
-                    </td>
-                    <td className="px-4 py-2.5 truncate max-w-40 text-muted-foreground">
+                    </TableCell>
+                    <TableCell >
                       {empresasMap.get(p.empresa_id) ?? `#${p.empresa_id}`}
-                    </td>
-                    <td className="px-4 py-2.5">
+                    </TableCell>
+                    <TableCell >
                       <StatusPill status={p.status} label={statusLabel(p.status)} />
-                    </td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">{brl(p.total)}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell align="right">{brl(p.total)}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </SectionCard>
 
         <SectionCard className="p-0 overflow-hidden">
           <div className="flex items-center justify-between px-5 pt-5 pb-2">
-            <h2 className="text-base font-bold">Estoque crítico</h2>
+            <Typography variant="h6" component="h2" className="text-base font-bold">Estoque crítico</Typography>
             <Link
               to="/estoque"
               className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
@@ -1054,22 +1046,22 @@ function DashboardPage() {
           </div>
 
           {estoque.itens.length === 0 ? (
-            <p className="px-5 pb-5 text-sm text-muted-foreground">
+            <Typography variant="body2" component="p" className="px-5 pb-5 text-sm text-muted-foreground">
               Nenhum produto abaixo do estoque mínimo.
-            </p>
+            </Typography>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-5 py-2 font-semibold">Produto</th>
-                  <th className="px-4 py-2 text-right font-semibold">Saldo / Mín.</th>
-                  <th className="px-5 py-2 text-right font-semibold">Reposição</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table size="small" className="w-full text-sm">
+              <TableHead>
+                <TableRow >
+                  <TableCell >Produto</TableCell>
+                  <TableCell align="right">Saldo / Mín.</TableCell>
+                  <TableCell align="right">Reposição</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {estoque.itens.slice(0, 5).map((item) => (
-                  <tr key={item.produtoId} className="border-b border-border/60 last:border-0">
-                    <td className="px-5 py-2.5">
+                  <TableRow key={item.produtoId}>
+                    <TableCell >
                       <Link
                         to={`/catalogo/produtos/${item.produtoId}` as "/"}
                         className="font-medium hover:underline block truncate max-w-48"
@@ -1077,22 +1069,22 @@ function DashboardPage() {
                         {item.nome}
                       </Link>
                       <span className="text-[11px] text-muted-foreground">{item.sku}</span>
-                    </td>
-                    <td className="px-4 py-2.5 text-right tabular-nums text-xs">
+                    </TableCell>
+                    <TableCell align="right">
                       <span className={item.zerado ? "font-bold text-[#D92546]" : ""}>
                         {qty(String(item.disponivel), item.unidade)}
                       </span>{" "}
                       <span className="text-muted-foreground">
                         / {qty(String(item.minimo), item.unidade)}
                       </span>
-                    </td>
-                    <td className="px-5 py-2.5 text-right tabular-nums text-xs font-medium">
+                    </TableCell>
+                    <TableCell align="right">
                       {brl(item.custoReposicao.toFixed(2))}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </SectionCard>
       </div>

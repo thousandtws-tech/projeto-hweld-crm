@@ -12,6 +12,14 @@ import { useResourceList } from "@/lib/use-resource-list";
 import { useAuth } from "@/store/auth-store";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Chip from "@mui/material/Chip";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
 
 export const Route = createFileRoute("/vendas/pedidos/")({
   component: PedidosIndexPage,
@@ -102,14 +110,7 @@ function PedidosIndexPage() {
                 <Plus className="h-4 w-4" /> Novo pedido
               </Link>
             )}
-            <button
-              type="button"
-              onClick={l.recarregar}
-              aria-label="Atualizar"
-              className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${l.carregando ? "animate-spin" : ""}`} />
-            </button>
+            <IconButton size="small" type="button" onClick={l.recarregar} aria-label="Atualizar"><RefreshCw className={`h-3.5 w-3.5 ${l.carregando ? "animate-spin" : ""}`} /></IconButton>
           </div>
         }
       />
@@ -119,40 +120,13 @@ function PedidosIndexPage() {
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <div className="flex min-w-52 flex-1 sm:max-w-xs items-center gap-2 rounded-2xl border border-border bg-card px-3 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <input
-              type="search"
-              value={l.busca}
-              onChange={(e) => l.setBusca(e.target.value)}
-              placeholder="Buscar nº do pedido ou cliente…"
-              className="w-full bg-transparent text-xs sm:text-sm outline-none placeholder:text-muted-foreground"
-            />
+            <TextField size="small" type="search" value={l.busca} onChange={(e) => l.setBusca(e.target.value)} placeholder="Buscar nº do pedido ou cliente…" />
           </div>
 
           <div className="flex flex-wrap items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setStatus("")}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                filtroStatus === ""
-                  ? "bg-primary text-primary-foreground"
-                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Todos
-            </button>
+            <Chip label={<>Todos</>} size="small" variant={(filtroStatus === "") ? "filled" : "outlined"} color={(filtroStatus === "") ? "primary" : "default"} onClick={() => setStatus("")} />
             {STATUS_PEDIDO.map((st) => (
-              <button
-                key={st}
-                type="button"
-                onClick={() => setStatus(filtroStatus === st ? "" : st)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                  filtroStatus === st
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border bg-card text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {statusLabel(st)}
-              </button>
+              <Chip label={<>{statusLabel(st)}</>} size="small" variant={(filtroStatus === st) ? "filled" : "outlined"} color={(filtroStatus === st) ? "primary" : "default"} key={st} onClick={() => setStatus(filtroStatus === st ? "" : st)} />
             ))}
           </div>
         </div>
@@ -168,47 +142,38 @@ function PedidosIndexPage() {
       {l.erro && (
         <div className="flex items-center justify-between gap-3 rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
           <span>{l.erro}</span>
-          <button
-            onClick={l.recarregar}
-            className="inline-flex items-center gap-1.5 rounded-full border border-destructive/30 px-3 py-1 text-xs font-semibold hover:bg-destructive/10"
-          >
-            <RefreshCw className="h-3.5 w-3.5" /> Tentar novamente
-          </button>
+          <Button variant="contained" color="error" size="small" onClick={l.recarregar}><RefreshCw className="h-3.5 w-3.5" /> Tentar novamente</Button>
         </div>
       )}
 
       <SectionCard className="overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className={`w-full text-sm ${l.carregando ? "opacity-60" : ""}`}>
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3 font-semibold">Nº</th>
-                <th className="px-4 py-3 font-semibold">Empresa</th>
-                <th className="px-4 py-3 font-semibold">Origem</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Data</th>
-                <th className="px-4 py-3 text-right font-semibold">Total</th>
-                <th className="px-4 py-3 text-right font-semibold" />
-              </tr>
-            </thead>
-            <tbody>
+          <Table size="small" className={`w-full text-sm ${l.carregando ? "opacity-60" : ""}`}>
+            <TableHead>
+              <TableRow >
+                <TableCell >Nº</TableCell>
+                <TableCell >Empresa</TableCell>
+                <TableCell >Origem</TableCell>
+                <TableCell >Status</TableCell>
+                <TableCell >Data</TableCell>
+                <TableCell align="right">Total</TableCell>
+                <TableCell align="right" />
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {l.itens.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                <TableRow >
+                  <TableCell align="center" colSpan={7}>
                     {l.carregando ? "Carregando…" : "Nenhum pedido encontrado."}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ) : (
                 l.itens.map((p) => {
                   const acao = ACAO_RAPIDA_PEDIDO[p.status];
                   return (
-                    <tr
-                      key={p.id}
-                      onClick={() => navigate({ to: `/vendas/pedidos/${p.id}` as "/" })}
-                      className="cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/40"
-                    >
-                      <td className="px-4 py-3 font-semibold text-primary">{p.numero}</td>
-                      <td className="px-4 py-3">
+                    <TableRow key={p.id} onClick={() => navigate({ to: `/vendas/pedidos/${p.id}` as "/" })} sx={{ cursor: "pointer" }} hover>
+                      <TableCell >{p.numero}</TableCell>
+                      <TableCell >
                         <Link
                           to={`/crm/empresas/${p.empresa_id}` as "/"}
                           onClick={(e) => e.stopPropagation()}
@@ -216,37 +181,31 @@ function PedidosIndexPage() {
                         >
                           {empresas.get(p.empresa_id) ?? `Empresa #${p.empresa_id}`}
                         </Link>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                      </TableCell>
+                      <TableCell >
                         {ORIGEM_LABEL[p.origem] ?? p.origem}
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell >
                         <StatusPill status={p.status} label={statusLabel(p.status)} />
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                      </TableCell>
+                      <TableCell >
                         {fmtData(p.created_at)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                      </TableCell>
+                      <TableCell align="right">
                         {brl(p.total)}
-                      </td>
-                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      </TableCell>
+                      <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                         {podeEditar && acao && (
-                          <button
-                            type="button"
-                            onClick={() => void transicionarRapido(p, acao.para)}
-                            className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium hover:bg-secondary"
-                          >
-                            {acao.rotulo}
-                            <ChevronRight className="h-3 w-3" />
-                          </button>
+                          <Button variant="outlined" size="small" type="button" onClick={() => void transicionarRapido(p, acao.para)}>{acao.rotulo}
+                            <ChevronRight className="h-3 w-3" /></Button>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {l.pagina && l.pagina.total_paginas > 1 && (
@@ -259,17 +218,7 @@ function PedidosIndexPage() {
                   Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
                 )
                 .map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => l.setPaginaNum(p)}
-                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
-                      p === l.paginaNum
-                        ? "bg-lime text-primary-foreground"
-                        : "text-muted-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    {p}
-                  </button>
+                  <Chip label={<>{p}</>} size="small" variant={(p === l.paginaNum) ? "filled" : "outlined"} color={(p === l.paginaNum) ? "primary" : "default"} key={p} onClick={() => l.setPaginaNum(p)} />
                 ))}
             </div>
           </div>

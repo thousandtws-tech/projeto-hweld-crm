@@ -20,6 +20,16 @@ import { crmService, fiscalDocService, fiscalService, pedidosService } from "@/l
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Typography from "@mui/material/Typography";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
 
 export const Route = createFileRoute("/fiscal/notas")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -232,24 +242,11 @@ function FiscalPage() {
         subtitle="Emissão, transmissão e cancelamento de NF-e vinculadas aos pedidos de venda"
         action={
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setEmitirOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-lime px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-            >
-              <Plus className="h-4 w-4" /> Emitir NF
-            </button>
-            <button
-              type="button"
-              onClick={() => {
+            <Button variant="contained" type="button" onClick={() => setEmitirOpen(true)}><Plus className="h-4 w-4" /> Emitir NF</Button>
+            <IconButton size="small" type="button" onClick={() => {
                 void carregar();
                 void carregarDocs();
-              }}
-              aria-label="Atualizar"
-              className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} />
-            </button>
+              }} aria-label="Atualizar"><RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} /></IconButton>
           </div>
         }
       />
@@ -260,17 +257,11 @@ function FiscalPage() {
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           <div className="space-y-0.5">
             <div className="font-bold">Não foi possível verificar a configuração fiscal</div>
-            <p className="text-muted-foreground">
+            <Typography variant="body2" component="p" className="text-muted-foreground">
               O estado real da integração SEFAZ está indisponível no momento.
-            </p>
+            </Typography>
           </div>
-          <button
-            type="button"
-            onClick={() => void carregarConfig()}
-            className="ml-auto shrink-0 rounded-full border border-border bg-card px-3 py-1.5 font-medium hover:bg-secondary"
-          >
-            Tentar novamente
-          </button>
+          <Button variant="outlined" size="small" type="button" onClick={() => void carregarConfig()}>Tentar novamente</Button>
         </div>
       )}
 
@@ -282,7 +273,7 @@ function FiscalPage() {
             <div className="font-bold text-[#D9486E]">
               Integração SEFAZ pendente para liberação definitiva deste módulo em produção
             </div>
-            <p className="text-muted-foreground">
+            <Typography variant="body2" component="p" className="text-muted-foreground">
               As emissões operam em modo simulado (homologação interna).{" "}
               {configFiscal && configFiscal.pendencias.length > 0
                 ? `Pendente: ${configFiscal.pendencias
@@ -305,7 +296,7 @@ function FiscalPage() {
                 Configuração fiscal
               </Link>
               .
-            </p>
+            </Typography>
           </div>
         </div>
       )}
@@ -316,10 +307,10 @@ function FiscalPage() {
             <div className="font-bold text-[#B8891D]">
               Credenciais completas — ambiente de homologação
             </div>
-            <p className="text-muted-foreground">
+            <Typography variant="body2" component="p" className="text-muted-foreground">
               Certificado, CSC e parâmetros configurados. As transmissões seguem em homologação até
               a ativação do emissor fiscal de produção.
-            </p>
+            </Typography>
           </div>
         </div>
       )}
@@ -328,10 +319,10 @@ function FiscalPage() {
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#2E7D4F]" />
           <div className="space-y-0.5">
             <div className="font-bold text-[#2E7D4F]">Integração SEFAZ pronta para produção</div>
-            <p className="text-muted-foreground">
+            <Typography variant="body2" component="p" className="text-muted-foreground">
               Credenciais completas e ambiente em produção — aguardando ativação do transmissor
               fiscal oficial.
-            </p>
+            </Typography>
           </div>
         </div>
       )}
@@ -339,80 +330,74 @@ function FiscalPage() {
       {/* Registro de negócio — notas_fiscais no core-api */}
       <SectionCard className="overflow-hidden p-0">
         <div className="border-b border-border px-4 py-3">
-          <h2 className="text-sm font-semibold">Notas fiscais</h2>
-          <p className="text-xs text-muted-foreground">
+          <Typography variant="h6" component="h2" className="text-sm font-semibold">Notas fiscais</Typography>
+          <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
             Registro de negócio no sistema — atualizado automaticamente pelos eventos do provedor.
-          </p>
+          </Typography>
         </div>
         <div className="overflow-x-auto">
-          <table className={`w-full text-sm ${carregando ? "opacity-60" : ""}`}>
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3 font-semibold">#</th>
-                <th className="px-4 py-3 font-semibold">Pedido</th>
-                <th className="px-4 py-3 font-semibold">Empresa</th>
-                <th className="px-4 py-3 font-semibold">Número / Série</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Chave de acesso</th>
-                <th className="px-4 py-3 text-right font-semibold">Valor</th>
-                <th className="px-4 py-3 text-right font-semibold" />
-              </tr>
-            </thead>
-            <tbody>
+          <Table size="small" className={`w-full text-sm ${carregando ? "opacity-60" : ""}`}>
+            <TableHead>
+              <TableRow >
+                <TableCell >#</TableCell>
+                <TableCell >Pedido</TableCell>
+                <TableCell >Empresa</TableCell>
+                <TableCell >Número / Série</TableCell>
+                <TableCell >Status</TableCell>
+                <TableCell >Chave de acesso</TableCell>
+                <TableCell align="right">Valor</TableCell>
+                <TableCell align="right" />
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {notas.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
+                <TableRow >
+                  <TableCell align="center" colSpan={8}>
                     Nenhuma nota fiscal emitida.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
               {notas.map((n) => (
-                <tr key={n.id} className="border-b border-border/60 last:border-0">
-                  <td className="px-4 py-3 tabular-nums text-muted-foreground">#{n.id}</td>
-                  <td className="px-4 py-3">
+                <TableRow key={n.id}>
+                  <TableCell >#{n.id}</TableCell>
+                  <TableCell >
                     <Link
                       to={`/vendas/pedidos/${n.pedido_id}` as "/"}
                       className="font-medium text-primary hover:underline"
                     >
                       Pedido #{n.pedido_id}
                     </Link>
-                  </td>
-                  <td className="px-4 py-3 font-medium">
+                  </TableCell>
+                  <TableCell >
                     {empresas.get(n.empresa_id) ?? `Empresa #${n.empresa_id}`}
-                  </td>
-                  <td className="px-4 py-3 tabular-nums">
+                  </TableCell>
+                  <TableCell >
                     {n.numero || "—"}
                     {n.serie ? ` / Série ${n.serie}` : ""}
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell >
                     <StatusPill status={n.status} label={statusLabel(n.status)} />
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell >
                     <span
                       className="font-mono text-xs text-muted-foreground"
                       title={n.chave ?? undefined}
                     >
                       {n.chave ? `${n.chave.slice(0, 22)}…` : "—"}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium tabular-nums">
+                  </TableCell>
+                  <TableCell align="right">
                     {brl(n.valor_total)}
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                  </TableCell>
+                  <TableCell align="right">
                     {n.status === "rascunho" && (
-                      <button
-                        type="button"
-                        onClick={() => setAlvo(n)}
-                        className="rounded-full border border-[#D92546]/30 px-3 py-1 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10"
-                      >
-                        Descartar
-                      </button>
+                      <Button variant="contained" color="error" size="small" type="button" onClick={() => setAlvo(n)}>Descartar</Button>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </SectionCard>
 
@@ -420,10 +405,10 @@ function FiscalPage() {
       <SectionCard className="overflow-hidden p-0">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div>
-            <h2 className="text-sm font-semibold">Transmissões ao provedor fiscal</h2>
-            <p className="text-xs text-muted-foreground">
+            <Typography variant="h6" component="h2" className="text-sm font-semibold">Transmissões ao provedor fiscal</Typography>
+            <Typography variant="body2" component="p" className="text-xs text-muted-foreground">
               Ciclo de vida no provedor (Focus NFe): emissão, autorização, artefatos e cancelamento.
-            </p>
+            </Typography>
           </div>
           {opsIndisponivel && (
             <span className="rounded-full border border-[#B8891D]/40 bg-[#B8891D]/8 px-3 py-1 text-xs font-medium text-[#B8891D]">
@@ -432,33 +417,33 @@ function FiscalPage() {
           )}
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3 font-semibold">Pedido</th>
-                <th className="px-4 py-3 font-semibold">Tipo</th>
-                <th className="px-4 py-3 font-semibold">Ambiente</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Provedor</th>
-                <th className="px-4 py-3 font-semibold">Número / Série</th>
-                <th className="px-4 py-3 font-semibold">Sincronizado</th>
-                <th className="px-4 py-3 text-right font-semibold" />
-              </tr>
-            </thead>
-            <tbody>
+          <Table size="small" className="w-full text-sm">
+            <TableHead>
+              <TableRow >
+                <TableCell >Pedido</TableCell>
+                <TableCell >Tipo</TableCell>
+                <TableCell >Ambiente</TableCell>
+                <TableCell >Status</TableCell>
+                <TableCell >Provedor</TableCell>
+                <TableCell >Número / Série</TableCell>
+                <TableCell >Sincronizado</TableCell>
+                <TableCell align="right" />
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {docs.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
+                <TableRow >
+                  <TableCell align="center" colSpan={8}>
                     {opsIndisponivel
                       ? "Documentos do provedor indisponíveis no momento."
                       : "Nenhuma transmissão fiscal registrada."}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
               {docs.map((d) => (
                 <Fragment key={d.id}>
-                  <tr className="border-b border-border/60 last:border-0">
-                    <td className="px-4 py-3">
+                  <TableRow >
+                    <TableCell >
                       <Link
                         to={`/vendas/pedidos/${d.pedidoId}` as "/"}
                         className="font-medium text-primary hover:underline"
@@ -468,15 +453,15 @@ function FiscalPage() {
                       {d.notaFiscalId != null && (
                         <div className="text-xs text-muted-foreground">NF #{d.notaFiscalId}</div>
                       )}
-                    </td>
-                    <td className="px-4 py-3 font-medium">{d.docType}</td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell >{d.docType}</TableCell>
+                    <TableCell >
                       <StatusPill
                         status={d.environment === "producao" ? "authorized" : "requested"}
                         label={d.environment === "producao" ? "Produção" : "Homologação"}
                       />
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell >
                       <StatusPill status={d.status.toLowerCase()} label={docStatusLabel(d)} />
                       {d.rejectionReason && (
                         <div
@@ -486,105 +471,58 @@ function FiscalPage() {
                           {d.rejectionReason}
                         </div>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                    </TableCell>
+                    <TableCell >
                       <div>{d.provider}</div>
                       {statusRemoto(d) && (
                         <div className="max-w-[180px] truncate" title={statusRemoto(d) ?? ""}>
                           {statusRemoto(d)}
                         </div>
                       )}
-                    </td>
-                    <td className="px-4 py-3 tabular-nums">
+                    </TableCell>
+                    <TableCell >
                       {d.numero || "—"}
                       {d.serie ? ` / ${d.serie}` : ""}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                    </TableCell>
+                    <TableCell >
                       {fmtDataHora(d.lastSyncedAt)}
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell >
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          type="button"
-                          onClick={() => void sincronizarDoc(d)}
-                          title="Consultar status no provedor"
-                          className="grid h-7 w-7 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-                        >
-                          <RefreshCw className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void abrirHistorico(d)}
-                          title="Histórico do documento"
-                          className="grid h-7 w-7 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-                        >
-                          <History className="h-3.5 w-3.5" />
-                        </button>
+                        <IconButton size="small" type="button" onClick={() => void sincronizarDoc(d)} title="Consultar status no provedor"><RefreshCw className="h-3.5 w-3.5" /></IconButton>
+                        <IconButton size="small" type="button" onClick={() => void abrirHistorico(d)} title="Histórico do documento"><History className="h-3.5 w-3.5" /></IconButton>
                         {d.xmlUrl && (
-                          <button
-                            type="button"
-                            onClick={() => void baixarArtefato(d, "xml")}
-                            title="Baixar XML"
-                            className="grid h-7 w-7 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-                          >
-                            <FileDown className="h-3.5 w-3.5" />
-                          </button>
+                          <IconButton size="small" type="button" onClick={() => void baixarArtefato(d, "xml")} title="Baixar XML"><FileDown className="h-3.5 w-3.5" /></IconButton>
                         )}
                         {d.pdfUrl && (
-                          <button
-                            type="button"
-                            onClick={() => void baixarArtefato(d, "pdf")}
-                            title="Baixar DANFE (PDF)"
-                            className="grid h-7 w-7 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-                          >
-                            <FileText className="h-3.5 w-3.5" />
-                          </button>
+                          <IconButton size="small" type="button" onClick={() => void baixarArtefato(d, "pdf")} title="Baixar DANFE (PDF)"><FileText className="h-3.5 w-3.5" /></IconButton>
                         )}
                         {(d.status === "AUTHORIZED" ||
                           d.status === "PROCESSING" ||
                           d.status === "REQUIRES_RECONCILIATION") && (
-                          <button
-                            type="button"
-                            onClick={() => void reenviarWebhook(d)}
-                            title="Reenviar notificação do provedor"
-                            className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition hover:text-foreground"
-                          >
-                            Reenviar hook
-                          </button>
+                          <Button variant="outlined" size="small" type="button" onClick={() => void reenviarWebhook(d)} title="Reenviar notificação do provedor">Reenviar hook</Button>
                         )}
                         {d.status === "AUTHORIZED" && (
-                          <button
-                            type="button"
-                            onClick={() => setDocAlvo(d)}
-                            className="rounded-full border border-[#D92546]/30 px-3 py-1 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10"
-                          >
-                            Cancelar
-                          </button>
+                          <Button variant="contained" color="error" size="small" type="button" onClick={() => setDocAlvo(d)}>Cancelar</Button>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                   {historicoId === d.id && (
-                    <tr className="border-b border-border/60 bg-secondary/30 last:border-0">
-                      <td colSpan={8} className="px-4 py-3">
+                    <TableRow >
+                      <TableCell colSpan={8}>
                         <div className="flex items-center justify-between pb-2">
                           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             Histórico do documento
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => setHistoricoId(null)}
-                            className="text-xs text-muted-foreground hover:text-foreground"
-                          >
-                            Fechar
-                          </button>
+                          <Button variant="text" size="small" type="button" onClick={() => setHistoricoId(null)}>Fechar</Button>
                         </div>
                         {historico.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">Carregando…</p>
+                          <Typography variant="body2" component="p" className="text-xs text-muted-foreground">Carregando…</Typography>
                         ) : (
-                          <ol className="space-y-1.5">
+                          <List component="ol" disablePadding>
                             {historico.map((ev) => (
-                              <li key={ev.id} className="flex items-baseline gap-3 text-xs">
+                              <ListItem key={ev.id}>
                                 <span className="shrink-0 tabular-nums text-muted-foreground">
                                   {fmtDataHora(ev.createdAt)}
                                 </span>
@@ -599,17 +537,17 @@ function FiscalPage() {
                                 {ev.message && (
                                   <span className="text-foreground">{ev.message}</span>
                                 )}
-                              </li>
+                              </ListItem>
                             ))}
-                          </ol>
+                          </List>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )}
                 </Fragment>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </SectionCard>
 

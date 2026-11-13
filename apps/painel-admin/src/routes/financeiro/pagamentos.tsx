@@ -16,6 +16,14 @@ import { useResourceList } from "@/lib/use-resource-list";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import { DateField } from "@/components/ui-kit/DateField";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Chip from "@mui/material/Chip";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
 
 export const Route = createFileRoute("/financeiro/pagamentos")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -219,21 +227,8 @@ function PagamentosPage() {
         subtitle={`A receber: ${brl(metricas.aReceber.toFixed(2))} · Vencido: ${brl(metricas.vencido.toFixed(2))} · Recebido: ${brl(metricas.recebido.toFixed(2))}`}
         action={
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={abrirModalParcelas}
-              className="inline-flex items-center gap-1.5 rounded-full bg-lime px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-            >
-              <Plus className="h-4 w-4" /> Gerar parcelas
-            </button>
-            <button
-              type="button"
-              onClick={() => void carregar()}
-              aria-label="Atualizar"
-              className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} />
-            </button>
+            <Button variant="contained" type="button" onClick={abrirModalParcelas}><Plus className="h-4 w-4" /> Gerar parcelas</Button>
+            <IconButton size="small" type="button" onClick={() => void carregar()} aria-label="Atualizar"><RefreshCw className={`h-3.5 w-3.5 ${carregando ? "animate-spin" : ""}`} /></IconButton>
           </div>
         }
       />
@@ -243,43 +238,16 @@ function PagamentosPage() {
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <div className="flex min-w-52 flex-1 sm:max-w-xs items-center gap-2 rounded-2xl border border-border bg-card px-3 py-1.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <input
-              type="search"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar pedido ou cliente…"
-              className="w-full bg-transparent text-xs sm:text-sm outline-none placeholder:text-muted-foreground"
-            />
+            <TextField size="small" type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar pedido ou cliente…" />
           </div>
 
           <div className="flex flex-wrap items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setFiltroStatus("")}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                filtroStatus === ""
-                  ? "bg-primary text-primary-foreground"
-                  : "border border-border bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Todos ({l.pagina?.total ?? l.itens.length})
-            </button>
+            <Chip label={<>Todos ({l.pagina?.total ?? l.itens.length})</>} size="small" variant={(filtroStatus === "") ? "filled" : "outlined"} color={(filtroStatus === "") ? "primary" : "default"} onClick={() => setFiltroStatus("")} />
             {STATUS_PAGAMENTO.map((st) => {
               const count = l.itens.filter((p) => p.status === st).length;
               if (count === 0 && filtroStatus !== st) return null;
               return (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => setFiltroStatus(filtroStatus === st ? "" : st)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                    filtroStatus === st
-                      ? "bg-primary text-primary-foreground"
-                      : "border border-border bg-card text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {statusLabel(st)} ({count})
-                </button>
+                <Chip label={<>{statusLabel(st)} ({count})</>} size="small" variant={(filtroStatus === st) ? "filled" : "outlined"} color={(filtroStatus === st) ? "primary" : "default"} key={st} onClick={() => setFiltroStatus(filtroStatus === st ? "" : st)} />
               );
             })}
           </div>
@@ -288,25 +256,25 @@ function PagamentosPage() {
 
       <SectionCard className="overflow-hidden p-0">
         <div className="overflow-x-auto">
-          <table className={`w-full text-sm ${carregando ? "opacity-60" : ""}`}>
-            <thead>
-              <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3 font-semibold">Pedido / Cliente</th>
-                <th className="px-4 py-3 font-semibold">Parcela</th>
-                <th className="px-4 py-3 font-semibold">Forma</th>
-                <th className="px-4 py-3 font-semibold">Vencimento</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 text-right font-semibold">Valor</th>
-                <th className="px-4 py-3 text-right font-semibold" />
-              </tr>
-            </thead>
-            <tbody>
+          <Table size="small" className={`w-full text-sm ${carregando ? "opacity-60" : ""}`}>
+            <TableHead>
+              <TableRow >
+                <TableCell >Pedido / Cliente</TableCell>
+                <TableCell >Parcela</TableCell>
+                <TableCell >Forma</TableCell>
+                <TableCell >Vencimento</TableCell>
+                <TableCell >Status</TableCell>
+                <TableCell align="right">Valor</TableCell>
+                <TableCell align="right" />
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {pagamentosFiltrados.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                <TableRow >
+                  <TableCell align="center" colSpan={7}>
                     Nenhuma parcela encontrada.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
               {pagamentosFiltrados.map((p) => {
                 const dias = diasAteVencimento(p.vencimento);
@@ -314,67 +282,55 @@ function PagamentosPage() {
                   (p.status === "pendente" || p.status === "vencido") && dias !== null && dias < 0;
 
                 return (
-                  <tr key={p.id} className="border-b border-border/60 last:border-0">
-                    <td className="px-4 py-3">
+                  <TableRow key={p.id}>
+                    <TableCell >
                       <Link
                         to={`/vendas/pedidos/${p.pedido_id}` as "/"}
                         className="font-medium text-foreground hover:text-primary hover:underline"
                       >
                         {pedidoLabel(p.pedido_id)}
                       </Link>
-                    </td>
-                    <td className="px-4 py-3 tabular-nums">{p.parcela}ª</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                    </TableCell>
+                    <TableCell >{p.parcela}ª</TableCell>
+                    <TableCell >
                       {nomeForma(p.forma_pagamento_id)}
-                    </td>
-                    <td className="px-4 py-3 text-xs">
+                    </TableCell>
+                    <TableCell >
                       <span className={atrasada ? "font-semibold text-[#D92546]" : ""}>
                         {fmtData(p.vencimento)}
                         {atrasada ? ` (${Math.abs(dias!)}d atraso)` : ""}
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell >
                       <StatusPill status={p.status} label={statusLabel(p.status)} />
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                    </TableCell>
+                    <TableCell align="right">
                       {brl(p.valor)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
+                    </TableCell>
+                    <TableCell align="right">
                       {(p.status === "pendente" || p.status === "vencido") && (
-                        <button
-                          type="button"
-                          onClick={() => {
+                        <Button variant="contained" size="small" type="button" onClick={() => {
                             setAlvo(p);
                             setFBaixa({
                               forma_pagamento_id: String(p.forma_pagamento_id ?? 1),
                               observacao: "",
                             });
                             setModal("baixa");
-                          }}
-                          className="mr-2 rounded-full bg-lime px-3 py-1 text-xs font-semibold text-primary-foreground hover:opacity-90"
-                        >
-                          Baixar
-                        </button>
+                          }}>Baixar</Button>
                       )}
                       {p.status === "pago" && (
-                        <button
-                          type="button"
-                          onClick={() => {
+                        <Button variant="contained" color="error" size="small" type="button" onClick={() => {
                             setAlvo(p);
                             setMotivo("");
                             setModal("estorno");
-                          }}
-                          className="rounded-full border border-[#D92546]/30 px-3 py-1 text-xs font-medium text-[#D92546] hover:bg-[#D92546]/10"
-                        >
-                          Estornar
-                        </button>
+                          }}>Estornar</Button>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {l.pagina && l.pagina.total_paginas > 1 && (
@@ -387,17 +343,7 @@ function PagamentosPage() {
                   Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
                 )
                 .map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => l.setPaginaNum(p)}
-                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
-                      p === l.paginaNum
-                        ? "bg-lime text-primary-foreground"
-                        : "text-muted-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    {p}
-                  </button>
+                  <Chip label={<>{p}</>} size="small" variant={(p === l.paginaNum) ? "filled" : "outlined"} color={(p === l.paginaNum) ? "primary" : "default"} key={p} onClick={() => l.setPaginaNum(p)} />
                 ))}
             </div>
           </div>

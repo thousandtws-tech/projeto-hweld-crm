@@ -8,6 +8,14 @@ import type { Contato, Empresa, Produto } from "@/lib/models";
 import { catalogoService, crmService, pedidosService } from "@/lib/services";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import Box from "@mui/material/Box";
 
 export const Route = createFileRoute("/vendas/pedidos/novo")({
   component: PedidoNovoPage,
@@ -138,7 +146,7 @@ function PedidoNovoPage() {
   return (
     <>
       <PageHeader title="Novo pedido manual" />
-      <form onSubmit={criar} className="space-y-4">
+      <Box component="form" onSubmit={criar} className="space-y-4">
         <SectionCard>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <FormField label="Empresa">
@@ -205,29 +213,23 @@ function PedidoNovoPage() {
         <SectionCard className="p-0 overflow-hidden">
           <div className="flex items-center justify-between px-5 pt-4 pb-2">
             <span className="text-sm font-semibold">Itens</span>
-            <button
-              type="button"
-              onClick={addItem}
-              className="rounded-full border border-border px-3.5 py-1.5 text-xs font-semibold hover:bg-secondary"
-            >
-              + Item
-            </button>
+            <Button variant="outlined" size="small" type="button" onClick={addItem}>+ Item</Button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="min-w-56 px-4 py-2 font-semibold">Produto</th>
-                  <th className="px-4 py-2 font-semibold">Qtd</th>
-                  <th className="px-4 py-2 font-semibold">Preço</th>
-                  <th className="px-4 py-2 font-semibold">Desc.</th>
-                  <th className="px-4 py-2" />
-                </tr>
-              </thead>
-              <tbody>
+            <Table size="small" className="w-full text-sm">
+              <TableHead>
+                <TableRow >
+                  <TableCell >Produto</TableCell>
+                  <TableCell >Qtd</TableCell>
+                  <TableCell >Preço</TableCell>
+                  <TableCell >Desc.</TableCell>
+                  <TableCell  />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {itens.map((item, idx) => (
-                  <tr key={idx} className="border-b border-border/60 last:border-0">
-                    <td className="px-4 py-2">
+                  <TableRow key={idx}>
+                    <TableCell >
                       <TextField size="small" fullWidth select
                         value={item.produto_id ?? ""}
                         onChange={(e) =>
@@ -241,62 +243,50 @@ function PedidoNovoPage() {
                           </MenuItem>
                         ))}
                       </TextField>
-                    </td>
-                    <td className="px-4 py-2">
+                    </TableCell>
+                    <TableCell >
                       <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001" } }}
                         type="number"
                        
                         value={item.quantidade}
                         onChange={(e) => setItem(idx, { quantidade: e.target.value })} />
-                    </td>
-                    <td className="px-4 py-2">
+                    </TableCell>
+                    <TableCell >
                       <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }}
                         type="number"
                        
                         value={item.preco_unitario}
                         onChange={(e) => setItem(idx, { preco_unitario: e.target.value })} />
-                    </td>
-                    <td className="px-4 py-2">
+                    </TableCell>
+                    <TableCell >
                       <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.01" } }}
                         type="number"
                        
                         value={item.desconto}
                         onChange={(e) => setItem(idx, { desconto: e.target.value })} />
-                    </td>
-                    <td className="px-4 py-2">
-                      <button
-                        type="button"
-                        onClick={() => setItens((l) => l.filter((_, i) => i !== idx))}
-                        className="rounded-full border border-destructive/30 px-2.5 py-1 text-xs text-destructive hover:bg-destructive/10"
-                      >
-                        ×
-                      </button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                    <TableCell >
+                      <Button variant="contained" color="error" size="small" type="button" onClick={() => setItens((l) => l.filter((_, i) => i !== idx))}>×</Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </SectionCard>
 
         <SectionCard>
-          <label className="block text-xs font-medium text-muted-foreground">
+          <Typography component="label" className="block text-xs font-medium text-muted-foreground">
             Observações
             <TextField size="small" fullWidth multiline minRows={3}
               rows={2}
               value={f.observacoes}
               onChange={(e) => setF({ ...f, observacoes: e.target.value })} />
-          </label>
+          </Typography>
         </SectionCard>
 
         <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={!valido || salvando}
-            className="rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
-          >
-            Criar pedido
-          </button>
+          <Button variant="contained" type="submit" disabled={!valido || salvando}>Criar pedido</Button>
           <Link
             to="/vendas/pedidos"
             className="rounded-full border border-border px-5 py-2.5 text-sm font-medium hover:bg-secondary"
@@ -304,7 +294,7 @@ function PedidoNovoPage() {
             Cancelar
           </Link>
         </div>
-      </form>
+      </Box>
     </>
   );
 }

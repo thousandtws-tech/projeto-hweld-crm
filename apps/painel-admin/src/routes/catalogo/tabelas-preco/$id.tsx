@@ -11,6 +11,13 @@ import { exigePerfil } from "@/lib/guards";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableRow from "@mui/material/TableRow";
+import TableCell from "@mui/material/TableCell";
+import Box from "@mui/material/Box";
 
 export const Route = createFileRoute("/catalogo/tabelas-preco/$id")({
   beforeLoad: exigePerfil("admin", "vendedor"),
@@ -77,7 +84,7 @@ function TabelaPrecoPage() {
         <>
           <PageHeader title={tabela.nome} subtitle={tabela.descricao ?? undefined} />
           <SectionCard className="p-0 overflow-hidden">
-            <form onSubmit={definir} className="flex flex-wrap items-end gap-2 px-5 pt-4">
+            <Box component="form" onSubmit={definir} className="flex flex-wrap items-end gap-2 px-5 pt-4">
               <TextField size="small" fullWidth select
                 required
                 value={fPreco.produto_id}
@@ -98,42 +105,35 @@ function TabelaPrecoPage() {
                 aria-label="Preço"
                 value={fPreco.preco}
                 onChange={(e) => setFPreco({ ...fPreco, preco: e.target.value })} />
-              <button className="rounded-full bg-lime px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
-                Definir
-              </button>
-            </form>
-            <table className="mt-3 w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-5 py-2 font-semibold">Produto</th>
-                  <th className="px-5 py-2 text-right font-semibold">Preço</th>
-                  <th className="px-5 py-2" />
-                </tr>
-              </thead>
-              <tbody>
+              <Button variant="contained" >Definir</Button>
+            </Box>
+            <Table size="small" className="mt-3 w-full text-sm">
+              <TableHead>
+                <TableRow >
+                  <TableCell >Produto</TableCell>
+                  <TableCell align="right">Preço</TableCell>
+                  <TableCell  />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {(tabela.itens ?? []).length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="px-5 py-8 text-center text-muted-foreground">
+                  <TableRow >
+                    <TableCell align="center" colSpan={3}>
                       Nenhum preço definido.
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 )}
                 {(tabela.itens ?? []).map((i) => (
-                  <tr key={i.produto_id} className="border-b border-border/60 last:border-0">
-                    <td className="px-5 py-2.5 font-medium">{nomeProduto(i.produto_id)}</td>
-                    <td className="px-5 py-2.5 text-right tabular-nums">{brl(i.preco)}</td>
-                    <td className="px-5 py-2.5 text-right">
-                      <button
-                        onClick={() => void remover(i.produto_id)}
-                        className="rounded-full border border-destructive/30 px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
-                      >
-                        Remover
-                      </button>
-                    </td>
-                  </tr>
+                  <TableRow key={i.produto_id}>
+                    <TableCell >{nomeProduto(i.produto_id)}</TableCell>
+                    <TableCell align="right">{brl(i.preco)}</TableCell>
+                    <TableCell align="right">
+                      <Button variant="contained" color="error" size="small" onClick={() => void remover(i.produto_id)}>Remover</Button>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </SectionCard>
         </>
       ) : (

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ShieldAlert } from "lucide-react";
+import Typography from "@mui/material/Typography";
 
 
 export const Route = createFileRoute("/sem-permissao")({
@@ -14,10 +15,10 @@ function SemPermissaoPage() {
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[var(--pill-warn-bg)] text-[var(--pill-warn-fg)]">
             <ShieldAlert className="h-6 w-6" />
           </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight">Sem permissão</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <Typography variant="h4" component="h1" className="mt-4 text-2xl font-bold tracking-tight">Sem permissão</Typography>
+          <Typography variant="body2" component="p" className="mt-2 text-sm text-muted-foreground">
             Seu perfil não tem acesso a esta área. Fale com um administrador.
-          </p>
+          </Typography>
           <Link
             to="/dashboard"
             className="mt-6 inline-flex items-center justify-center rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"

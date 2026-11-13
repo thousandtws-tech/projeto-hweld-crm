@@ -11,6 +11,11 @@ import { exigePerfil } from "@/lib/guards";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 
 export const Route = createFileRoute("/operacao/ordens-servico/$id")({
   beforeLoad: exigePerfil("admin", "tecnico"),
@@ -128,13 +133,7 @@ function OsDetalhePage() {
                 <StatusPill status={os.status} label={statusLabel(os.status)} />
                 <StatusPill status={os.prioridade} label={os.prioridade} />
                 {(TRANSICOES[os.status] ?? []).map((t) => (
-                  <button
-                    key={t.para}
-                    onClick={() => void transicionar(os, t.para)}
-                    className={`rounded-full px-4 py-2 text-xs font-semibold hover:opacity-90 ${t.cor}`}
-                  >
-                    {t.rotulo}
-                  </button>
+                  <Button variant="text" size="small" key={t.para} onClick={() => void transicionar(os, t.para)}>{t.rotulo}</Button>
                 ))}
               </div>
             }
@@ -143,77 +142,77 @@ function OsDetalhePage() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[3fr_2fr]">
             <div className="space-y-4">
               <SectionCard>
-                <h2 className="mb-3 text-sm font-semibold">Detalhes</h2>
-                <dl className="space-y-3 text-sm">
+                <Typography variant="h6" component="h2" className="mb-3 text-sm font-semibold">Detalhes</Typography>
+                <Box component="dl" className="space-y-3 text-sm">
                   <div>
-                    <dt className="text-xs text-muted-foreground">Empresa</dt>
-                    <dd className="mt-0.5 font-medium">{empresaNome(os.empresa_id)}</dd>
+                    <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-xs text-muted-foreground">Empresa</Typography>
+                    <Typography component="dd" variant="body2" className="mt-0.5 font-medium">{empresaNome(os.empresa_id)}</Typography>
                   </div>
                   <div>
-                    <dt className="text-xs text-muted-foreground">Descrição</dt>
-                    <dd className="mt-0.5">{os.descricao || "—"}</dd>
+                    <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-xs text-muted-foreground">Descrição</Typography>
+                    <Typography component="dd" variant="body2" className="mt-0.5">{os.descricao || "—"}</Typography>
                   </div>
                   <div>
-                    <dt className="text-xs text-muted-foreground">Prevista</dt>
-                    <dd className="mt-0.5">{fmtData(os.prevista_em)}</dd>
+                    <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-xs text-muted-foreground">Prevista</Typography>
+                    <Typography component="dd" variant="body2" className="mt-0.5">{fmtData(os.prevista_em)}</Typography>
                   </div>
                   <div>
-                    <dt className="text-xs text-muted-foreground">Mão de obra</dt>
-                    <dd className="mt-0.5 tabular-nums">{brl(os.valor_mao_obra)}</dd>
+                    <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-xs text-muted-foreground">Mão de obra</Typography>
+                    <Typography component="dd" variant="body2" className="mt-0.5 tabular-nums">{brl(os.valor_mao_obra)}</Typography>
                   </div>
                   {os.valor_total && (
                     <div>
-                      <dt className="text-xs text-muted-foreground">Valor total (c/ materiais)</dt>
-                      <dd className="mt-0.5 font-bold tabular-nums">{brl(os.valor_total)}</dd>
+                      <Typography component="dt" variant="caption" color="text.secondary" display="block" className="text-xs text-muted-foreground">Valor total (c/ materiais)</Typography>
+                      <Typography component="dd" variant="body2" className="mt-0.5 font-bold tabular-nums">{brl(os.valor_total)}</Typography>
                     </div>
                   )}
-                </dl>
+                </Box>
               </SectionCard>
 
               <SectionCard className="p-0 overflow-hidden">
                 <div className="px-5 pt-4 pb-2 text-sm font-semibold">
                   Materiais consumidos (baixa de estoque)
                 </div>
-                <ul className="divide-y divide-border/60">
+                <List disablePadding>
                   {(os.materiais ?? []).length === 0 && (
-                    <li className="px-5 py-5 text-sm text-muted-foreground">Nenhum material.</li>
+                    <ListItem>Nenhum material.</ListItem>
                   )}
                   {(os.materiais ?? []).map((m, i) => (
-                    <li key={i} className="flex justify-between px-5 py-2.5 text-sm">
+                    <ListItem key={i}>
                       <span>{nomeProduto(m.produto_id)}</span>
                       <span className="tabular-nums">
                         {m.quantidade}
                         {m.total ? ` (${brl(m.total)})` : ""}
                       </span>
-                    </li>
+                    </ListItem>
                   ))}
-                </ul>
+                </List>
               </SectionCard>
 
               {os.historico && os.historico.length > 0 && (
                 <SectionCard className="p-0 overflow-hidden">
                   <div className="px-5 pt-4 pb-2 text-sm font-semibold">Histórico de status</div>
-                  <ul className="divide-y divide-border/60 text-xs">
+                  <List disablePadding>
                     {os.historico.map((h) => (
-                      <li key={h.id} className="flex items-center justify-between px-5 py-2.5">
+                      <ListItem key={h.id}>
                         <span>
                           {h.status_anterior ? `${statusLabel(h.status_anterior)} → ` : ""}
                           <strong>{statusLabel(h.status_novo)}</strong>
                           {h.observacao ? ` · ${h.observacao}` : ""}
                         </span>
                         <span className="text-muted-foreground">{fmtData(h.created_at)}</span>
-                      </li>
+                      </ListItem>
                     ))}
-                  </ul>
+                  </List>
                 </SectionCard>
               )}
             </div>
 
             {["aberta", "em_andamento", "aguardando_material"].includes(os.status) && (
               <SectionCard>
-                <h2 className="mb-3 text-sm font-semibold">Consumir material</h2>
-                <form onSubmit={consumir} className="grid gap-3">
-                  <label className="text-xs font-medium text-muted-foreground">
+                <Typography variant="h6" component="h2" className="mb-3 text-sm font-semibold">Consumir material</Typography>
+                <Box component="form" onSubmit={consumir} className="grid gap-3">
+                  <Typography component="label" className="text-xs font-medium text-muted-foreground">
                     Produto
                     <TextField size="small" fullWidth select
                       required
@@ -226,8 +225,8 @@ function OsDetalhePage() {
                         </MenuItem>
                       ))}
                     </TextField>
-                  </label>
-                  <label className="text-xs font-medium text-muted-foreground">
+                  </Typography>
+                  <Typography component="label" className="text-xs font-medium text-muted-foreground">
                     Quantidade
                     <TextField size="small" fullWidth slotProps={{ htmlInput: { step: "0.001" } }}
                       type="number"
@@ -235,11 +234,9 @@ function OsDetalhePage() {
                       required
                       value={fMat.quantidade}
                       onChange={(e) => setFMat({ ...fMat, quantidade: e.target.value })} />
-                  </label>
-                  <button className="rounded-full bg-lime px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
-                    Consumir
-                  </button>
-                </form>
+                  </Typography>
+                  <Button variant="contained" >Consumir</Button>
+                </Box>
               </SectionCard>
             )}
           </div>

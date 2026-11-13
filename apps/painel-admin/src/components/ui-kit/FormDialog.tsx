@@ -7,6 +7,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import FormControl from "@mui/material/FormControl";
 import FormLabel from "@mui/material/FormLabel";
 import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 
 export const fieldClass =
   "mt-1 w-full rounded-xl border border-border bg-secondary/60 px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20 placeholder:text-muted-foreground";
@@ -64,7 +65,7 @@ export function FormDialog({
           {description}
         </Typography>
       </DialogTitle>
-      <form onSubmit={onSubmit}>
+      <Box component="form" onSubmit={onSubmit}>
         <DialogContent
           sx={{ display: "grid", gap: 2, gridTemplateColumns: { sm: "1fr 1fr" }, py: 3 }}
         >
@@ -78,7 +79,7 @@ export function FormDialog({
             {submitLabel}
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </Dialog>
   );
 }
