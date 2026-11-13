@@ -47,3 +47,4 @@ infra/cloudflare/dist-check/
 deliv.json
 uploads/
 services/hweld-core-api/uploads/
+infra/docker/certs/
