@@ -2,10 +2,10 @@
   display: block;
 }
 
-/* Faixa promocional acima do header — padrão marketplace */
+/* Faixa promocional acima do header — vermelho da marca sobre navy */
 .topbar {
-  background: linear-gradient(90deg, #0c1f4b 0%, #16357e 55%, #1d4fd8 100%);
-  color: #e8edf8;
+  background: linear-gradient(90deg, #b81a20 0%, var(--hw-brand-red) 55%, #e23338 100%);
+  color: #ffffff;
   font-family: var(--hw-font-sans);
 }
 
@@ -33,7 +33,7 @@
 
 .topbar-promo-icone {
   font-size: 17px;
-  color: #fb923c;
+  color: #ffffff;
   flex-shrink: 0;
 }
 
@@ -44,7 +44,7 @@
 }
 
 .topbar-promo-txt strong {
-  color: #fb923c;
+  color: #ffffff;
   font-weight: 800;
 }
 
@@ -62,7 +62,7 @@
 }
 
 .topbar-link {
-  color: #c3cde4;
+  color: rgba(255, 255, 255, 0.82);
   font-size: 12px;
   font-weight: 500;
   text-decoration: none;
@@ -75,7 +75,7 @@
 }
 
 .topbar-link:focus-visible {
-  outline: 2px solid #fb923c;
+  outline: 2px solid #ffffff;
   outline-offset: 3px;
   border-radius: 2px;
 }

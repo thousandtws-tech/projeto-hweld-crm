@@ -4,15 +4,13 @@
   display: contents;
 }
 
-/* Cabeçalho Sticky Glassmorphism */
+/* Cabeçalho Sticky — barra navy da marca (padrão grandes varejistas) */
 .topo {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--hw-border);
+  background: var(--hw-brand-navy);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   height: var(--hw-header-h);
   display: flex;
   align-items: center;
@@ -53,16 +51,16 @@
   font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--hw-text);
+  color: #ffffff;
 }
 
 .logo-tag {
   font-family: var(--hw-font-mono);
   font-size: 10px;
   font-weight: 700;
-  background: var(--hw-accent-tint);
-  color: var(--hw-accent);
-  border: 1px solid rgba(29, 79, 216, 0.2);
+  background: var(--hw-brand-red);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--hw-radius-xs);
   padding: 1px 5px;
   letter-spacing: 0.05em;

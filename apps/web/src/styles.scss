@@ -53,39 +53,47 @@ html {
   --hw-border: #e2e8f0;
   --hw-border-subtle: #f1f5f9;
   --hw-border-input: #cbd5e1;
-  --hw-border-focus: #1d4fd8;
-  
+  --hw-border-focus: #233d8c;
+
   --hw-text: #0f172a;
   --hw-text-muted: #64748b;
   --hw-text-faint: #94a3b8;
 
-  /* Brand Accents */
-  --hw-accent: #1d4fd8;
-  --hw-accent-hover: #1e40af;
-  --hw-accent-tint: #eff6ff;
+  /* Brand Accents — extraídos da logo oficial HWeld */
+  --hw-brand-navy: #233d8c;
+  --hw-brand-red: #d82027;
+  --hw-accent: #233d8c;
+  --hw-accent-hover: #1b2f6d;
+  --hw-accent-tint: #e9edf8;
   --hw-on-accent: #ffffff;
 
+  /* CTA de compra — vermelho da marca (padrão grandes varejistas) */
+  --hw-cta: #d82027;
+  --hw-cta-hover: #b81a20;
+  --hw-cta-tint: #fcebeb;
+  --hw-on-cta: #ffffff;
+
   /* Semantic Feedback */
-  --hw-danger: #dc2626;
-  --hw-danger-hover: #b91c1c;
-  --hw-danger-tint: #fef2f2;
+  --hw-danger: #d82027;
+  --hw-danger-hover: #b81a20;
+  --hw-danger-tint: #fcebeb;
   --hw-on-danger: #ffffff;
 
   --hw-success: #16a34a;
   --hw-success-tint: #f0fdf4;
   --hw-warning: #d97706;
   --hw-warning-tint: #fffbeb;
-  --hw-info: #1d4fd8;
+  --hw-info: #233d8c;
 
   /* Status Chips */
   --hw-chip-neutral-bg: #f1f5f9;  --hw-chip-neutral-fg: #334155;
-  --hw-chip-info-bg:    #eff6ff;  --hw-chip-info-fg:    #1d4fd8;
+  --hw-chip-info-bg:    #e9edf8;  --hw-chip-info-fg:    #233d8c;
   --hw-chip-progress-bg:#f5f3ff;  --hw-chip-progress-fg:#7c3aed;
   --hw-chip-success-bg: #f0fdf4;  --hw-chip-success-fg: #15803d;
   --hw-chip-warning-bg: #fffbeb;  --hw-chip-warning-fg: #b45309;
-  --hw-chip-danger-bg:  #fef2f2;  --hw-chip-danger-fg:  #b91c1c;
+  --hw-chip-danger-bg:  #fcebeb;  --hw-chip-danger-fg:  #b81a20;
 
-  --hw-focus-ring: #1d4fd8;
+  --hw-focus-ring: #233d8c;
   --hw-scrim: rgba(15, 23, 42, 0.4);
 
   /* Typography */
@@ -420,7 +428,7 @@ a:hover {
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: #0f172a;
+    background: var(--hw-brand-navy);
     color: #ffffff;
     font-weight: 600;
     font-size: 13px;

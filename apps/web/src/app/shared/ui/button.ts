@@ -16,7 +16,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   styleUrl: './button.scss',
 })
 export class HwButton {
-  variant = input<'primary' | 'secondary' | 'ghost' | 'danger'>('primary');
+  variant = input<'primary' | 'secondary' | 'ghost' | 'danger' | 'cta'>('primary');
   size = input<'sm' | 'md' | 'lg'>('md');
   loading = input(false);
   disabled = input(false);

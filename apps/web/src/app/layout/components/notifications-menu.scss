@@ -4,7 +4,7 @@
   display: contents;
 }
 
-/* Botão Ícone Circular (Sino de Notificações) */
+/* Botão Ícone Circular (Sino de Notificações) — sobre a barra navy */
 .icone-topo-btn {
   position: relative;
   width: 40px;
@@ -12,7 +12,7 @@
   border-radius: 50%;
   border: 1px solid transparent;
   background: transparent;
-  color: var(--hw-text);
+  color: #ffffff;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -21,14 +21,14 @@
 
   .material-symbols-outlined {
     font-size: 22px;
-    color: #64748b;
+    color: rgba(255, 255, 255, 0.85);
     transition: color 120ms ease;
   }
 
   &:hover {
-    background: var(--hw-surface);
+    background: rgba(255, 255, 255, 0.1);
     .material-symbols-outlined {
-      color: #0f172a;
+      color: #ffffff;
     }
   }
 }

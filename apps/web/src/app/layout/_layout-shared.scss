@@ -9,7 +9,7 @@
   border-radius: 8px;
   text-decoration: none;
   cursor: pointer;
-  color: var(--hw-text);
+  color: #ffffff;
   white-space: nowrap;
   transition:
     background-color 120ms ease,
@@ -17,11 +17,11 @@
   font-family: var(--hw-font-sans);
 
   &:hover {
-    background: var(--hw-surface);
-    border-color: var(--hw-border-subtle);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.14);
 
     .header-item-icone {
-      color: #0f172a;
+      color: #ffffff;
     }
     .header-custom-icone {
       transform: scale(1.08);
@@ -33,9 +33,15 @@
   font-size: 24px;
   width: 24px;
   height: 24px;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.85);
   flex-shrink: 0;
   transition: color 120ms ease;
+}
+
+/* Ícones PNG navy da marca — invertidos para branco sobre a barra navy */
+img.header-item-icone,
+.header-custom-icone {
+  filter: brightness(0) invert(1);
 }
 
 .header-custom-icone {
@@ -56,19 +62,19 @@
 .header-item-sub {
   font-size: 11px;
   font-weight: 450;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.66);
 }
 
 .header-item-tit {
   font-size: 12.5px;
   font-weight: 700;
-  color: var(--hw-text);
+  color: #ffffff;
   letter-spacing: -0.01em;
 }
 
 .seta-sub {
   font-size: 18px;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.6);
   margin-left: -2px;
 }
 
@@ -80,7 +86,7 @@
   height: 17px;
   padding: 0 4px;
   border-radius: var(--hw-radius-pill);
-  background: #0f172a;
+  background: var(--hw-brand-red);
   color: #ffffff;
   font-family: var(--hw-font-sans);
   font-size: 10px;
@@ -89,7 +95,7 @@
   align-items: center;
   justify-content: center;
   line-height: 1;
-  box-shadow: 0 0 0 2px #ffffff;
+  box-shadow: 0 0 0 2px var(--hw-brand-navy);
   pointer-events: none;
 }
 

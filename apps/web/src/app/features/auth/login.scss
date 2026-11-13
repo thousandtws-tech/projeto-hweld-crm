@@ -94,7 +94,7 @@
   transition: border-color 0.15s ease;
 
   &:focus-within {
-    border-color: #0062ff;
+    border-color: #233d8c;
   }
 
   &.invalid {
@@ -142,8 +142,8 @@
   height: auto;
   padding: 12px 64px;
   border-radius: 8px;
-  --hw-accent: #0062ff;
-  --hw-accent-hover: #0052d8;
+  --hw-accent: #233d8c;
+  --hw-accent-hover: #1b2f6d;
 }
 
 .linha-esqueci {
@@ -156,7 +156,7 @@
   font-weight: 600;
   line-height: 24px;
   letter-spacing: 0.1px;
-  color: #0062ff;
+  color: #233d8c;
   text-decoration: none;
 
   &:hover {
@@ -249,7 +249,7 @@
 
   a {
     font-weight: 600;
-    color: #0062ff;
+    color: #233d8c;
     text-decoration: none;
 
     &:hover {
@@ -344,7 +344,7 @@
 
     strong {
       font-weight: 600;
-      color: #3062d4;
+      color: #233d8c;
     }
   }
 

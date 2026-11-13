@@ -4,38 +4,38 @@
   display: contents;
 }
 
-/* Categorias Trigger */
+/* Categorias Trigger — sobre a barra navy */
 .cats-trigger {
   display: flex;
   align-items: center;
   gap: 6px;
   background: transparent;
-  border: 1px solid var(--hw-border);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: var(--hw-radius-sm);
   padding: 0 var(--hw-space-3);
   height: 38px;
   font-family: var(--hw-font-sans);
   font-size: 13px;
   font-weight: 500;
-  color: var(--hw-text);
+  color: #ffffff;
   cursor: pointer;
   transition: all var(--hw-motion-fast) var(--hw-motion-ease);
   white-space: nowrap;
 
   &:hover {
-    background: var(--hw-surface);
-    border-color: var(--hw-border-input);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.34);
   }
 }
 
 .icone-grade {
   font-size: 18px;
-  color: var(--hw-text-muted);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .icone-seta {
   font-size: 18px;
-  color: var(--hw-text-muted);
+  color: rgba(255, 255, 255, 0.66);
 }
 
 /* Menu de departamentos — coluna única */

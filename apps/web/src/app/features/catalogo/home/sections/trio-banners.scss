@@ -73,7 +73,7 @@
   box-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
 }
 .badge-blue {
-  background: #1d4fd8;
+  background: var(--hw-accent);
   color: #ffffff;
   box-shadow: 0 0 12px rgba(29, 79, 216, 0.4);
 }
@@ -141,7 +141,7 @@
   color: #ffffff;
 }
 .btn-blue {
-  background: #1d4fd8;
+  background: var(--hw-accent);
   color: #ffffff;
 }
 

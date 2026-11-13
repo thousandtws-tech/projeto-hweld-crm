@@ -17,7 +17,7 @@
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: #1d4fd8;
+  color: var(--hw-accent);
   display: inline-block;
   margin-bottom: 4px;
 }
@@ -58,9 +58,9 @@
   transition: all 0.18s ease;
 }
 .cat-arrow-btn:hover {
-  background: #eff6ff;
+  background: var(--hw-accent-tint);
   border-color: #93c5fd;
-  color: #1d4fd8;
+  color: var(--hw-accent);
   transform: scale(1.06);
 }
 .cat-arrow-btn span {
@@ -73,18 +73,18 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #1d4fd8;
+  color: var(--hw-accent);
   text-decoration: none;
   padding: 6px 12px;
   border-radius: 8px;
-  background: #eff6ff;
+  background: var(--hw-accent-tint);
   transition:
     background 0.2s ease,
     transform 0.15s ease;
   white-space: nowrap;
 }
 .ver-tudo-link:hover {
-  background: #dbeafe;
+  background: rgba(35,61,140,0.18);
   transform: translateX(2px);
 }
 .ver-tudo-link span.material-symbols-outlined {
