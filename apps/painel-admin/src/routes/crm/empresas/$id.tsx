@@ -10,7 +10,6 @@ import { catalogoService, crmService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -152,40 +151,45 @@ function Empresa360Page() {
       </Tabs>
 
       {aba === "dados" && (
-          <Metabox title="Dados cadastrais">
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(3, 1fr)" },
-                gap: 2.5,
-              }}
-            >
-              {[
-                ["Segmento", empresa.segmento],
-                ["Telefone", empresa.telefone],
-                ["E-mail", empresa.email],
-                ["Site", empresa.site],
-                ["IE", empresa.inscricao_estadual],
-                ["Tabela de preço", nomeTabela(empresa.tabela_preco_id)],
-              ].map(([k, v]) => (
-                <Box key={k as string}>
-                  <Typography variant="caption" color="text.secondary" display="block">
-                    {k}
-                  </Typography>
-                  <Typography variant="body2" fontWeight={500} sx={{ mt: 0.5 }}>
-                    {(v as string) || "—"}
-                  </Typography>
-                </Box>
-              ))}
-              <Box sx={{ gridColumn: { xs: "span 2", md: "span 3" } }}>
-                <Typography variant="caption" color="text.secondary" display="block">
-                  Observações
-                </Typography>
-                <Typography variant="body2" fontWeight={500} sx={{ mt: 0.5 }}>
-                  {empresa.observacoes || "—"}
-                </Typography>
-              </Box>
-            </Box>
+          <Metabox title="Dados cadastrais" contentClassName="p-0">
+            <Table size="small">
+              <TableBody>
+                {([
+                  ["CNPJ", empresa.cnpj],
+                  ["Razão social", empresa.razao_social],
+                  ["Nome fantasia", empresa.nome_fantasia],
+                  ["Segmento", empresa.segmento],
+                  ["Telefone", empresa.telefone],
+                  ["E-mail", empresa.email],
+                  ["Site", empresa.site],
+                  ["Inscrição estadual", empresa.inscricao_estadual],
+                  ["Tabela de preço", nomeTabela(empresa.tabela_preco_id)],
+                  ["Observações", empresa.observacoes],
+                ] as [string, string | null | undefined][]).map(([k, v]) => (
+                  <TableRow
+                    key={k}
+                    sx={{ "&:nth-of-type(odd)": { bgcolor: "action.hover" } }}
+                  >
+                    <TableCell
+                      component="th"
+                      scope="row"
+                      sx={{ width: { xs: 140, md: 260 }, color: "text.secondary", fontWeight: 500, whiteSpace: "nowrap" }}
+                    >
+                      {k}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>
+                      {k === "E-mail" && v ? (
+                        <a href={`mailto:${v}`} className="text-primary hover:underline">{v}</a>
+                      ) : k === "Site" && v ? (
+                        <a href={v.startsWith("http") ? v : `https://${v}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">{v}</a>
+                      ) : (
+                        v || "—"
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </Metabox>
       )}
 
