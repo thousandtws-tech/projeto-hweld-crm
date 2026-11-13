@@ -1,15 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, Plus, RefreshCw, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
 import { brl, fmtData, statusLabel } from "@/lib/format";
 import { exigePerfil } from "@/lib/guards";
-import type { Contato, Empresa, OrdemServico, Pedido, PrioridadeOs, StatusOs } from "@/lib/models";
+import type { Contato, OrdemServico, Pedido, PrioridadeOs, StatusOs } from "@/lib/models";
 import { crmService, osService, pedidosService } from "@/lib/services";
-import { useRealtimeEvent } from "@/lib/use-realtime";
+import { useEmpresasMap } from "@/lib/use-empresas";
+import { useResourceList } from "@/lib/use-resource-list";
 import { useAuth } from "@/store/auth-store";
 
 export const Route = createFileRoute("/operacao/ordens-servico/")({
@@ -40,15 +41,25 @@ function OrdensServicoIndexPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [ordens, setOrdens] = useState<OrdemServico[]>([]);
-  const [empresas, setEmpresas] = useState<Map<number, Empresa>>(new Map());
+  const empresas = useEmpresasMap();
   const [contatos, setContatos] = useState<Contato[]>([]);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [carregando, setCarregando] = useState(true);
 
-  const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("");
   const [filtroPrioridade, setFiltroPrioridade] = useState<string>("");
+
+  const l = useResourceList<OrdemServico>({
+    recurso: "ordens-servico",
+    filtros: {
+      status: filtroStatus || undefined,
+      prioridade: filtroPrioridade || undefined,
+    },
+    eventos: ["os.criada", "os.status_alterada"],
+  });
+  const carregando = l.carregando;
+  const carregar = l.recarregar;
+  const busca = l.busca;
+  const setBusca = l.setBusca;
 
   const [novoOpen, setNovoOpen] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -63,28 +74,6 @@ function OrdensServicoIndexPage() {
     observacoes: "",
   });
 
-  const carregar = useCallback(async (silencioso = false) => {
-    if (!silencioso) setCarregando(true);
-    try {
-      const [pOs, pEmps] = await Promise.all([
-        osService.listar({ por_pagina: 100 }),
-        crmService.empresas({ por_pagina: 100 }),
-      ]);
-      setOrdens(pOs.itens ?? []);
-      setEmpresas(new Map((pEmps.itens ?? []).map((e) => [e.id, e])));
-    } catch {
-      if (!silencioso) toast.error("Falha ao carregar ordens de serviço.");
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
-
-  useRealtimeEvent(["os.criada", "os.status_alterada"], () => void carregar(true));
-
   useEffect(() => {
     if (!novoOpen) return;
     crmService
@@ -97,30 +86,17 @@ function OrdensServicoIndexPage() {
       .catch(() => toast.error("Falha ao carregar pedidos para vincular."));
   }, [novoOpen]);
 
-  const empresaNome = useCallback(
-    (id: number) => {
-      const e = empresas.get(id);
-      return e ? e.nome_fantasia || e.razao_social : `Empresa #${id}`;
-    },
-    [empresas],
-  );
+  const empresaNome = (id: number) => {
+    const e = empresas.get(id);
+    return e ? e.nome_fantasia || e.razao_social : `Empresa #${id}`;
+  };
 
-  const ordensFiltradas = useMemo(() => {
-    const q = busca.trim().toLowerCase();
-    return ordens.filter((o) => {
-      if (filtroStatus && o.status !== filtroStatus) return false;
-      if (filtroPrioridade && o.prioridade !== filtroPrioridade) return false;
-      if (q) {
-        const emp = empresaNome(o.empresa_id).toLowerCase();
-        const desc = (o.descricao ?? "").toLowerCase();
-        const numStr = (o.numero || String(o.id)).toLowerCase();
-        if (!emp.includes(q) && !desc.includes(q) && !numStr.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [ordens, busca, filtroStatus, filtroPrioridade, empresaNome]);
+  // Status/prioridade/busca já são filtros server-side — a lista renderiza
+  // `l.itens` direto; resumo reflete a página carregada.
+  const ordensFiltradas = l.itens;
 
   const resumo = useMemo(() => {
+    const ordens = l.itens;
     const emFila = ordens.filter(
       (o) =>
         o.status === "aberta" || o.status === "em_andamento" || o.status === "aguardando_material",
@@ -133,7 +109,7 @@ function OrdensServicoIndexPage() {
     ).length;
     const concluidas = ordens.filter((o) => o.status === "concluida").length;
     return { emFila, urgentes, concluidas };
-  }, [ordens]);
+  }, [l.itens]);
 
   const abrirModalNovo = () => {
     setFNovo({
@@ -177,8 +153,8 @@ function OrdensServicoIndexPage() {
 
   const transicionarRapido = async (o: OrdemServico, para: StatusOs) => {
     try {
-      const atualizada = await osService.transicionar(o.id, para);
-      setOrdens((lista) => lista.map((x) => (x.id === atualizada.id ? atualizada : x)));
+      await osService.transicionar(o.id, para);
+      l.recarregar();
       toast.success(`OS #${o.numero || o.id} → ${statusLabel(para)}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Transição recusada.");
@@ -236,10 +212,10 @@ function OrdensServicoIndexPage() {
                   : "border border-border bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
-              Todas ({ordens.length})
+              Todas ({l.pagina?.total ?? l.itens.length})
             </button>
             {STATUS_OS.map((st) => {
-              const count = ordens.filter((o) => o.status === st).length;
+              const count = l.itens.filter((o) => o.status === st).length;
               if (count === 0 && filtroStatus !== st) return null;
               return (
                 <button
@@ -358,6 +334,32 @@ function OrdensServicoIndexPage() {
             </tbody>
           </table>
         </div>
+
+        {l.pagina && l.pagina.total_paginas > 1 && (
+          <div className="flex items-center justify-between border-t border-border px-4 py-3">
+            <span className="text-xs text-muted-foreground">{l.pagina.total} registro(s)</span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: l.pagina.total_paginas }, (_, i) => i + 1)
+                .slice(
+                  Math.max(0, Math.min(l.paginaNum - 3, l.pagina.total_paginas - 5)),
+                  Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
+                )
+                .map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => l.setPaginaNum(p)}
+                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
+                      p === l.paginaNum
+                        ? "bg-lime text-primary-foreground"
+                        : "text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
       </SectionCard>
 
       {/* Modal: Nova Ordem de Serviço */}

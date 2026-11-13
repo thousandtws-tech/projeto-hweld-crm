@@ -134,15 +134,29 @@ integrações. Atualizado em 2026-11-13.
 
 ## Pendente — frontend
 
-- Painel: 10 páginas de listagem com fetch manual `por_pagina:100` +
-  paginação client-side → migrar para `ListaPage`+`useQuery` (ver
-  `docs/performance/REMAINING_BOTTLENECKS.md`)
-- Angular bundle ~721 kB — tema custom Material (somente componentes usados)
-- React entry chunk ~383 kB — avaliar `manualChunks` (recharts, kanban)
+- ~~Painel: 10 páginas de listagem com fetch manual `por_pagina:100`~~ ✅
+  **Épico D** — `useResourceList` (`src/lib/use-resource-list.ts`): paginação
+  server-side + `keepPreviousData` + busca debounced `?busca=` + invalidação
+  realtime. Migradas: pedidos, orçamentos, OS, pagamentos, estoque (extrato),
+  usuários, auditoria, tabelas-preço; `ListaPage` delega ao hook. Lookups de
+  empresa compartilhados via `useEmpresasMap`/`useEmpresasNomes` (cap 500 —
+  acima disso nome vira "Empresa #id"; join no backend é o caminho definitivo).
+  Ficaram fora por natureza: `caixa` e `notas` (dashboards compostos), 
+  `oportunidades` (kanban by-design), dashboard (multi-query agregada).
+  Backend ganhou `?busca=` (ILIKE) em pedidos/orçamentos/OS/pagamentos e
+  `?prioridade=` em OS — a busca agora cobre o dataset inteiro (antes filtrava
+  só os 100 primeiros).
+- ~~Angular bundle — tema prebuilt~~ ✅ **Épico D** — `styles.scss` usa
+  `mat.define-theme` (azure/blue M3, paridade visual) emitindo só os 16
+  componentes usados — styles ~47 kB vs prebuilt ~90 kB+.
+- ~~React entry chunk~~ ✅ **Épico D** — `manualChunks` separa `recharts`
+  (396 kB→chunk `charts`) e `react-kanban-kit` (chunk `kanban`) do entry.
+- ~~Web Vitals/RUM beacon~~ ✅ **Épico D** — `POST /api/v1/telemetria/vitals`
+  (público, log estruturado `target:"web_vitals"`); `web-vitals` + sendBeacon
+  nos dois apps (`lib/vitals.ts`, `app/vitals.ts`). Dev loga no console.
 - SSR/prerender do catálogo público (SEO/LCP) — decisão de infra
 - Fonts Google auto-hospedadas (subset)
 - Kanban: paginação por estágio se volume crescer
-- Web Vitals/RUM beacon — sem telemetria de campo
 
 ## Pendente — infra/ops (runbook `docs/runbooks/producao.md`)
 

@@ -14,4 +14,5 @@ pub mod ordens;
 pub mod pedidos;
 pub mod portal;
 pub mod saude;
+pub mod telemetria;
 pub mod usuarios;

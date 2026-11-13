@@ -1,12 +1,11 @@
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Loader2, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
-import { api, ApiError, type Filtros } from "@/lib/api";
+import { api } from "@/lib/api";
 import { brl, fmtData, qty, statusLabel } from "@/lib/format";
-import { useRealtimeEvent } from "@/lib/use-realtime";
+import { useResourceList } from "@/lib/use-resource-list";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 
 export interface Coluna {
@@ -91,46 +90,30 @@ function Celula({ linha, c }: { linha: Linha; c: Coluna }) {
 /**
  * Listagem server-side config-driven — estados: loading, vazio, erro com retry, paginação.
  * Eventos realtime reconciliam via REST silenciosamente (sem skeleton).
+ * Delega a camada de dados ao `useResourceList` compartilhado.
  */
 export function ListaPage({ cfg }: { cfg: ListaCfg }) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [paginaNum, setPaginaNum] = useState(1);
-  const [busca, setBusca] = useState("");
-  const [buscaDebounced, setBuscaDebounced] = useState("");
   const [filtroValor, setFiltroValor] = useState("");
   const [excluindoId, setExcluindoId] = useState<number | string | null>(null);
 
-  // Cache por (recurso, página, busca, filtro): navegar de volta para uma
-  // página já visitada reutiliza os dados instantaneamente em vez de
-  // reapresentar skeleton + refetch.
-  const query = useQuery({
-    queryKey: ["lista", cfg.recurso, paginaNum, buscaDebounced, filtroValor],
-    queryFn: () => {
-      const f: Filtros = { pagina: paginaNum, por_pagina: POR_PAGINA };
-      if (cfg.busca && buscaDebounced) f.busca = buscaDebounced;
-      if (cfg.filtro && filtroValor) f[cfg.filtro.campo] = filtroValor;
-      return api.lista<Linha>(cfg.recurso, f);
-    },
-    // Mantém a página anterior na tela durante a transição de página/busca
-    // — zero layout shift e nenhum skeleton entre páginas.
-    placeholderData: keepPreviousData,
-    staleTime: 15_000,
+  const l = useResourceList<Linha>({
+    recurso: cfg.recurso,
+    porPagina: POR_PAGINA,
+    busca: Boolean(cfg.busca),
+    filtros: cfg.filtro && filtroValor ? { [cfg.filtro.campo]: filtroValor } : {},
+    eventos: cfg.eventos ?? [],
   });
-
-  const pagina = query.data ?? null;
-  // "carregando" cobre load inicial e refetches — a tabela esmaece sem
-  // sumir, e o skeleton só aparece quando não há dado nenhum para mostrar.
-  const carregando = query.isFetching;
-  const erro =
-    query.error == null
-      ? null
-      : query.error instanceof ApiError && query.error.status === 403
-        ? "Sem permissão para este recurso."
-        : "Falha ao carregar. O backend está no ar?";
-
-  const recarregar = () =>
-    queryClient.invalidateQueries({ queryKey: ["lista", cfg.recurso] });
+  const {
+    pagina,
+    carregando,
+    erro,
+    paginaNum,
+    setPaginaNum,
+    busca,
+    setBusca: onBusca,
+    recarregar,
+  } = l;
 
   const aoExcluir = async (e: React.MouseEvent, linha: Linha) => {
     e.stopPropagation();
@@ -146,30 +129,13 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
         await api.del(cfg.recurso, id);
       }
       toast.success(`"${nome}" excluído.`);
-      void recarregar();
+      recarregar();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao excluir registro.");
     } finally {
       setExcluindoId(null);
     }
   };
-
-  // debounce 350ms — igual ao FormControl + debounceTime do legado
-  const debRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const onBusca = (v: string) => {
-    setBusca(v);
-    if (debRef.current) clearTimeout(debRef.current);
-    debRef.current = setTimeout(() => {
-      setBuscaDebounced(v);
-      setPaginaNum(1);
-    }, 350);
-  };
-
-  // Reconciliação: evento realtime (coalescido no hook) → invalida o
-  // recurso; refetch é silencioso — a tabela esmaece, não reaparece skeleton.
-  useRealtimeEvent(cfg.eventos ?? [], () => void recarregar());
-
-  const carregar = () => void query.refetch();
 
   const detalhe = cfg.detalhePrefixo;
 
@@ -226,7 +192,7 @@ export function ListaPage({ cfg }: { cfg: ListaCfg }) {
         <div className="flex items-center justify-between gap-3 rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
           <span>{erro}</span>
           <button
-            onClick={() => void carregar()}
+            onClick={recarregar}
             className="inline-flex items-center gap-1.5 rounded-full border border-destructive/30 px-3 py-1 text-xs font-semibold hover:bg-destructive/10"
           >
             <RefreshCw className="h-3.5 w-3.5" /> Tentar novamente

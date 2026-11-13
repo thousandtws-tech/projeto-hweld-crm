@@ -1,6 +1,45 @@
 @use 'swiper/css';
 @use 'swiper/css/pagination';
-@import '@angular/material/prebuilt-themes/azure-blue.css';
+@use '@angular/material' as mat;
+
+/* Tema custom — substitui o prebuilt azure-blue.css (~90KB, 40+ componentes)
+ * por um define-theme próprio emitindo apenas os componentes que o app usa.
+ * Paleta preservada: azure/blue M3 idênticos ao prebuilt (paridade visual). */
+$hw-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+    tertiary: mat.$blue-palette,
+  ),
+  typography: (
+    plain-family: 'Inter, Roboto, sans-serif',
+    brand-family: 'Inter, Roboto, sans-serif',
+  ),
+  density: (scale: 0),
+));
+
+html {
+  color-scheme: light;
+  @include mat.core-theme($hw-theme);
+  @include mat.ripple-theme($hw-theme);
+  @include mat.badge-theme($hw-theme);
+  @include mat.button-theme($hw-theme);
+  @include mat.icon-button-theme($hw-theme);
+  @include mat.card-theme($hw-theme);
+  @include mat.chips-theme($hw-theme);
+  @include mat.divider-theme($hw-theme);
+  @include mat.form-field-theme($hw-theme);
+  @include mat.icon-theme($hw-theme);
+  @include mat.input-theme($hw-theme);
+  @include mat.menu-theme($hw-theme);
+  @include mat.option-theme($hw-theme);
+  @include mat.optgroup-theme($hw-theme);
+  @include mat.pseudo-checkbox-theme($hw-theme);
+  @include mat.progress-spinner-theme($hw-theme);
+  @include mat.select-theme($hw-theme);
+  @include mat.tabs-theme($hw-theme);
+  @include mat.tooltip-theme($hw-theme);
+}
 
 /* HWeld Minimalist Design System & Angular Material Theme
  * Inspired by modern minimalist e-commerce design (Apple, Zara, Vercel Commerce, Shopify Hydrogen)

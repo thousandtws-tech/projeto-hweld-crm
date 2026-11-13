@@ -288,6 +288,7 @@ impl ServicoPortal {
                     empresa_id: Some(contato.empresa_id),
                     contato_id: so_meus.then_some(contato.id),
                     origem: None,
+                    busca: None,
                 },
             )
             .await?;

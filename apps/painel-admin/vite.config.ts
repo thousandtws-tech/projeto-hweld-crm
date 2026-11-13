@@ -26,4 +26,20 @@ export default defineConfig({
       "/events": { target: "http://localhost:4100", changeOrigin: true },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Dependências pesadas fora do entry chunk — recharts/kanban/jet só
+        // são buscados quando a rota que os usa carrega (code-split já vem
+        // do router; aqui evita que uma página pesada contamine o vendor).
+        manualChunks(id: string) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("recharts")) return "charts";
+          if (id.includes("react-kanban-kit")) return "kanban";
+          if (id.includes("@jet-admin")) return "jet";
+          return undefined;
+        },
+      },
+    },
+  },
 });

@@ -1,15 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { fieldClass } from "@/components/ui-kit/FormDialog";
-import { ApiError } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { fmtDataHora, qty } from "@/lib/format";
 import type { Movimentacao, Produto, SaldoAbaixoMinimo } from "@/lib/models";
 import { catalogoService, estoqueService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
 import { useRealtimeEvent } from "@/lib/use-realtime";
+import { useResourceList } from "@/lib/use-resource-list";
 
 export const Route = createFileRoute("/estoque")({
   beforeLoad: exigePerfil("admin", "estoque"),
@@ -63,32 +65,39 @@ function Origem({ m }: { m: Movimentacao }) {
 
 /** Estoque: alertas de reposição + lançamento manual + extrato imutável. */
 function EstoquePage() {
-  const [baixos, setBaixos] = useState<SaldoAbaixoMinimo[]>([]);
-  const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
-  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const queryClient = useQueryClient();
   const [mostrarBaixos, setMostrarBaixos] = useState(true);
-
   const [f, setF] = useState({ produto_id: "", tipo: "entrada", quantidade: "1", motivo: "" });
 
+  // Lookups cacheados — produtos alimentam o select e a resolução de nome.
+  const { data: produtosPg } = useQuery({
+    queryKey: ["lookup", "produtos"],
+    queryFn: () => catalogoService.produtos({ por_pagina: 500 }).catch(() => ({ itens: [] })),
+    staleTime: 60_000,
+  });
+  const produtos = produtosPg?.itens ?? [];
   const nomeProduto = (id: number) => produtos.find((p) => p.id === id)?.nome ?? `#${id}`;
 
-  const carregarMovs = useCallback(() => {
-    estoqueService.movimentacoes({ por_pagina: 50 }).then((p) => setMovimentacoes(p.itens));
-  }, []);
-  const carregarBaixos = useCallback(() => {
-    estoqueService.abaixoDoMinimo().then(setBaixos);
-  }, []);
-
-  useEffect(() => {
-    catalogoService.produtos({ por_pagina: 100 }).then((p) => setProdutos(p.itens));
-    carregarBaixos();
-    carregarMovs();
-  }, [carregarBaixos, carregarMovs]);
-
-  useRealtimeEvent(EVENTOS, () => {
-    carregarMovs();
-    carregarBaixos();
+  const { data: baixos = [] } = useQuery({
+    queryKey: ["lookup", "estoque-baixos"],
+    queryFn: () => estoqueService.abaixoDoMinimo().catch(() => [] as SaldoAbaixoMinimo[]),
+    staleTime: 15_000,
   });
+  const carregarBaixos = () =>
+    void queryClient.invalidateQueries({ queryKey: ["lookup", "estoque-baixos"] });
+
+  // Extrato: server-side, reconcilia nos eventos de estoque e nos derivados
+  // (pedido/OS também movimentam saldo).
+  const l = useResourceList<Movimentacao>({
+    recurso: "estoque/movimentacoes",
+    porPagina: 50,
+    busca: false,
+    eventos: EVENTOS,
+  });
+  const movimentacoes = l.itens;
+  const carregarMovs = l.recarregar;
+
+  useRealtimeEvent(EVENTOS, carregarBaixos);
 
   const lancar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -273,6 +282,32 @@ function EstoquePage() {
             ))}
           </tbody>
         </table>
+
+        {l.pagina && l.pagina.total_paginas > 1 && (
+          <div className="flex items-center justify-between border-t border-border px-4 py-3">
+            <span className="text-xs text-muted-foreground">{l.pagina.total} registro(s)</span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: l.pagina.total_paginas }, (_, i) => i + 1)
+                .slice(
+                  Math.max(0, Math.min(l.paginaNum - 3, l.pagina.total_paginas - 5)),
+                  Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
+                )
+                .map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => l.setPaginaNum(p)}
+                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
+                      p === l.paginaNum
+                        ? "bg-lime text-primary-foreground"
+                        : "text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
       </SectionCard>
     </>
   );

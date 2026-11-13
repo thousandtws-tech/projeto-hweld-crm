@@ -122,6 +122,8 @@ pub struct FiltroOrcamentos {
     pub empresa_id: Option<Id<Empresa>>,
     pub oportunidade_id: Option<Id<Oportunidade>>,
     pub vendedor_id: Option<Id<hweld_domain::acesso::usuario::Usuario>>,
+    /// ILIKE em `numero` ou no nome da empresa.
+    pub busca: Option<String>,
 }
 
 #[async_trait]

@@ -774,6 +774,17 @@ fn push_filtro_pedidos<'a>(qb: &mut QueryBuilder<'a, Postgres>, filtro: &'a Filt
     if let Some(origem) = filtro.origem {
         qb.push(" AND origem = ").push_bind(origem.as_str());
     }
+    if let Some(busca) = filtro.busca.as_ref().filter(|b| !b.trim().is_empty()) {
+        let padrao = format!("%{}%", busca.trim());
+        qb.push(" AND (numero ILIKE ")
+            .push_bind(padrao.clone())
+            .push(" OR EXISTS (SELECT 1 FROM empresas e WHERE e.id = empresa_id \
+                   AND (e.razao_social ILIKE ")
+            .push_bind(padrao.clone())
+            .push(" OR e.nome_fantasia ILIKE ")
+            .push_bind(padrao)
+            .push(")))");
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1080,6 +1091,19 @@ fn push_filtro_pagamentos<'a>(qb: &mut QueryBuilder<'a, Postgres>, filtro: &'a F
         qb.push(" AND vencimento < ")
             .push_bind(vencidos_em)
             .push(" AND status IN ('pendente','vencido')");
+    }
+    if let Some(busca) = filtro.busca.as_ref().filter(|b| !b.trim().is_empty()) {
+        let padrao = format!("%{}%", busca.trim());
+        // Busca textual passa pelo pedido — número e nome da empresa.
+        qb.push(" AND EXISTS (SELECT 1 FROM pedidos p \
+                 JOIN empresas e ON e.id = p.empresa_id \
+                 WHERE p.id = pedido_id AND (p.numero ILIKE ")
+            .push_bind(padrao.clone())
+            .push(" OR e.razao_social ILIKE ")
+            .push_bind(padrao.clone())
+            .push(" OR e.nome_fantasia ILIKE ")
+            .push_bind(padrao)
+            .push("))");
     }
 }
 

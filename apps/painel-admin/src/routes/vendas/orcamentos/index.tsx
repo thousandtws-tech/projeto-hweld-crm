@@ -9,7 +9,6 @@ import { ApiError } from "@/lib/api";
 import { brl, fmtData, statusLabel } from "@/lib/format";
 import type {
   Contato,
-  Empresa,
   Oportunidade,
   Orcamento,
   Produto,
@@ -17,7 +16,8 @@ import type {
   TabelaPreco,
 } from "@/lib/models";
 import { catalogoService, crmService, orcamentosService } from "@/lib/services";
-import { useRealtimeEvent } from "@/lib/use-realtime";
+import { useEmpresasMap } from "@/lib/use-empresas";
+import { useResourceList } from "@/lib/use-resource-list";
 import { useAuth } from "@/store/auth-store";
 
 export const Route = createFileRoute("/vendas/orcamentos/")({
@@ -69,18 +69,25 @@ function OrcamentosIndexPage() {
   const { user, pode } = useAuth();
   const podeEditar = pode("admin", "vendedor");
 
-  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
-  const [empresas, setEmpresas] = useState<Map<number, Empresa>>(new Map());
+  const empresas = useEmpresasMap();
   const [contatos, setContatos] = useState<Contato[]>([]);
   const [oportunidades, setOportunidades] = useState<Oportunidade[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [tabelasCache, setTabelasCache] = useState<Map<number, TabelaPreco>>(new Map());
-  const [carregando, setCarregando] = useState(true);
 
-  // Filtros
-  const [busca, setBusca] = useState("");
+  // Filtros (status+busca já existem server-side; ordenação é da página visível)
   const [filtroStatus, setFiltroStatus] = useState<string>("");
   const [ordenacao, setOrdenacao] = useState<"recentes" | "maior_valor" | "validade">("recentes");
+
+  const l = useResourceList<Orcamento>({
+    recurso: "orcamentos",
+    filtros: { status: filtroStatus || undefined },
+    eventos: ["orcamento.criado", "orcamento.status_alterado", "orcamento.convertido"],
+  });
+  const carregando = l.carregando;
+  const carregar = l.recarregar;
+  const busca = l.busca;
+  const setBusca = l.setBusca;
 
   // Modal de Novo Orçamento
   const [novoOpen, setNovoOpen] = useState(false);
@@ -98,31 +105,6 @@ function OrcamentosIndexPage() {
   const [itensNovo, setItensNovo] = useState<ItemNovoForm[]>([
     { produto_id: "", descricao: "", quantidade: "1", preco_unitario: "0", desconto: "0" },
   ]);
-
-  const carregar = useCallback(async (silencioso = false) => {
-    if (!silencioso) setCarregando(true);
-    try {
-      const [pOrcs, pEmps] = await Promise.all([
-        orcamentosService.listar({ por_pagina: 100 }),
-        crmService.empresas({ por_pagina: 100 }),
-      ]);
-      setOrcamentos(pOrcs.itens ?? []);
-      setEmpresas(new Map((pEmps.itens ?? []).map((e) => [e.id, e])));
-    } catch {
-      if (!silencioso) toast.error("Falha ao carregar orçamentos.");
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
-
-  useRealtimeEvent(
-    ["orcamento.criado", "orcamento.status_alterado", "orcamento.convertido"],
-    () => void carregar(true),
-  );
 
   // Carrega catálogos auxiliares ao abrir o modal de criação
   useEffect(() => {
@@ -215,20 +197,9 @@ function OrcamentosIndexPage() {
     return Math.max(0, sub - valorNum(fNovo.desconto) + valorNum(fNovo.frete));
   }, [itensNovo, fNovo.desconto, fNovo.frete]);
 
-  // Filtragem e Ordenação
+  // Ordenação local da página visível — status e busca já são server-side.
   const orcamentosFiltrados = useMemo(() => {
-    const termo = busca.trim().toLowerCase();
-    const filtrados = orcamentos.filter((o) => {
-      if (filtroStatus && o.status !== filtroStatus) return false;
-      if (termo) {
-        const emp = empresaNome(o.empresa_id).toLowerCase();
-        const numStr = (o.numero || String(o.id)).toLowerCase();
-        if (!emp.includes(termo) && !numStr.includes(termo)) return false;
-      }
-      return true;
-    });
-
-    return [...filtrados].sort((a, b) => {
+    return [...l.itens].sort((a, b) => {
       if (ordenacao === "maior_valor") return valorNum(b.total) - valorNum(a.total);
       if (ordenacao === "validade") {
         const va = a.valido_ate ?? "9999-12-31";
@@ -237,10 +208,11 @@ function OrcamentosIndexPage() {
       }
       return b.id - a.id;
     });
-  }, [orcamentos, busca, filtroStatus, ordenacao, empresaNome]);
+  }, [l.itens, ordenacao]);
 
-  // Resumo financeiro no subtítulo
+  // Resumo financeiro no subtítulo (reflete a página carregada)
   const metricas = useMemo(() => {
+    const orcamentos = l.itens;
     const emAberto = orcamentos.filter((o) =>
       ["rascunho", "enviado", "em_analise"].includes(o.status),
     );
@@ -258,7 +230,7 @@ function OrcamentosIndexPage() {
       valorAprovado,
       valorConvertido,
     };
-  }, [orcamentos]);
+  }, [l.itens]);
 
   const abrirModalNovo = () => {
     // Sugere validade padrão de +15 dias
@@ -321,10 +293,8 @@ function OrcamentosIndexPage() {
 
   const transicionarRapido = async (o: Orcamento, para: StatusOrcamento) => {
     try {
-      const atualizado = await orcamentosService.transicionar(o.id, para);
-      setOrcamentos((lista) =>
-        lista.map((x) => (x.id === atualizado.id ? { ...x, ...atualizado } : x)),
-      );
+      await orcamentosService.transicionar(o.id, para);
+      l.recarregar();
       toast.success(`Orçamento #${o.numero || o.id} → ${statusLabel(para)}`);
     } catch {
       toast.error("Transição recusada pelo backend.");
@@ -405,10 +375,12 @@ function OrcamentosIndexPage() {
                   : "border border-border bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
-              Todos ({orcamentos.length})
+              Todos ({l.pagina?.total ?? l.itens.length})
             </button>
             {STATUS_ORCAMENTO.map((st) => {
-              const count = orcamentos.filter((o) => o.status === st).length;
+              // Contadores refletem a página atual — o backend não expõe
+              // totais por status sem endpoint dedicado.
+              const count = l.itens.filter((o) => o.status === st).length;
               if (count === 0 && filtroStatus !== st) return null;
               return (
                 <button
@@ -576,6 +548,32 @@ function OrcamentosIndexPage() {
             </tbody>
           </table>
         </div>
+
+        {l.pagina && l.pagina.total_paginas > 1 && (
+          <div className="flex items-center justify-between border-t border-border px-4 py-3">
+            <span className="text-xs text-muted-foreground">{l.pagina.total} registro(s)</span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: l.pagina.total_paginas }, (_, i) => i + 1)
+                .slice(
+                  Math.max(0, Math.min(l.paginaNum - 3, l.pagina.total_paginas - 5)),
+                  Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
+                )
+                .map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => l.setPaginaNum(p)}
+                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
+                      p === l.paginaNum
+                        ? "bg-lime text-primary-foreground"
+                        : "text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
       </SectionCard>
 
       {/* Modal: Novo Orçamento com Precificação por Tabela da Empresa */}

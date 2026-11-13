@@ -362,6 +362,8 @@ pub struct QueryOrcamentos {
     pub empresa_id: Option<i64>,
     pub oportunidade_id: Option<i64>,
     pub vendedor_id: Option<i64>,
+    /// ILIKE em número e nome da empresa.
+    pub busca: Option<String>,
 }
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
@@ -622,6 +624,8 @@ pub struct QueryPedidos {
     pub empresa_id: Option<i64>,
     pub contato_id: Option<i64>,
     pub origem: Option<OrigemPedido>,
+    /// ILIKE em número e nome da empresa.
+    pub busca: Option<String>,
 }
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
@@ -728,6 +732,9 @@ pub struct QueryOrdens {
     pub empresa_id: Option<i64>,
     pub pedido_id: Option<i64>,
     pub responsavel_id: Option<i64>,
+    pub prioridade: Option<hweld_domain::operacao::ordem_servico::PrioridadeOs>,
+    /// ILIKE em número, descrição e nome da empresa.
+    pub busca: Option<String>,
 }
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
@@ -848,6 +855,8 @@ pub struct QueryPagamentos {
     pub pedido_id: Option<i64>,
     pub status: Option<hweld_domain::vendas::pagamento::StatusPagamento>,
     pub vencidos_em: Option<NaiveDate>,
+    /// ILIKE no número do pedido e no nome da empresa.
+    pub busca: Option<String>,
 }
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]

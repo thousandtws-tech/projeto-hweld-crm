@@ -256,6 +256,9 @@ pub fn configurar(cfg: &mut web::ServiceConfig, docs_habilitados: bool) {
             .service(notificacoes::marcar_lida_portal)
             .service(notificacoes::ler_todas_portal)
             .service(notificacoes::remover_portal)
-            .service(notificacoes::limpar_todas_portal),
+            .service(notificacoes::limpar_todas_portal)
+            // Telemetria — Web Vitals dos dois front-ends (público, sem auth;
+            // beacon anônimo não carrega credenciais).
+            .service(telemetria::vitals),
     );
 }

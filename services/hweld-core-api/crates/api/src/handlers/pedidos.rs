@@ -36,6 +36,7 @@ pub struct PedidoDetalhe {
         ("empresa_id" = Option<i64>, Query),
         ("contato_id" = Option<i64>, Query),
         ("origem" = Option<OrigemPedido>, Query),
+        ("busca" = Option<String>, Query, description = "ILIKE em número e nome da empresa"),
     ),
     responses(
         (status = 200, body = Pagina<Pedido>),
@@ -58,6 +59,7 @@ pub async fn listar(
                 empresa_id: q.empresa_id.map(Id::novo),
                 contato_id: q.contato_id.map(Id::novo),
                 origem: q.origem,
+                busca: q.busca.clone(),
             },
         )
         .await?;

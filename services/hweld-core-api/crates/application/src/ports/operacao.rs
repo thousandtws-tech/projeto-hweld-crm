@@ -5,7 +5,7 @@ use hweld_domain::acesso::usuario::Usuario;
 use hweld_domain::catalogo::produto::Produto;
 use hweld_domain::crm::empresa::Empresa;
 use hweld_domain::operacao::ordem_servico::{
-    OrdemServico, OrdemServicoInput, OsHistorico, OsItem, StatusOs,
+    OrdemServico, OrdemServicoInput, OsHistorico, OsItem, PrioridadeOs, StatusOs,
 };
 use hweld_domain::shared::dinheiro::{Dinheiro, Quantidade};
 use hweld_domain::shared::id::Id;
@@ -20,6 +20,9 @@ pub struct FiltroOrdensServico {
     pub empresa_id: Option<Id<Empresa>>,
     pub pedido_id: Option<Id<hweld_domain::vendas::pedido::Pedido>>,
     pub responsavel_id: Option<Id<Usuario>>,
+    pub prioridade: Option<PrioridadeOs>,
+    /// ILIKE em `numero`, `descricao` ou no nome da empresa.
+    pub busca: Option<String>,
 }
 
 #[async_trait]

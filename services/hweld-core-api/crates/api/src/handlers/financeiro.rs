@@ -34,6 +34,7 @@ const FINANCEIRO: &[Perfil] = &[Perfil::Admin, Perfil::Financeiro];
         ("pedido_id" = Option<i64>, Query),
         ("status" = Option<StatusPagamento>, Query),
         ("vencidos_em" = Option<String>, Query, description = "vencidos até a data (YYYY-MM-DD)"),
+        ("busca" = Option<String>, Query, description = "ILIKE no nº do pedido e nome da empresa"),
     ),
     responses(
         (status = 200, body = Pagina<Pagamento>),
@@ -56,6 +57,7 @@ pub async fn listar_pagamentos(
                 pedido_id: q.pedido_id.map(Id::novo),
                 status: q.status,
                 vencidos_em: q.vencidos_em,
+                busca: q.busca.clone(),
             },
         )
         .await?;

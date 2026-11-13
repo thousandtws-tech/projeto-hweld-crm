@@ -5,7 +5,9 @@ use crate::erro::Resposta;
 use actix_web::{get, patch, post, web, HttpResponse};
 use hweld_application::ports::operacao::FiltroOrdensServico;
 use hweld_domain::acesso::usuario::Perfil;
-use hweld_domain::operacao::ordem_servico::{OrdemServico, OsHistorico, OsItem, StatusOs};
+use hweld_domain::operacao::ordem_servico::{
+    OrdemServico, OsHistorico, OsItem, PrioridadeOs, StatusOs,
+};
 use hweld_domain::shared::id::Id;
 use hweld_domain::shared::paginacao::Pagina;
 use serde::Serialize;
@@ -35,6 +37,8 @@ pub struct OsDetalhe {
         ("empresa_id" = Option<i64>, Query),
         ("pedido_id" = Option<i64>, Query),
         ("responsavel_id" = Option<i64>, Query),
+        ("prioridade" = Option<PrioridadeOs>, Query),
+        ("busca" = Option<String>, Query, description = "ILIKE em número, descrição e empresa"),
     ),
     responses(
         (status = 200, body = Pagina<OrdemServico>),
@@ -57,6 +61,8 @@ pub async fn listar(
                 empresa_id: q.empresa_id.map(Id::novo),
                 pedido_id: q.pedido_id.map(Id::novo),
                 responsavel_id: q.responsavel_id.map(Id::novo),
+                prioridade: q.prioridade,
+                busca: q.busca.clone(),
             },
         )
         .await?;

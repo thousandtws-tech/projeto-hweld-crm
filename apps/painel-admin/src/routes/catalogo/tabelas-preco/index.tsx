@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Plus, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
@@ -8,7 +8,7 @@ import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialo
 import { exigePerfil } from "@/lib/guards";
 import type { TabelaPreco } from "@/lib/models";
 import { catalogoService } from "@/lib/services";
-import { useRealtimeEvent } from "@/lib/use-realtime";
+import { useResourceList } from "@/lib/use-resource-list";
 
 export const Route = createFileRoute("/catalogo/tabelas-preco/")({
   beforeLoad: exigePerfil("admin", "vendedor"),
@@ -17,31 +17,18 @@ export const Route = createFileRoute("/catalogo/tabelas-preco/")({
 
 function TabelasPrecoIndexPage() {
   const navigate = useNavigate();
-  const [tabelas, setTabelas] = useState<TabelaPreco[]>([]);
-  const [carregando, setCarregando] = useState(true);
+  const l = useResourceList<TabelaPreco>({
+    recurso: "tabelas-preco",
+    busca: false,
+    eventos: ["catalogo.precos"],
+  });
+  const tabelas = l.itens;
+  const carregando = l.carregando;
 
   const [open, setOpen] = useState(false);
   const [editando, setEditando] = useState<TabelaPreco | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [f, setF] = useState({ nome: "", descricao: "", ativa: true });
-
-  const carregar = useCallback(async (silencioso = false) => {
-    if (!silencioso) setCarregando(true);
-    try {
-      const p = await catalogoService.tabelas({ por_pagina: 100 });
-      setTabelas(p.itens ?? []);
-    } catch {
-      if (!silencioso) toast.error("Falha ao carregar tabelas de preço.");
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
-
-  useRealtimeEvent(["catalogo.precos"], () => void carregar(true));
 
   const abrirModal = (t?: TabelaPreco) => {
     setEditando(t ?? null);
@@ -64,8 +51,8 @@ function TabelasPrecoIndexPage() {
         ativa: f.ativa,
       };
       if (editando) {
-        const atualizada = await catalogoService.atualizarTabela(editando.id, body);
-        setTabelas((lista) => lista.map((x) => (x.id === atualizada.id ? atualizada : x)));
+        await catalogoService.atualizarTabela(editando.id, body);
+        l.recarregar();
         setOpen(false);
         toast.success("Tabela de preço atualizada.");
       } else {
@@ -97,7 +84,7 @@ function TabelasPrecoIndexPage() {
             </button>
             <button
               type="button"
-              onClick={() => void carregar()}
+              onClick={l.recarregar}
               aria-label="Atualizar"
               className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground transition hover:text-foreground"
             >
@@ -170,6 +157,32 @@ function TabelasPrecoIndexPage() {
             </tbody>
           </table>
         </div>
+
+        {l.pagina && l.pagina.total_paginas > 1 && (
+          <div className="flex items-center justify-between border-t border-border px-4 py-3">
+            <span className="text-xs text-muted-foreground">{l.pagina.total} registro(s)</span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: l.pagina.total_paginas }, (_, i) => i + 1)
+                .slice(
+                  Math.max(0, Math.min(l.paginaNum - 3, l.pagina.total_paginas - 5)),
+                  Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
+                )
+                .map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => l.setPaginaNum(p)}
+                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
+                      p === l.paginaNum
+                        ? "bg-lime text-primary-foreground"
+                        : "text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
       </SectionCard>
 
       <FormDialog

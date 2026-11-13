@@ -35,6 +35,7 @@ pub struct OrcamentoDetalhe {
         ("empresa_id" = Option<i64>, Query),
         ("oportunidade_id" = Option<i64>, Query),
         ("vendedor_id" = Option<i64>, Query),
+        ("busca" = Option<String>, Query, description = "ILIKE em número e nome da empresa"),
     ),
     responses(
         (status = 200, body = Pagina<Orcamento>),
@@ -57,6 +58,7 @@ pub async fn listar(
                 empresa_id: q.empresa_id.map(Id::novo),
                 oportunidade_id: q.oportunidade_id.map(Id::novo),
                 vendedor_id: q.vendedor_id.map(Id::novo),
+                busca: q.busca.clone(),
             },
         )
         .await?;

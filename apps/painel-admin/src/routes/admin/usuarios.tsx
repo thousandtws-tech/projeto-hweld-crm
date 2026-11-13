@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
@@ -7,7 +7,7 @@ import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialo
 import type { Usuario } from "@/lib/models";
 import { usuariosService } from "@/lib/services";
 import { exigePerfil } from "@/lib/guards";
-import { useRealtimeEvent } from "@/lib/use-realtime";
+import { useResourceList } from "@/lib/use-resource-list";
 
 export const Route = createFileRoute("/admin/usuarios")({
   beforeLoad: exigePerfil("admin"),
@@ -16,22 +16,15 @@ export const Route = createFileRoute("/admin/usuarios")({
 
 /** Usuários staff — CRUD + ativo (admin only). */
 function UsuariosPage() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const l = useResourceList<Usuario>({
+    recurso: "usuarios",
+    eventos: (t) => t.startsWith("usuario."),
+  });
+  const usuarios = l.itens;
+  const carregar = l.recarregar;
   const [open, setOpen] = useState(false);
   const [editando, setEditando] = useState<Usuario | null>(null);
   const [f, setF] = useState({ nome: "", email: "", senha: "", perfil: "vendedor" });
-
-  const carregar = useCallback(() => {
-    usuariosService.listar({ por_pagina: 100 }).then((p) => setUsuarios(p.itens));
-  }, []);
-
-  useEffect(() => carregar(), [carregar]);
-
-  // Outro admin mexeu em usuários → lista reconcilia sem refresh.
-  useRealtimeEvent(
-    (t) => t.startsWith("usuario."),
-    () => carregar(),
-  );
 
   const abrir = (u?: Usuario) => {
     setEditando(u ?? null);
@@ -94,7 +87,7 @@ function UsuariosPage() {
       />
 
       <SectionCard className="p-0 overflow-hidden">
-        <table className="w-full text-sm">
+        <table className={`w-full text-sm ${l.carregando ? "opacity-55" : ""}`}>
           <thead>
             <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
               {["Nome", "E-mail", "Perfil", "Ativo", ""].map((h) => (
@@ -147,6 +140,32 @@ function UsuariosPage() {
             ))}
           </tbody>
         </table>
+
+        {l.pagina && l.pagina.total_paginas > 1 && (
+          <div className="flex items-center justify-between border-t border-border px-4 py-3">
+            <span className="text-xs text-muted-foreground">{l.pagina.total} registro(s)</span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: l.pagina.total_paginas }, (_, i) => i + 1)
+                .slice(
+                  Math.max(0, Math.min(l.paginaNum - 3, l.pagina.total_paginas - 5)),
+                  Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
+                )
+                .map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => l.setPaginaNum(p)}
+                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
+                      p === l.paginaNum
+                        ? "bg-lime text-primary-foreground"
+                        : "text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
       </SectionCard>
 
       <FormDialog

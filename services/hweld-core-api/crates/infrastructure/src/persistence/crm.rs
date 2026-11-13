@@ -1526,4 +1526,15 @@ fn push_filtro_orcamentos<'a>(qb: &mut QueryBuilder<'a, Postgres>, filtro: &'a F
         qb.push(" AND vendedor_id = ")
             .push_bind(vendedor_id.valor());
     }
+    if let Some(busca) = filtro.busca.as_ref().filter(|b| !b.trim().is_empty()) {
+        let padrao = format!("%{}%", busca.trim());
+        qb.push(" AND (numero ILIKE ")
+            .push_bind(padrao.clone())
+            .push(" OR EXISTS (SELECT 1 FROM empresas e WHERE e.id = empresa_id \
+                   AND (e.razao_social ILIKE ")
+            .push_bind(padrao.clone())
+            .push(" OR e.nome_fantasia ILIKE ")
+            .push_bind(padrao)
+            .push(")))");
+    }
 }

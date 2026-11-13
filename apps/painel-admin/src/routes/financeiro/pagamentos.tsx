@@ -1,15 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, RefreshCw, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
 import { FormDialog, FormField, fieldClass } from "@/components/ui-kit/FormDialog";
+import { api } from "@/lib/api";
 import { brl, fmtData, statusLabel } from "@/lib/format";
 import { exigePerfil } from "@/lib/guards";
-import type { Empresa, Pagamento, Pedido, StatusPagamento } from "@/lib/models";
-import { crmService, financeiroService, pedidosService } from "@/lib/services";
-import { useRealtimeEvent } from "@/lib/use-realtime";
+import type { Pagamento, Pedido, StatusPagamento } from "@/lib/models";
+import { financeiroService } from "@/lib/services";
+import { useEmpresasNomes } from "@/lib/use-empresas";
+import { useResourceList } from "@/lib/use-resource-list";
 
 export const Route = createFileRoute("/financeiro/pagamentos")({
   beforeLoad: exigePerfil("admin", "financeiro"),
@@ -53,13 +56,31 @@ function diasAteVencimento(isoDate: string): number | null {
 }
 
 function PagamentosPage() {
-  const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
-  const [pedidos, setPedidos] = useState<Map<number, Pedido>>(new Map());
-  const [empresas, setEmpresas] = useState<Map<number, string>>(new Map());
-  const [carregando, setCarregando] = useState(true);
-
-  const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("");
+
+  const l = useResourceList<Pagamento>({
+    recurso: "pagamentos",
+    filtros: { status: filtroStatus || undefined },
+    eventos: EV_PAGAMENTO,
+  });
+  const carregando = l.carregando;
+  const carregar = l.recarregar;
+  const busca = l.busca;
+  const setBusca = l.setBusca;
+
+  // Lookups compartilhados: número do pedido na linha + pedidos elegíveis no
+  // modal de parcelas. Ambos cacheados e coalescidos entre as páginas.
+  const empresas = useEmpresasNomes();
+  const { data: pedidosPg } = useQuery({
+    queryKey: ["lookup", "pedidos"],
+    queryFn: () =>
+      api.lista<Pedido>("pedidos", { por_pagina: 500 }).catch(() => ({ itens: [] as Pedido[] })),
+    staleTime: 30_000,
+  });
+  const pedidos = useMemo(
+    () => new Map((pedidosPg?.itens ?? []).map((p) => [p.id, p])),
+    [pedidosPg],
+  );
 
   const [modal, setModal] = useState<Modal>(null);
   const [alvo, setAlvo] = useState<Pagamento | null>(null);
@@ -74,30 +95,6 @@ function PagamentosPage() {
   const [fBaixa, setFBaixa] = useState({ forma_pagamento_id: "1", observacao: "" });
   const [motivo, setMotivo] = useState("");
 
-  const carregar = useCallback(async (silencioso = false) => {
-    if (!silencioso) setCarregando(true);
-    try {
-      const [pPag, pPed, pEmp] = await Promise.all([
-        financeiroService.pagamentos({ por_pagina: 100 }),
-        pedidosService.listar({ por_pagina: 100 }).catch(() => ({ itens: [] as Pedido[] })),
-        crmService.empresas({ por_pagina: 100 }).catch(() => ({ itens: [] as Empresa[] })),
-      ]);
-      setPagamentos(pPag.itens ?? []);
-      setPedidos(new Map((pPed.itens ?? []).map((p) => [p.id, p])));
-      setEmpresas(
-        new Map((pEmp.itens ?? []).map((e) => [e.id, e.nome_fantasia || e.razao_social])),
-      );
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
-
-  useRealtimeEvent(EV_PAGAMENTO, () => void carregar(true));
-
   const nomeForma = (id: number | null) => FORMAS_PAGAMENTO.find((f) => f.id === id)?.nome ?? "—";
 
   const pedidoLabel = useCallback(
@@ -110,29 +107,22 @@ function PagamentosPage() {
     [pedidos, empresas],
   );
 
-  // Pedidos elegíveis que ainda não possuem parcelas geradas
+  // Pedidos elegíveis que ainda não possuem parcelas geradas. Olha o lookup
+  // de pedidos + a página atual de pagamentos — aproximação assumida; a
+  // checagem definitiva é o backend na hora de gerar.
   const pedidosSemParcelas = useMemo(() => {
-    const comParcelas = new Set(pagamentos.map((p) => p.pedido_id));
+    const comParcelas = new Set(l.itens.map((p) => p.pedido_id));
     return [...pedidos.values()].filter((p) => p.status !== "cancelado" && !comParcelas.has(p.id));
-  }, [pedidos, pagamentos]);
+  }, [pedidos, l.itens]);
 
-  const pagamentosFiltrados = useMemo(() => {
-    const q = busca.trim().toLowerCase();
-    return pagamentos.filter((p) => {
-      if (filtroStatus && p.status !== filtroStatus) return false;
-      if (q) {
-        const label = pedidoLabel(p.pedido_id).toLowerCase();
-        if (!label.includes(q) && !String(p.pedido_id).includes(q)) return false;
-      }
-      return true;
-    });
-  }, [pagamentos, busca, filtroStatus, pedidoLabel]);
+  // Status/busca já são server-side.
+  const pagamentosFiltrados = l.itens;
 
   const metricas = useMemo(() => {
     let aReceber = 0;
     let vencido = 0;
     let recebido = 0;
-    for (const p of pagamentos) {
+    for (const p of l.itens) {
       const v = num(p.valor);
       if (p.status === "pago") recebido += v;
       else if (p.status === "vencido") vencido += v;
@@ -143,7 +133,7 @@ function PagamentosPage() {
       }
     }
     return { aReceber, vencido, recebido };
-  }, [pagamentos]);
+  }, [l.itens]);
 
   const abrirModalParcelas = () => {
     const d = new Date();
@@ -269,10 +259,10 @@ function PagamentosPage() {
                   : "border border-border bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
-              Todos ({pagamentos.length})
+              Todos ({l.pagina?.total ?? l.itens.length})
             </button>
             {STATUS_PAGAMENTO.map((st) => {
-              const count = pagamentos.filter((p) => p.status === st).length;
+              const count = l.itens.filter((p) => p.status === st).length;
               if (count === 0 && filtroStatus !== st) return null;
               return (
                 <button
@@ -383,6 +373,32 @@ function PagamentosPage() {
             </tbody>
           </table>
         </div>
+
+        {l.pagina && l.pagina.total_paginas > 1 && (
+          <div className="flex items-center justify-between border-t border-border px-4 py-3">
+            <span className="text-xs text-muted-foreground">{l.pagina.total} registro(s)</span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: l.pagina.total_paginas }, (_, i) => i + 1)
+                .slice(
+                  Math.max(0, Math.min(l.paginaNum - 3, l.pagina.total_paginas - 5)),
+                  Math.max(5, Math.min(l.paginaNum + 2, l.pagina.total_paginas)),
+                )
+                .map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => l.setPaginaNum(p)}
+                    className={`h-8 min-w-8 rounded-xl px-2 text-xs font-semibold ${
+                      p === l.paginaNum
+                        ? "bg-lime text-primary-foreground"
+                        : "text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
       </SectionCard>
 
       {/* Modal: Gerar Parcelas */}

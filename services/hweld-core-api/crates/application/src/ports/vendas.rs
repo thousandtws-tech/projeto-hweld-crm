@@ -92,6 +92,9 @@ pub struct FiltroPedidos {
     pub empresa_id: Option<Id<Empresa>>,
     pub contato_id: Option<Id<Contato>>,
     pub origem: Option<OrigemPedido>,
+    /// ILIKE em `numero` ou no nome (razão/fantasia) da empresa —
+    /// substitui a busca client-side que só enxergava a página carregada.
+    pub busca: Option<String>,
 }
 
 #[async_trait]
@@ -125,6 +128,8 @@ pub struct FiltroPagamentos {
     pub pedido_id: Option<Id<Pedido>>,
     pub status: Option<StatusPagamento>,
     pub vencidos_em: Option<NaiveDate>,
+    /// ILIKE no número do pedido ou no nome da empresa (via pedido).
+    pub busca: Option<String>,
 }
 
 #[async_trait]
