@@ -520,6 +520,8 @@ export function ProdutoForm({ produtoRef }: { produtoRef?: string }) {
                 minRows={2}
                 value={f.descricao_curta}
                 onChange={set("descricao_curta")}
+                slotProps={{ htmlInput: { maxLength: 500 } }}
+                helperText={`${f.descricao_curta.length}/500 — resumo exibido na vitrine; use "Descrição técnica" para texto completo`}
               />
             </FormField>
           </Metabox>

@@ -97,6 +97,19 @@ impl ProdutoInput {
             Some(s) => v.validar("slug", texto::slug("slug", s, 220)),
             None => nome.as_ref().and_then(|n| texto::slug("slug", n, 220).ok()),
         };
+        // Campos VARCHAR com teto no banco — falha aqui é 400, não 500.
+        let descricao_curta = v.validar(
+            "descricao_curta",
+            texto::opcional(self.descricao_curta.as_deref(), "descricao_curta", 500),
+        );
+        let marca = v.validar(
+            "marca",
+            texto::opcional(self.marca.as_deref(), "marca", 80),
+        );
+        let unidade_medida = v.validar(
+            "unidade_medida",
+            texto::opcional(self.unidade_medida.as_deref(), "unidade_medida", 6),
+        );
         let preco = v.validar(
             "preco_venda",
             Dinheiro::nao_negativo(self.preco_venda, "preco_venda"),
@@ -123,6 +136,9 @@ impl ProdutoInput {
             sku: sku.unwrap().to_uppercase(),
             nome: nome.unwrap(),
             slug,
+            descricao_curta: descricao_curta.flatten(),
+            marca: marca.flatten(),
+            unidade_medida: unidade_medida.flatten(),
             origem_mercadoria: self.origem_mercadoria.or_else(|| Some("0".into())),
             ..self
         })
