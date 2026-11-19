@@ -51,6 +51,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/payments/*/cancel", "/api/v1/payments/*/refund",
                         "/api/v1/payments/*/reconcile", "/api/v1/fiscal-documents/**")
                     .hasAnyAuthority("ROLE_STAFF_ADMIN", "ROLE_STAFF_FINANCEIRO")
+                .requestMatchers("/api/v1/integracoes/**").hasAuthority("ROLE_STAFF_ADMIN")
                 .requestMatchers("/api/v1/billing/**", "/api/v1/fiscal-documents/**", "/api/v1/notifications/**",
                         "/api/v1/events/**")
                     .hasAnyAuthority("ROLE_STAFF_ADMIN", "ROLE_STAFF_FINANCEIRO")

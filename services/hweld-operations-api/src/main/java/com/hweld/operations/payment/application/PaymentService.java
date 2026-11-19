@@ -113,6 +113,7 @@ public class PaymentService {
                 idemKey, actor.tipo(), String.valueOf(actor.id()));
         payment.assignPedidoNumero(order.numero());
         payment.assignContatoEmail(order.contatoEmail() != null ? order.contatoEmail() : cmd.emailContato());
+        payment.assignContatoTelefone(order.contatoTelefone());
         payment.applyProviderResult(charge.externalId(), charge.checkoutUrl(),
                 charge.pixQrCode(), charge.pixCopyPaste(), charge.expiresAt());
         if (charge.status() != PaymentStatus.PENDING && payment.getStatus().canTransitionTo(charge.status())) {
@@ -270,6 +271,7 @@ public class PaymentService {
                     "provider", p.getProvider()));
             if (p.getContatoId() != null) payload.put("contatoId", p.getContatoId());
             if (p.getContatoEmail() != null) payload.put("contatoEmail", p.getContatoEmail());
+            if (p.getContatoTelefone() != null) payload.put("contatoTelefone", p.getContatoTelefone());
             // Templates de notificação interpolam {{pedidoNumero}} — sem ele o
             // e-mail sai com "pedido ," em branco. Rows antigas (pré-coluna)
             // caem no fallback com o id numérico.
@@ -295,6 +297,7 @@ public class PaymentService {
                 "provider", p.getProvider()));
         if (p.getContatoId() != null) payload.put("contatoId", p.getContatoId());
         if (order.contatoEmail() != null) payload.put("contatoEmail", order.contatoEmail());
+        if (order.contatoTelefone() != null) payload.put("contatoTelefone", order.contatoTelefone());
         if (p.getPixCopyPaste() != null) payload.put("pixCopyPaste", p.getPixCopyPaste());
         if (p.getCheckoutUrl() != null) payload.put("checkoutUrl", p.getCheckoutUrl());
         if (p.getExpiresAt() != null) payload.put("expiresAt", p.getExpiresAt().toString());

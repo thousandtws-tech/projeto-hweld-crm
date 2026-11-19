@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.hweld.operations.notification.application.EmailProvider;
 import com.hweld.operations.notification.application.NotificationService;
+import com.hweld.operations.notification.application.SmsProvider;
 import com.hweld.operations.notification.application.TemplateRenderer;
 import com.hweld.operations.notification.domain.NotificationDelivery;
 import com.hweld.operations.notification.domain.NotificationDeliveryRepository;
@@ -38,9 +39,9 @@ class NotificationServiceTest {
         deliveries = mock(NotificationDeliveryRepository.class);
         emailProvider = mock(EmailProvider.class);
         outbox = mock(Outbox.class);
-        props = new NotificationService.Props("log", 3, 1000, "noreply@x", "HWeld");
+        props = new NotificationService.Props("log", "log", 3, 1000, 0, "noreply@x", "HWeld");
         service = new NotificationService(templates, deliveries, new TemplateRenderer(),
-                emailProvider, outbox, props);
+                emailProvider, mock(SmsProvider.class), outbox, props);
     }
 
     private NotificationTemplate template() {

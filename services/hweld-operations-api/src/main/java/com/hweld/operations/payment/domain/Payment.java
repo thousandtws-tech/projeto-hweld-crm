@@ -35,6 +35,10 @@ public class Payment {
     @Column(name = "contato_email", length = 320)
     private String contatoEmail;
 
+    /** Telefone do contato, capturado na criação — alimenta o canal SMS. */
+    @Column(name = "contato_telefone", length = 20)
+    private String contatoTelefone;
+
     /** Número do pedido (PV-XXXXXX), denormalizado na criação — eventos de
      *  transição não voltam ao core-api, então o número viaja junto. */
     @Column(name = "pedido_numero", length = 40)
@@ -127,6 +131,13 @@ public class Payment {
         }
     }
 
+    /** Telefone do contato (E.164 ou local), capturado na criação para SMS. */
+    public void assignContatoTelefone(String telefone) {
+        if (telefone != null && !telefone.isBlank()) {
+            this.contatoTelefone = telefone.substring(0, Math.min(telefone.length(), 20));
+        }
+    }
+
     /** Transição de estado com guarda — violação é erro de domínio. */
     public void transitionTo(PaymentStatus next, String failureCode, String failureMessage) {
         if (!status.canTransitionTo(next)) {
@@ -155,6 +166,7 @@ public class Payment {
     public Long getEmpresaId() { return empresaId; }
     public Long getContatoId() { return contatoId; }
     public String getContatoEmail() { return contatoEmail; }
+    public String getContatoTelefone() { return contatoTelefone; }
     public String getPedidoNumero() { return pedidoNumero; }
     public String getProvider() { return provider; }
     public PaymentMethod getMethod() { return method; }

@@ -22,4 +22,32 @@ public interface NotificationDeliveryRepository extends JpaRepository<Notificati
     Page<NotificationDelivery> findByRecipientOrderByCreatedAtDesc(String recipient, Pageable pageable);
 
     Page<NotificationDelivery> findByStatusOrderByCreatedAtDesc(String status, Pageable pageable);
+
+    Page<NotificationDelivery> findByChannelOrderByCreatedAtDesc(String channel, Pageable pageable);
+
+    Page<NotificationDelivery> findByChannelAndStatusOrderByCreatedAtDesc(
+            String channel, String status, Pageable pageable);
+
+    Page<NotificationDelivery> findByChannelAndPedidoIdOrderByCreatedAtDesc(
+            String channel, Long pedidoId, Pageable pageable);
+
+    java.util.Optional<NotificationDelivery> findByMessageId(String messageId);
+
+    java.util.Optional<NotificationDelivery> findByDedupKey(String dedupKey);
+
+    /** SMS aceito pelo provider sem DLR há muito tempo → reconciliação. */
+    List<NotificationDelivery> findByChannelAndStatusAndSentAtBefore(
+            String channel, String status, Instant cutoff, Pageable pageable);
+
+    /** Evento posterior torna pendências obsoletas — ex.: PaymentConfirmed
+     *  suprime o sms_payment_requested ainda na fila do mesmo pedido. */
+    @Query("""
+            SELECT d FROM NotificationDelivery d
+            WHERE d.channel = 'SMS' AND d.status = 'QUEUED'
+              AND d.pedidoId = :pedidoId AND d.templateCode = :templateCode
+            """)
+    List<NotificationDelivery> findSmsSupprimable(@Param("pedidoId") Long pedidoId,
+            @Param("templateCode") String templateCode);
+
+    long countByChannelAndStatusIn(String channel, List<String> statuses);
 }

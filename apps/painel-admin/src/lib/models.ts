@@ -536,3 +536,43 @@ export interface CmsLoja {
   duo_banners: CardDuoCms[];
   selos: SeloCms[];
 }
+
+// ── Integrações (hweld-operations-api) ────────────────────────────────────
+
+/** Estado consolidado da integração Infobip SMS — `GET /integracoes/infobip`. */
+export interface IntegracaoInfobip {
+  provedor: string;
+  envConfigurado: boolean;
+  baseUrlConfigurada: boolean;
+  apiKeyConfigurada: boolean;
+  remetente: string;
+  callbackConfigurado: boolean;
+  webhookUrl: string;
+  ativado: boolean;
+  maxSegmentos: number;
+  destinatariosTeste: string[];
+  eventos: Record<string, boolean>;
+  ultimaValidacao: { at?: string; ok?: boolean; detail?: string };
+  pendentes: number;
+  ultimoEnvio: string;
+}
+
+/** Entrega da fila transacional (canal SMS) — `notification_deliveries`. */
+export interface EntregaSms {
+  id: string;
+  templateCode: string | null;
+  channel: string;
+  recipient: string;
+  subject: string;
+  status: string;
+  attempts: number;
+  segments: number | null;
+  remoteStatus: string | null;
+  sentAt: string | null;
+  deliveredAt: string | null;
+  nextRetryAt: string | null;
+  lastError: string | null;
+  createdAt: string;
+  pedidoId: number | null;
+  messageId: string | null;
+}

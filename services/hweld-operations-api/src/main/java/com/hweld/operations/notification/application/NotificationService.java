@@ -35,12 +35,15 @@ public class NotificationService {
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
     @ConfigurationProperties(prefix = "hweld.notification")
-    public record Props(String emailProvider, int maxAttempts, long retryBaseDelayMs,
+    public record Props(String emailProvider, String smsProvider, int maxAttempts,
+            long retryBaseDelayMs, long dlrReconcileAgeMs,
             String defaultFrom, String defaultFromName) {
         public Props {
             if (emailProvider == null) emailProvider = "log";
+            if (smsProvider == null) smsProvider = "log";
             if (maxAttempts <= 0) maxAttempts = 4;
             if (retryBaseDelayMs <= 0) retryBaseDelayMs = 30000;
+            if (dlrReconcileAgeMs <= 0) dlrReconcileAgeMs = 21_600_000; // 6h
         }
     }
 
@@ -48,16 +51,18 @@ public class NotificationService {
     private final NotificationDeliveryRepository deliveries;
     private final TemplateRenderer renderer;
     private final EmailProvider emailProvider;
+    private final SmsProvider smsProvider;
     private final Outbox outbox;
     private final Props props;
 
     public NotificationService(NotificationTemplateRepository templates,
             NotificationDeliveryRepository deliveries, TemplateRenderer renderer,
-            EmailProvider emailProvider, Outbox outbox, Props props) {
+            EmailProvider emailProvider, SmsProvider smsProvider, Outbox outbox, Props props) {
         this.templates = templates;
         this.deliveries = deliveries;
         this.renderer = renderer;
         this.emailProvider = emailProvider;
+        this.smsProvider = smsProvider;
         this.outbox = outbox;
         this.props = props;
     }
@@ -83,6 +88,55 @@ public class NotificationService {
         return d;
     }
 
+    /**
+     * Enfileira SMS — `phoneRaw` é normalizado para E.164; inválido/ausente
+     * vira SUPPRESSED auditável (não cobra nem tenta). `dedupKey` único
+     * garante idempotência de re-entrega de evento/clique duplo; retorna a
+     * entrega existente quando a chave já foi usada.
+     */
+    @Transactional
+    public NotificationDelivery queueSms(String templateCode, String phoneRaw,
+            Map<String, Object> vars, String dedupKey, String sourceEventId,
+            Long pedidoId, int maxSegments) {
+        NotificationTemplate t = templates.findByCodeAndActiveTrue(templateCode)
+                .orElseThrow(() -> ApiException.validacao("template inexistente/inativo: " + templateCode));
+
+        if (dedupKey != null) {
+            var existente = deliveries.findByDedupKey(dedupKey);
+            if (existente.isPresent()) return existente.get();
+        }
+
+        String e164 = PhoneNormalizer.toE164(phoneRaw);
+        String text = renderer.render(
+                t.getBodyText() != null ? t.getBodyText() : "", vars, false);
+
+        Map<String, Object> payload = new java.util.HashMap<>(vars);
+        payload.put("text", text);
+
+        NotificationDelivery d = new NotificationDelivery(
+                templateCode, e164 != null ? e164 : "(telefone inválido)", "SMS", payload)
+                .asSms(dedupKey, sourceEventId, pedidoId);
+
+        if (e164 == null) {
+            d.markSuppressed("telefone ausente/inválido: " + mask(phoneRaw));
+        } else {
+            var count = SmsSegmenter.count(text);
+            if (maxSegments > 0 && count.segments() > maxSegments) {
+                d.markSuppressed("mensagem excede o máximo de " + maxSegments
+                        + " segmentos (" + count.segments() + ")");
+            } else {
+                d.recordSegments(count.segments());
+            }
+        }
+        deliveries.save(d);
+        return d;
+    }
+
+    private static String mask(String phone) {
+        if (phone == null || phone.length() < 4) return "***";
+        return phone.substring(0, phone.length() - 4) + "****";
+    }
+
     /** Dispatcher: despacha deliveries devidos. Falha → retry exponencial → DEAD. */
     @Scheduled(fixedDelayString = "${hweld.notification.dispatch-interval-ms:3000}", initialDelay = 4000)
     @Transactional
@@ -93,7 +147,28 @@ public class NotificationService {
         }
     }
 
+    /**
+     * Reconciliação: SMS SENT sem DLR além de `dlr-reconcile-age-ms` vira
+     * UNKNOWN — callback ausente nunca dispara reenvio automático.
+     */
+    @Scheduled(fixedDelayString = "${hweld.notification.dlr-reconcile-interval-ms:300000}",
+            initialDelay = 60000)
+    @Transactional
+    public void reconcileSmsWithoutDlr() {
+        Instant cutoff = Instant.now().minusMillis(props.dlrReconcileAgeMs());
+        List<NotificationDelivery> pendentes = deliveries.findByChannelAndStatusAndSentAtBefore(
+                "SMS", NotificationDelivery.Status.SENT.name(), cutoff, PageRequest.of(0, 100));
+        for (NotificationDelivery d : pendentes) {
+            d.markUnknown("sem DLR do provider há mais de " + props.dlrReconcileAgeMs() / 60000 + " min");
+            deliveries.save(d);
+        }
+    }
+
     private void send(NotificationDelivery d) {
+        if ("SMS".equals(d.getChannel())) {
+            sendSms(d);
+            return;
+        }
         d.markSending();
         try {
             String html = d.getPayload() != null ? (String) d.getPayload().get("html") : null;
@@ -121,6 +196,47 @@ public class NotificationService {
         }
     }
 
+    private void sendSms(NotificationDelivery d) {
+        d.markSending();
+        try {
+            String text = d.getPayload() != null ? (String) d.getPayload().get("text") : null;
+            SmsProvider.SmsReceipt receipt = smsProvider.send(d.getRecipient(), text);
+            d.applySmsReceipt(receipt.messageId(), receipt.bulkId(), receipt.segments());
+            deliveries.save(d);
+            outbox.publish("notification_delivery", d.getId().toString(), IntegrationEvent.of(
+                    EventTypes.NOTIFICATION_SENT, d.getId().toString(),
+                    Map.of("deliveryId", d.getId().toString(), "channel", "SMS"),
+                    CorrelationIdFilter.current()));
+        } catch (SmsSendException e) {
+            log.warn("sms falhou delivery={} tentativa={} kind={}: {}",
+                    d.getId(), d.getAttempts(), e.kind(), e.getMessage());
+            if (!e.isRetryable() || d.getAttempts() >= props.maxAttempts()) {
+                d.markDead(e.kind() + ": " + e.getMessage());
+                outbox.publish("notification_delivery", d.getId().toString(), IntegrationEvent.of(
+                        EventTypes.NOTIFICATION_FAILED, d.getId().toString(),
+                        Map.of("deliveryId", d.getId().toString(), "channel", "SMS",
+                                "lastError", String.valueOf(e.getMessage())),
+                        CorrelationIdFilter.current()));
+            } else {
+                Instant retry = e.retryAfterMs() != null
+                        ? Instant.now().plusMillis(e.retryAfterMs())
+                        : nextRetry(d.getAttempts());
+                d.markFailed(e.getMessage(), retry);
+            }
+            deliveries.save(d);
+        } catch (Exception e) {
+            // Falha fora do contrato tipado — tratada como transitória.
+            log.warn("sms falhou inesperada delivery={} tentativa={}: {}",
+                    d.getId(), d.getAttempts(), e.getMessage());
+            if (d.getAttempts() >= props.maxAttempts()) {
+                d.markDead(e.getMessage());
+            } else {
+                d.markFailed(e.getMessage(), nextRetry(d.getAttempts()));
+            }
+            deliveries.save(d);
+        }
+    }
+
     private Instant nextRetry(int attempt) {
         long base = props.retryBaseDelayMs() * (1L << Math.min(attempt - 1, 6));
         long jitter = ThreadLocalRandom.current().nextLong(base / 4 + 1);
@@ -128,7 +244,15 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public Page<NotificationDelivery> list(String status, String recipient, Pageable pageable) {
+    public Page<NotificationDelivery> list(String status, String recipient,
+            String channel, Long pedidoId, Pageable pageable) {
+        if ("SMS".equalsIgnoreCase(channel)) {
+            if (status != null) return deliveries.findByChannelAndStatusOrderByCreatedAtDesc(
+                    "SMS", status.toUpperCase(), pageable);
+            if (pedidoId != null) return deliveries.findByChannelAndPedidoIdOrderByCreatedAtDesc(
+                    "SMS", pedidoId, pageable);
+            return deliveries.findByChannelOrderByCreatedAtDesc("SMS", pageable);
+        }
         if (recipient != null) return deliveries.findByRecipientOrderByCreatedAtDesc(recipient, pageable);
         if (status != null) return deliveries.findByStatusOrderByCreatedAtDesc(status.toUpperCase(), pageable);
         return deliveries.findAll(pageable);
@@ -140,12 +264,18 @@ public class NotificationService {
                 .orElseThrow(() -> ApiException.naoEncontrado("delivery não encontrado"));
     }
 
-    /** Reprocessa um delivery FAILED/DEAD manualmente (admin). */
+    /**
+     * Reprocessa um delivery manualmente (admin). UNKNOWN é permitido
+     * explicitamente — o chamador reconhece que o envio pode já ter ocorrido
+     * (timeout ambíguo) e assume a possibilidade de duplicidade.
+     */
     @Transactional
     public void retry(UUID id) {
         NotificationDelivery d = get(id);
-        if (d.getStatus().equals(NotificationDelivery.Status.SENT.name())) {
-            throw ApiException.conflito("delivery já enviado");
+        if (d.getStatus().equals(NotificationDelivery.Status.SENT.name())
+                || d.getStatus().equals(NotificationDelivery.Status.DELIVERED.name())
+                || d.getStatus().equals(NotificationDelivery.Status.ACCEPTED.name())) {
+            throw ApiException.conflito("delivery já enviado — reprocessar não é seguro");
         }
         d.markFailed(null, Instant.now()); // volta para fila
         deliveries.save(d);

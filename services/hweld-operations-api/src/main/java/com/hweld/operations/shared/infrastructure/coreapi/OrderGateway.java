@@ -11,13 +11,14 @@ import java.math.BigDecimal;
 public interface OrderGateway {
 
     record OrderInfo(long pedidoId, String numero, String status, long empresaId,
-            Long contatoId, Money total, String contatoEmail) {}
+            Long contatoId, Money total, String contatoEmail, String contatoTelefone) {}
 
     /** @throws com.hweld.operations.shared.interfaces.error.ApiException 404/403 quando inacessível */
     OrderInfo getOrder(long pedidoId, String callerJwt, boolean portalContext);
 
-    /** Perfil do contato portal autenticado (empresa + e-mail para notificações). */
+    /** Perfil do contato portal autenticado (empresa + e-mail/telefone p/ notificações). */
     PortalProfile getPortalProfile(String callerJwt);
 
-    record PortalProfile(long contatoId, long empresaId, String email, String nomeContato) {}
+    record PortalProfile(long contatoId, long empresaId, String email,
+            String nomeContato, String telefone) {}
 }

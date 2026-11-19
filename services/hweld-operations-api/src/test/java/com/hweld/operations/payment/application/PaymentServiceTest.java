@@ -58,7 +58,8 @@ class PaymentServiceTest {
     }
 
     private OrderInfo order(String status) {
-        return new OrderInfo(10L, "PV-00010", status, 7L, 42L, Money.of(new BigDecimal("199.90")), "c@x.com");
+        return new OrderInfo(10L, "PV-00010", status, 7L, 42L, Money.of(new BigDecimal("199.90")),
+                "c@x.com", "41999887766");
     }
 
     @Test

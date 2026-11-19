@@ -183,10 +183,27 @@ hweld:
     secret-key: ${MINIO_SECRET_KEY:}
   notification:
     email-provider: ${EMAIL_PROVIDER:log}   # log | smtp
+    sms-provider: ${SMS_PROVIDER:log}       # log | infobip
     max-attempts: 4
     retry-base-delay-ms: 30000
+    # SMS SENT sem DLR após este tempo → UNKNOWN (reconciliação, sem reenvio).
+    dlr-reconcile-age-ms: ${SMS_DLR_RECONCILE_AGE_MS:21600000}
     default-from: ${MAIL_FROM:noreply@hweld.com.br}
     default-from-name: ${MAIL_FROM_NAME:HWeld}
+    infobip:
+      # URL base específica da conta — ex.: https://xxxxx.api.infobip.com
+      # (HTTPS obrigatório; falha na carga se http://).
+      base-url: ${INFOBIP_BASE_URL:}
+      # API key — Authorization: App {KEY}. Segredo: somente env.
+      api-key: ${INFOBIP_API_KEY:}
+      # Remetente autorizado no painel Infobip (alfa ou E.164).
+      sender: ${INFOBIP_SENDER:}
+      timeout-ms: ${INFOBIP_TIMEOUT_MS:10000}
+      # Segredo do callback DLR — header que o painel Infobip envia.
+      dlr-auth-token: ${INFOBIP_DLR_AUTH_TOKEN:}
+      dlr-auth-header: ${INFOBIP_DLR_AUTH_HEADER:X-DLR-Token}
+      # URL pública deste webhook (para registro no painel Infobip).
+      webhook-url: ${INFOBIP_WEBHOOK_URL:}
 
 springdoc:
   # Spec + UI expõem todas as rotas, incluindo /internal/**.

@@ -25,10 +25,13 @@ public class CoreApiOrderGateway implements OrderGateway {
 
     private final RestClient client;
     private final ObjectMapper mapper;
+    private final ContatoGateway contatos;
 
-    public CoreApiOrderGateway(@Qualifier("coreApiClient") RestClient client, ObjectMapper mapper) {
+    public CoreApiOrderGateway(@Qualifier("coreApiClient") RestClient client,
+            ObjectMapper mapper, ContatoGateway contatos) {
         this.client = client;
         this.mapper = mapper;
+        this.contatos = contatos;
     }
 
     @Override
@@ -45,6 +48,7 @@ public class CoreApiOrderGateway implements OrderGateway {
             Long contatoId = pedido.hasNonNull("contato_id") ? pedido.path("contato_id").asLong() : null;
             Long empresaId = pedido.hasNonNull("empresa_id") ? pedido.path("empresa_id").asLong() : null;
             String email = null;
+            String telefone = null;
 
             if (portalContext) {
                 // Resposta do portal não carrega empresa_id/contato_id — vêm do perfil.
@@ -52,11 +56,20 @@ public class CoreApiOrderGateway implements OrderGateway {
                 empresaId = perfil.empresaId();
                 contatoId = perfil.contatoId();
                 email = perfil.email();
+                telefone = perfil.telefone();
+            } else if (contatoId != null) {
+                // Staff: pedido traz só contato_id — resolve via canal interno.
+                var contato = contatos.getContato(contatoId);
+                if (contato != null) {
+                    email = contato.email();
+                    telefone = contato.telefone();
+                }
             }
             if (empresaId == null || empresaId <= 0) {
                 throw ApiException.proibido("pedido sem empresa identificável");
             }
-            return new OrderInfo(id, numero, status, empresaId, contatoId, Money.of(total), email);
+            return new OrderInfo(id, numero, status, empresaId, contatoId,
+                    Money.of(total), email, telefone);
         } catch (ApiException e) {
             throw e;
         } catch (Exception e) {
@@ -74,7 +87,8 @@ public class CoreApiOrderGateway implements OrderGateway {
         long empresaId = empresa.path("id").asLong();
         String email = contato.hasNonNull("email") ? contato.path("email").asString() : null;
         String nome = contato.hasNonNull("nome") ? contato.path("nome").asString() : null;
-        return new PortalProfile(contatoId, empresaId, email, nome);
+        String telefone = contato.hasNonNull("telefone") ? contato.path("telefone").asString() : null;
+        return new PortalProfile(contatoId, empresaId, email, nome, telefone);
     }
 
     private JsonNode getJson(String path, String callerJwt) {

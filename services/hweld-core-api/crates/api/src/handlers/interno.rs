@@ -10,6 +10,7 @@
 use actix_web::{get, post, web, HttpResponse};
 use hweld_application::use_cases::integracao::{EventoFinanceiro, ResultadoEvento};
 use hweld_domain::fiscal::nota_fiscal::NotaFiscal;
+use hweld_domain::crm::contato::Contato;
 use hweld_domain::shared::id::Id;
 use hweld_domain::vendas::pedido::Pedido;
 
@@ -58,4 +59,24 @@ pub async fn dados_fiscais(
         )
         .await?;
     Ok(HttpResponse::Ok().json(dados))
+}
+
+/// Dados mínimos de notificação do contato (e-mail/telefone) para o
+/// operations-api resolver destinatários fora do contexto de JWT — usado
+/// pelo handler de eventos SMS/e-mail quando o payload traz só `contatoId`.
+#[get("/internal/contatos/{id}/notificacao")]
+pub async fn contato_notificacao(
+    state: web::Data<AppState>,
+    _servico: AuthServico,
+    path: web::Path<i64>,
+) -> Resposta<HttpResponse> {
+    let c = state
+        .contatos
+        .buscar(Id::<Contato>::novo(path.into_inner()))
+        .await?;
+    Ok(HttpResponse::Ok().json(serde_json::json!({
+        "id": c.id.valor(),
+        "email": c.email,
+        "telefone": c.telefone,
+    })))
 }

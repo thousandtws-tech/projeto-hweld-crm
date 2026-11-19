@@ -28,9 +28,10 @@ public class NotificationController {
     public Page<NotificationDelivery> list(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String recipient,
+            @RequestParam(required = false) String channel,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int porPagina) {
-        return service.list(status, recipient,
+        return service.list(status, recipient, channel, null,
                 PageRequest.of(Math.max(pagina, 0), Math.min(porPagina, 100)));
     }
 

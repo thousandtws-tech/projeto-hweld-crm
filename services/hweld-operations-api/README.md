@@ -54,6 +54,10 @@ Swagger UI: `/swagger-ui.html`.
 | `EMAIL_PROVIDER` | `log` | `log` (dev) ou `smtp` |
 | `SMTP_HOST`/`SMTP_PORT`/`SMTP_USERNAME`/`SMTP_PASSWORD`/`SMTP_AUTH`/`SMTP_STARTTLS` | `localhost`/`1025`/… | SMTP transacional |
 | `MAIL_FROM` / `MAIL_FROM_NAME` | `noreply@hweld.com.br`/`HWeld` | remetente |
+| `SMS_PROVIDER` | `log` | `log` (dev) ou `infobip` |
+| `INFOBIP_BASE_URL` / `INFOBIP_API_KEY` / `INFOBIP_SENDER` | — | conta Infobip — URL HTTPS específica, `Authorization: App {key}` e remetente autorizado |
+| `INFOBIP_DLR_AUTH_TOKEN` / `..._HEADER` / `INFOBIP_WEBHOOK_URL` | —/`X-DLR-Token`/— | segredo do callback DLR `/api/v1/webhooks/infobip/sms/dlr` |
+| `SMS_DLR_RECONCILE_AGE_MS` | `6h` | SENT sem DLR vira UNKNOWN (sem reenvio automático) |
 | `OTEL_ENABLED` / `OTEL_EXPORTER_OTLP_ENDPOINT` | `false`/NR US | tracing OTLP |
 
 ## APIs (prefixo `/api/v1`)

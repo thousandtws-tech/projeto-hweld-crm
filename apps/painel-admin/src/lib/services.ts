@@ -392,3 +392,29 @@ export const sessaoService = {
   encerrar: (id: string) => api.del<void>("auth/sessoes", id),
   encerrarOutras: () => api.post<{ encerradas: number }>("auth/sessoes/encerrar-outras", {}),
 };
+
+/**
+ * Módulo Integrações (hweld-operations-api) — Infobip SMS. Estado, toggles
+ * operacionais, teste de conexão read-only, SMS de teste restrito e histórico.
+ */
+export const integracoesService = {
+  infobip: () => apiOps.getRecurso<import("./models").IntegracaoInfobip>("integracoes/infobip"),
+  salvarConfig: (b: {
+    enabled?: boolean;
+    sender?: string;
+    maxSegments?: number;
+    testRecipients?: string[];
+    events?: Record<string, boolean>;
+  }) => apiOps.putRecurso<import("./models").IntegracaoInfobip>("integracoes/infobip/config", b),
+  testarConexao: () =>
+    apiOps.post<{ ok: boolean; detalhe: string }>("integracoes/infobip/testar-conexao", {}),
+  enviarSmsTeste: (destinatario: string) =>
+    apiOps.post<import("./models").EntregaSms>("integracoes/infobip/sms-teste", { destinatario }),
+  reprocessar: (deliveryId: string) =>
+    apiOps.post<import("./models").EntregaSms>(
+      `integracoes/infobip/deliveries/${deliveryId}/reprocessar`,
+      {},
+    ),
+  historico: (f: Filtros = {}) =>
+    apiOps.pagina<import("./models").EntregaSms>("integracoes/infobip/historico", f),
+};

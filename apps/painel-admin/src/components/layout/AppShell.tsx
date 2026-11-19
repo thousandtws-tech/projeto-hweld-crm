@@ -15,6 +15,7 @@ import {
   Moon,
   Network,
   Package,
+  Plug,
   Receipt,
   Search,
   ShieldCheck,
@@ -141,7 +142,10 @@ const NAV: NavSection[] = [
   },
   {
     secao: "Administração",
-    itens: [{ to: "/admin/usuarios", label: "Usuários", icon: Users, perfis: ["admin"] }],
+    itens: [
+      { to: "/admin/usuarios", label: "Usuários", icon: Users, perfis: ["admin"] },
+      { to: "/admin/integracoes", label: "Integrações", icon: Plug, perfis: ["admin"] },
+    ],
   },
 ];
 
@@ -171,6 +175,7 @@ const MAPA_ROTAS: Record<string, { secao: string; label: string; parentTo?: stri
   "/financeiro/pagamentos": { secao: "Financeiro", label: "Pagamentos" },
   "/financeiro/caixa": { secao: "Financeiro", label: "Caixa" },
   "/admin/usuarios": { secao: "Administração", label: "Usuários" },
+  "/admin/integracoes": { secao: "Administração", label: "Integrações" },
   "/admin/busca": { secao: "Administração", label: "Busca" },
   "/auditoria": { secao: "Administração", label: "Auditoria" },
   "/conta": { secao: "Conta", label: "Minha conta" },

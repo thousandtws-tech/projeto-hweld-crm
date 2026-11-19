@@ -17,6 +17,7 @@ import { Route as EstoqueRouteImport } from './routes/estoque'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SemPermissaoRouteImport } from './routes/sem-permissao'
 import { Route as AdminBuscaRouteImport } from './routes/admin/busca'
+import { Route as AdminIntegracoesRouteImport } from './routes/admin/integracoes'
 import { Route as AdminUsuariosRouteImport } from './routes/admin/usuarios'
 import { Route as CrmOportunidadesRouteImport } from './routes/crm/oportunidades'
 import { Route as FinanceiroCaixaRouteImport } from './routes/financeiro/caixa'
@@ -79,6 +80,11 @@ const SemPermissaoRoute = SemPermissaoRouteImport.update({
 const AdminBuscaRoute = AdminBuscaRouteImport.update({
   id: '/admin/busca',
   path: '/admin/busca',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIntegracoesRoute = AdminIntegracoesRouteImport.update({
+  id: '/admin/integracoes',
+  path: '/admin/integracoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/sem-permissao': typeof SemPermissaoRoute
   '/admin/busca': typeof AdminBuscaRoute
+  '/admin/integracoes': typeof AdminIntegracoesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/crm/oportunidades': typeof CrmOportunidadesRoute
   '/financeiro/caixa': typeof FinanceiroCaixaRoute
@@ -241,6 +248,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/sem-permissao': typeof SemPermissaoRoute
   '/admin/busca': typeof AdminBuscaRoute
+  '/admin/integracoes': typeof AdminIntegracoesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/crm/oportunidades': typeof CrmOportunidadesRoute
   '/financeiro/caixa': typeof FinanceiroCaixaRoute
@@ -275,6 +283,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/sem-permissao': typeof SemPermissaoRoute
   '/admin/busca': typeof AdminBuscaRoute
+  '/admin/integracoes': typeof AdminIntegracoesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/crm/oportunidades': typeof CrmOportunidadesRoute
   '/financeiro/caixa': typeof FinanceiroCaixaRoute
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/sem-permissao'
     | '/admin/busca'
+    | '/admin/integracoes'
     | '/admin/usuarios'
     | '/crm/oportunidades'
     | '/financeiro/caixa'
@@ -343,6 +353,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/sem-permissao'
     | '/admin/busca'
+    | '/admin/integracoes'
     | '/admin/usuarios'
     | '/crm/oportunidades'
     | '/financeiro/caixa'
@@ -376,6 +387,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/sem-permissao'
     | '/admin/busca'
+    | '/admin/integracoes'
     | '/admin/usuarios'
     | '/crm/oportunidades'
     | '/financeiro/caixa'
@@ -410,6 +422,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SemPermissaoRoute: typeof SemPermissaoRoute
   AdminBuscaRoute: typeof AdminBuscaRoute
+  AdminIntegracoesRoute: typeof AdminIntegracoesRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
   CrmOportunidadesRoute: typeof CrmOportunidadesRoute
   FinanceiroCaixaRoute: typeof FinanceiroCaixaRoute
@@ -491,6 +504,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/busca'
       fullPath: '/admin/busca'
       preLoaderRoute: typeof AdminBuscaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/integracoes': {
+      id: '/admin/integracoes'
+      path: '/admin/integracoes'
+      fullPath: '/admin/integracoes'
+      preLoaderRoute: typeof AdminIntegracoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/usuarios': {
@@ -666,6 +686,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SemPermissaoRoute: SemPermissaoRoute,
   AdminBuscaRoute: AdminBuscaRoute,
+  AdminIntegracoesRoute: AdminIntegracoesRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
   CrmOportunidadesRoute: CrmOportunidadesRoute,
   FinanceiroCaixaRoute: FinanceiroCaixaRoute,
