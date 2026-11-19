@@ -429,3 +429,18 @@
   color: var(--hw-text-muted);
   line-height: 1.4;
 }
+
+.mp-card-brick {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--hw-border, #e5e7eb);
+}
+
+.brick-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--hw-text-muted);
+  margin: 0;
+}

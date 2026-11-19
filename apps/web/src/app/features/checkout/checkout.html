@@ -244,7 +244,7 @@
               <input type="radio" formControlName="metodo" value="CREDIT_CARD" />
               <span class="material-symbols-outlined" aria-hidden="true">credit_card</span>
               <span class="pag-card-titulo">Cartão de crédito</span>
-              <span class="pag-card-desc">Pagamento seguro na página do adquirente</span>
+              <span class="pag-card-desc">Pagamento seguro — cartão não passa pelos nossos servidores</span>
             </label>
             <label class="pagamento-card" [class.sel]="form.controls.metodo.value === ''">
               <input type="radio" formControlName="metodo" value="" />
@@ -253,6 +253,10 @@
               <span class="pag-card-desc">Faturado / prazo — sem cobrança online</span>
             </label>
           </div>
+
+          @if (brickAtivo()) {
+            <div id="mp-card-brick" class="mp-card-brick"></div>
+          }
 
           <mat-form-field appearance="outline" class="w-full" style="margin-top: 16px">
             <mat-label>Condição de Pagamento</mat-label>
@@ -337,19 +341,26 @@
           </div>
         }
 
-        <button
-          hwButton
-          size="lg"
-          variant="cta"
-          type="submit"
-          class="btn-confirmar"
-          [loading]="enviando()"
-          texto="Enviando pedido…"
-          [disabled]="form.invalid"
-        >
-          <span>Finalizar pedido</span>
-          <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
-        </button>
+        @if (brickAtivo()) {
+          <p class="brick-hint">
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span>
+            <span>Conclua o pedido e o pagamento pelo botão do formulário de cartão.</span>
+          </p>
+        } @else {
+          <button
+            hwButton
+            size="lg"
+            variant="cta"
+            type="submit"
+            class="btn-confirmar"
+            [loading]="enviando()"
+            texto="Enviando pedido…"
+            [disabled]="form.invalid"
+          >
+            <span>Finalizar pedido</span>
+            <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+          </button>
+        }
 
         <span class="aviso-seguro">
           <span class="material-symbols-outlined">lock</span>

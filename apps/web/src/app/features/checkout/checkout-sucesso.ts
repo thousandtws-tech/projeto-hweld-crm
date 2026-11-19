@@ -19,19 +19,7 @@ import { HwButton } from '../../shared/ui/button';
 import { HwStatusChip } from '../../shared/ui/status-chip';
 import { HwSkeleton } from '../../shared/ui/skeleton';
 import { ToastService } from '../../shared/ui/toast';
-
-/** Brick cardPayment do SDK MP v2 — subconjunto do formData que usamos. */
-interface MpCardFormData {
-  token: string;
-  issuer_id?: string | number;
-  payment_method_id?: string;
-  installments?: number;
-  payer?: { identification?: { type?: string; number?: string } };
-}
-
-interface MpBrickController {
-  unmount: () => Promise<void>;
-}
+import { MpBrickController, MpBrickService, MpCardFormData } from '../../core/mp-brick';
 
 /**
  * S08 — Confirmação de pedido + instrumentos de pagamento.
@@ -51,6 +39,7 @@ export class CheckoutSucessoPage implements OnInit, OnDestroy {
   private conta = inject(ContaService);
   private toast = inject(ToastService);
   private rt = inject(RealtimeService);
+  private brickService = inject(MpBrickService);
   pedidoId = 0;
 
   // `numero` é o número real do pedido (PV-XXXXXX) — o :id da rota é o
@@ -70,7 +59,6 @@ export class CheckoutSucessoPage implements OnInit, OnDestroy {
 
   private mpBrick: MpBrickController | null = null;
   private mpBrickMontando = false;
-  private sdkMpPromise: Promise<void> | null = null;
 
   /** Brick visível quando: método cartão + MP transparente + sem cobrança ativa. */
   brickVisivel = computed(
@@ -162,20 +150,6 @@ export class CheckoutSucessoPage implements OnInit, OnDestroy {
       });
   }
 
-  private carregarSdkMp(): Promise<void> {
-    if (typeof (window as { MercadoPago?: unknown }).MercadoPago === 'function') {
-      return Promise.resolve();
-    }
-    this.sdkMpPromise ??= new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://sdk.mercadopago.com/js/v2';
-      s.onload = () => resolve();
-      s.onerror = () => reject(new Error('falha ao carregar o SDK do Mercado Pago'));
-      document.head.appendChild(s);
-    });
-    return this.sdkMpPromise;
-  }
-
   /** Card Payment Brick: tokenização e formulário acontecem 100% no SDK/MP. */
   private async montarBrick(): Promise<void> {
     const cfg = this.checkoutCfg();
@@ -183,26 +157,13 @@ export class CheckoutSucessoPage implements OnInit, OnDestroy {
     if (!cfg?.publicKey || !valor || this.mpBrickMontando) return;
     this.mpBrickMontando = true;
     try {
-      await this.carregarSdkMp();
-      interface MpCtor {
-        new (k: string, o?: object): {
-          bricks: () => {
-            create: (t: string, c: string, o: object) => Promise<MpBrickController>;
-          };
-        };
-      }
-      const MP = (window as unknown as { MercadoPago: MpCtor }).MercadoPago;
-      const bricks = new MP(cfg.publicKey, { locale: 'pt-BR' }).bricks();
-      this.mpBrick = await bricks.create('cardPayment', 'mp-card-brick', {
-        initialization: { amount: valor },
-        customization: { visual: { hidePaymentButton: false } },
-        callbacks: {
-          onReady: () => {},
-          onSubmit: (formData: MpCardFormData) => this.pagarComToken(formData),
-          onError: () =>
-            this.toast.erro('Não foi possível carregar o formulário do cartão.'),
-        },
-      });
+      this.mpBrick = await this.brickService.montar(
+        'mp-card-brick',
+        valor,
+        cfg.publicKey,
+        (fd) => this.pagarComToken(fd),
+        () => this.toast.erro('Não foi possível carregar o formulário do cartão.'),
+      );
     } catch {
       this.toast.erro('Não foi possível carregar o pagamento com cartão.');
     } finally {

@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  afterEveryRender,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -6,6 +15,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { CarrinhoService, ContaService, PagamentoService } from '../../core/servicos';
+import { MpBrickController, MpBrickService, MpCardFormData } from '../../core/mp-brick';
 import { RealtimeService } from '../../core/realtime';
 import { Endereco, MetodoPagamento } from '../../core/models';
 import { BrlPipe } from '../../core/pipes';
@@ -32,13 +42,14 @@ import { ToastService } from '../../shared/ui/toast';
   templateUrl: './checkout.html',
   styleUrl: './checkout.scss',
 })
-export class CheckoutPage implements OnInit {
+export class CheckoutPage implements OnInit, OnDestroy {
   private carrinho = inject(CarrinhoService);
   private conta = inject(ContaService);
   private pagamentos = inject(PagamentoService);
   private toast = inject(ToastService);
   private router = inject(Router);
   private rt = inject(RealtimeService);
+  private mpBrick = inject(MpBrickService);
 
   readonly Number = Number;
 
@@ -49,6 +60,23 @@ export class CheckoutPage implements OnInit {
   cepLocalizado = signal(false);
   mostrandoFormEndereco = signal(false);
   erro = signal<string | null>(null);
+  /** Config pública do checkout — descobre se o cartão é tokenizado aqui. */
+  cfgCartao = signal<{ provedorCartao: string; publicKey?: string } | null>(null);
+  /** Método espelhado em signal — FormControl não é reativo pra computed. */
+  metodoSel = signal<'' | MetodoPagamento>('');
+  pagandoCartao = signal(false);
+  private brickCtl: MpBrickController | null = null;
+  private montandoBrick = false;
+
+  /** Brick MP no próprio checkout — só quando o PSP ativo é o MP com key. */
+  brickAtivo = computed(() => {
+    const cfg = this.cfgCartao();
+    return (
+      this.metodoSel() === 'CREDIT_CARD' &&
+      cfg?.provedorCartao === 'mercadopago' &&
+      !!cfg.publicKey
+    );
+  });
   enderecos = signal<Endereco[]>([]);
   itens = signal<
     {
@@ -118,6 +146,105 @@ export class CheckoutPage implements OnInit {
           .then((c) => this.itens.set(c.itens))
           .catch(() => {}),
     );
+
+    // Seleção de cartão descobre a config do PSP e monta o Brick inline.
+    this.form.controls.metodo.valueChanges.subscribe((v) => {
+      this.metodoSel.set(v);
+      if (v === 'CREDIT_CARD') this.carregarCfgCartao();
+      else this.desmontarBrick();
+    });
+    // O container do Brick é renderizado condicionalmente — monta após ele
+    // entrar no DOM, sem piscar em cada render.
+    afterEveryRender(() => {
+      const cfg = this.cfgCartao();
+      if (!this.brickAtivo() || !cfg?.publicKey || this.brickCtl || this.montandoBrick) return;
+      if (!document.getElementById('mp-card-brick')) return;
+      void this.montarBrick(cfg);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.desmontarBrick();
+  }
+
+  private desmontarBrick(): void {
+    void this.brickCtl?.unmount();
+    this.brickCtl = null;
+  }
+
+  private carregarCfgCartao(): void {
+    if (this.cfgCartao()) return;
+    void this.pagamentos
+      .checkoutConfig()
+      .then((c) => this.cfgCartao.set(c))
+      .catch(() => {}); // sem config → fallback hospedado na confirmação
+  }
+
+  private async montarBrick(cfg: { publicKey?: string }): Promise<void> {
+    this.montandoBrick = true;
+    try {
+      this.brickCtl = await this.mpBrick.montar(
+        'mp-card-brick',
+        Number(this.subtotal()),
+        cfg.publicKey!,
+        (fd) => void this.pagarComToken(fd),
+        () => this.erro.set('Não foi possível carregar o formulário de pagamento.'),
+      );
+    } catch {
+      this.erro.set('Não foi possível carregar o formulário de pagamento.');
+    } finally {
+      this.montandoBrick = false;
+    }
+  }
+
+  /** onSubmit do Brick: valida o pedido, cria a cobrança com o token e vai
+   *  pra confirmação já com o resultado (aprovado/recusado) síncrono. */
+  private async pagarComToken(fd: MpCardFormData): Promise<void> {
+    this.form.markAllAsTouched();
+    if (this.form.invalid || this.pagandoCartao()) {
+      if (this.form.invalid) {
+        this.erro.set('Preencha os dados do pedido antes de concluir o pagamento.');
+      }
+      return;
+    }
+    this.pagandoCartao.set(true);
+    this.erro.set(null);
+    try {
+      const v = this.form.getRawValue();
+      const pedido = await this.carrinho.checkout({
+        endereco_faturamento_id: v.faturamento!,
+        endereco_entrega_id: v.entrega!,
+        condicao_pagamento: v.condicao || undefined,
+        observacoes: v.observacoes || undefined,
+      });
+      try {
+        await this.pagamentos.criar({
+          pedidoId: pedido.id,
+          method: 'CREDIT_CARD',
+          idempotencyKey: `pedido-${pedido.id}-credit_card`,
+          cardToken: fd.token,
+          paymentMethodId: fd.payment_method_id,
+          installments: fd.installments,
+          issuerId: fd.issuer_id != null ? String(fd.issuer_id) : undefined,
+          identificationType: fd.payer?.identification?.type,
+          identificationNumber: fd.payer?.identification?.number,
+        });
+      } catch {
+        this.toast.erro(
+          'Pedido criado, mas a cobrança falhou. Você pode tentar novamente na tela do pedido.',
+        );
+      }
+      await this.router.navigate(['/checkout/sucesso', pedido.id], {
+        queryParams: { metodo: 'CREDIT_CARD' },
+      });
+    } catch (e: unknown) {
+      const apiErro = (e as { error?: { erro?: { mensagem?: string } } })?.error?.erro;
+      const msg = apiErro?.mensagem ?? 'Não foi possível concluir o pedido. Tente novamente.';
+      this.erro.set(msg);
+      this.toast.erro(msg);
+    } finally {
+      this.pagandoCartao.set(false);
+    }
   }
 
   ngOnInit(): void {
@@ -259,7 +386,9 @@ export class CheckoutPage implements OnInit {
   }
 
   async confirmar(): Promise<void> {
-    if (this.form.invalid || this.enviando()) return;
+    // Com o Brick ativo quem conclui é o botão dele — Enter no form não cria
+    // pedido órfão sem cobrança.
+    if (this.brickAtivo() || this.form.invalid || this.enviando()) return;
     this.enviando.set(true);
     this.erro.set(null);
     try {
