@@ -13,7 +13,6 @@ import com.hweld.operations.notification.domain.IntegrationSettings;
 import com.hweld.operations.notification.domain.IntegrationSettingsRepository;
 import com.hweld.operations.shared.interfaces.error.ApiException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

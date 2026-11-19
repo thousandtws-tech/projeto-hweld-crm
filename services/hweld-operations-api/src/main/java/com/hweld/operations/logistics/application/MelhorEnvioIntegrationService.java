@@ -9,8 +9,6 @@ import com.hweld.operations.shared.infrastructure.security.CredentialCipher;
 import com.hweld.operations.shared.interfaces.error.ApiException;
 import java.util.Map;
 import java.util.TreeMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
@@ -23,8 +21,6 @@ import tools.jackson.databind.JsonNode;
  */
 @Service
 public class MelhorEnvioIntegrationService {
-
-    private static final Logger log = LoggerFactory.getLogger(MelhorEnvioIntegrationService.class);
 
     public record SalvarReq(Long versao, String nomeConta, Map<String, Object> config,
             Map<String, String> segredos) {
