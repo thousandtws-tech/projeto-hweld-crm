@@ -17,13 +17,14 @@ import { Route as EstoqueRouteImport } from './routes/estoque'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SemPermissaoRouteImport } from './routes/sem-permissao'
 import { Route as AdminBuscaRouteImport } from './routes/admin/busca'
-import { Route as AdminIntegracoesRouteImport } from './routes/admin/integracoes'
 import { Route as AdminUsuariosRouteImport } from './routes/admin/usuarios'
 import { Route as CrmOportunidadesRouteImport } from './routes/crm/oportunidades'
 import { Route as FinanceiroCaixaRouteImport } from './routes/financeiro/caixa'
 import { Route as FinanceiroPagamentosRouteImport } from './routes/financeiro/pagamentos'
 import { Route as FiscalConfiguracaoRouteImport } from './routes/fiscal/configuracao'
 import { Route as FiscalNotasRouteImport } from './routes/fiscal/notas'
+import { Route as AdminIntegracoesIndexRouteImport } from './routes/admin/integracoes/index'
+import { Route as AdminIntegracoesSlugRouteImport } from './routes/admin/integracoes/$slug'
 import { Route as CatalogoCategoriasIndexRouteImport } from './routes/catalogo/categorias/index'
 import { Route as CatalogoCmsIndexRouteImport } from './routes/catalogo/cms/index'
 import { Route as CatalogoProdutosIndexRouteImport } from './routes/catalogo/produtos/index'
@@ -82,11 +83,6 @@ const AdminBuscaRoute = AdminBuscaRouteImport.update({
   path: '/admin/busca',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminIntegracoesRoute = AdminIntegracoesRouteImport.update({
-  id: '/admin/integracoes',
-  path: '/admin/integracoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
   id: '/admin/usuarios',
   path: '/admin/usuarios',
@@ -115,6 +111,16 @@ const FiscalConfiguracaoRoute = FiscalConfiguracaoRouteImport.update({
 const FiscalNotasRoute = FiscalNotasRouteImport.update({
   id: '/fiscal/notas',
   path: '/fiscal/notas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIntegracoesIndexRoute = AdminIntegracoesIndexRouteImport.update({
+  id: '/admin/integracoes/',
+  path: '/admin/integracoes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIntegracoesSlugRoute = AdminIntegracoesSlugRouteImport.update({
+  id: '/admin/integracoes/$slug',
+  path: '/admin/integracoes/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CatalogoCategoriasIndexRoute = CatalogoCategoriasIndexRouteImport.update({
@@ -214,13 +220,13 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/sem-permissao': typeof SemPermissaoRoute
   '/admin/busca': typeof AdminBuscaRoute
-  '/admin/integracoes': typeof AdminIntegracoesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/crm/oportunidades': typeof CrmOportunidadesRoute
   '/financeiro/caixa': typeof FinanceiroCaixaRoute
   '/financeiro/pagamentos': typeof FinanceiroPagamentosRoute
   '/fiscal/configuracao': typeof FiscalConfiguracaoRoute
   '/fiscal/notas': typeof FiscalNotasRoute
+  '/admin/integracoes/$slug': typeof AdminIntegracoesSlugRoute
   '/catalogo/produtos/$id': typeof CatalogoProdutosIdRoute
   '/catalogo/produtos/novo': typeof CatalogoProdutosNovoRoute
   '/catalogo/tabelas-preco/$id': typeof CatalogoTabelasPrecoIdRoute
@@ -230,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/vendas/orcamentos/$id': typeof VendasOrcamentosIdRoute
   '/vendas/pedidos/$id': typeof VendasPedidosIdRoute
   '/vendas/pedidos/novo': typeof VendasPedidosNovoRoute
+  '/admin/integracoes/': typeof AdminIntegracoesIndexRoute
   '/catalogo/categorias/': typeof CatalogoCategoriasIndexRoute
   '/catalogo/cms/': typeof CatalogoCmsIndexRoute
   '/catalogo/produtos/': typeof CatalogoProdutosIndexRoute
@@ -248,13 +255,13 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/sem-permissao': typeof SemPermissaoRoute
   '/admin/busca': typeof AdminBuscaRoute
-  '/admin/integracoes': typeof AdminIntegracoesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/crm/oportunidades': typeof CrmOportunidadesRoute
   '/financeiro/caixa': typeof FinanceiroCaixaRoute
   '/financeiro/pagamentos': typeof FinanceiroPagamentosRoute
   '/fiscal/configuracao': typeof FiscalConfiguracaoRoute
   '/fiscal/notas': typeof FiscalNotasRoute
+  '/admin/integracoes/$slug': typeof AdminIntegracoesSlugRoute
   '/catalogo/produtos/$id': typeof CatalogoProdutosIdRoute
   '/catalogo/produtos/novo': typeof CatalogoProdutosNovoRoute
   '/catalogo/tabelas-preco/$id': typeof CatalogoTabelasPrecoIdRoute
@@ -264,6 +271,7 @@ export interface FileRoutesByTo {
   '/vendas/orcamentos/$id': typeof VendasOrcamentosIdRoute
   '/vendas/pedidos/$id': typeof VendasPedidosIdRoute
   '/vendas/pedidos/novo': typeof VendasPedidosNovoRoute
+  '/admin/integracoes': typeof AdminIntegracoesIndexRoute
   '/catalogo/categorias': typeof CatalogoCategoriasIndexRoute
   '/catalogo/cms': typeof CatalogoCmsIndexRoute
   '/catalogo/produtos': typeof CatalogoProdutosIndexRoute
@@ -283,13 +291,13 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/sem-permissao': typeof SemPermissaoRoute
   '/admin/busca': typeof AdminBuscaRoute
-  '/admin/integracoes': typeof AdminIntegracoesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/crm/oportunidades': typeof CrmOportunidadesRoute
   '/financeiro/caixa': typeof FinanceiroCaixaRoute
   '/financeiro/pagamentos': typeof FinanceiroPagamentosRoute
   '/fiscal/configuracao': typeof FiscalConfiguracaoRoute
   '/fiscal/notas': typeof FiscalNotasRoute
+  '/admin/integracoes/$slug': typeof AdminIntegracoesSlugRoute
   '/catalogo/produtos/$id': typeof CatalogoProdutosIdRoute
   '/catalogo/produtos/novo': typeof CatalogoProdutosNovoRoute
   '/catalogo/tabelas-preco/$id': typeof CatalogoTabelasPrecoIdRoute
@@ -299,6 +307,7 @@ export interface FileRoutesById {
   '/vendas/orcamentos/$id': typeof VendasOrcamentosIdRoute
   '/vendas/pedidos/$id': typeof VendasPedidosIdRoute
   '/vendas/pedidos/novo': typeof VendasPedidosNovoRoute
+  '/admin/integracoes/': typeof AdminIntegracoesIndexRoute
   '/catalogo/categorias/': typeof CatalogoCategoriasIndexRoute
   '/catalogo/cms/': typeof CatalogoCmsIndexRoute
   '/catalogo/produtos/': typeof CatalogoProdutosIndexRoute
@@ -319,13 +328,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/sem-permissao'
     | '/admin/busca'
-    | '/admin/integracoes'
     | '/admin/usuarios'
     | '/crm/oportunidades'
     | '/financeiro/caixa'
     | '/financeiro/pagamentos'
     | '/fiscal/configuracao'
     | '/fiscal/notas'
+    | '/admin/integracoes/$slug'
     | '/catalogo/produtos/$id'
     | '/catalogo/produtos/novo'
     | '/catalogo/tabelas-preco/$id'
@@ -335,6 +344,7 @@ export interface FileRouteTypes {
     | '/vendas/orcamentos/$id'
     | '/vendas/pedidos/$id'
     | '/vendas/pedidos/novo'
+    | '/admin/integracoes/'
     | '/catalogo/categorias/'
     | '/catalogo/cms/'
     | '/catalogo/produtos/'
@@ -353,13 +363,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/sem-permissao'
     | '/admin/busca'
-    | '/admin/integracoes'
     | '/admin/usuarios'
     | '/crm/oportunidades'
     | '/financeiro/caixa'
     | '/financeiro/pagamentos'
     | '/fiscal/configuracao'
     | '/fiscal/notas'
+    | '/admin/integracoes/$slug'
     | '/catalogo/produtos/$id'
     | '/catalogo/produtos/novo'
     | '/catalogo/tabelas-preco/$id'
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/vendas/orcamentos/$id'
     | '/vendas/pedidos/$id'
     | '/vendas/pedidos/novo'
+    | '/admin/integracoes'
     | '/catalogo/categorias'
     | '/catalogo/cms'
     | '/catalogo/produtos'
@@ -387,13 +398,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/sem-permissao'
     | '/admin/busca'
-    | '/admin/integracoes'
     | '/admin/usuarios'
     | '/crm/oportunidades'
     | '/financeiro/caixa'
     | '/financeiro/pagamentos'
     | '/fiscal/configuracao'
     | '/fiscal/notas'
+    | '/admin/integracoes/$slug'
     | '/catalogo/produtos/$id'
     | '/catalogo/produtos/novo'
     | '/catalogo/tabelas-preco/$id'
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | '/vendas/orcamentos/$id'
     | '/vendas/pedidos/$id'
     | '/vendas/pedidos/novo'
+    | '/admin/integracoes/'
     | '/catalogo/categorias/'
     | '/catalogo/cms/'
     | '/catalogo/produtos/'
@@ -422,13 +434,13 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SemPermissaoRoute: typeof SemPermissaoRoute
   AdminBuscaRoute: typeof AdminBuscaRoute
-  AdminIntegracoesRoute: typeof AdminIntegracoesRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
   CrmOportunidadesRoute: typeof CrmOportunidadesRoute
   FinanceiroCaixaRoute: typeof FinanceiroCaixaRoute
   FinanceiroPagamentosRoute: typeof FinanceiroPagamentosRoute
   FiscalConfiguracaoRoute: typeof FiscalConfiguracaoRoute
   FiscalNotasRoute: typeof FiscalNotasRoute
+  AdminIntegracoesSlugRoute: typeof AdminIntegracoesSlugRoute
   CatalogoProdutosIdRoute: typeof CatalogoProdutosIdRoute
   CatalogoProdutosNovoRoute: typeof CatalogoProdutosNovoRoute
   CatalogoTabelasPrecoIdRoute: typeof CatalogoTabelasPrecoIdRoute
@@ -438,6 +450,7 @@ export interface RootRouteChildren {
   VendasOrcamentosIdRoute: typeof VendasOrcamentosIdRoute
   VendasPedidosIdRoute: typeof VendasPedidosIdRoute
   VendasPedidosNovoRoute: typeof VendasPedidosNovoRoute
+  AdminIntegracoesIndexRoute: typeof AdminIntegracoesIndexRoute
   CatalogoCategoriasIndexRoute: typeof CatalogoCategoriasIndexRoute
   CatalogoCmsIndexRoute: typeof CatalogoCmsIndexRoute
   CatalogoProdutosIndexRoute: typeof CatalogoProdutosIndexRoute
@@ -506,13 +519,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBuscaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/integracoes': {
-      id: '/admin/integracoes'
-      path: '/admin/integracoes'
-      fullPath: '/admin/integracoes'
-      preLoaderRoute: typeof AdminIntegracoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/usuarios': {
       id: '/admin/usuarios'
       path: '/admin/usuarios'
@@ -553,6 +559,20 @@ declare module '@tanstack/react-router' {
       path: '/fiscal/notas'
       fullPath: '/fiscal/notas'
       preLoaderRoute: typeof FiscalNotasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/integracoes/': {
+      id: '/admin/integracoes/'
+      path: '/admin/integracoes'
+      fullPath: '/admin/integracoes/'
+      preLoaderRoute: typeof AdminIntegracoesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/integracoes/$slug': {
+      id: '/admin/integracoes/$slug'
+      path: '/admin/integracoes/$slug'
+      fullPath: '/admin/integracoes/$slug'
+      preLoaderRoute: typeof AdminIntegracoesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/catalogo/categorias/': {
@@ -686,13 +706,13 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SemPermissaoRoute: SemPermissaoRoute,
   AdminBuscaRoute: AdminBuscaRoute,
-  AdminIntegracoesRoute: AdminIntegracoesRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
   CrmOportunidadesRoute: CrmOportunidadesRoute,
   FinanceiroCaixaRoute: FinanceiroCaixaRoute,
   FinanceiroPagamentosRoute: FinanceiroPagamentosRoute,
   FiscalConfiguracaoRoute: FiscalConfiguracaoRoute,
   FiscalNotasRoute: FiscalNotasRoute,
+  AdminIntegracoesSlugRoute: AdminIntegracoesSlugRoute,
   CatalogoProdutosIdRoute: CatalogoProdutosIdRoute,
   CatalogoProdutosNovoRoute: CatalogoProdutosNovoRoute,
   CatalogoTabelasPrecoIdRoute: CatalogoTabelasPrecoIdRoute,
@@ -702,6 +722,7 @@ const rootRouteChildren: RootRouteChildren = {
   VendasOrcamentosIdRoute: VendasOrcamentosIdRoute,
   VendasPedidosIdRoute: VendasPedidosIdRoute,
   VendasPedidosNovoRoute: VendasPedidosNovoRoute,
+  AdminIntegracoesIndexRoute: AdminIntegracoesIndexRoute,
   CatalogoCategoriasIndexRoute: CatalogoCategoriasIndexRoute,
   CatalogoCmsIndexRoute: CatalogoCmsIndexRoute,
   CatalogoProdutosIndexRoute: CatalogoProdutosIndexRoute,

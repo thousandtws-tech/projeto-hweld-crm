@@ -8,7 +8,6 @@ import {
   QrCode,
   RefreshCcw,
   Send,
-  Smartphone,
   Webhook,
   XCircle,
 } from "lucide-react";
@@ -24,6 +23,8 @@ import MenuItem from "@mui/material/MenuItem";
 import Switch from "@mui/material/Switch";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
 
 const EVENTOS_WA: { tipo: string; rotulo: string }[] = [
   { tipo: "OrderCreated", rotulo: "Pedido registrado" },
@@ -47,23 +48,21 @@ const STATUS_ENTREGA: Record<string, string> = {
   DEAD: "Falha definitiva",
 };
 
-const ESTADO: Record<string, { rotulo: string; status: string }> = {
-  ativa: { rotulo: "Ativa", status: "ativo" },
-  conectando: { rotulo: "Aguardando conexão", status: "pendente" },
-  pendente: { rotulo: "Pendente", status: "urgente" },
-  falha: { rotulo: "Falha na verificação", status: "cancelado" },
-  desativada: { rotulo: "Desativada", status: "inativo" },
-};
-
 const inputSm = { size: "small" as const, fullWidth: true };
 
-/** Card Z-API WhatsApp — credenciais do cliente, conexão por QR,
- *  webhooks auto-configurados, teste e histórico canal WHATSAPP. */
-export function ZapiCard() {
+/** Painel Z-API WhatsApp — abas Visão geral / Configurações / Eventos /
+ *  Histórico. Credenciais write-only, QR de conexão, webhooks
+ *  auto-configurados e histórico canal WHATSAPP. */
+export function ZapiCard({
+  onView,
+}: {
+  onView?: (v: IntegracaoZapi) => void;
+}) {
   const [i, setI] = useState<IntegracaoZapi | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [falha, setFalha] = useState(false);
   const [conflito, setConflito] = useState(false);
+  const [aba, setAba] = useState("geral");
 
   const [fNome, setFNome] = useState("");
   const [fInstanceId, setFInstanceId] = useState("");
@@ -92,6 +91,7 @@ export function ZapiCard() {
 
   const preencher = useCallback((v: IntegracaoZapi) => {
     setI(v);
+    onView?.(v);
     setFNome(v.nome_conta ?? "");
     setFInstanceId(v.config?.instance_id ?? "");
     setFPausado(v.config?.envio_pausado === true);
@@ -99,7 +99,7 @@ export function ZapiCard() {
     setFDestinatarios((v.config?.destinatarios_teste ?? []).join(", "));
     setFToken("");
     setFClientToken("");
-  }, []);
+  }, [onView]);
 
   const carregar = useCallback(async () => {
     setConflito(false);
@@ -284,48 +284,10 @@ export function ZapiCard() {
     );
   }
 
-  const estado = ESTADO[i.estado] ?? ESTADO.desativada;
   const conectado = i.conexao?.conectado === true && i.conexao?.smartphone === true;
 
   return (
     <>
-      {/* Cabeçalho */}
-      <SectionCard>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="rounded-xl border border-border bg-secondary/60 p-2.5">
-              <Smartphone className="h-5 w-5 text-[#26488c]" />
-            </div>
-            <div>
-              <Typography variant="h6" component="h2" className="text-sm font-semibold">
-                Z-API
-                <span className="ml-2 rounded-md border border-border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                  Produção
-                </span>
-              </Typography>
-              <Typography variant="body2" className="text-xs text-muted-foreground">
-                Comunicação · WhatsApp via Z-API — tokens cifrados no servidor, mensagens
-                recebidas e status de entrega por webhook.
-              </Typography>
-            </div>
-          </div>
-          <StatusPill status={estado.status} label={estado.rotulo} />
-        </div>
-        {i.conexao?.consultado === true && (
-          <div className={`mt-3 flex items-start gap-2 rounded-xl border px-3 py-2 ${
-            conectado ? "border-[#2E7D4F]/40 bg-[#2E7D4F]/8" : "border-border bg-secondary/50"}`}>
-            {conectado
-              ? <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#2E7D4F]" />
-              : <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-            <span className="text-[11px] text-muted-foreground">
-              {conectado
-                ? <>Número conectado ao WhatsApp{i.conexao.sessao ? ` — sessão ${i.conexao.sessao}` : ""}.</>
-                : "Instância criada, mas o número ainda não está conectado — escaneie o QR Code abaixo."}
-            </span>
-          </div>
-        )}
-      </SectionCard>
-
       {conflito && (
         <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-[#B8891D]/40 bg-[#B8891D]/8 px-3.5 py-3" role="alert">
           <AlertTriangle className="h-4 w-4 shrink-0 text-[#B8891D]" />
@@ -338,7 +300,33 @@ export function ZapiCard() {
         </div>
       )}
 
+      <Tabs
+        value={aba}
+        onChange={(_, v) => setAba(v)}
+        sx={{ mb: 2.5, minHeight: 40, "& .MuiTab-root": { minHeight: 40, textTransform: "none" } }}
+      >
+        <Tab value="geral" label="Visão geral" />
+        <Tab value="config" label="Configurações" />
+        <Tab value="eventos" label="Eventos e sincronização" />
+        <Tab value="historico" label="Histórico" />
+      </Tabs>
+
+      {i.conexao?.consultado === true && aba === "geral" && (
+        <div className={`mb-4 flex items-start gap-2 rounded-xl border px-3 py-2 ${
+          conectado ? "border-[#2E7D4F]/40 bg-[#2E7D4F]/8" : "border-border bg-secondary/50"}`}>
+          {conectado
+            ? <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#2E7D4F]" />
+            : <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+          <span className="text-[11px] text-muted-foreground">
+            {conectado
+              ? <>Número conectado ao WhatsApp{i.conexao.sessao ? ` — sessão ${i.conexao.sessao}` : ""}.</>
+              : "Instância criada, mas o número ainda não está conectado — escaneie o QR Code abaixo."}
+          </span>
+        </div>
+      )}
+
       {/* Credenciais */}
+      {aba === "config" && (
       <SectionCard>
         <Typography variant="h6" component="h3" className="text-sm font-semibold">
           Credenciais da instância
@@ -384,9 +372,11 @@ export function ZapiCard() {
           </div>
         </div>
       </SectionCard>
+      )}
 
       {/* Conexão WhatsApp */}
-      <SectionCard>
+      {aba === "geral" && (
+      <SectionCard className="mb-4">
         <Typography variant="h6" component="h3" className="text-sm font-semibold">
           Conexão do número
         </Typography>
@@ -446,9 +436,11 @@ export function ZapiCard() {
           </div>
         )}
       </SectionCard>
+      )}
 
       {/* Webhooks */}
-      <SectionCard>
+      {aba === "geral" && (
+      <SectionCard className="mb-4">
         <Typography variant="h6" component="h3" className="flex items-center gap-2 text-sm font-semibold">
           <Webhook className="h-4 w-4 text-muted-foreground" /> Webhooks da instância
         </Typography>
@@ -477,9 +469,11 @@ export function ZapiCard() {
           </Typography>
         )}
       </SectionCard>
+      )}
 
       {/* Configuração operacional */}
-      <SectionCard>
+      {aba === "config" && (
+      <SectionCard className="mb-4">
         <Typography variant="h6" component="h3" className="text-sm font-semibold">
           Configuração do canal
         </Typography>
@@ -530,9 +524,11 @@ export function ZapiCard() {
           </Button>
         </div>
       </SectionCard>
+      )}
 
       {/* Mensagem de teste */}
-      <SectionCard>
+      {aba === "config" && (
+      <SectionCard className="mb-4">
         <Typography variant="h6" component="h3" className="text-sm font-semibold">
           Mensagem de teste
         </Typography>
@@ -564,8 +560,10 @@ export function ZapiCard() {
           </Button>
         </div>
       </SectionCard>
+      )}
 
       {/* Operação */}
+      {aba === "geral" && (
       <SectionCard>
         <Typography variant="h6" component="h3" className="mb-3 text-sm font-semibold">
           Operação
@@ -581,8 +579,10 @@ export function ZapiCard() {
             onChange={() => void alternarHabilitado()} />
         </div>
       </SectionCard>
+      )}
 
       {/* Eventos de webhook */}
+      {aba === "eventos" && (
       <SectionCard>
         <Typography variant="h6" component="h3" className="text-sm font-semibold">
           Eventos de webhook
@@ -628,8 +628,10 @@ export function ZapiCard() {
           </div>
         )}
       </SectionCard>
+      )}
 
       {/* Histórico */}
+      {aba === "historico" && (
       <SectionCard>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <Typography variant="h6" component="h2" className="flex items-center gap-2 text-sm font-semibold">
@@ -712,6 +714,7 @@ export function ZapiCard() {
           </div>
         )}
       </SectionCard>
+      )}
     </>
   );
 }
