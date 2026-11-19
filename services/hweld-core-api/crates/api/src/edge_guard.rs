@@ -18,9 +18,10 @@ use std::rc::Rc;
 use actix_web::body::{BoxBody, EitherBody, MessageBody};
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::{Error, HttpResponse};
-use futures::future::LocalBoxFuture;
 
 use crate::extratores::segredo_confere;
+
+type LocalBoxFuture<'a, T> = std::pin::Pin<Box<dyn std::future::Future<Output = T> + 'a>>;
 
 const HEADER: &str = "x-edge-token";
 

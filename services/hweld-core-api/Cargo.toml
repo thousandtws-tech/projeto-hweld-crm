@@ -26,8 +26,6 @@ actix-cors = "0.7"
 
 # Async
 tokio = { version = "1", features = ["full"] }
-tokio-stream = { version = "0.1", features = ["sync", "time"] }
-futures = "0.3"
 async-trait = "0.1"
 
 # Search — cliente oficial (linha ES 8.x; só há releases alpha)

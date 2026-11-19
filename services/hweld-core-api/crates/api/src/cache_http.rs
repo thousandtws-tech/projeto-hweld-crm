@@ -33,7 +33,8 @@ use actix_web::http::header::{
 };
 use actix_web::http::{header, Method, StatusCode};
 use actix_web::{Error, HttpResponse};
-use futures::future::LocalBoxFuture;
+
+type LocalBoxFuture<'a, T> = std::pin::Pin<Box<dyn std::future::Future<Output = T> + 'a>>;
 
 /// Corpos maiores não recebem ETag (sem buffer completo — streamed as-is).
 const CORPO_MAX_ETAG: usize = 4 * 1024 * 1024;

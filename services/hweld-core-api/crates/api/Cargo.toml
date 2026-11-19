@@ -9,19 +9,15 @@ description = "HWeld presentation layer: Actix-web HTTP adapters, auth extractor
 [dependencies]
 hweld-domain.workspace = true
 hweld-application.workspace = true
-hweld-infrastructure.workspace = true
 actix-web.workspace = true
-actix-cors.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
-futures.workspace = true
 tokio.workspace = true
 uuid.workspace = true
 chrono.workspace = true
 rust_decimal.workspace = true
 tracing.workspace = true
-tracing-actix-web.workspace = true
 sqlx.workspace = true
 utoipa-swagger-ui = { version = "9.0.2", features = ["actix-web"] }
 utoipa = { version = "5.5.0", features = ["actix_extras", "chrono", "uuid", "decimal"] }
@@ -29,3 +25,5 @@ actix-governor = "0.10.0"
 
 [dev-dependencies]
 awc = "3"
+actix-cors.workspace = true
+tracing-actix-web.workspace = true
