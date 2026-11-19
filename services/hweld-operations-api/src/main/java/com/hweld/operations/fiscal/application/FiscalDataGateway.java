@@ -3,19 +3,8 @@ package com.hweld.operations.fiscal.application;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * Port de leitura dos dados fiscais autoritatídicos no core-api — pedido,
- * itens (com ncm/cfop/unidade resolvidos server-side), empresa destinatária
- * e endereço de faturamento. O operations-api nunca lê o banco do core-api;
- * os dados vêm do endpoint interno autenticado por `X-Service-Token`.
- */
 public interface FiscalDataGateway {
 
-    /**
-     * Busca o conjunto fiscal do pedido. `notaFiscalId` opcional — quando
-     * presente, o snapshot da NF (`nota_fiscal_itens`) é a fonte dos campos
-     * tributários por item.
-     */
     DadosFiscaisPedido buscar(long pedidoId, Long notaFiscalId);
 
     record DadosFiscaisPedido(

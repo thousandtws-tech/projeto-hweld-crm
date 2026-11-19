@@ -6,10 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-/**
- * Adapter default de desenvolvimento: "envia" via log estruturado.
- * Em produção configurar EMAIL_PROVIDER=smtp + SMTP_*.
- */
 @Component
 @ConditionalOnProperty(name = "hweld.notification.email-provider", havingValue = "log", matchIfMissing = true)
 public class LogEmailProvider implements EmailProvider {

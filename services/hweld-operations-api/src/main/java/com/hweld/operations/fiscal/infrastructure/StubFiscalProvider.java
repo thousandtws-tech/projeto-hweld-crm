@@ -9,13 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-/**
- * Adapter de teste do port `FiscalProvider` — autoriza em memória com chave
- * de acesso no layout NF-e real (44 dígitos, DV módulo-11) e protocolo fake.
- * Gera XML/PDF sintéticos e hospeda no object storage (`fiscal/{id}.*`)
- * quando configurado — NÃO emite documento fiscal real; produção exige
- * adapter credenciado (ex.: Spedy) e homologação.
- */
 @Component
 public class StubFiscalProvider implements FiscalProvider {
 
@@ -55,7 +48,6 @@ public class StubFiscalProvider implements FiscalProvider {
                 Map.of("externalId", externalId, "provider", NAME));
     }
 
-    /** XML sintético no envelope NF-e — suficiente p/ testar download/parser. */
     private static byte[] xmlSintetico(EmissionRequest req, String chave, String protocolo) {
         String xml = """
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -73,7 +65,6 @@ public class StubFiscalProvider implements FiscalProvider {
         return xml.getBytes(StandardCharsets.UTF_8);
     }
 
-    /** PDF mínimo estruturalmente válido (1 página, texto do protocolo). */
     private static byte[] pdfSintetico(EmissionRequest req, String chave) {
         String stream = "BT /F1 14 Tf 50 750 Td (DANFE STUB - doc %s - chave %s) Tj ET"
                 .formatted(req.documentId(), chave);
@@ -98,7 +89,6 @@ public class StubFiscalProvider implements FiscalProvider {
         log.debug("stub fiscal: cancel {} motivo={}", externalId, motivo);
     }
 
-    /** Chave NF-e 44 dígitos: cUF(2) AAMM(4) CNPJ(14) mod(2) serie(3) nNF(9) tpEmis(1) cNF(8) cDV(1). */
     private static String chaveFake(String documentId) {
         long n = Math.abs(documentId.hashCode());
         String base = String.format("3525010000000000000055001%09d1%08d", n % 1_000_000_000L, n % 100_000_000L);

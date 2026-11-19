@@ -1,5 +1,3 @@
-//! Use case de auditoria — consulta da trilha (admin).
-
 use std::sync::Arc;
 
 use hweld_domain::auditoria::log::LogAuditoria;

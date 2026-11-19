@@ -101,7 +101,9 @@ defmodule MotorRealtime.EventLog do
 
   defp podar_oldest(n) when n > 0 do
     case :ets.first(@tabela) do
-      :"$end_of_table" -> :ok
+      :"$end_of_table" ->
+        :ok
+
       chave ->
         :ets.delete(@tabela, chave)
         podar_oldest(n - 1)

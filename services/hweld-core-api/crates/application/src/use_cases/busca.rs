@@ -1,7 +1,3 @@
-//! Use case de busca — full-text com filtros/facetas (motor) + hidratação
-//! dos hits com os dados canônicos do Postgres. ES é índice secundário:
-//! a ordem vem dele, a verdade vem do banco relacional.
-
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -24,7 +20,6 @@ use crate::ports::catalogo::{
 };
 use crate::ports::crm::RepositorioEmpresas;
 
-/// Página de resultados + facetas — envelope único para a API.
 #[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct BuscaPaginada<T> {
     pub itens: Vec<T>,
@@ -33,12 +28,10 @@ pub struct BuscaPaginada<T> {
     pub por_pagina: u32,
     pub total_paginas: u32,
     pub facetas: Facetas,
-    /// Sugestão de correção ortográfica ("você quis dizer?").
     #[serde(skip_serializing_if = "Option::is_none")]
     pub correcao: Option<String>,
 }
 
-/// Item de busca do backoffice — produto + score de relevância.
 #[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct ItemBuscaStaff {
     #[serde(flatten)]
@@ -46,8 +39,6 @@ pub struct ItemBuscaStaff {
     pub score: f64,
 }
 
-/// Item de busca do portal — `ProdutoPortal` sanitizado (sem `preco_custo`,
-/// `estoque_minimo`, `controla_estoque`) + `preco_efetivo` B2B + imagens + score.
 #[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct ItemBuscaPortal {
     #[serde(flatten)]
@@ -63,7 +54,6 @@ pub struct ServicoBusca {
     categorias: Arc<dyn RepositorioCategorias>,
     tabelas: Arc<dyn RepositorioTabelasPreco>,
     empresas: Arc<dyn RepositorioEmpresas>,
-    /// Outbox de indexações falhas — reprocessada pelo relay periódico.
     pendentes: Arc<dyn RepositorioBuscaPendentes>,
 }
 
@@ -86,9 +76,6 @@ impl ServicoBusca {
         }
     }
 
-    /// Relay da outbox de busca — reprocessa indexações/remoções que
-    /// falharam no best-effort com backoff (8 tentativas → morto).
-    /// Chamado por um task periódica no boot do servidor.
     pub async fn reprocessar_pendentes(&self, limite: u32) -> Resultado<u64> {
         let itens = self.pendentes.vencidos(limite).await?;
         if itens.is_empty() {
@@ -106,8 +93,6 @@ impl ServicoBusca {
                         );
                         self.motor.indexar_produto(&doc).await
                     }
-                    // Produto removido/arquivado desde o enfileiramento —
-                    // pendente obsoleto, conclui sem tocar o índice.
                     _ => Ok(()),
                 },
                 OperacaoBusca::Remover => self.motor.remover_produto(item.produto_id).await,
@@ -125,7 +110,6 @@ impl ServicoBusca {
         Ok(ok)
     }
 
-    /// Busca do backoffice — sem resolução de preço B2B.
     pub async fn buscar(
         &self,
         mut consulta: ConsultaBuscaProdutos,
@@ -153,8 +137,6 @@ impl ServicoBusca {
         ))
     }
 
-    /// Busca do portal (pública ou B2B) — apenas produtos visíveis na vitrine, com o
-    /// `preco_efetivo` da empresa do contato (quando autenticado) ou preço de venda padrão.
     pub async fn buscar_portal(
         &self,
         empresa_id: Option<Id<Empresa>>,
@@ -186,7 +168,6 @@ impl ServicoBusca {
             mapa_imagens.entry(img.produto_id).or_default().push(img);
         }
 
-        // Lookup O(1) — `find` por hit custava hits × tamanho da tabela.
         let mapa_precos: HashMap<Id<Produto>, &TabelaPrecoItem> = tabela
             .as_ref()
             .map(|(_, itens)| itens.iter().map(|i| (i.produto_id, i)).collect())
@@ -219,7 +200,6 @@ impl ServicoBusca {
         ))
     }
 
-    /// Autocomplete — sugestões leves para o dropdown de pesquisa.
     pub async fn sugerir(&self, prefixo: &str, limite: u32) -> Resultado<Vec<SugestaoProduto>> {
         if prefixo.trim().len() < 2 {
             return Ok(vec![]);
@@ -227,9 +207,6 @@ impl ServicoBusca {
         self.motor.sugerir_produtos(prefixo.trim(), limite).await
     }
 
-    /// Reconstrução completa do índice — recria o índice (remove docs
-    /// obsoletos) e varre o catálogo em páginas fazendo bulk por lote.
-    /// Admin-only, roda sob demanda ou pós-migração.
     #[instrument(skip(self))]
     pub async fn reindexar(&self) -> Resultado<u64> {
         self.motor.recriar_indice().await?;
@@ -261,11 +238,6 @@ impl ServicoBusca {
         Ok(indexados)
     }
 
-    // ── internos ──────────────────────────────────────────────────────────
-
-    /// Busca os produtos canônicos preservando a ordem de relevância do
-    /// motor — hits sem correspondência no banco são descartados (índice
-    /// pode estar defasado entre duas escritas).
     async fn hidratar(
         &self,
         hits: &[crate::ports::busca::HitBusca],
@@ -274,8 +246,6 @@ impl ServicoBusca {
         let encontrados = self.produtos.buscar_por_ids(&ids).await?;
         Ok(encontrados.into_iter().map(|p| (p.id, p)).collect())
     }
-
-    /// Preenche `rotulo` das facetas de categoria com o nome real.
     async fn rotular(&self, mut facetas: Facetas) -> Resultado<Facetas> {
         if facetas.categorias.is_empty() {
             return Ok(facetas);
@@ -318,10 +288,6 @@ impl ServicoBusca {
     }
 }
 
-/// Indexação best-effort — chamada pós-commit pelo `ServicoProdutos`.
-/// Falhas do motor são logadas, enfileiradas na outbox de busca
-/// (`busca_pendentes`) e nunca propagadas: o Postgres segue como fonte de
-/// verdade, o relay retenta e `reindexar` repara divergências.
 pub async fn indexar_best_effort(
     motor: &Option<Arc<dyn MotorBusca>>,
     categorias: &Arc<dyn RepositorioCategorias>,
@@ -345,7 +311,6 @@ pub async fn indexar_best_effort(
     }
 }
 
-/// Remoção best-effort do índice (produto arquivado) — mesma outbox.
 pub async fn desindexar_best_effort(
     motor: &Option<Arc<dyn MotorBusca>>,
     pendentes: &Arc<dyn RepositorioBuscaPendentes>,

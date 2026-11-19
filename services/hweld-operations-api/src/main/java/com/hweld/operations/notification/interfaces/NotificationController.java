@@ -32,7 +32,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int porPagina) {
         return service.list(status, recipient, channel, null,
-                PageRequest.of(Math.max(pagina, 0), Math.min(porPagina, 100)));
+                PageRequest.of(Math.max(pagina, 0), Math.max(1, Math.min(porPagina, 100))));
     }
 
     @GetMapping("/{id}")

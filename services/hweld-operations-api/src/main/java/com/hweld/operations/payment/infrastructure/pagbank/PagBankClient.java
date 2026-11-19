@@ -15,24 +15,6 @@ import org.springframework.web.client.RestClientResponseException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * Client HTTP da Orders API PagBank (developer.pagbank.com.br).
- *
- * Autenticação: `Authorization: Bearer {token}` — token gerado pelo cliente
- * no painel PagBank (produção: Vendas → Integrações → Gerar Token; sandbox:
- * Portal do Desenvolvedor → Tokens), gerenciado em `integration_settings`
- * (`pagbank-pagamentos`): `base_url` define o ambiente
- * (`https://api.pagseguro.com` produção | `https://sandbox.api.pagseguro.com`
- * sandbox) e `api_key_enc` o token cifrado. Credenciais resolvidas por
- * chamada — trocar o token no painel não exige reinício.
- *
- * Escopo fase A: `POST /orders` (cobrança Pix com QR), `GET /charges/{id}`
- * (reconciliação + autenticidade do webhook por fetch-back),
- * `GET /public-keys` (teste de conexão — leitura autenticada segura),
- * `POST /charges/{id}/cancel` (cancelamento/estorno).
- *
- * NUNCA loga token, headers ou payload de cobrança completo.
- */
 @Component
 public class PagBankClient {
 
@@ -81,25 +63,14 @@ public class PagBankClient {
         return exchange("GET", "/public-keys", null, false);
     }
 
-    /**
-     * `POST /checkouts` — checkout hospedado: página de pagamento no
-     * ambiente PagBank (cartão sem PAN/CVV trafegar aqui). Resposta traz
-     * `id` CHEC_* e `links[rel=PAY]` com a URL do link de pagamento.
-     */
     public JsonNode criarCheckout(Map<String, Object> body) {
         return exchange("POST", "/checkouts", body, true);
     }
 
-    /** `GET /checkouts/{id}` — status do checkout/link (fetch-back). */
     public JsonNode consultarCheckout(String checkoutId) {
         return exchange("GET", "/checkouts/" + checkoutId, null, false);
     }
 
-    /**
-     * `POST /checkouts/{id}/inactivate` — bloqueia o pagamento pelo link.
-     * "Cancelamento" de um checkout ainda não pago; cobrança já paga é
-     * cancelada/estornada via `/charges/{id}/cancel`.
-     */
     public JsonNode inativarCheckout(String checkoutId) {
         return exchange("POST", "/checkouts/" + checkoutId + "/inactivate", null, true);
     }
@@ -113,7 +84,8 @@ public class PagBankClient {
                 spec = spec.contentType(MediaType.APPLICATION_JSON).body(body);
             }
             String raw = spec.retrieve().body(String.class);
-            if (raw == null || raw.isBlank()) return mapper.createObjectNode();
+            if (raw == null || raw.isBlank())
+                return mapper.createObjectNode();
             return mapper.readTree(raw);
         } catch (RestClientResponseException e) {
             throw mapear(e);
@@ -137,7 +109,6 @@ public class PagBankClient {
         String mensagem = "HTTP " + status.value();
         try {
             JsonNode body = mapper.readTree(raw);
-            // Envelope oficial: {error_messages:[{code, description, ...}]}
             JsonNode erros = body.path("error_messages");
             if (erros.isArray() && !erros.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
@@ -145,12 +116,15 @@ public class PagBankClient {
                     String desc = err.path("description").asString("");
                     String code = err.path("code").asString("");
                     if (!desc.isBlank()) {
-                        if (sb.length() > 0) sb.append("; ");
+                        if (sb.length() > 0)
+                            sb.append("; ");
                         sb.append(desc);
-                        if (!code.isBlank()) sb.append(" (").append(code).append(")");
+                        if (!code.isBlank())
+                            sb.append(" (").append(code).append(")");
                     }
                 });
-                if (sb.length() > 0) mensagem = sb.toString();
+                if (sb.length() > 0)
+                    mensagem = sb.toString();
             }
             if (mensagem.startsWith("HTTP") && body.hasNonNull("message")) {
                 mensagem = body.path("message").asString();
@@ -179,16 +153,14 @@ public class PagBankClient {
     private long retryAfterMs(RestClientResponseException e) {
         try {
             String h = e.getResponseHeaders() != null
-                    ? e.getResponseHeaders().getFirst("Retry-After") : null;
+                    ? e.getResponseHeaders().getFirst("Retry-After")
+                    : null;
             return h != null ? Long.parseLong(h.trim()) * 1000L : 0;
         } catch (Exception ignored) {
             return 0;
         }
     }
 
-    /**
-     * RestClient por chamada — credenciais dinâmicas da `integration_settings`.
-     */
     private RestClient client() {
         IntegrationSettings cfg = settings.findById(IntegrationSettings.PAGBANK_PAGAMENTOS)
                 .orElseThrow(() -> PagBankException.autenticacao(

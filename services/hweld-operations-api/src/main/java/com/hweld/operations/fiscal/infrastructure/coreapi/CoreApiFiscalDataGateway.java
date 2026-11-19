@@ -15,13 +15,6 @@ import org.springframework.web.client.RestClientResponseException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * `GET {CORE_API}/api/v1/internal/pedidos/{id}/dados-fiscais` — canal
- * service-to-service autenticado por `X-Service-Token`. O core-api monta o
- * conjunto (pedido + itens com campos fiscais resolvidos + empresa +
- * endereço de faturamento): o payload NF-e nasce de dados autoritatídicos,
- * nunca de dados digitados no frontend.
- */
 @Component
 public class CoreApiFiscalDataGateway implements FiscalDataGateway {
 

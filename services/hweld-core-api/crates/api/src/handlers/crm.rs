@@ -1,6 +1,3 @@
-//! CRM — empresas, contatos, endereços, oportunidades e interações.
-//! Escrita exige `admin` ou `vendedor`; leitura qualquer staff autenticado.
-
 use crate::erro::Resposta;
 use actix_web::{delete, get, patch, post, web, HttpResponse};
 use hweld_application::ports::crm::{FiltroEmpresas, FiltroOportunidades};
@@ -23,9 +20,6 @@ use crate::extratores::AuthStaff;
 
 const VENDAS: &[Perfil] = &[Perfil::Admin, Perfil::Vendedor];
 
-// ── Empresas ────────────────────────────────────────────────────────────────
-
-/// Lista empresas (clientes) paginado.
 #[utoipa::path(
     get,
     path = "/api/v1/empresas",
@@ -42,6 +36,7 @@ const VENDAS: &[Perfil] = &[Perfil::Admin, Perfil::Vendedor];
     ),
     security(("bearer_auth" = [])),
 )]
+
 #[get("/empresas")]
 pub async fn listar_empresas(
     state: web::Data<AppState>,
@@ -61,7 +56,6 @@ pub async fn listar_empresas(
     Ok(HttpResponse::Ok().json(pagina))
 }
 
-/// Busca empresa por id.
 #[utoipa::path(
     get,
     path = "/api/v1/empresas/{id}",
@@ -83,7 +77,6 @@ pub async fn buscar_empresa(
     Ok(HttpResponse::Ok().json(empresa))
 }
 
-/// Cria empresa (valida CNPJ).
 #[utoipa::path(
     post,
     path = "/api/v1/empresas",
@@ -111,7 +104,6 @@ pub async fn criar_empresa(
     Ok(HttpResponse::Created().json(empresa))
 }
 
-/// Atualiza empresa.
 #[utoipa::path(
     patch,
     path = "/api/v1/empresas/{id}",
@@ -145,7 +137,6 @@ pub async fn atualizar_empresa(
     Ok(HttpResponse::Ok().json(empresa))
 }
 
-/// Arquiva empresa (soft-delete).
 #[utoipa::path(
     delete,
     path = "/api/v1/empresas/{id}",
@@ -172,9 +163,6 @@ pub async fn arquivar_empresa(
     Ok(HttpResponse::NoContent().finish())
 }
 
-// ── Contatos ────────────────────────────────────────────────────────────────
-
-/// Lista contatos, opcionalmente por empresa.
 #[utoipa::path(
     get,
     path = "/api/v1/contatos",
@@ -208,7 +196,6 @@ pub async fn listar_contatos(
     Ok(HttpResponse::Ok().json(pagina))
 }
 
-/// Busca contato por id.
 #[utoipa::path(
     get,
     path = "/api/v1/contatos/{id}",
@@ -230,7 +217,6 @@ pub async fn buscar_contato(
     Ok(HttpResponse::Ok().json(contato))
 }
 
-/// Cria contato vinculado a uma empresa.
 #[utoipa::path(
     post,
     path = "/api/v1/contatos",
@@ -257,7 +243,6 @@ pub async fn criar_contato(
     Ok(HttpResponse::Created().json(contato))
 }
 
-/// Atualiza contato.
 #[utoipa::path(
     patch,
     path = "/api/v1/contatos/{id}",
@@ -289,7 +274,6 @@ pub async fn atualizar_contato(
     Ok(HttpResponse::Ok().json(contato))
 }
 
-/// Ativa acesso ao portal B2B (define senha do contato).
 #[utoipa::path(
     post,
     path = "/api/v1/contatos/{id}/portal",
@@ -317,7 +301,6 @@ pub async fn ativar_portal(
     Ok(HttpResponse::NoContent().finish())
 }
 
-/// Revoga acesso ao portal B2B.
 #[utoipa::path(
     delete,
     path = "/api/v1/contatos/{id}/portal",
@@ -343,7 +326,6 @@ pub async fn desativar_portal(
     Ok(HttpResponse::NoContent().finish())
 }
 
-/// Arquiva contato (soft-delete).
 #[utoipa::path(
     delete,
     path = "/api/v1/contatos/{id}",
@@ -369,9 +351,6 @@ pub async fn arquivar_contato(
     Ok(HttpResponse::NoContent().finish())
 }
 
-// ── Endereços ───────────────────────────────────────────────────────────────
-
-/// Lista endereços da empresa.
 #[utoipa::path(
     get,
     path = "/api/v1/empresas/{id}/enderecos",
@@ -397,7 +376,6 @@ pub async fn listar_enderecos(
     Ok(HttpResponse::Ok().json(lista))
 }
 
-/// Cria endereço para uma empresa.
 #[utoipa::path(
     post,
     path = "/api/v1/enderecos",
@@ -420,7 +398,6 @@ pub async fn criar_endereco(
     Ok(HttpResponse::Created().json(endereco))
 }
 
-/// Atualiza endereço.
 #[utoipa::path(
     patch,
     path = "/api/v1/enderecos/{id}",
@@ -448,7 +425,6 @@ pub async fn atualizar_endereco(
     Ok(HttpResponse::Ok().json(endereco))
 }
 
-/// Remove endereço.
 #[utoipa::path(
     delete,
     path = "/api/v1/enderecos/{id}",
@@ -471,9 +447,6 @@ pub async fn remover_endereco(
     Ok(HttpResponse::NoContent().finish())
 }
 
-// ── Oportunidades ───────────────────────────────────────────────────────────
-
-/// Funil de vendas — oportunidades paginadas com filtros.
 #[utoipa::path(
     get,
     path = "/api/v1/oportunidades",
@@ -511,7 +484,6 @@ pub async fn listar_oportunidades(
     Ok(HttpResponse::Ok().json(pagina))
 }
 
-/// Busca oportunidade por id.
 #[utoipa::path(
     get,
     path = "/api/v1/oportunidades/{id}",
@@ -533,7 +505,6 @@ pub async fn buscar_oportunidade(
     Ok(HttpResponse::Ok().json(op))
 }
 
-/// Cria oportunidade no funil.
 #[utoipa::path(
     post,
     path = "/api/v1/oportunidades",
@@ -559,7 +530,6 @@ pub async fn criar_oportunidade(
     Ok(HttpResponse::Created().json(op))
 }
 
-/// Atualiza oportunidade.
 #[utoipa::path(
     patch,
     path = "/api/v1/oportunidades/{id}",
@@ -591,7 +561,6 @@ pub async fn atualizar_oportunidade(
     Ok(HttpResponse::Ok().json(op))
 }
 
-/// Move oportunidade de estágio no funil (ganho/perdido exige motivo).
 #[utoipa::path(
     patch,
     path = "/api/v1/oportunidades/{id}/estagio",
@@ -625,9 +594,6 @@ pub async fn mover_estagio(
     Ok(HttpResponse::Ok().json(op))
 }
 
-// ── Interações ──────────────────────────────────────────────────────────────
-
-/// Timeline de interações (ligações, e-mails, visitas...).
 #[utoipa::path(
     get,
     path = "/api/v1/interacoes",
@@ -663,7 +629,6 @@ pub async fn timeline(
     Ok(HttpResponse::Ok().json(pagina))
 }
 
-/// Registra interação na timeline.
 #[utoipa::path(
     post,
     path = "/api/v1/interacoes",

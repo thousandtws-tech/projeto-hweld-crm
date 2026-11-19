@@ -6,12 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-/**
- * Adapter de desenvolvimento: "envia" via log estruturado com `messageId`
- * sintético — exercita o ciclo completo (fila → DLR simulável) sem
- * credenciais. Selecionado pelo `SmsProviderRouter` quando `sms-provider`
- * é `log` ou quando `auto` e a integração ainda não tem credenciais.
- */
 @Component
 public class LogSmsProvider implements SmsProvider {
 
@@ -35,7 +29,8 @@ public class LogSmsProvider implements SmsProvider {
     }
 
     private static String mask(String e164) {
-        if (e164 == null || e164.length() < 6) return "***";
+        if (e164 == null || e164.length() < 6)
+            return "***";
         return e164.substring(0, e164.length() - 4) + "****";
     }
 }

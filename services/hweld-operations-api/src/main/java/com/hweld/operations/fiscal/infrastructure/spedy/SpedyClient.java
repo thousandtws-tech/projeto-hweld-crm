@@ -17,26 +17,6 @@ import org.springframework.web.client.RestClientResponseException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * Client HTTP da API Spedy v1 (docs.spedy.com.br).
- *
- * Autenticação: `X-Api-Key` — chave estática por empresa, gerenciada pelo
- * cliente em `integration_settings` (`spedy-fiscal`): `base_url` define o
- * ambiente (`https://api.spedy.com.br` produção | `https://sandbox-api...`
- * sandbox) e `api_key_enc` a chave cifrada. Credenciais são resolvidas por
- * chamada — trocar a chave no painel não exige reinício.
- *
- * Escopo implementado (contrato oficial): NF-e em `/v1/product-invoices`
- * (emissão assíncrona, consulta por id ou `integrationId`, cancelamento
- * `DELETE` com `reason`, CC-e, check-status, XML/PDF), gestão de webhooks em
- * `/v1/webhooks` e segredo de assinatura em `/v1/webhooks/secret`.
- *
- * Retry: o client só repete leituras (GET) — emissão/cancelamento não são
- * reenviados após falha de transporte; a reconciliação consulta pela
- * `integrationId` antes de qualquer reenvio (idempotência oficial).
- *
- * NUNCA loga a chave, headers ou payload fiscal completo.
- */
 @Component
 public class SpedyClient {
 
@@ -57,94 +37,59 @@ public class SpedyClient {
         this.mapper = mapper;
     }
 
-    // ── NF-e: emissão / consulta / cancelamento / CC-e ───────────────────────
-
-    /**
-     * `POST /v1/product-invoices` — cria e enfileira a nota para a SEFAZ.
-     * A resposta `2xx` confirma aceite, não autorização (status vem por
-     * webhook ou consulta). `integrationId` no payload é a chave de
-     * idempotência oficial.
-     */
     public JsonNode emitirNfe(Map<String, Object> payload) {
         return exchange("POST", API_PREFIX + "/product-invoices", payload, true);
     }
 
-    /** `GET /v1/product-invoices/{id}` — consulta pelo id da nota na Spedy. */
     public JsonNode consultarNfe(String invoiceId) {
         return exchange("GET", API_PREFIX + "/product-invoices/" + invoiceId, null, false);
     }
 
-    /**
-     * `GET /v1/product-invoices?integrationId={ref}&pageSize=1` — reconciliação
-     * pós-falha: localiza a nota pela nossa referência quando o id remoto ainda
-     * não foi gravado.
-     */
     public JsonNode consultarNfePorIntegrationId(String integrationId) {
         return exchange("GET",
                 API_PREFIX + "/product-invoices?integrationId=" + integrationId + "&pageSize=1",
                 null, false);
     }
 
-    /** `DELETE /v1/product-invoices/{id}` — `{reason}` 15–255 chars (SEFAZ). */
     public JsonNode cancelarNfe(String invoiceId, String motivo) {
         return exchange("DELETE", API_PREFIX + "/product-invoices/" + invoiceId,
                 Map.of("reason", motivo), true);
     }
 
-    /** `POST /v1/product-invoices/{id}/corrections` — `{letter}` 15–1000 chars. */
     public JsonNode cartaCorrecaoNfe(String invoiceId, String correcao) {
         return exchange("POST", API_PREFIX + "/product-invoices/" + invoiceId + "/corrections",
                 Map.of("letter", correcao), true);
     }
 
-    /**
-     * `POST /v1/product-invoices/{id}/check-status` — força reconciliação com
-     * a SEFAZ (equivalente ao "reenvio de status" dos outros provedores).
-     */
     public JsonNode checkStatusNfe(String invoiceId) {
         return exchange("POST", API_PREFIX + "/product-invoices/" + invoiceId + "/check-status",
                 null, true);
     }
 
-    // ── Artefatos ────────────────────────────────────────────────────────────
-
-    /** `GET /v1/product-invoices/{id}/xml` — XML autorizado da nota. */
     public byte[] baixarXmlNfe(String invoiceId) {
         return exchangeBytes(API_PREFIX + "/product-invoices/" + invoiceId + "/xml");
     }
 
-    /** `GET /v1/product-invoices/{id}/pdf` — DANFE da nota. */
     public byte[] baixarPdfNfe(String invoiceId) {
         return exchangeBytes(API_PREFIX + "/product-invoices/" + invoiceId + "/pdf");
     }
 
-    // ── Conta / webhooks ─────────────────────────────────────────────────────
-
-    /**
-     * `GET /v1/companies?page=1&pageSize=1` — teste de conexão + identificação
-     * da empresa titular das credenciais.
-     */
     public JsonNode listarEmpresas() {
         return exchange("GET", API_PREFIX + "/companies?page=1&pageSize=1", null, false);
     }
 
-    /** `GET /v1/webhooks/secret` — segredo `whsec_` de assinatura da conta. */
     public JsonNode segredoWebhook() {
         return exchange("GET", API_PREFIX + "/webhooks/secret", null, false);
     }
 
-    /** `GET /v1/webhooks?page=1&pageSize=100` — webhooks registrados na conta. */
     public JsonNode listarWebhooks() {
         return exchange("GET", API_PREFIX + "/webhooks?page=1&pageSize=100", null, false);
     }
 
-    /** `POST /v1/webhooks` — `{event, url}`; um webhook por evento. */
     public JsonNode criarWebhook(String event, String url) {
         return exchange("POST", API_PREFIX + "/webhooks",
                 Map.of("event", event, "url", url), false);
     }
-
-    // ── Núcleo HTTP ──────────────────────────────────────────────────────────
 
     private JsonNode exchange(String method, String uri, Map<String, Object> body,
             boolean efeitoColateral) {
@@ -243,11 +188,6 @@ public class SpedyClient {
         return lista;
     }
 
-    /**
-     * RestClient por chamada — credenciais dinâmicas da `integration_settings`
-     * (rotação de chave no painel vale imediatamente). Fail-fast quando
-     * base URL ou chave estão ausentes.
-     */
     private RestClient client() {
         IntegrationSettings cfg = settings.findById(IntegrationSettings.SPEDY_FISCAL)
                 .orElseThrow(() -> SpedyException.autenticacao(

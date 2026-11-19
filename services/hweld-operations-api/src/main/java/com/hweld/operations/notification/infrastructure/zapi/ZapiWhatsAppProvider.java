@@ -43,11 +43,13 @@ public class ZapiWhatsAppProvider implements SmsProvider {
         return "zapi";
     }
 
-    public record Resolved(String instanceId, String instanceToken, String clientToken) {}
+    public record Resolved(String instanceId, String instanceToken, String clientToken) {
+    }
 
     public Resolved resolve() {
         IntegrationSettings cfg = settings.findById(IntegrationSettings.ZAPI_WHATSAPP).orElse(null);
-        if (cfg == null || !cfg.credenciaisZapiCompletas()) return null;
+        if (cfg == null || !cfg.credenciaisZapiCompletas())
+            return null;
         return new Resolved(cfg.getExternalId(),
                 cipher.decrypt(cfg.getApiKeyEnc()),
                 cipher.decrypt(cfg.getClientTokenEnc()));
@@ -86,7 +88,8 @@ public class ZapiWhatsAppProvider implements SmsProvider {
 
     public JsonNode status() {
         Resolved r = resolve();
-        if (r == null) return null;
+        if (r == null)
+            return null;
         String raw = client(r).get().uri("/status").retrieve().body(String.class);
         return mapper.readTree(raw);
     }
@@ -114,14 +117,16 @@ public class ZapiWhatsAppProvider implements SmsProvider {
 
     public JsonNode qrCode() {
         Resolved r = resolve();
-        if (r == null) return null;
+        if (r == null)
+            return null;
         String raw = client(r).get().uri("/qr-code/image").retrieve().body(String.class);
         return mapper.readTree(raw);
     }
 
     public void configureWebhooks(String callbackBase) {
         Resolved r = resolve();
-        if (r == null || callbackBase == null || callbackBase.isBlank()) return;
+        if (r == null || callbackBase == null || callbackBase.isBlank())
+            return;
         RestClient c = client(r);
         for (String hook : List.of("received", "delivery", "disconnected")) {
             try {
@@ -137,7 +142,8 @@ public class ZapiWhatsAppProvider implements SmsProvider {
 
     public void disconnect() {
         Resolved r = resolve();
-        if (r == null) return;
+        if (r == null)
+            return;
         client(r).post().uri("/disconnect").retrieve().toBodilessEntity();
     }
 
@@ -189,7 +195,8 @@ public class ZapiWhatsAppProvider implements SmsProvider {
     }
 
     private static String excerpt(String body) {
-        if (body == null) return "";
+        if (body == null)
+            return "";
         return body.length() > 200 ? body.substring(0, 200) : body;
     }
 }

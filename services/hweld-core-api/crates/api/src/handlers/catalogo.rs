@@ -1,6 +1,3 @@
-//! Catálogo — categorias, produtos e tabelas de preço (admin) e o catálogo
-//! precificado do portal B2B (contato autenticado).
-
 use crate::erro::Resposta;
 use actix_web::{delete, get, patch, post, put, web, HttpResponse};
 use hweld_application::ports::catalogo::FiltroProdutos;
@@ -21,10 +18,9 @@ use crate::estado::AppState;
 use crate::extratores::{AuthPortalOpcional, AuthStaff};
 
 const CATALOGO: &[Perfil] = &[Perfil::Admin, Perfil::Estoque, Perfil::Vendedor];
-/// Imagens e upload de mídia — liberado para quem gerencia o catálogo.
 const IMAGENS: &[Perfil] = &[Perfil::Admin, Perfil::Estoque, Perfil::Vendedor];
 
-const MAX_UPLOAD_BYTES: usize = 8 * 1024 * 1024; // 8 MB
+const MAX_UPLOAD_BYTES: usize = 8 * 1024 * 1024;
 
 #[derive(Serialize, utoipa::ToSchema)]
 pub struct UploadMidiaResp {
@@ -33,8 +29,6 @@ pub struct UploadMidiaResp {
     pub mime: String,
     pub bytes: usize,
 }
-
-// ── Respostas compostas ─────────────────────────────────────────────────────
 
 #[derive(Serialize, utoipa::ToSchema)]
 pub struct ProdutoDetalhe {
@@ -48,9 +42,6 @@ pub struct TabelaDetalhe {
     pub itens: Vec<TabelaPrecoItem>,
 }
 
-// ── Categorias ──────────────────────────────────────────────────────────────
-
-/// Lista categorias (árvore completa ou só ativas).
 #[utoipa::path(
     get,
     path = "/api/v1/categorias",
@@ -75,7 +66,6 @@ pub async fn listar_categorias(
     Ok(HttpResponse::Ok().json(lista))
 }
 
-/// Cria categoria.
 #[utoipa::path(
     post,
     path = "/api/v1/categorias",
@@ -99,7 +89,6 @@ pub async fn criar_categoria(
     Ok(HttpResponse::Created().json(cat))
 }
 
-/// Atualiza categoria (nome, slug, pai, ordem, ativa).
 #[utoipa::path(
     patch,
     path = "/api/v1/categorias/{id}",
@@ -126,7 +115,6 @@ pub async fn atualizar_categoria(
         .categorias
         .atualizar(Id::novo(*id), body.into_inner().input())
         .await?;
-    // Ao trocar/remover a imagem local da categoria, descarta o arquivo órfão.
     if antes.imagem_url.as_deref() != cat.imagem_url.as_deref() {
         if let Some(antiga) = antes.imagem_url.as_deref() {
             descartar_arquivo_midia(antiga, state.armazenamento.as_ref()).await;
@@ -135,7 +123,6 @@ pub async fn atualizar_categoria(
     Ok(HttpResponse::Ok().json(cat))
 }
 
-/// Remove categoria (promove subcategorias e valida produtos vinculados).
 #[utoipa::path(
     delete,
     path = "/api/v1/categorias/{id}",
@@ -162,9 +149,6 @@ pub async fn excluir_categoria(
     Ok(HttpResponse::NoContent().finish())
 }
 
-// ── Produtos ────────────────────────────────────────────────────────────────
-
-/// Lista produtos paginado com filtros.
 #[utoipa::path(
     get,
     path = "/api/v1/produtos",
@@ -204,7 +188,6 @@ pub async fn listar_produtos(
     Ok(HttpResponse::Ok().json(pagina))
 }
 
-/// Detalhe do produto + imagens.
 #[utoipa::path(
     get,
     path = "/api/v1/produtos/{id}",
@@ -226,7 +209,6 @@ pub async fn buscar_produto(
     Ok(HttpResponse::Ok().json(ProdutoDetalhe { produto, imagens }))
 }
 
-/// Cria produto.
 #[utoipa::path(
     post,
     path = "/api/v1/produtos",
@@ -250,7 +232,6 @@ pub async fn criar_produto(
     Ok(HttpResponse::Created().json(produto))
 }
 
-/// Atualiza produto (reindexa no motor de busca, best-effort).
 #[utoipa::path(
     patch,
     path = "/api/v1/produtos/{id}",
@@ -279,7 +260,6 @@ pub async fn atualizar_produto(
     Ok(HttpResponse::Ok().json(produto))
 }
 
-/// Arquiva produto (soft-delete; desindexa do motor, best-effort).
 #[utoipa::path(
     delete,
     path = "/api/v1/produtos/{id}",
@@ -303,9 +283,6 @@ pub async fn arquivar_produto(
     Ok(HttpResponse::NoContent().finish())
 }
 
-// ── Imagens de produto ──────────────────────────────────────────────────────
-
-/// Lista imagens do produto ordenadas pela galeria.
 #[utoipa::path(
     get,
     path = "/api/v1/produtos/{id}/imagens",
@@ -328,8 +305,6 @@ pub async fn listar_imagens(
     Ok(HttpResponse::Ok().json(imagens))
 }
 
-/// Registra imagem por URL externa (v1 — sem upload binário).
-/// `is_principal=true` desmarca a principal anterior (transação no repo).
 #[utoipa::path(
     post,
     path = "/api/v1/produtos/{id}/imagens",
@@ -364,7 +339,6 @@ pub async fn adicionar_imagem(
     Ok(HttpResponse::Created().json(imagem))
 }
 
-/// Atualiza metadados da imagem (alt_text, ordem ou define como imagem principal da vitrine).
 #[utoipa::path(
     patch,
     path = "/api/v1/produtos/{id}/imagens/{imagem_id}",
@@ -402,7 +376,6 @@ pub async fn atualizar_imagem(
     Ok(HttpResponse::Ok().json(img))
 }
 
-/// Remove imagem — 404 se não pertencer ao produto do path.
 #[utoipa::path(
     delete,
     path = "/api/v1/produtos/{id}/imagens/{imagem_id}",
@@ -433,8 +406,6 @@ pub async fn remover_imagem(
     Ok(HttpResponse::NoContent().finish())
 }
 
-// ── Upload e Entrega de Mídia (Produtos e Categorias) ───────────────────────
-
 fn detectar_formato_imagem(bytes: &[u8]) -> Option<(&'static str, &'static str)> {
     if bytes.len() >= 12 && &bytes[0..4] == b"RIFF" && &bytes[8..12] == b"WEBP" {
         return Some(("webp", "image/webp"));
@@ -451,9 +422,6 @@ fn detectar_formato_imagem(bytes: &[u8]) -> Option<(&'static str, &'static str)>
     None
 }
 
-/// Descarta o objeto quando a URL aponta para `…/api/v1/midia/{arquivo}`
-/// (upload nosso). URLs externas e Data URLs não têm objeto para remover.
-/// Best-effort: falha de storage não derruba a operação principal — registra warn.
 async fn descartar_arquivo_midia(
     url: &str,
     storage: &dyn hweld_application::ports::armazenamento::ArmazenamentoObjetos,
@@ -478,7 +446,6 @@ async fn descartar_arquivo_midia(
     }
 }
 
-/// Upload binário de imagem para produtos e categorias (valida magic bytes PNG/JPEG/WEBP/GIF).
 #[utoipa::path(
     post,
     path = "/api/v1/midia/upload",
@@ -522,9 +489,6 @@ pub async fn upload_midia(
         .salvar(&format!("midia/{nome_arquivo}"), &body, mime)
         .await?;
 
-    // URL relativa — o browser resolve no domínio do front (worker), que
-    // proxya para esta API. URL absoluta gravaria o host visto pelo
-    // servidor (interno/Railway), quebrando atrás de proxy reverso.
     let url = format!("/api/v1/midia/{nome_arquivo}");
 
     Ok(HttpResponse::Created().json(UploadMidiaResp {
@@ -535,7 +499,6 @@ pub async fn upload_midia(
     }))
 }
 
-/// Serve imagem pública de produto ou categoria armazenada localmente.
 #[utoipa::path(
     get,
     path = "/api/v1/midia/{arquivo}",
@@ -577,9 +540,6 @@ pub async fn servir_midia(
         .body(bytes))
 }
 
-// ── CMS da Loja (Banners, Marcas & Vitrine) ─────────────────────────────────
-
-/// Chave do JSON do CMS no object storage (MinIO ou disco local).
 const CMS_CHAVE: &str = "cms/loja.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
@@ -627,7 +587,7 @@ pub struct CardTrioCms {
     pub botao_texto: String,
     pub botao_link: String,
     pub imagem_url: String,
-    pub cor: String, // "orange" | "cyan" | "blue"
+    pub cor: String,
     #[serde(default = "default_true")]
     pub ativo: bool,
 }
@@ -651,9 +611,6 @@ fn default_true() -> bool {
     true
 }
 
-/// Item da faixa de confiança da vitrine (selos/benefícios — "Entrega em
-/// Todo o Brasil", "Faturamento Direto"…). `icone_url` aceita caminho de
-/// assets do front (`assets/...`), URL `/api/v1/midia/…` (upload) ou externa.
 #[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct SeloCms {
     pub id: String,
@@ -664,7 +621,6 @@ pub struct SeloCms {
     pub link: String,
     #[serde(default)]
     pub icone_url: String,
-    /// `true` = abre em nova aba (`<a target="_blank">`), `false` = routerLink.
     #[serde(default)]
     pub externo: bool,
     #[serde(default = "default_true")]
@@ -677,8 +633,6 @@ pub struct CmsLoja {
     pub slides: Vec<SlideBannerCms>,
     pub trio_banners: Vec<CardTrioCms>,
     pub duo_banners: Vec<CardDuoCms>,
-    /// Faixa de selos de confiança — `#[serde(default)]` mantém JSONs
-    /// antigos (sem a chave) desserializando; vazio vira o padrão na carga.
     #[serde(default)]
     pub selos: Vec<SeloCms>,
 }
@@ -798,7 +752,6 @@ fn cms_padrao() -> CmsLoja {
     }
 }
 
-/// Faixa de selos padrão — mesmos 5 itens que eram hardcoded no front.
 fn selos_padrao() -> Vec<SeloCms> {
     vec![
         SeloCms {
@@ -849,9 +802,6 @@ fn selos_padrao() -> Vec<SeloCms> {
     ]
 }
 
-/// Cache do CMS da loja — o JSON mora no object storage (MinIO/S3), então
-/// cada hit de página da loja pagava um GET remoto. TTL curto + invalidação
-/// explícita no `PUT /cms`. Processo único: `RwLock` estático basta.
 static CMS_CACHE: std::sync::RwLock<Option<(std::time::Instant, std::sync::Arc<CmsLoja>)>> =
     std::sync::RwLock::new(None);
 const CMS_TTL: std::time::Duration = std::time::Duration::from_secs(30);
@@ -884,11 +834,6 @@ async fn carregar_cms_remoto(
 ) -> CmsLoja {
     if let Ok(bytes) = storage.ler(CMS_CHAVE).await {
         if let Ok(mut cms) = serde_json::from_slice::<CmsLoja>(&bytes) {
-            // JSONs antigos não têm `selos` — vazio significa "nunca
-            // configurado" (o padrão), não "remover todos" (o admin
-            // consegue esvaziar salvando a lista explicitamente vazia…
-            // distinção impossível sem migração; selos_padrao é o
-            // comportamento menos surpreendente aqui).
             if cms.selos.is_empty() {
                 cms.selos = selos_padrao();
             }
@@ -909,14 +854,12 @@ async fn salvar_cms(
     storage.salvar(CMS_CHAVE, &json, "application/json").await
 }
 
-/// Retorna a configuração completa do CMS da loja (público para o portal web).
 #[get("/portal/cms")]
 pub async fn obter_cms_publico(state: web::Data<AppState>) -> Resposta<HttpResponse> {
     let cms = carregar_cms(state.armazenamento.as_ref()).await;
     Ok(HttpResponse::Ok().json(cms))
 }
 
-/// Retorna a configuração completa do CMS da loja (painel admin).
 #[get("/cms")]
 pub async fn obter_cms_staff(
     state: web::Data<AppState>,

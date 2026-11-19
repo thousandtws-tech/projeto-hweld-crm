@@ -10,11 +10,6 @@ import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-/**
- * Webhook fiscal recebido (ex.: Spedy). Dedupe por (provider, event_key):
- * a linha é gravada em TX isolada antes do processamento — violação do UNIQUE
- * = entrega duplicada; crash depois do insert = replay seguro.
- */
 @Entity
 @Table(name = "fiscal_webhook_events")
 public class FiscalWebhookEvent {

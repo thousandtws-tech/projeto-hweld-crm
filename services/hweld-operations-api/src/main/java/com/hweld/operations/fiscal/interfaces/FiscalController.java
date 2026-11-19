@@ -48,7 +48,6 @@ public class FiscalController {
     @PostMapping
     public ResponseEntity<FiscalDocument> emit(@Valid @RequestBody EmitRequest req,
             Authentication auth) {
-        // empresa vem do pedido no core-api (staff JWT repassado) — nunca do body
         var order = orderGateway.getOrder(req.pedidoId(), bearer(auth), false);
         FiscalDocument doc = service.requestEmission(req.pedidoId(), order.empresaId(),
                 req.billingInvoiceId(), req.notaFiscalId(), req.docType(),
@@ -62,7 +61,7 @@ public class FiscalController {
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int porPagina) {
         return service.list(pedidoId, status,
-                PageRequest.of(Math.max(pagina, 0), Math.min(porPagina, 100),
+                PageRequest.of(Math.max(pagina, 0), Math.max(1, Math.min(porPagina, 100)),
                         Sort.by(Sort.Direction.DESC, "createdAt")));
     }
 
@@ -71,7 +70,6 @@ public class FiscalController {
         return service.get(id);
     }
 
-    /** Download do artefato fiscal hospedado no object storage. */
     @GetMapping("/{id}/xml")
     public ResponseEntity<byte[]> xml(@PathVariable UUID id) {
         return artefato(id, "xml", "application/xml");
@@ -105,20 +103,17 @@ public class FiscalController {
         return service.refresh(id);
     }
 
-    /** Histórico do ciclo de vida (transições, webhooks, reconciliações). */
     @GetMapping("/{id}/historico")
     public List<FiscalDocumentEvent> historico(@PathVariable UUID id) {
         return service.historico(id);
     }
 
-    /** Pede ao provedor o reenvio das notificações do documento. */
     @PostMapping("/{id}/webhook-resend")
     public ResponseEntity<Map<String, Object>> webhookResend(@PathVariable UUID id) {
         service.requestNotificationResend(id);
         return ResponseEntity.ok(Map.of("reenvio", true));
     }
 
-    /** Carta de correção NF-e (15–1000 caracteres, documento AUTHORIZED). */
     @PostMapping("/{id}/carta-correcao")
     public ResponseEntity<Map<String, Object>> cartaCorrecao(@PathVariable UUID id,
             @RequestBody Map<String, String> body) {

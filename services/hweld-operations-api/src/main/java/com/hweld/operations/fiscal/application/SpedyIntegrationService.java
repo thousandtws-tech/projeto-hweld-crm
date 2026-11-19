@@ -23,17 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 
-/**
- * Casos de uso do card Spedy no módulo Integrações — credenciais fiscais
- * gerenciadas pelo cliente: `X-Api-Key` cifrada (write-only), ambiente
- * sandbox/produção, habilitação, pausa de emissão, teste de conexão e
- * auto-configuração do webhook assinado da conta (`invoice.status_changed`
- * + segredo `whsec_` via `GET /v1/webhooks/secret`).
- *
- * Após salvar credenciais válidas o serviço tenta: buscar o segredo de
- * assinatura da conta e registrar o webhook apontando para cá. Falhas não
- * bloqueiam o save — aparecem como pendências na view.
- */
 @Service
 public class SpedyIntegrationService {
 
@@ -41,7 +30,8 @@ public class SpedyIntegrationService {
     private static final String EVENTO_WEBHOOK = "invoice.status_changed";
 
     public record SalvarReq(Long versao, String nomeConta, Map<String, Object> config,
-            Map<String, String> segredos) {}
+            Map<String, String> segredos) {
+    }
 
     private final IntegrationSettingsRepository settings;
     private final FiscalWebhookEventRepository webhookEvents;
@@ -64,26 +54,28 @@ public class SpedyIntegrationService {
         this.audit = audit;
     }
 
-    /** Visão pública — segredos só como flags `configurado`, nunca valores. */
     @Transactional(readOnly = true)
     public Map<String, Object> view(String publicBase) {
         IntegrationSettings cfg = load();
         Map<String, Object> check = cfg.getLastCheck() != null
-                ? cfg.getLastCheck() : Map.of();
+                ? cfg.getLastCheck()
+                : Map.of();
 
         Map<String, Object> config = new TreeMap<>();
         config.put("ambiente", ambiente(cfg));
         config.put("emissao_pausada", cfg.isEnvioPausado());
         config.put("empresa_id", cfg.getExternalId() != null ? cfg.getExternalId() : "");
         String callback = callbackUrl(publicBase);
-        if (callback != null) config.put("webhook_url", callback);
+        if (callback != null)
+            config.put("webhook_url", callback);
 
         Map<String, Object> view = new TreeMap<>();
         view.put("provedor", "spedy");
         view.put("categoria", "fiscal");
         view.put("ambiente", ambiente(cfg));
         view.put("provider_ativo", cfg.isEnabled() && cfg.credenciaisSpedyCompletas()
-                ? SpedyProvider.NAME : "");
+                ? SpedyProvider.NAME
+                : "");
         view.put("nome_conta", cfg.getNomeConta() != null ? cfg.getNomeConta() : "");
         view.put("habilitado", cfg.isEnabled());
         view.put("estado", estado(cfg));
@@ -106,10 +98,13 @@ public class SpedyIntegrationService {
     }
 
     private String estado(IntegrationSettings cfg) {
-        if (!cfg.isEnabled()) return "desativada";
-        if (!cfg.credenciaisSpedyCompletas()) return "pendente";
+        if (!cfg.isEnabled())
+            return "desativada";
+        if (!cfg.credenciaisSpedyCompletas())
+            return "pendente";
         Map<String, Object> check = cfg.getLastCheck();
-        if (check != null && Boolean.FALSE.equals(check.get("ok"))) return "falha";
+        if (check != null && Boolean.FALSE.equals(check.get("ok")))
+            return "falha";
         return "ativa";
     }
 
@@ -121,27 +116,25 @@ public class SpedyIntegrationService {
                     "integração alterada por outro administrador — recarregue antes de salvar");
         }
         Map<String, Object> c = req.config() != null ? req.config() : Map.of();
-        // `ambiente` ausente mantém a base URL atual — PUT parcial não apaga o ambiente.
         String baseUrl = c.containsKey("ambiente")
-                ? baseUrlDoAmbiente(c.get("ambiente")) : cfg.getBaseUrl();
+                ? baseUrlDoAmbiente(c.get("ambiente"))
+                : cfg.getBaseUrl();
         var actor = AuditService.currentActor();
         cfg.atualizarSpedy(
                 req.nomeConta(),
-                cfg.isEnabled(), // habilitação tem endpoint próprio
+                cfg.isEnabled(),
                 baseUrl,
                 cfg.getExternalId(),
                 Boolean.TRUE.equals(c.get("emissao_pausada")),
                 mapOfBooleans(c.get("eventos")),
                 actor.tipo() + ":" + actor.id());
 
-        // Segredos write-only: chave presente atualiza ("" limpa), ausente mantém.
         if (req.segredos() != null && req.segredos().containsKey("api_key")) {
             String key = req.segredos().get("api_key");
             cfg.definirApiKey(key == null || key.isBlank() ? null : cipher.encrypt(key.trim()));
         }
         settings.save(cfg);
 
-        // Auto-setup da conta Spedy: segredo whsec_ + webhook apontando para cá.
         if (cfg.credenciaisSpedyCompletas()) {
             sincronizarConta(cfg, publicBase);
         }
@@ -151,16 +144,13 @@ public class SpedyIntegrationService {
         return view(publicBase);
     }
 
-    /**
-     * Busca o segredo de assinatura e registra o webhook `invoice.status_changed`.
-     * Cada falha é tolerada individualmente — a view reflete o que ficou pendente.
-     */
     private void sincronizarConta(IntegrationSettings cfg, String publicBase) {
         try {
             JsonNode empresa = client.listarEmpresas();
             String id = primeiroId(empresa);
-            if (id != null) cfg.atualizarSpedy(cfg.getNomeConta(), cfg.isEnabled(),
-                    cfg.getBaseUrl(), id, cfg.isEnvioPausado(), cfg.getEvents(), "sync:spedy");
+            if (id != null)
+                cfg.atualizarSpedy(cfg.getNomeConta(), cfg.isEnabled(),
+                        cfg.getBaseUrl(), id, cfg.isEnvioPausado(), cfg.getEvents(), "sync:spedy");
         } catch (Exception e) {
             log.warn("spedy: consulta de empresa falhou: {}", e.getMessage());
         }
@@ -183,20 +173,19 @@ public class SpedyIntegrationService {
         settings.save(cfg);
     }
 
-    /** Cria o webhook se ainda não existir um `{event,url}` igual na conta. */
     private void registrarWebhook(String url) {
         JsonNode lista = client.listarWebhooks();
         if (lista != null) {
             JsonNode arr = lista.isArray() ? lista
                     : lista.has("data") && lista.path("data").isArray() ? lista.path("data")
-                    : lista.has("items") && lista.path("items").isArray() ? lista.path("items")
-                    : lista.has("content") && lista.path("content").isArray() ? lista.path("content")
-                    : null;
+                            : lista.has("items") && lista.path("items").isArray() ? lista.path("items")
+                                    : lista.has("content") && lista.path("content").isArray() ? lista.path("content")
+                                            : null;
             if (arr != null) {
                 for (JsonNode w : arr) {
                     if (EVENTO_WEBHOOK.equals(w.path("event").asString())
                             && url.equals(w.path("url").asString())) {
-                        return; // já registrado
+                        return;
                     }
                 }
             }
@@ -207,12 +196,13 @@ public class SpedyIntegrationService {
     private static String primeiroId(JsonNode resp) {
         JsonNode arr = resp == null ? null
                 : resp.isArray() ? resp
-                : resp.has("data") && resp.path("data").isArray() ? resp.path("data")
-                : resp.has("items") && resp.path("items").isArray() ? resp.path("items")
-                : resp.has("content") && resp.path("content").isArray() ? resp.path("content")
-                : null;
+                        : resp.has("data") && resp.path("data").isArray() ? resp.path("data")
+                                : resp.has("items") && resp.path("items").isArray() ? resp.path("items")
+                                        : resp.has("content") && resp.path("content").isArray() ? resp.path("content")
+                                                : null;
         return arr != null && !arr.isEmpty()
-                ? arr.get(0).path("id").asString(null) : null;
+                ? arr.get(0).path("id").asString(null)
+                : null;
     }
 
     @Transactional
@@ -228,10 +218,6 @@ public class SpedyIntegrationService {
         return view(publicBase);
     }
 
-    /**
-     * Teste de conexão read-only — `GET /v1/companies?pageSize=1`.
-     * Em sucesso, aproveita para sincronizar empresa + segredo + webhook.
-     */
     @Transactional
     public Map<String, Object> testarConexao(String publicBase) {
         IntegrationSettings cfg = load();
@@ -261,7 +247,6 @@ public class SpedyIntegrationService {
         return out;
     }
 
-    /** Eventos de webhook recebidos da Spedy — aba "Eventos". */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> eventos(int limite) {
         var page = webhookEvents.findByProviderOrderByReceivedAtDesc(
@@ -273,7 +258,8 @@ public class SpedyIntegrationService {
             m.put("evento", e.getEventKey());
             m.put("resultado", e.getProcessingResult() != null ? e.getProcessingResult() : "");
             m.put("documento", e.getFiscalDocumentId() != null
-                    ? e.getFiscalDocumentId().toString() : "");
+                    ? e.getFiscalDocumentId().toString()
+                    : "");
             m.put("erro", e.getErrorMessage() != null ? e.getErrorMessage() : "");
             m.put("recebido_em", e.getReceivedAt().toString());
             out.add(m);
@@ -281,7 +267,6 @@ public class SpedyIntegrationService {
         return out;
     }
 
-    /** Últimos documentos fiscais emitidos via Spedy — aba "Histórico". */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> documentos(int limite) {
         var page = documents.findByProviderOrderByCreatedAtDesc(
@@ -305,20 +290,23 @@ public class SpedyIntegrationService {
 
     private String callbackUrl(String publicBase) {
         String base = props.publicBaseUrl() != null && !props.publicBaseUrl().isBlank()
-                ? props.publicBaseUrl() : publicBase;
-        if (base == null || base.isBlank()) return null;
+                ? props.publicBaseUrl()
+                : publicBase;
+        if (base == null || base.isBlank())
+            return null;
         return base + "/api/v1/webhooks/fiscal/spedy";
     }
 
     private static String ambiente(IntegrationSettings cfg) {
         String u = cfg.getBaseUrl();
-        if (u == null || u.isBlank()) return "";
+        if (u == null || u.isBlank())
+            return "";
         return u.contains("sandbox") ? "homologacao" : "producao";
     }
 
-    /** `ambiente` aceito: `homologacao|sandbox|producao|production` → base URL oficial. */
     private static String baseUrlDoAmbiente(Object ambiente) {
-        if (!(ambiente instanceof String a) || a.isBlank()) return null;
+        if (!(ambiente instanceof String a) || a.isBlank())
+            return null;
         return switch (a.trim().toLowerCase()) {
             case "homologacao", "sandbox" -> SpedyClient.URL_SANDBOX;
             case "producao", "production" -> SpedyClient.URL_PRODUCAO;
@@ -333,10 +321,12 @@ public class SpedyIntegrationService {
     }
 
     private static Map<String, Boolean> mapOfBooleans(Object v) {
-        if (!(v instanceof Map<?, ?> m)) return null;
+        if (!(v instanceof Map<?, ?> m))
+            return null;
         Map<String, Boolean> out = new TreeMap<>();
         for (var e : m.entrySet()) {
-            if (e.getKey() instanceof String k && e.getValue() instanceof Boolean b) out.put(k, b);
+            if (e.getKey() instanceof String k && e.getValue() instanceof Boolean b)
+                out.put(k, b);
         }
         return out;
     }

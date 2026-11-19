@@ -3,14 +3,6 @@ package com.hweld.operations.fiscal.infrastructure;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Erro tipado comum dos adapters `FiscalProvider` (Spedy, ...).
- *
- * `codigo`/`erros` preservam os campos do envelope de erro do provedor.
- * `retriable` marca falhas transitórias (429, 5xx, transporte) — emissão
- * inconclusiva (timeout pós-POST) NÃO é retriável: exige reconciliação
- * pela referência antes de qualquer reenvio.
- */
 public class FiscalProviderException extends RuntimeException {
 
     private final String codigo;

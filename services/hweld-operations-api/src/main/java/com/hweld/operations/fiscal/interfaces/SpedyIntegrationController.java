@@ -13,11 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Card Spedy do módulo Integrações — credenciais fiscais gerenciadas pelo
- * cliente. `ROLE_STAFF_ADMIN` no `SecurityConfig` (`/api/v1/integracoes/**`).
- * Segredos write-only: a view devolve apenas flags `configurado`.
- */
 @RestController
 @RequestMapping("/api/v1/integracoes/spedy")
 @Tag(name = "Integrações — Spedy", description = "Integração fiscal Spedy — configuração do cliente")
@@ -51,14 +46,12 @@ public class SpedyIntegrationController {
         return service.testarConexao(publicBase(http));
     }
 
-    /** Últimos eventos de webhook recebidos da Spedy — aba "Eventos". */
     @GetMapping("/eventos")
     public List<Map<String, Object>> eventos(
             @RequestParam(defaultValue = "20") int limite) {
         return service.eventos(limite);
     }
 
-    /** Documentos fiscais emitidos via Spedy — aba "Histórico". */
     @GetMapping("/documentos")
     public List<Map<String, Object>> documentos(
             @RequestParam(defaultValue = "20") int limite) {

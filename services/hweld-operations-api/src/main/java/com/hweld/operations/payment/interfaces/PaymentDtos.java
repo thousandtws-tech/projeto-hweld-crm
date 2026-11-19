@@ -11,14 +11,16 @@ import java.util.UUID;
 
 public final class PaymentDtos {
 
-    private PaymentDtos() {}
+    private PaymentDtos() {
+    }
 
     public record CreatePaymentRequest(
             @NotNull @Positive Long pedidoId,
             @NotNull PaymentMethod method,
             String provider,
             String idempotencyKey,
-            String emailContato) {}
+            String emailContato) {
+    }
 
     public record PaymentResponse(
             UUID id, Long pedidoId, Long empresaId, Long contatoId,

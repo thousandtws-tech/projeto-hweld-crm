@@ -10,7 +10,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
-/** Adapter SMTP real — ativo apenas com EMAIL_PROVIDER=smtp e SMTP_* configurados. */
 @Component
 @ConditionalOnProperty(name = "hweld.notification.email-provider", havingValue = "smtp")
 public class SmtpEmailProvider implements EmailProvider {

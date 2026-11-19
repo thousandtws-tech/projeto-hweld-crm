@@ -5,11 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-/**
- * Reconciliação agendada de documentos não-terminais — cobre webhooks
- * perdidos e emissões inconclusivas (timeout pós-POST). Consulta pela
- * referência única; nunca reenvia emissão. `hweld.fiscal.reconcile-*`.
- */
 @Component
 public class FiscalReconciliationWorker {
 

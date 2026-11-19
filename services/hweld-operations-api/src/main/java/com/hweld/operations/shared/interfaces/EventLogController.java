@@ -33,6 +33,6 @@ public class EventLogController {
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int porPagina) {
         return outbox.search(status, eventType,
-                PageRequest.of(Math.max(pagina, 0), Math.min(porPagina, 100)));
+                PageRequest.of(Math.max(pagina, 0), Math.max(1, Math.min(porPagina, 100))));
     }
 }

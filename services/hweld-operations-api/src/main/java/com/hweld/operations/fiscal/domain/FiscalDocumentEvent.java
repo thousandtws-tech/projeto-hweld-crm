@@ -10,10 +10,6 @@ import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-/**
- * Histórico append-only do ciclo de vida do documento fiscal — emissão,
- * transições de status, webhooks, reconciliações e cancelamentos.
- */
 @Entity
 @Table(name = "fiscal_document_events")
 public class FiscalDocumentEvent {

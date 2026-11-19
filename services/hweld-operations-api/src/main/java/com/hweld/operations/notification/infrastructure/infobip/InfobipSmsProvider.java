@@ -16,13 +16,6 @@ import org.springframework.web.client.RestClientResponseException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * Adapter Infobip SMS API — `POST {baseUrl}/sms/3/messages` com
- * `Authorization: App {API_KEY}` (doc: infobip.com/docs/api/sms-api).
- * Credenciais vêm de `integration_settings` (gestão do cliente no painel,
- * cifradas via `CredentialCipher`) — resolvidas por chamada, nunca
- * cacheadas em claro além do RestClient da configuração corrente.
- */
 @Component
 public class InfobipSmsProvider implements SmsProvider {
 
@@ -31,7 +24,6 @@ public class InfobipSmsProvider implements SmsProvider {
     private final InfobipProperties props;
     private final ObjectMapper mapper;
 
-    /** Cliente da configuração corrente — reconstruído só se ela mudar. */
     private volatile String cachedFingerprint;
     private volatile RestClient cachedClient;
 
@@ -48,13 +40,14 @@ public class InfobipSmsProvider implements SmsProvider {
         return "infobip";
     }
 
-    /** Credenciais resolvidas do banco — ou null se incompletas. */
-    public record Resolved(String baseUrl, String apiKey, String sender) {}
+    public record Resolved(String baseUrl, String apiKey, String sender) {
+    }
 
     public Resolved resolve() {
         IntegrationSettings cfg = settings.findById(IntegrationSettings.INFOBIP_SMS)
                 .orElse(null);
-        if (cfg == null || !cfg.credenciaisCompletas()) return null;
+        if (cfg == null || !cfg.credenciaisCompletas())
+            return null;
         return new Resolved(cfg.getBaseUrl(), cipher.decrypt(cfg.getApiKeyEnc()), cfg.getSender());
     }
 
@@ -86,7 +79,8 @@ public class InfobipSmsProvider implements SmsProvider {
                     .body(String.class);
             JsonNode resp = mapper.readTree(raw);
             JsonNode msg = resp.path("messages").isArray() && !resp.path("messages").isEmpty()
-                    ? resp.path("messages").get(0) : resp;
+                    ? resp.path("messages").get(0)
+                    : resp;
             JsonNode status = msg.path("status");
             int groupId = status.path("groupId").asInt(-1);
             String statusName = status.path("name").asString("");
@@ -107,10 +101,6 @@ public class InfobipSmsProvider implements SmsProvider {
         }
     }
 
-    /**
-     * Teste de conexão read-only — `GET /account/1/balance` (doc. Infobip).
-     * Valida credencial + permissão SEM enviar SMS (nunca gera custo).
-     */
     @Override
     public ConnectionTest testConnection() {
         Resolved r = resolve();
@@ -136,7 +126,6 @@ public class InfobipSmsProvider implements SmsProvider {
         }
     }
 
-    /** RestClient por credencial resolvida — troca ao salvar nova config. */
     private RestClient client(Resolved r) {
         String fp = r.baseUrl() + "|" + Integer.toHexString(r.apiKey().hashCode());
         RestClient c = cachedClient;
@@ -162,7 +151,8 @@ public class InfobipSmsProvider implements SmsProvider {
     private SmsSendException mapHttpError(RestClientResponseException e) {
         int status = e.getStatusCode().value();
         Long retryAfter = parseRetryAfter(e.getResponseHeaders() != null
-                ? e.getResponseHeaders().getFirst("Retry-After") : null);
+                ? e.getResponseHeaders().getFirst("Retry-After")
+                : null);
         return switch (status) {
             case 401 -> new SmsSendException(Kind.INVALID_CREDENTIALS,
                     "API key inválida (HTTP 401)");
@@ -179,7 +169,8 @@ public class InfobipSmsProvider implements SmsProvider {
     }
 
     private static Long parseRetryAfter(String header) {
-        if (header == null || header.isBlank()) return null;
+        if (header == null || header.isBlank())
+            return null;
         try {
             return Long.parseLong(header.trim()) * 1000L;
         } catch (NumberFormatException ignored) {
@@ -197,7 +188,8 @@ public class InfobipSmsProvider implements SmsProvider {
     }
 
     private static String excerpt(String body) {
-        if (body == null) return "";
+        if (body == null)
+            return "";
         return body.length() > 200 ? body.substring(0, 200) : body;
     }
 }

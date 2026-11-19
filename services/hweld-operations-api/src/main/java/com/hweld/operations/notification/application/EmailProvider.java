@@ -1,6 +1,5 @@
 package com.hweld.operations.notification.application;
 
-/** Port de envio de e-mail — SMTP (`SmtpEmailProvider`) ou log (dev). */
 public interface EmailProvider {
 
     String name();
