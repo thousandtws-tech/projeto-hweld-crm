@@ -1,4 +1,4 @@
--- V10 — Melhor Envio (logística): config genérica em `integration_settings`
+-- V11 — Melhor Envio (logística): config genérica em `integration_settings`
 -- (campos que não cabem nas colunas tipadas — ex.: cep_origem, serviços) e
 -- histórico de cotações de frete. Credenciais seguem o padrão cliente:
 -- Bearer token cifrado em `api_key_enc`, ambiente em `base_url`.
