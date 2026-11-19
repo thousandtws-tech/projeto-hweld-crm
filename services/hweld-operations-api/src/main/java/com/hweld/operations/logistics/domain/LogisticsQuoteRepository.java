@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface LogisticsQuoteRepository extends JpaRepository<LogisticsQuote, UUID> {
 
     Page<LogisticsQuote> findByPedidoId(Long pedidoId, Pageable pageable);
+
+    Page<LogisticsQuote> findByEmpresaId(Long empresaId, Pageable pageable);
 }

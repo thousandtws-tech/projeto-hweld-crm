@@ -197,6 +197,65 @@ export interface ResultadoBusca {
   correcao?: string;
 }
 
+// ─── Pagamentos (operations-api, /api/v1/payments — camelCase) ───────────
+
+export type MetodoPagamento = 'PIX' | 'CREDIT_CARD' | 'BOLETO';
+
+export type StatusPagamento =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'CONFIRMED'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'EXPIRED'
+  | 'REFUNDED';
+
+/** PaymentResponse — operations-api serializa camelCase. */
+export interface Pagamento {
+  id: string;
+  pedidoId: number;
+  empresaId: number;
+  contatoId: number | null;
+  provider: string;
+  method: MetodoPagamento;
+  status: StatusPagamento;
+  amount: Dinheiro;
+  currency: string;
+  externalId: string | null;
+  /** Link hospedado no PSP (cartão) — PAN/CVV nunca trafegam na loja. */
+  checkoutUrl: string | null;
+  /** Imagem do QR (data URI base64 ou URL PNG do PSP). */
+  pixQrCode: string | null;
+  /** Pix copia-e-cola. */
+  pixCopyPaste: string | null;
+  expiresAt: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Frete (operations-api, /api/v1/logistica — snake_case) ──────────────
+
+export interface ServicoFrete {
+  servico_id: number;
+  nome: string;
+  transportadora: string;
+  preco: Dinheiro;
+  prazo_dias: number | null;
+  erro?: string;
+}
+
+export interface CotacaoFrete {
+  id: string;
+  provider: string;
+  cep_origem: string;
+  cep_destino: string;
+  pedido_id: number | null;
+  servicos: ServicoFrete[];
+  criado_em: string;
+}
+
 /** Envelope de erro do backend (ErroApp → HTTP). */
 export interface ErroApi {
   codigo?: string;

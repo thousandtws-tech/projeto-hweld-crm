@@ -12,16 +12,6 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 
-/**
- * Adapter `ShippingProvider` do Melhor Envio — converte a cotação neutra em
- * `POST /me/shipment/calculate` (cotação por `products`) e normaliza o
- * objeto-mapa `{serviceId: {…}}` em `CotacaoServico`s.
- *
- * Preço/prazo preferem `custom_price`/`custom_delivery_time` (oficial:
- * refletem as taxas configuradas na conta do usuário) com fallback para
- * `price`/`delivery_time`. Entradas com `error` não quebram a cotação —
- * voltam como `CotacaoServico.erro` para a UI exibir por serviço.
- */
 @Component
 public class MelhorEnvioProvider implements ShippingProvider {
 
@@ -54,7 +44,6 @@ public class MelhorEnvioProvider implements ShippingProvider {
         return normalizar(resposta);
     }
 
-    /** Body oficial — `products` unitários (cm/kg/BRL); `services` CSV opcional. */
     Map<String, Object> montarBody(CotacaoInput input) {
         var body = new LinkedHashMap<String, Object>();
         body.put("from", Map.of("postal_code", input.cepOrigem()));
@@ -78,13 +67,14 @@ public class MelhorEnvioProvider implements ShippingProvider {
         return body;
     }
 
-    /** `{serviceId: {name, custom_price, custom_delivery_time, company, error?}}` → lista. */
     List<CotacaoServico> normalizar(JsonNode resposta) {
         var out = new ArrayList<CotacaoServico>();
-        if (resposta == null || !resposta.isObject()) return out;
+        if (resposta == null || !resposta.isObject())
+            return out;
         resposta.properties().forEach(e -> {
             JsonNode s = e.getValue();
-            if (!s.isObject()) return;
+            if (!s.isObject())
+                return;
             int serviceId;
             try {
                 serviceId = s.hasNonNull("id") ? s.path("id").asInt()
@@ -103,10 +93,11 @@ public class MelhorEnvioProvider implements ShippingProvider {
                     erro));
         });
         out.sort((a, b) -> {
-            // disponíveis antes de indisponíveis; entre disponíveis, menor preço.
             boolean ea = a.erro() != null, eb = b.erro() != null;
-            if (ea != eb) return ea ? 1 : -1;
-            if (a.preco() != null && b.preco() != null) return a.preco().compareTo(b.preco());
+            if (ea != eb)
+                return ea ? 1 : -1;
+            if (a.preco() != null && b.preco() != null)
+                return a.preco().compareTo(b.preco());
             return Integer.compare(a.serviceId(), b.serviceId());
         });
         return out;
@@ -119,13 +110,16 @@ public class MelhorEnvioProvider implements ShippingProvider {
 
     private static Integer prazo(JsonNode s) {
         JsonNode v = s.hasNonNull("custom_delivery_time")
-                ? s.get("custom_delivery_time") : s.get("delivery_time");
+                ? s.get("custom_delivery_time")
+                : s.get("delivery_time");
         return v != null && v.isNumber() ? v.asInt() : null;
     }
 
     private static BigDecimal numero(JsonNode v) {
-        if (v == null || v.isNull()) return null;
-        if (v.isNumber()) return v.decimalValue();
+        if (v == null || v.isNull())
+            return null;
+        if (v.isNumber())
+            return v.decimalValue();
         try {
             return new BigDecimal(v.asString().replace(",", "."));
         } catch (NumberFormatException ignored) {
@@ -133,7 +127,6 @@ public class MelhorEnvioProvider implements ShippingProvider {
         }
     }
 
-    /** Erros do adapter propagam como `ShippingProviderException`. */
     static ShippingProviderException erro(String msg) {
         return MelhorEnvioException.provedor(msg, 0);
     }

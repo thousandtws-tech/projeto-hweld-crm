@@ -383,3 +383,49 @@
     grid-template-columns: 1fr;
   }
 }
+
+.pagamento-opcoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--hw-space-3);
+}
+.pagamento-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: var(--hw-space-3) var(--hw-space-4);
+  border: 1.5px solid var(--hw-border);
+  border-radius: var(--hw-radius-md);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+  input[type='radio'] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .material-symbols-outlined {
+    color: var(--hw-text-muted);
+  }
+  &:hover {
+    border-color: var(--hw-primary);
+  }
+  &.sel {
+    border-color: var(--hw-primary);
+    background: color-mix(in srgb, var(--hw-primary) 6%, transparent);
+    .material-symbols-outlined {
+      color: var(--hw-primary);
+    }
+  }
+}
+.pag-card-titulo {
+  font-size: 14px;
+  font-weight: 700;
+}
+.pag-card-desc {
+  font-size: 12px;
+  color: var(--hw-text-muted);
+  line-height: 1.4;
+}

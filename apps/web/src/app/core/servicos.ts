@@ -5,10 +5,13 @@ import { environment } from '../../environments/environment';
 import {
   Carrinho,
   Categoria,
+  CotacaoFrete,
   DadosEmpresa,
   Endereco,
   ItemCatalogoPortal,
+  MetodoPagamento,
   MeuPerfil,
+  Pagamento,
   Pagina,
   PedidoDetalhe,
   PedidoResumo,
@@ -217,5 +220,43 @@ export class ContaService {
 
   trocarSenha(senha_atual: string, nova_senha: string) {
     return firstValueFrom(this.http.post(`${api}/auth/senha`, { senha_atual, nova_senha }));
+  }
+}
+
+/** Pagamentos — operations-api `/payments`. JWT do portal valida posse do pedido no backend. */
+@Injectable({ providedIn: 'root' })
+export class PagamentoService {
+  private http = inject(HttpClient);
+
+  /** Idempotente: a mesma chave nunca gera duas cobranças no PSP. */
+  criar(input: { pedidoId: number; method: MetodoPagamento; idempotencyKey?: string }) {
+    return firstValueFrom(this.http.post<Pagamento>(`${api}/payments`, input));
+  }
+
+  buscar(id: string) {
+    return firstValueFrom(this.http.get<Pagamento>(`${api}/payments/${id}`));
+  }
+
+  /** Pagamentos do pedido — escopo portal devolve só os da empresa autenticada. */
+  doPedido(pedidoId: number) {
+    return firstValueFrom(
+      this.http.get<{ content: Pagamento[] }>(`${api}/payments`, {
+        params: new HttpParams().set('pedidoId', pedidoId),
+      }),
+    ).then((p) => p.content);
+  }
+}
+
+/** Frete — operations-api `/logistica`. Cotação por pedido resolve dimensões no servidor. */
+@Injectable({ providedIn: 'root' })
+export class LogisticaService {
+  private http = inject(HttpClient);
+
+  cotarPedido(pedidoId: number, servicos?: string) {
+    let params = new HttpParams().set('pedido_id', pedidoId);
+    if (servicos) params = params.set('servicos', servicos);
+    return firstValueFrom(
+      this.http.post<CotacaoFrete>(`${api}/logistica/cotacoes`, null, { params }),
+    );
   }
 }

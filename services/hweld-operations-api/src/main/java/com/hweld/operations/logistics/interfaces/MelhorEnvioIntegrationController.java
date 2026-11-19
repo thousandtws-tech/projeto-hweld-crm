@@ -10,15 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Card Melhor Envio do módulo Integrações — credenciais logísticas
- * gerenciadas pelo cliente. `ROLE_STAFF_ADMIN` no `SecurityConfig`
- * (`/api/v1/integracoes/**`). Token write-only: a view devolve só flags.
- */
 @RestController
 @RequestMapping("/api/v1/integracoes/melhorenvio")
-@Tag(name = "Integrações — Melhor Envio",
-        description = "Integração logística Melhor Envio — configuração do cliente")
+@Tag(name = "Integrações — Melhor Envio", description = "Integração logística Melhor Envio — configuração do cliente")
 public class MelhorEnvioIntegrationController {
 
     private final MelhorEnvioIntegrationService service;

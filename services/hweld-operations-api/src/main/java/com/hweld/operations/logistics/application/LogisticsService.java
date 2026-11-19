@@ -23,11 +23,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Orquestra cotações de frete: resolve o `ShippingProvider` ativo
- * (`auto` → Melhor Envio se credenciada, senão stub), valida CEP/dimensões,
- * chama o adapter e persiste a cotação em `logistics_quotes`.
- */
 @Service
 public class LogisticsService {
 
@@ -39,19 +34,21 @@ public class LogisticsService {
     private final LogisticsProperties props;
     private final MelhorEnvioProvider melhorEnvio;
     private final StubShippingProvider stub;
+    private final com.hweld.operations.shared.infrastructure.coreapi.OrderGateway orderGateway;
 
     public LogisticsService(LogisticsQuoteRepository quotes, LogisticsDataGateway gateway,
             IntegrationSettingsRepository settings, LogisticsProperties props,
-            MelhorEnvioProvider melhorEnvio, StubShippingProvider stub) {
+            MelhorEnvioProvider melhorEnvio, StubShippingProvider stub,
+            com.hweld.operations.shared.infrastructure.coreapi.OrderGateway orderGateway) {
         this.quotes = quotes;
         this.gateway = gateway;
         this.settings = settings;
         this.props = props;
         this.melhorEnvio = melhorEnvio;
         this.stub = stub;
+        this.orderGateway = orderGateway;
     }
 
-    /** Provider efetivo para a cotação — `auto` prefere credenciais do cliente. */
     public ShippingProvider resolver() {
         return switch (props.provider()) {
             case "melhorenvio" -> melhorEnvio;
@@ -65,13 +62,15 @@ public class LogisticsService {
         };
     }
 
-    /**
-     * Cotação por pedido — monta produtos a partir dos dados autoritatídicos
-     * do core-api (peso/dimensões do cadastro + CEP de entrega). Itens sem
-     * dimensões cadastradas bloqueiam a cotação completa.
-     */
     @Transactional
-    public Map<String, Object> cotarPedido(long pedidoId, String servicos) {
+    public Map<String, Object> cotarPedido(long pedidoId, String servicos,
+            com.hweld.operations.shared.infrastructure.security.AuthPrincipal actor,
+            String callerJwt) {
+        if (actor != null && actor.isPortal()) {
+            // A chamada repassa o JWT do contato — pedido de outra empresa
+            // devolve 403/404 do core-api antes de qualquer cotação (IDOR).
+            orderGateway.getOrder(pedidoId, callerJwt, true);
+        }
         var dados = gateway.buscar(pedidoId);
         String cepOrigem = cepOrigem();
         String cepDestino = dados.cepDestino();
@@ -84,7 +83,6 @@ public class LogisticsService {
                 dados.pedido().id(), dados.pedido().empresaId());
     }
 
-    /** Cotação direta (sandbox do painel) — produtos informados pela UI. */
     @Transactional
     public Map<String, Object> cotarManual(String cepDestino, List<ProdutoCotacao> produtos,
             String servicos) {
@@ -132,7 +130,6 @@ public class LogisticsService {
         };
     }
 
-    /** CEP de origem da conta (config.cep_origem) — obrigatório para cotar. */
     private String cepOrigem() {
         IntegrationSettings cfg = settings.findById(IntegrationSettings.MELHOR_ENVIO_FRETE)
                 .orElse(null);
@@ -249,11 +246,18 @@ public class LogisticsService {
         return m;
     }
 
-    /** Histórico recente de cotações — painel da integração. */
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> historico(int limite) {
-        var page = quotes.findAll(PageRequest.of(0, Math.min(Math.max(limite, 1), 100),
-                org.springframework.data.domain.Sort.by("createdAt").descending()));
+    public List<Map<String, Object>> historico(int limite,
+            com.hweld.operations.shared.infrastructure.security.AuthPrincipal actor,
+            String callerJwt) {
+        var pageable = PageRequest.of(0, Math.min(Math.max(limite, 1), 100),
+                org.springframework.data.domain.Sort.by("createdAt").descending());
+        // Portal só vê cotações da própria empresa — o histórico carrega CEP
+        // de destino, dado de terceiros não pode vazar (IDOR).
+        var page = actor != null && actor.isPortal()
+                ? quotes.findByEmpresaId(
+                        orderGateway.getPortalProfile(callerJwt).empresaId(), pageable)
+                : quotes.findAll(pageable);
         return page.map(q -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", q.getId().toString());

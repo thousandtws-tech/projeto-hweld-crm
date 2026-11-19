@@ -10,11 +10,6 @@ import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-/**
- * Registro de uma cotação de frete executada (`logistics_quotes`).
- * Auditoria + histórico do painel; a compra de frete (fase B) referencia
- * a cotação que originou o envio.
- */
 @Entity
 @Table(name = "logistics_quotes")
 public class LogisticsQuote {

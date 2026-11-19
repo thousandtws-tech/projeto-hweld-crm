@@ -9,10 +9,64 @@
     faturamento.
   </p>
 
+  <!-- Instrumento de pagamento — Pix copia-e-cola ou link hospedado do cartão. -->
+  @if (carregandoPagamento()) {
+    <hw-skeleton style="height: 180px; border-radius: 8px; width: 100%; max-width: 460px" />
+  } @else if (pagamento(); as pg) {
+    <section class="pagamento-box" aria-label="Instruções de pagamento">
+      <div class="pag-box-head">
+        <span class="material-symbols-outlined" aria-hidden="true">
+          {{ pg.method === 'PIX' ? 'qr_code_2' : 'credit_card' }}
+        </span>
+        <strong>{{ pg.method === 'PIX' ? 'Pagamento via Pix' : 'Pagamento com cartão' }}</strong>
+        <span class="pag-status" [class.ok]="pg.status === 'CONFIRMED'" [class.erro]="pg.status === 'FAILED'">
+          {{ statusRotulo(pg.status) }}
+        </span>
+      </div>
+      <span class="pag-valor hw-numeric">{{ pg.amount | brl }}</span>
+
+      @if (pg.status === 'CONFIRMED') {
+        <p class="pag-ok-msg">Pagamento confirmado pelo adquirente. Obrigado!</p>
+      } @else if (pg.status === 'FAILED' || pg.status === 'EXPIRED' || pg.status === 'CANCELLED') {
+        <p class="pag-erro-msg">
+          {{ pg.failureMessage ?? 'A cobrança não foi concluída.' }}
+          Acesse o pedido na sua conta para gerar uma nova cobrança.
+        </p>
+      } @else {
+        @if (qrImagem(); as qr) {
+          <img class="pix-qr" [src]="qr" alt="QR Code Pix" width="200" height="200" />
+        }
+        @if (pg.pixCopyPaste) {
+          <div class="pix-copia-box">
+            <code class="pix-copia">{{ pg.pixCopyPaste }}</code>
+            <button hwButton size="sm" (click)="copiarPix(pg.pixCopyPaste!)">
+              <span class="material-symbols-outlined">{{ copiado() ? 'check' : 'content_copy' }}</span>
+              <span>{{ copiado() ? 'Copiado!' : 'Copiar código' }}</span>
+            </button>
+          </div>
+        }
+        @if (pg.checkoutUrl) {
+          <a [href]="pg.checkoutUrl" target="_blank" rel="noopener" hwButton variant="cta" size="lg">
+            <span class="material-symbols-outlined">open_in_new</span>
+            <span>Pagar com cartão (página segura)</span>
+          </a>
+          <p class="pag-dica">
+            O pagamento é concluído na página do adquirente — esta tela atualiza sozinha.
+          </p>
+        }
+        @if (pg.expiresAt) {
+          <p class="pag-expira hw-numeric">
+            Válido até {{ pg.expiresAt | date: 'dd/MM/yyyy HH:mm' }}
+          </p>
+        }
+      }
+    </section>
+  }
+
   <div class="sucesso-acoes">
-    <a routerLink="/conta/pedidos" hwButton size="lg">
+    <a [routerLink]="['/conta/pedidos', numero()]" hwButton size="lg">
       <span class="material-symbols-outlined">receipt_long</span>
-      <span>Acompanhar meus pedidos</span>
+      <span>Acompanhar meu pedido</span>
     </a>
     <a routerLink="/" hwButton variant="secondary" size="lg">
       <span>Voltar ao catálogo</span>

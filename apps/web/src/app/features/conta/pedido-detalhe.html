@@ -96,6 +96,127 @@
         </div>
       </section>
 
+      <!-- Pagamento online — cobrança gerada no PSP (Pix ou link de cartão). -->
+      <section class="woo-box" style="margin-bottom: 20px">
+        <div class="woo-box-head">
+          <h2>Pagamento</h2>
+          @if (pagamento(); as pg) {
+            <span class="pag-status" [class.ok]="pg.status === 'CONFIRMED'" [class.erro]="pg.status === 'FAILED' || pg.status === 'EXPIRED' || pg.status === 'CANCELLED'">
+              {{ statusPagamentoRotulo(pg.status) }}
+            </span>
+          }
+        </div>
+        <div class="woo-box-body">
+          @if (pagamento(); as pg) {
+            <div class="pag-resumo">
+              <span class="pag-metodo">
+                <span class="material-symbols-outlined" aria-hidden="true">
+                  {{ pg.method === 'PIX' ? 'qr_code_2' : 'credit_card' }}
+                </span>
+                {{ pg.method === 'PIX' ? 'Pix' : 'Cartão de crédito' }} ·
+                <strong class="hw-numeric">{{ pg.amount | brl }}</strong>
+              </span>
+
+              @if (pg.status === 'CONFIRMED') {
+                <p class="pag-ok-msg">Pagamento confirmado pelo adquirente.</p>
+              } @else if (pg.status === 'FAILED' || pg.status === 'EXPIRED' || pg.status === 'CANCELLED') {
+                <p class="pag-erro-msg">
+                  {{ pg.failureMessage ?? 'A cobrança não foi concluída.' }}
+                </p>
+                <div class="pag-acoes">
+                  <button hwButton (click)="pagarComPix()">
+                    <span class="material-symbols-outlined">qr_code_2</span>
+                    <span>Gerar novo Pix</span>
+                  </button>
+                  <button hwButton variant="secondary" (click)="pagarComCartao()">
+                    <span class="material-symbols-outlined">credit_card</span>
+                    <span>Pagar com cartão</span>
+                  </button>
+                </div>
+              } @else {
+                @if (qrImagem(); as qr) {
+                  <img class="pix-qr" [src]="qr" alt="QR Code Pix" width="160" height="160" />
+                }
+                @if (pg.pixCopyPaste) {
+                  <div class="pix-copia-box">
+                    <code class="pix-copia">{{ pg.pixCopyPaste }}</code>
+                    <button hwButton size="sm" variant="secondary" (click)="copiarPix(pg.pixCopyPaste!)">
+                      <span class="material-symbols-outlined">
+                        {{ copiado() ? 'check' : 'content_copy' }}
+                      </span>
+                      <span>{{ copiado() ? 'Copiado!' : 'Copiar código Pix' }}</span>
+                    </button>
+                  </div>
+                }
+                @if (pg.checkoutUrl) {
+                  <a [href]="pg.checkoutUrl" target="_blank" rel="noopener" hwButton>
+                    <span class="material-symbols-outlined">open_in_new</span>
+                    <span>Pagar com cartão (página segura)</span>
+                  </a>
+                }
+              }
+            </div>
+          } @else {
+            <div class="pag-resumo">
+              <p class="pag-sem-cobranca">Nenhuma cobrança online gerada para este pedido.</p>
+              <div class="pag-acoes">
+                <button hwButton (click)="pagarComPix()">
+                  <span class="material-symbols-outlined">qr_code_2</span>
+                  <span>Pagar com Pix</span>
+                </button>
+                <button hwButton variant="secondary" (click)="pagarComCartao()">
+                  <span class="material-symbols-outlined">credit_card</span>
+                  <span>Pagar com cartão</span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Frete — cotação sob demanda no Melhor Envio (itens+dimensões do pedido). -->
+      <section class="woo-box" style="margin-bottom: 20px">
+        <div class="woo-box-head">
+          <h2>Frete</h2>
+          <button hwButton size="sm" variant="secondary" [loading]="cotando()" texto="Cotando…" (click)="cotarFrete()">
+            <span class="material-symbols-outlined">local_shipping</span>
+            <span>{{ cotacao() ? 'Recotar frete' : 'Cotar frete' }}</span>
+          </button>
+        </div>
+        <div class="woo-box-body">
+          @if (cotacao(); as cot) {
+            @if (cot.servicos.length) {
+              <ul class="frete-lista">
+                @for (s of cot.servicos; track s.servico_id) {
+                  <li class="frete-item" [class.indisponivel]="s.erro">
+                    <div class="frete-nome">
+                      <strong>{{ s.nome }}</strong>
+                      <span>{{ s.transportadora }}</span>
+                    </div>
+                    @if (s.erro) {
+                      <span class="frete-erro">{{ s.erro }}</span>
+                    } @else {
+                      <div class="frete-valor">
+                        <strong class="hw-numeric">{{ s.preco | brl }}</strong>
+                        @if (s.prazo_dias) {
+                          <span class="hw-numeric">até {{ s.prazo_dias }} dias úteis</span>
+                        }
+                      </div>
+                    }
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="pag-sem-cobranca">Nenhuma transportadora disponível para este destino.</p>
+            }
+          } @else {
+            <p class="pag-sem-cobranca">
+              Cote o frete deste pedido com as transportadoras parceiras.
+            </p>
+          }
+        </div>
+      </section>
+
       <!-- Grade de Totais e Logística -->
       <div class="detalhes-grid">
         <section class="woo-box">

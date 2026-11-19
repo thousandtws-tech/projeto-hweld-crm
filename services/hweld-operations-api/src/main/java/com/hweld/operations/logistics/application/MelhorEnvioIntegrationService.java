@@ -13,12 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 
-/**
- * Gerenciamento da integração Melhor Envio pelo cliente no painel —
- * view/salvar/habilitar/testarConexao. Token write-only (só `configurado`
- * flag), cifrado em `api_key_enc`. `GET /me` valida o token e traz
- * id/nome da conta para `external_id`/`nome_conta`.
- */
 @Service
 public class MelhorEnvioIntegrationService {
 
@@ -146,10 +140,6 @@ public class MelhorEnvioIntegrationService {
         return view();
     }
 
-    /**
-     * "Testar conexão" — `GET /me` valida o token e atualiza
-     * `external_id`/`nome_conta` com a conta resolvida.
-     */
     @Transactional
     public Map<String, Object> testarConexao() {
         IntegrationSettings cfg = load();

@@ -156,6 +156,10 @@ public class PaymentService {
             String callerJwt, Pageable pageable) {
         if (actor.isPortal()) {
             var perfil = orderGateway.getPortalProfile(callerJwt);
+            if (pedidoId != null) {
+                // Portal filtrado por empresa — pedidoId de terceiro devolve página vazia.
+                return payments.findByEmpresaIdAndPedidoId(perfil.empresaId(), pedidoId, pageable);
+            }
             if (status != null) {
                 return payments.findByEmpresaIdAndStatus(perfil.empresaId(), status, pageable);
             }

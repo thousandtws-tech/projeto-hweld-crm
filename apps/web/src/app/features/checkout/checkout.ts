@@ -5,9 +5,9 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
-import { CarrinhoService, ContaService } from '../../core/servicos';
+import { CarrinhoService, ContaService, PagamentoService } from '../../core/servicos';
 import { RealtimeService } from '../../core/realtime';
-import { Endereco } from '../../core/models';
+import { Endereco, MetodoPagamento } from '../../core/models';
 import { BrlPipe } from '../../core/pipes';
 import { HwButton } from '../../shared/ui/button';
 import { HwSkeleton } from '../../shared/ui/skeleton';
@@ -35,6 +35,7 @@ import { ToastService } from '../../shared/ui/toast';
 export class CheckoutPage implements OnInit {
   private carrinho = inject(CarrinhoService);
   private conta = inject(ContaService);
+  private pagamentos = inject(PagamentoService);
   private toast = inject(ToastService);
   private router = inject(Router);
   private rt = inject(RealtimeService);
@@ -62,6 +63,8 @@ export class CheckoutPage implements OnInit {
     faturamento: new FormControl<number | null>(null, { validators: [Validators.required] }),
     entrega: new FormControl<number | null>(null, { validators: [Validators.required] }),
     condicao: new FormControl('', { nonNullable: true }),
+    /** '' = combinar com o vendedor (sem cobrança online). */
+    metodo: new FormControl<'' | MetodoPagamento>('', { nonNullable: true }),
     observacoes: new FormControl('', { nonNullable: true }),
   });
 
@@ -261,6 +264,22 @@ export class CheckoutPage implements OnInit {
         condicao_pagamento: v.condicao || undefined,
         observacoes: v.observacoes || undefined,
       });
+      // Pedido criado — se o cliente escolheu pagar online, gera a cobrança
+      // no PSP (idempotente pela chave do pedido+método: retry nunca duplica).
+      // Falha aqui não derruba o pedido — a tela de confirmação permite retentar.
+      if (v.metodo) {
+        try {
+          await this.pagamentos.criar({
+            pedidoId: pedido.id,
+            method: v.metodo,
+            idempotencyKey: `pedido-${pedido.id}-${v.metodo.toLowerCase()}`,
+          });
+        } catch {
+          this.toast.erro(
+            'Pedido criado, mas a cobrança online falhou. Você pode tentar novamente na tela do pedido.',
+          );
+        }
+      }
       await this.router.navigate(['/checkout/sucesso', pedido.id]);
     } catch (e: unknown) {
       // Envelope ErroApp do backend: { erro: { codigo, mensagem } } — exibe a

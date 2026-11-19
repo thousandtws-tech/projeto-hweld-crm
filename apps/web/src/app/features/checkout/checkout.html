@@ -227,13 +227,34 @@
         </section>
       }
 
-      <!-- Bloco 3: Condição de Pagamento -->
+      <!-- Bloco 3: Condição + Forma de Pagamento -->
       <section class="woo-box">
         <div class="woo-box-head">
-          <h2>3. Condição de pagamento</h2>
+          <h2>3. Pagamento</h2>
         </div>
         <div class="woo-box-body">
-          <mat-form-field appearance="outline" class="w-full">
+          <div class="pagamento-opcoes" role="radiogroup" aria-label="Forma de pagamento">
+            <label class="pagamento-card" [class.sel]="form.controls.metodo.value === 'PIX'">
+              <input type="radio" formControlName="metodo" value="PIX" />
+              <span class="material-symbols-outlined" aria-hidden="true">qr_code_2</span>
+              <span class="pag-card-titulo">Pix</span>
+              <span class="pag-card-desc">QR Code gerado na confirmação — baixa em segundos</span>
+            </label>
+            <label class="pagamento-card" [class.sel]="form.controls.metodo.value === 'CREDIT_CARD'">
+              <input type="radio" formControlName="metodo" value="CREDIT_CARD" />
+              <span class="material-symbols-outlined" aria-hidden="true">credit_card</span>
+              <span class="pag-card-titulo">Cartão de crédito</span>
+              <span class="pag-card-desc">Pagamento seguro na página do adquirente</span>
+            </label>
+            <label class="pagamento-card" [class.sel]="form.controls.metodo.value === ''">
+              <input type="radio" formControlName="metodo" value="" />
+              <span class="material-symbols-outlined" aria-hidden="true">handshake</span>
+              <span class="pag-card-titulo">Combinar com o vendedor</span>
+              <span class="pag-card-desc">Faturado / prazo — sem cobrança online</span>
+            </label>
+          </div>
+
+          <mat-form-field appearance="outline" class="w-full" style="margin-top: 16px">
             <mat-label>Condição de Pagamento</mat-label>
             <mat-select formControlName="condicao">
               <mat-option value="">Combinar com o vendedor / Tabela Padrão</mat-option>

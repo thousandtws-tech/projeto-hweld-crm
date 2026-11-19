@@ -1,16 +1,93 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { PagamentoService } from '../../core/servicos';
+import { RealtimeService } from '../../core/realtime';
+import { Pagamento, StatusPagamento } from '../../core/models';
+import { BrlPipe } from '../../core/pipes';
 import { HwButton } from '../../shared/ui/button';
 import { HwStatusChip } from '../../shared/ui/status-chip';
+import { HwSkeleton } from '../../shared/ui/skeleton';
+import { ToastService } from '../../shared/ui/toast';
 
-/** S08 — Confirmação de pedido com visual moderno e limpo. */
+/** S08 — Confirmação de pedido + instrumentos de pagamento (Pix/checkout cartão). */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, HwStatusChip, HwButton],
+  imports: [RouterLink, DatePipe, HwStatusChip, HwButton, HwSkeleton, BrlPipe],
   templateUrl: './checkout-sucesso.html',
   styleUrl: './checkout-sucesso.scss',
 })
-export class CheckoutSucessoPage {
+export class CheckoutSucessoPage implements OnInit {
   private route = inject(ActivatedRoute);
-  numero = signal(this.route.snapshot.paramMap.get('id'));
+  private pagamentos = inject(PagamentoService);
+  private toast = inject(ToastService);
+  private rt = inject(RealtimeService);
+  private pedidoId = 0;
+
+  numero = signal<string | null>(null);
+  pagamento = signal<Pagamento | null>(null);
+  carregandoPagamento = signal(true);
+  copiado = signal(false);
+
+  /** `pixQrCode` varia por PSP: PagBank envia URL PNG; Mercado Pago, base64 puro.
+   *  Fallback do PagBank (payload EMV) não vira imagem — o copia-e-cola cobre. */
+  qrImagem = computed(() => {
+    const v = this.pagamento()?.pixQrCode;
+    if (!v) return null;
+    if (v.startsWith('http')) return v;
+    if (/^[A-Za-z0-9+/=\s]{300,}$/.test(v)) return `data:image/png;base64,${v}`;
+    return null;
+  });
+
+  constructor() {
+    // `pagamento.*` do SSE — confirmação do PSP aparece na tela sem refresh.
+    this.rt.reagirA(
+      (e) => e.tipo.startsWith('pagamento.') && Number(e.dados['pedidoId']) === this.pedidoId,
+      () => this.carregarPagamento(),
+    );
+  }
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    this.pedidoId = Number(id);
+    this.numero.set(id);
+    this.carregarPagamento();
+  }
+
+  private carregarPagamento(): void {
+    this.pagamentos
+      .doPedido(this.pedidoId)
+      .then((lista) => this.pagamento.set(this.maisRelevante(lista)))
+      .catch(() => this.pagamento.set(null))
+      .finally(() => this.carregandoPagamento.set(false));
+  }
+
+  /** Cobrança ativa primeiro; depois a mais recente. */
+  private maisRelevante(lista: Pagamento[]): Pagamento | null {
+    const ativa = lista.find((p) => ['PENDING', 'PROCESSING'].includes(p.status));
+    return ativa ?? lista[0] ?? null;
+  }
+
+  statusRotulo(s: StatusPagamento): string {
+    const mapa: Record<StatusPagamento, string> = {
+      PENDING: 'Aguardando pagamento',
+      PROCESSING: 'Em análise',
+      CONFIRMED: 'Pagamento confirmado',
+      FAILED: 'Pagamento recusado',
+      CANCELLED: 'Cobrança cancelada',
+      EXPIRED: 'Cobrança expirada',
+      REFUNDED: 'Pagamento estornado',
+    };
+    return mapa[s];
+  }
+
+  async copiarPix(codigo: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(codigo);
+      this.copiado.set(true);
+      setTimeout(() => this.copiado.set(false), 2500);
+    } catch {
+      this.toast.erro('Não foi possível copiar — selecione o código manualmente.');
+    }
+  }
 }

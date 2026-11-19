@@ -15,12 +15,6 @@ import org.springframework.web.client.RestClientResponseException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * `GET {CORE_API}/api/v1/internal/pedidos/{id}/dados-logisticos` — canal
- * service-to-service (`X-Service-Token`). O core-api monta itens com
- * peso/dimensões do cadastro do produto + CEP de entrega: a cotação nasce
- * de dados autoritatídicos, nunca do frontend.
- */
 @Component
 public class CoreApiLogisticsDataGateway implements LogisticsDataGateway {
 
@@ -56,7 +50,8 @@ public class CoreApiLogisticsDataGateway implements LogisticsDataGateway {
                     pedidoId, status, e.getResponseBodyAsString());
             throw ApiException.provedorIndisponivel("core-api indisponível");
         } catch (Exception e) {
-            if (e instanceof ApiException ae) throw ae;
+            if (e instanceof ApiException ae)
+                throw ae;
             log.error("core-api dados-logisticos pedido {} falhou: {}", pedidoId, e.getMessage());
             throw ApiException.provedorIndisponivel("core-api indisponível");
         }
@@ -97,7 +92,8 @@ public class CoreApiLogisticsDataGateway implements LogisticsDataGateway {
         JsonNode end = body.get("endereco_entrega");
         if (end != null && end.isObject() && end.hasNonNull("cep")) {
             cep = end.path("cep").asString().replaceAll("\\D", "");
-            if (cep.length() != 8) cep = null;
+            if (cep.length() != 8)
+                cep = null;
         }
         return new DadosLogisticosPedido(pedido, itens, cep);
     }
@@ -108,14 +104,18 @@ public class CoreApiLogisticsDataGateway implements LogisticsDataGateway {
     }
 
     private static BigDecimal decimal(JsonNode node) {
-        if (node == null || node.isNull()) return BigDecimal.ZERO;
-        if (node.isString()) return new BigDecimal(node.asString());
+        if (node == null || node.isNull())
+            return BigDecimal.ZERO;
+        if (node.isString())
+            return new BigDecimal(node.asString());
         return node.decimalValue();
     }
 
     private static BigDecimal decimalNullable(JsonNode node) {
-        if (node == null || node.isNull()) return null;
-        if (node.isString()) return new BigDecimal(node.asString());
+        if (node == null || node.isNull())
+            return null;
+        if (node.isString())
+            return new BigDecimal(node.asString());
         return node.decimalValue();
     }
 }

@@ -18,23 +18,6 @@ import org.springframework.web.client.RestClientResponseException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * Client HTTP da API Melhor Envio v2 (docs.melhorenvio.com.br).
- *
- * Autenticação: `Authorization: Bearer {access_token}` — token gerado pelo
- * cliente no aplicativo do painel Melhor Envio, gerenciado em
- * `integration_settings` (`melhorenvio-frete`): `base_url` define o
- * ambiente (`https://melhorenvio.com.br` produção |
- * `https://sandbox.melhorenvio.com.br` sandbox) e `api_key_enc` o token
- * cifrado. Credenciais resolvidas por chamada — trocar o token no painel
- * não exige reinício. `User-Agent` é obrigatório pelo contrato oficial.
- *
- * Escopo implementado (fase A): `GET /api/v2/me`, `GET /api/v2/me/balance`
- * e `POST /api/v2/me/shipment/calculate` (cotação por produtos).
- * Carrinho/compra/etiquetas/rastreio = fase B.
- *
- * NUNCA loga o token, headers ou endereços completos.
- */
 @Component
 public class MelhorEnvioClient {
 
@@ -56,21 +39,14 @@ public class MelhorEnvioClient {
         this.props = props;
     }
 
-    /** Dados da conta autenticada — `GET /api/v2/me` (id, nome, e-mail). */
     public JsonNode me() {
         return exchange("GET", "/me", null);
     }
 
-    /** Saldo da carteira — `GET /api/v2/me/balance` → `{balance}`. */
     public JsonNode saldo() {
         return exchange("GET", "/me/balance", null);
     }
 
-    /**
-     * Cotação de fretes — `POST /api/v2/me/shipment/calculate`.
-     * Body: `{from:{postal_code}, to:{postal_code}, products:[…], services?}`.
-     * Resposta: objeto-mapa `{serviceId: {…}}` — um frete por requisição.
-     */
     public JsonNode calcular(Map<String, Object> body) {
         return exchange("POST", "/me/shipment/calculate", body);
     }
@@ -157,10 +133,6 @@ public class MelhorEnvioClient {
         return lista;
     }
 
-    /**
-     * RestClient por chamada — credenciais dinâmicas da `integration_settings`.
-     * `User-Agent` fixo do aplicativo (exigido pelo Melhor Envio).
-     */
     private RestClient client() {
         IntegrationSettings cfg = settings.findById(IntegrationSettings.MELHOR_ENVIO_FRETE)
                 .orElseThrow(() -> MelhorEnvioException.autenticacao(

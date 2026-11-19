@@ -3,12 +3,6 @@ package com.hweld.operations.logistics.infrastructure;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Erro tipado comum dos adapters `ShippingProvider` (Melhor Envio, ...).
- * `retriable` marca falhas transitórias (429, 5xx, transporte de leitura).
- * Cotação é operação de leitura — nunca `inconclusivo` como nas emissões
- * fiscais: timeout num POST de cálculo não gera efeito colateral.
- */
 public class ShippingProviderException extends RuntimeException {
 
     private final String codigo;
