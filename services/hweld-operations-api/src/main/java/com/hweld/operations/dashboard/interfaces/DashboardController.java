@@ -5,12 +5,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * `GET /api/v1/dashboard/resumo` — painel operacional do backoffice:
- * contagens por status e somas sobre payments, billing, fiscal,
- * notificações e a projeção de pedidos. Restrito a `ROLE_STAFF`
- * (SecurityConfig) — nunca exposto ao portal.
- */
 @RestController
 @RequestMapping("/api/v1/dashboard")
 public class DashboardController {

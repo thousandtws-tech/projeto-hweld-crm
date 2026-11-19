@@ -11,13 +11,14 @@ import {
   CATEGORIAS,
   categoriaRotulo,
   estadoInfobip,
+  estadoSpedy,
   estadoZapi,
   type CategoriaIntegracao,
   type EstadoConexao,
   type IntegracaoCatalogo,
 } from "@/lib/integracoes";
-import type { IntegracaoInfobip, IntegracaoZapi } from "@/lib/models";
-import { integracoesService, zapiService } from "@/lib/services";
+import type { IntegracaoInfobip, IntegracaoSpedy, IntegracaoZapi } from "@/lib/models";
+import { integracoesService, spedyService, zapiService } from "@/lib/services";
 import Chip from "@mui/material/Chip";
 import InputAdornment from "@mui/material/InputAdornment";
 import MenuItem from "@mui/material/MenuItem";
@@ -62,9 +63,10 @@ function IntegracoesCatalogoPage() {
 
   const carregar = useCallback(async () => {
     setCarregando(true);
-    const [inf, zap] = await Promise.allSettled([
+    const [inf, zap, spe] = await Promise.allSettled([
       comTimeout(integracoesService.infobip()),
       comTimeout(zapiService.view()),
+      comTimeout(spedyService.view()),
     ]);
     const prox: EstadoPorSlug = {};
     const errs: string[] = [];
@@ -79,6 +81,12 @@ function IntegracoesCatalogoPage() {
     } else {
       prox.zapi = "falha";
       errs.push("Z-API");
+    }
+    if (spe.status === "fulfilled") {
+      prox.spedy = estadoSpedy(spe.value as IntegracaoSpedy);
+    } else {
+      prox.spedy = "falha";
+      errs.push("Spedy");
     }
     // Nunca implementadas no backend → sempre "em_breve".
     for (const item of CATALOGO) {

@@ -1,6 +1,5 @@
 package com.hweld.operations.billing.application;
 
-import com.hweld.operations.billing.domain.BillingInvoice;
 import com.hweld.operations.shared.application.EventTypes;
 import com.hweld.operations.shared.application.IntegrationEvent;
 import com.hweld.operations.shared.application.IntegrationEventHandler;
@@ -9,11 +8,6 @@ import java.time.LocalDate;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
-/**
- * Reage aos eventos do módulo Payment: cria a fatura no PaymentRequested,
- * baixa no PaymentConfirmed, cancela no PaymentCancelled/RefundCompleted.
- * Dedupe por (eventId, "billing") via processed_events.
- */
 @Component
 public class BillingEventHandler implements IntegrationEventHandler {
 

@@ -21,7 +21,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Cobranças/faturas a receber — criadas a partir de pagamentos, baixadas por confirmação. */
 @Service
 public class BillingService {
 
@@ -37,7 +36,6 @@ public class BillingService {
         this.audit = audit;
     }
 
-    /** Fatura de pedido gerada quando um pagamento é solicitado. Idempotente por paymentId. */
     @Transactional
     public BillingInvoice createFromPayment(UUID paymentId, long pedidoId, long empresaId,
             BigDecimal amount, String currency, LocalDate dueDate, String descricao) {
@@ -58,7 +56,6 @@ public class BillingService {
         return invoice;
     }
 
-    /** Baixa da fatura quando o pagamento é confirmado. Idempotente. */
     @Transactional
     public void markPaidByPayment(UUID paymentId) {
         repository.findByPaymentId(paymentId).ifPresent(invoice -> {
@@ -73,7 +70,6 @@ public class BillingService {
         });
     }
 
-    /** Cancela a fatura vinculada quando o pagamento é cancelado/estornado. */
     @Transactional
     public void cancelByPayment(UUID paymentId) {
         repository.findByPaymentId(paymentId).ifPresent(invoice -> {
@@ -81,7 +77,7 @@ public class BillingService {
             try {
                 invoice.cancel();
             } catch (IllegalStateException e) {
-                return; // paga — não cancela (estorno segue outro fluxo)
+                return; 
             }
             repository.save(invoice);
             outbox.publish("billing_invoice", invoice.getId().toString(), IntegrationEvent.of(
@@ -114,8 +110,7 @@ public class BillingService {
         return invoice;
     }
 
-    /** Job diário: faturas OPEN vencidas → OVERDUE + evento. */
-    @Scheduled(cron = "${hweld.billing.overdue-cron:0 15 6 * * *}") // 06:15 diário
+    @Scheduled(cron = "${hweld.billing.overdue-cron:0 15 6 * * *}") 
     @Transactional
     public void markOverdue() {
         var vencidas = repository.findByStatusAndDueDateBefore("OPEN", LocalDate.now());

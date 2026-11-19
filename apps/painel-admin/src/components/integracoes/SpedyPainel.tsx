@@ -367,6 +367,19 @@ export function SpedyPainel({
               </span>
             )}
           </div>
+
+          {i.segredos.campos.api_key && !i.habilitado && (
+            <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-[#B8891D]/40 bg-[#B8891D]/8 px-3.5 py-3" role="note">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-[#B8891D]" />
+              <span className="flex-1 text-xs text-muted-foreground">
+                Credenciais salvas — para concluir a conexão, ative
+                <strong> Emissão habilitada</strong> na aba Visão geral.
+              </span>
+              <Button size="small" variant="outlined" onClick={() => setAba("geral")}>
+                Ir para Visão geral
+              </Button>
+            </div>
+          )}
         </SectionCard>
       )}
 

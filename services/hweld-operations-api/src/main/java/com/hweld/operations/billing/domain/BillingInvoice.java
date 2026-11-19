@@ -9,10 +9,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/**
- * Fatura/cobrança (conta a receber) gerada de um pedido. O pagamento em si
- * vive em `payments`; esta é a visão financeira (vencimento, status, baixa).
- */
 @Entity
 @Table(name = "billing_invoices")
 public class BillingInvoice {

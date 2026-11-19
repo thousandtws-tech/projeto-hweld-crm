@@ -25,7 +25,7 @@ public class SmsProviderRouter implements SmsProvider {
         return switch (props.smsProvider() == null ? "auto" : props.smsProvider()) {
             case "infobip" -> infobip;
             case "log" -> log;
-            default -> infobip.configured() ? infobip : log; // auto
+            default -> infobip.configured() ? infobip : log; 
         };
     }
 

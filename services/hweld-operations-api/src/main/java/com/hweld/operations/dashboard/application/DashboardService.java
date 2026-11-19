@@ -10,11 +10,6 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Agregações do painel operacional — `GROUP BY status` genérico (robusto a
- * novos status sem mudar o DTO) + somas monetárias. Consultas leves sobre
- * projeções/tabelas próprias: nenhum callback ao core-api.
- */
 @Service
 public class DashboardService {
 
@@ -41,11 +36,6 @@ public class DashboardService {
                 bloco("NotificationDelivery", null, null));
     }
 
-    /**
-     * `select status, count, sum(campo?) from Entidade group by status`.
-     * `campoSoma` nulo → só contagens; `statusSoma` restringe a soma
-     * exibida em `somaDestaque` (ex.: volume CONFIRMED de pagamentos).
-     */
     private Map<String, Object> bloco(String entidade, String campoSoma, String statusSoma) {
         String sum = campoSoma != null ? ", coalesce(sum(e." + campoSoma + "),0)" : ", 0";
         @SuppressWarnings("unchecked")

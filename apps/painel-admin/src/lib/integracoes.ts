@@ -199,12 +199,16 @@ export function estadoZapi(v: IntegracaoZapi): EstadoConexao {
   }
 }
 
+/** `estado` do view Spedy → estado de conexão do catálogo. "desativada" com
+ *  api_key salva = configurada aguardando habilitação → pendente, não
+ *  "Desconectado" (que implicaria nunca ter sido configurada). */
 export function estadoSpedy(v: IntegracaoSpedy): EstadoConexao {
   switch (v.estado) {
     case "ativa": return "conectado";
     case "pendente": return "pendente";
     case "falha": return "falha";
-    default: return "desconectado";
+    default:
+      return v.segredos?.campos?.api_key ? "pendente" : "desconectado";
   }
 }
 
