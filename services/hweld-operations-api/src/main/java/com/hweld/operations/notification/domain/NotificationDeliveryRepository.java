@@ -11,13 +11,20 @@ import org.springframework.data.repository.query.Param;
 
 public interface NotificationDeliveryRepository extends JpaRepository<NotificationDelivery, UUID> {
 
-    @Query("""
-            SELECT d FROM NotificationDelivery d
-            WHERE d.status IN ('QUEUED','FAILED')
-              AND (d.nextRetryAt IS NULL OR d.nextRetryAt <= :now)
-            ORDER BY d.createdAt
-            """)
-    List<NotificationDelivery> findDispatchable(@Param("now") Instant now, Pageable pageable);
+    /**
+     * Claim do dispatcher — FOR UPDATE SKIP LOCKED na TX do caller: duas
+     * réplicas nunca despacham o mesmo delivery (SMS/WhatsApp duplicado).
+     */
+    @Query(value = """
+            SELECT * FROM notification_deliveries
+            WHERE status IN ('QUEUED','FAILED')
+              AND (next_retry_at IS NULL OR next_retry_at <= :now)
+            ORDER BY created_at
+            LIMIT :limite
+            FOR UPDATE SKIP LOCKED
+            """, nativeQuery = true)
+    List<NotificationDelivery> findDispatchable(@Param("now") Instant now,
+            @Param("limite") int limite);
 
     Page<NotificationDelivery> findByRecipientOrderByCreatedAtDesc(String recipient, Pageable pageable);
 

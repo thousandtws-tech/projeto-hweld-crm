@@ -36,7 +36,10 @@ public class ServiceTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
             FilterChain chain) throws ServletException, IOException {
         String token = request.getHeader(HEADER);
-        if (token != null && MessageDigest.isEqual(expected, token.getBytes(StandardCharsets.UTF_8))) {
+        // Fail-closed: token configurado vazio + header vazio casaria por
+        // isEqual(vazio, vazio) e concederia ROLE_SERVICE sem credencial.
+        if (expected.length > 0 && token != null && !token.isBlank()
+                && MessageDigest.isEqual(expected, token.getBytes(StandardCharsets.UTF_8))) {
             var auth = new UsernamePasswordAuthenticationToken(
                     "core-api", null, List.of(new SimpleGrantedAuthority("ROLE_SERVICE")));
             SecurityContextHolder.getContext().setAuthentication(auth);

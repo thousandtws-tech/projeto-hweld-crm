@@ -74,7 +74,7 @@ class NotificationServiceTest {
         var t = template();
         when(templates.findByCodeAndActiveTrue("t")).thenReturn(Optional.of(t));
         NotificationDelivery d = service.queue("t", "c@x.com", Map.of("pedidoNumero", "1", "amount", "1"));
-        when(deliveries.findDispatchable(any(), any())).thenReturn(List.of(d));
+        when(deliveries.findDispatchable(any(), org.mockito.ArgumentMatchers.anyInt())).thenReturn(List.of(d));
 
         service.dispatchDue();
 
@@ -87,7 +87,7 @@ class NotificationServiceTest {
         var t = template();
         when(templates.findByCodeAndActiveTrue("t")).thenReturn(Optional.of(t));
         NotificationDelivery d = service.queue("t", "c@x.com", Map.of());
-        when(deliveries.findDispatchable(any(), any())).thenReturn(List.of(d));
+        when(deliveries.findDispatchable(any(), org.mockito.ArgumentMatchers.anyInt())).thenReturn(List.of(d));
         doThrow(new EmailProvider.EmailSendException("smtp down"))
                 .when(emailProvider).send(any(), any(), any(), any());
 

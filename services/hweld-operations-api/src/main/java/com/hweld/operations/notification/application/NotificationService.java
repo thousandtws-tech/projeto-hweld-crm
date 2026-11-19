@@ -223,7 +223,7 @@ public class NotificationService {
     @Scheduled(fixedDelayString = "${hweld.notification.dispatch-interval-ms:3000}", initialDelay = 4000)
     @Transactional
     public void dispatchDue() {
-        List<NotificationDelivery> due = deliveries.findDispatchable(Instant.now(), PageRequest.of(0, 50));
+        List<NotificationDelivery> due = deliveries.findDispatchable(Instant.now(), 50);
         for (NotificationDelivery d : due) {
             send(d);
         }

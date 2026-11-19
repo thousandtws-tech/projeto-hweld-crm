@@ -46,6 +46,10 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/health/**", "/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                // Métricas/env/prometheus NÃO são públicos: antes caíam no
+                // anyRequest().authenticated() — qualquer JWT de portal lia
+                // dados operacionais internos.
+                .requestMatchers("/actuator/**").hasAuthority("ROLE_STAFF_ADMIN")
                 .requestMatchers("/api/v1/webhooks/**").permitAll()
                 .requestMatchers("/api/v1/internal/**").hasAuthority("ROLE_SERVICE")
                 .requestMatchers(HttpMethod.POST, "/api/v1/payments/*/cancel", "/api/v1/payments/*/refund",

@@ -85,11 +85,17 @@ public class PaymentService {
             // paga pela empresa), mas registramos o contato do pedido.
         }
 
+        // Portal não escolhe provider: o campo no DTO existiria para o painel
+        // testar PSPs — aceitá-lo do portal desviaria do kill-switch do
+        // admin e permitiria forçar o stub.
+        if (actor.isPortal() && cmd.provider() != null) {
+            throw ApiException.validacao("provider de pagamento indisponível");
+        }
         PaymentProvider provider = cmd.provider() != null
                 ? providers.get(cmd.provider()) : providers.defaultProvider();
         if ("stub".equals(provider.name()) && actor.isPortal()) {
-            // Stub é provider de teste — portal nunca pode forçá-lo (a
-            // confirmação fake criaria pedido pago sem dinheiro).
+            // Stub é provider de teste — se ele cair como default (nenhum PSP
+            // credenciado), o portal não pode cobrar por ele.
             throw ApiException.validacao("provider de pagamento indisponível");
         }
         if (cmd.provider() != null && !provider.configured() && !"stub".equals(provider.name())) {

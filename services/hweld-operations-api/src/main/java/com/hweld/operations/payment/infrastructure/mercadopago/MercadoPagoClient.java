@@ -91,6 +91,18 @@ public class MercadoPagoClient {
         return exchange("GET", "/checkout/preferences/" + preferenceId, null, null, false);
     }
 
+    /**
+     * `GET /v1/payments/search?external_reference=` — acha os pagamentos
+     * reais gerados por uma preferência Checkout Pro (a preferência tem
+     * `external_reference` = nossa idempotency key).
+     */
+    public JsonNode buscarPagamentosPorReferencia(String externalReference) {
+        return exchange("GET", "/v1/payments/search?external_reference="
+                + java.net.URLEncoder.encode(externalReference,
+                        java.nio.charset.StandardCharsets.UTF_8),
+                null, null, false);
+    }
+
     /** `GET /users/me` — leitura autenticada segura para "Testar conexão". */
     public JsonNode usuario() {
         return exchange("GET", "/users/me", null, null, false);

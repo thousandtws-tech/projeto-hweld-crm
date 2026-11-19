@@ -131,9 +131,24 @@ public class MercadoPagoProvider implements PaymentProvider {
         if (isPaymentId(externalId)) {
             return chargeResultDePagamento(client.consultarPagamento(externalId));
         }
-        // Preferência (Checkout Pro): não tem status financeiro — a confirmação
-        // chega pelo webhook transacional (que migra o id p/ o payment numérico).
+        // Preferência (Checkout Pro): não tem status financeiro, mas pode
+        // já ter gerado pagamentos reais — se o webhook da confirmação se
+        // perdeu, o reconcile precisa achá-los pela external_reference em
+        // vez de devolver PENDING para sempre.
         JsonNode pref = client.consultarPreferencia(externalId);
+        String ref = texto(pref, "external_reference");
+        if (ref != null && !ref.isBlank()) {
+            JsonNode results = client.buscarPagamentosPorReferencia(ref).path("results");
+            if (results.isArray() && !results.isEmpty()) {
+                JsonNode maisRecente = results.get(0);
+                for (JsonNode r : results) {
+                    if (r.path("id").asLong() > maisRecente.path("id").asLong()) {
+                        maisRecente = r;
+                    }
+                }
+                return chargeResultDePagamento(maisRecente);
+            }
+        }
         return new ChargeResult(externalId, PaymentStatus.PENDING,
                 initPoint(pref), null, null,
                 parseInstant(texto(pref, "expiration_date_to")), rawOf(pref));
