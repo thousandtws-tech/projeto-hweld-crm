@@ -14,12 +14,25 @@ public final class PaymentDtos {
     private PaymentDtos() {
     }
 
+    /**
+     * `cardToken`/`paymentMethodId`/`installments`/`issuerId`/
+     * `identification*` — Checkout Transparente Mercado Pago: o SDK do MP
+     * tokeniza PAN/CVV no navegador e só o token (uso único, ~7 dias)
+     * chega aqui; PAN/CVV nunca transitam ou persistem nesta API.
+     * Ausentes → provider decide o fluxo (Checkout Pro hospedado).
+     */
     public record CreatePaymentRequest(
             @NotNull @Positive Long pedidoId,
             @NotNull PaymentMethod method,
             String provider,
             String idempotencyKey,
-            String emailContato) {
+            String emailContato,
+            String cardToken,
+            Integer installments,
+            String paymentMethodId,
+            String issuerId,
+            String identificationType,
+            String identificationNumber) {
     }
 
     public record PaymentResponse(

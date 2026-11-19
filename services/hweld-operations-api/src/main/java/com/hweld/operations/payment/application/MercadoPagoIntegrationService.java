@@ -65,6 +65,7 @@ public class MercadoPagoIntegrationService {
         config.put("ambiente", ambiente(cfg));
         config.put("parcelas_max", configInt(cfg, "parcelas_max", 12));
         config.put("cobrancas_pausadas", cfg.isEnvioPausado());
+        config.put("public_key", cfg.getConfig().getOrDefault("public_key", ""));
         config.put("webhook_url", webhookUrl());
 
         Map<String, Object> view = new TreeMap<>();
@@ -112,6 +113,11 @@ public class MercadoPagoIntegrationService {
         int parcelasMax = c.containsKey("parcelas_max")
                 ? clampInt(c.get("parcelas_max"), 1, 24)
                 : configInt(cfg, "parcelas_max", 12);
+        // public_key NÃO é segredo (vai ao navegador para tokenizar cartão) —
+        // fica no config, não em segredos cifrados.
+        String publicKey = c.containsKey("public_key")
+                ? String.valueOf(c.getOrDefault("public_key", "")).trim()
+                : String.valueOf(cfg.getConfig().getOrDefault("public_key", ""));
         var actor = AuditService.currentActor();
 
         cfg.atualizarMercadoPago(
@@ -120,7 +126,8 @@ public class MercadoPagoIntegrationService {
                 MercadoPagoClient.BASE_URL,
                 cfg.getExternalId(),
                 Boolean.TRUE.equals(c.get("cobrancas_pausadas")),
-                Map.of("ambiente", ambiente, "parcelas_max", parcelasMax),
+                Map.of("ambiente", ambiente, "parcelas_max", parcelasMax,
+                        "public_key", publicKey),
                 actor.tipo() + ":" + actor.id());
 
         if (req.segredos() != null && req.segredos().containsKey("token")) {

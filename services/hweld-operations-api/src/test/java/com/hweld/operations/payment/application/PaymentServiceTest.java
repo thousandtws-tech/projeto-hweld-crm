@@ -75,7 +75,7 @@ class PaymentServiceTest {
         });
 
         Payment p = service.create(new PaymentService.CreatePaymentCommand(
-                10L, PaymentMethod.PIX, null, null, null), portal, "jwt");
+                10L, PaymentMethod.PIX, null, null, null, null, null, null, null, null, null), portal, "jwt");
 
         assertThat(p.getStatus()).isEqualTo(PaymentStatus.PENDING);
         assertThat(p.getAmount()).isEqualByComparingTo("199.90");
@@ -95,7 +95,7 @@ class PaymentServiceTest {
         when(payments.findByIdempotencyKey("pedido-10-PIX-psp-teste")).thenReturn(Optional.of(existente));
 
         Payment p = service.create(new PaymentService.CreatePaymentCommand(
-                10L, PaymentMethod.PIX, null, null, null), portal, "jwt");
+                10L, PaymentMethod.PIX, null, null, null, null, null, null, null, null, null), portal, "jwt");
 
         assertThat(p).isSameAs(existente);
         verify(provider, never()).createCharge(any());
@@ -125,7 +125,7 @@ class PaymentServiceTest {
         });
 
         Payment p = service.create(new PaymentService.CreatePaymentCommand(
-                10L, PaymentMethod.CREDIT_CARD, null, "pedido-10-credit_card", null),
+                10L, PaymentMethod.CREDIT_CARD, null, "pedido-10-credit_card", null, null, null, null, null, null, null),
                 portal, "jwt");
 
         assertThat(morta.getStatus()).isEqualTo(PaymentStatus.EXPIRED);
@@ -137,7 +137,7 @@ class PaymentServiceTest {
     void pedidoCanceladoNaoAceitaCobranca() {
         when(orderGateway.getOrder(10L, "jwt", true)).thenReturn(order("cancelado"));
         assertThatThrownBy(() -> service.create(new PaymentService.CreatePaymentCommand(
-                10L, PaymentMethod.PIX, null, null, null), portal, "jwt"))
+                10L, PaymentMethod.PIX, null, null, null, null, null, null, null, null, null), portal, "jwt"))
                 .isInstanceOf(ApiException.class)
                 .hasMessageContaining("cancelado");
     }
@@ -149,7 +149,7 @@ class PaymentServiceTest {
         when(provider.createCharge(any())).thenThrow(new RuntimeException("timeout"));
 
         assertThatThrownBy(() -> service.create(new PaymentService.CreatePaymentCommand(
-                10L, PaymentMethod.PIX, null, null, null), portal, "jwt"))
+                10L, PaymentMethod.PIX, null, null, null, null, null, null, null, null, null), portal, "jwt"))
                 .isInstanceOf(ApiException.class)
                 .satisfies(e -> assertThat(((ApiException) e).codigo()).isEqualTo("provedor_indisponivel"));
         verify(payments, never()).saveAndFlush(any());
@@ -161,7 +161,7 @@ class PaymentServiceTest {
         when(payments.existsByPedidoIdAndStatus(10L, PaymentStatus.CONFIRMED)).thenReturn(true);
 
         assertThatThrownBy(() -> service.create(new PaymentService.CreatePaymentCommand(
-                10L, PaymentMethod.PIX, null, "chave-nova-qualquer", null), portal, "jwt"))
+                10L, PaymentMethod.PIX, null, "chave-nova-qualquer", null, null, null, null, null, null, null), portal, "jwt"))
                 .isInstanceOf(ApiException.class)
                 .hasMessageContaining("cobrança confirmada");
         verify(provider, never()).createCharge(any());
@@ -177,7 +177,7 @@ class PaymentServiceTest {
         when(payments.findByIdempotencyKey("pedido-10-PIX-psp-teste")).thenReturn(Optional.of(alheio));
 
         assertThatThrownBy(() -> service.create(new PaymentService.CreatePaymentCommand(
-                10L, PaymentMethod.PIX, null, null, null), portal, "jwt"))
+                10L, PaymentMethod.PIX, null, null, null, null, null, null, null, null, null), portal, "jwt"))
                 .isInstanceOf(ApiException.class)
                 .hasMessageContaining("outra empresa");
     }
@@ -193,7 +193,7 @@ class PaymentServiceTest {
         when(orderGateway.getOrder(10L, "jwt", true)).thenReturn(order("aguardando_pagamento"));
 
         assertThatThrownBy(() -> svc.create(new PaymentService.CreatePaymentCommand(
-                10L, PaymentMethod.PIX, "stub", null, null), portal, "jwt"))
+                10L, PaymentMethod.PIX, "stub", null, null, null, null, null, null, null, null), portal, "jwt"))
                 .isInstanceOf(ApiException.class)
                 .hasMessageContaining("indisponível");
         verify(stub, never()).createCharge(any());

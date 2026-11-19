@@ -739,6 +739,7 @@ export interface IntegracaoMercadoPago {
     ambiente: string;
     parcelas_max?: number;
     cobrancas_pausadas: boolean;
+    public_key?: string;
     webhook_url?: string;
   };
   segredos: { campos: { token: boolean; webhook_secret: boolean } };

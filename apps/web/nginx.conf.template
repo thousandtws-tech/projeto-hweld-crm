@@ -13,7 +13,7 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://viacep.com.br; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' https://sdk.mercadopago.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://viacep.com.br https://api.mercadopago.com https://*.mercadopago.com https://*.mercadolibre.com; frame-src https://*.mercadopago.com https://*.mercadolibre.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" always;
 
     # Pagamentos e logística vivem na operations-api (Java) — o restante
     # de /api/v1 segue para o core-api (Rust). proxy_pass via variável +

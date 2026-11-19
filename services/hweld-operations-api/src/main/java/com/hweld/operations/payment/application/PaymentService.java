@@ -66,7 +66,13 @@ public class PaymentService {
             PaymentMethod method,
             String provider,
             String idempotencyKey,
-            String emailContato) {}
+            String emailContato,
+            String cardToken,
+            Integer installments,
+            String paymentMethodId,
+            String issuerId,
+            String identificationType,
+            String identificationNumber) {}
 
     /**
      * Cria cobrança para o pedido. A posse/visibilidade é validada repassando
@@ -147,12 +153,24 @@ public class PaymentService {
             idemKey = idemKey + "-r" + tentativa;
         }
 
+        java.util.Map<String, Object> meta = new java.util.HashMap<>(Map.of(
+                "pedidoId", cmd.pedidoId(), "pedidoNumero", order.numero(),
+                "empresaId", order.empresaId(),
+                "contatoTelefone", order.contatoTelefone() != null ? order.contatoTelefone() : ""));
+        // Checkout transparente: campos tokenizados passam pela metadata —
+        // o provider MP os consome; outros PSPs ignoram (fluxo hospedado).
+        if (cmd.cardToken() != null && !cmd.cardToken().isBlank()) {
+            meta.put("cardToken", cmd.cardToken().trim());
+            meta.put("installments", cmd.installments() != null ? cmd.installments() : 1);
+            meta.put("paymentMethodId", cmd.paymentMethodId() != null ? cmd.paymentMethodId() : "");
+            meta.put("issuerId", cmd.issuerId() != null ? cmd.issuerId() : "");
+            meta.put("identificationType", cmd.identificationType() != null ? cmd.identificationType() : "");
+            meta.put("identificationNumber", cmd.identificationNumber() != null ? cmd.identificationNumber() : "");
+        }
         PaymentProvider.ChargeRequest chargeReq = new PaymentProvider.ChargeRequest(
                 idemKey, order.total(), cmd.method(),
                 "Pedido " + order.numero(), order.contatoEmail() != null ? order.contatoEmail() : cmd.emailContato(),
-                Map.of("pedidoId", cmd.pedidoId(), "pedidoNumero", order.numero(),
-                        "empresaId", order.empresaId(),
-                        "contatoTelefone", order.contatoTelefone() != null ? order.contatoTelefone() : ""));
+                meta);
 
         PaymentProvider.ChargeResult charge;
         try {
@@ -173,7 +191,7 @@ public class PaymentService {
         payment.applyProviderResult(charge.externalId(), charge.checkoutUrl(),
                 charge.pixQrCode(), charge.pixCopyPaste(), charge.expiresAt());
         if (charge.status() != PaymentStatus.PENDING && payment.getStatus().canTransitionTo(charge.status())) {
-            payment.transitionTo(charge.status(), null, null);
+            payment.transitionTo(charge.status(), charge.failureCode(), charge.failureMessage());
         }
 
         try {

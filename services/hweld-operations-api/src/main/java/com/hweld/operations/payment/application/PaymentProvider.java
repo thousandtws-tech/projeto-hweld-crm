@@ -60,7 +60,18 @@ public interface PaymentProvider {
             String pixQrCode,
             String pixCopyPaste,
             Instant expiresAt,
-            Map<String, Object> raw) {}
+            Map<String, Object> raw,
+            String failureCode,
+            String failureMessage) {
+
+        /** Conveniência — fluxos sem motivo de recusa no resultado síncrono. */
+        public ChargeResult(String externalId, PaymentStatus status, String checkoutUrl,
+                String pixQrCode, String pixCopyPaste, Instant expiresAt,
+                Map<String, Object> raw) {
+            this(externalId, status, checkoutUrl, pixQrCode, pixCopyPaste,
+                    expiresAt, raw, null, null);
+        }
+    }
 
     /**
      * `referenceId` = referência de nível de pedido enviada ao PSP na

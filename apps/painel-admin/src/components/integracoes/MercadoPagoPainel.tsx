@@ -48,6 +48,7 @@ export function MercadoPagoPainel({
   const [fToken, setFToken] = useState("");
   const [fSegredo, setFSegredo] = useState("");
   const [fParcelas, setFParcelas] = useState("12");
+  const [fPublicKey, setFPublicKey] = useState("");
   const [fPausada, setFPausada] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
@@ -64,6 +65,7 @@ export function MercadoPagoPainel({
     setFNome(v.nome_conta ?? "");
     setFAmbiente(v.config?.ambiente === "producao" ? "producao" : "teste");
     setFParcelas(String(v.config?.parcelas_max ?? 12));
+    setFPublicKey(v.config?.public_key ?? "");
     setFPausada(v.config?.cobrancas_pausadas === true);
     setFToken("");
     setFSegredo("");
@@ -111,6 +113,7 @@ export function MercadoPagoPainel({
         config: {
           ambiente: fAmbiente,
           parcelas_max: Math.max(1, Math.min(24, Number(fParcelas) || 12)),
+          public_key: fPublicKey.trim(),
           cobrancas_pausadas: fPausada,
         },
         ...(Object.keys(segredos).length ? { segredos } : {}),
@@ -366,6 +369,17 @@ export function MercadoPagoPainel({
               <div className="mb-1 text-xs font-medium text-foreground">Parcelas máximas (cartão)</div>
               <TextField {...inputSm} type="number" inputProps={{ min: 1, max: 24 }}
                 value={fParcelas} onChange={(e) => setFParcelas(e.target.value)} />
+            </div>
+            <div>
+              <div className="mb-1 text-xs font-medium text-foreground">Public Key (checkout na loja)</div>
+              <TextField {...inputSm}
+                placeholder="TEST-… ou APP_USR-… (não é o Access Token)"
+                value={fPublicKey} onChange={(e) => setFPublicKey(e.target.value)} />
+              <Typography variant="body2" className="mt-1 text-[11px] text-muted-foreground">
+                Necessária para o pagamento com cartão direto na loja — os dados
+                do cartão são tokenizados no navegador e nunca passam pela HWeld.
+                Sem ela, a loja usa o link hospedado (Checkout Pro).
+              </Typography>
             </div>
           </div>
 

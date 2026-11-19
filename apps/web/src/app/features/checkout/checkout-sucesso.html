@@ -30,8 +30,17 @@
       } @else if (pg.status === 'FAILED' || pg.status === 'EXPIRED' || pg.status === 'CANCELLED') {
         <p class="pag-erro-msg">
           {{ pg.failureMessage ?? 'A cobrança não foi concluída.' }}
-          Acesse o pedido na sua conta para gerar uma nova cobrança.
         </p>
+        @if (pg.method === 'CREDIT_CARD' && checkoutCfg()?.provedorCartao === 'mercadopago' && checkoutCfg()?.publicKey) {
+          <button hwButton variant="cta" size="lg" (click)="tentarOutroCartao()">
+            <span class="material-symbols-outlined">credit_card</span>
+            <span>Tentar outro cartão</span>
+          </button>
+        } @else {
+          <p class="pag-erro-msg">
+            Acesse o pedido na sua conta para gerar uma nova cobrança.
+          </p>
+        }
       } @else {
         @if (qrImagem(); as qr) {
           <img class="pix-qr" [src]="qr" alt="QR Code Pix" width="200" height="200" />
@@ -60,6 +69,22 @@
           </p>
         }
       }
+    </section>
+  } @else if (brickVisivel()) {
+    <!-- Checkout transparente MP — PAN/CVV são tokenizados pelo SDK no
+         navegador e nunca tocam no backend HWeld (só o token sobe). -->
+    <section class="pagamento-box" aria-label="Pagamento com cartão">
+      <div class="pag-box-head">
+        <span class="material-symbols-outlined" aria-hidden="true">credit_card</span>
+        <strong>Pagamento com cartão</strong>
+        @if (pagandoCartao()) {
+          <span class="pag-status">Processando…</span>
+        }
+      </div>
+      <div id="mp-card-brick" class="mp-brick"></div>
+      <p class="pag-dica">
+        Dados do cartão criptografados direto no Mercado Pago — esta tela atualiza sozinha.
+      </p>
     </section>
   } @else if (erroPagamento()) {
     <p class="pag-erro-msg">

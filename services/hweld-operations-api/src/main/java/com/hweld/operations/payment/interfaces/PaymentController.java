@@ -35,9 +35,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class PaymentController {
 
     private final PaymentService service;
+    private final com.hweld.operations.payment.application.CheckoutConfigService checkoutConfigService;
 
-    public PaymentController(PaymentService service) {
+    public PaymentController(PaymentService service,
+            com.hweld.operations.payment.application.CheckoutConfigService checkoutConfigService) {
         this.service = service;
+        this.checkoutConfigService = checkoutConfigService;
+    }
+
+    /** Config pública do checkout da loja — PSP do cartão + Public Key MP. */
+    @GetMapping("/checkout-config")
+    @Operation(summary = "Config pública para o checkout da loja (sem segredos)")
+    public java.util.Map<String, Object> checkoutConfig() {
+        return checkoutConfigService.config();
     }
 
     @PostMapping
@@ -47,7 +57,9 @@ public class PaymentController {
         AuthPrincipal actor = AuthPrincipal.from(auth);
         PaymentResponse resp = PaymentResponse.from(service.create(
                 new PaymentService.CreatePaymentCommand(req.pedidoId(), req.method(),
-                        req.provider(), req.idempotencyKey(), req.emailContato()),
+                        req.provider(), req.idempotencyKey(), req.emailContato(),
+                        req.cardToken(), req.installments(), req.paymentMethodId(),
+                        req.issuerId(), req.identificationType(), req.identificationNumber()),
                 actor, bearer(auth)));
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }

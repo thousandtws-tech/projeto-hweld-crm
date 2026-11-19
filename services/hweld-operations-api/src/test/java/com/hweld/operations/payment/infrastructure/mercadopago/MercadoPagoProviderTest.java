@@ -153,6 +153,63 @@ class MercadoPagoProviderTest {
                 .noneMatch(e -> "account_money".equals(e.get("id"))));
     }
 
+    private ChargeRequest reqCartaoTokenizado() {
+        return new ChargeRequest("idem-1", new Money(new BigDecimal("199.90"), "BRL"),
+                PaymentMethod.CREDIT_CARD, "Pedido 42", "cli@x.com",
+                Map.of("pedidoId", 42, "pedidoNumero", "42",
+                        "cardToken", "tok_abc123", "installments", 3,
+                        "paymentMethodId", "visa", "issuerId", "24",
+                        "identificationType", "CPF", "identificationNumber", "123.456.789-09"));
+    }
+
+    @Test
+    void createChargeCartaoComTokenChamaPaymentsDireto() throws Exception {
+        configurado();
+        var payment = mapper.readTree("""
+            {"id": 555001, "status": "approved", "status_detail": "accredited"}
+            """);
+        when(client.criarPagamento(any(), eq("idem-1"))).thenReturn(payment);
+
+        ChargeResult r = provider.createCharge(reqCartaoTokenizado());
+
+        assertEquals("555001", r.externalId());
+        assertEquals(PaymentStatus.CONFIRMED, r.status());
+        verify(client).criarPagamento(any(), eq("idem-1"));
+        verify(client, org.mockito.Mockito.never()).criarPreferencia(any(), any());
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> body = ArgumentCaptor.forClass(Map.class);
+        verify(client).criarPagamento(body.capture(), eq("idem-1"));
+        Map<String, Object> b = body.getValue();
+        assertEquals("tok_abc123", b.get("token"));
+        assertEquals("visa", b.get("payment_method_id"));
+        assertEquals(3, b.get("installments"));
+        assertEquals("24", b.get("issuer_id"));
+        assertEquals(true, b.get("binary_mode"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> payer = (Map<String, Object>) b.get("payer");
+        assertEquals("cli@x.com", payer.get("email"));
+        @SuppressWarnings("unchecked")
+        Map<String, String> ident = (Map<String, String>) payer.get("identification");
+        assertEquals("CPF", ident.get("type"));
+        assertEquals("12345678909", ident.get("number"));
+    }
+
+    @Test
+    void createChargeCartaoRecusadoExpoeStatusDetail() throws Exception {
+        configurado();
+        var payment = mapper.readTree("""
+            {"id": 555002, "status": "rejected", "status_detail": "cc_rejected_insufficient_amount"}
+            """);
+        when(client.criarPagamento(any(), eq("idem-1"))).thenReturn(payment);
+
+        ChargeResult r = provider.createCharge(reqCartaoTokenizado());
+
+        assertEquals(PaymentStatus.FAILED, r.status());
+        assertEquals("cc_rejected_insufficient_amount", r.failureCode());
+        assertEquals("Saldo ou limite insuficiente no cartão", r.failureMessage());
+    }
+
     @Test
     void boletoTemErroTipadoSemSuporteFingido() {
         configurado();

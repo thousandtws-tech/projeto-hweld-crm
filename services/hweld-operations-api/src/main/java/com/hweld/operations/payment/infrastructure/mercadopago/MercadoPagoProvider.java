@@ -119,6 +119,15 @@ public class MercadoPagoProvider implements PaymentProvider {
             }
         });
         if (req.method() == PaymentMethod.CREDIT_CARD) {
+            String cardToken = metaStr(req, "cardToken");
+            if (cardToken != null) {
+                // Checkout Transparente — POST /v1/payments com o card token
+                // gerado pelo SDK no navegador (PAN/CVV nunca transitam aqui).
+                JsonNode payment = client.criarPagamento(
+                        montarPagamentoCartao(req, cardToken), req.idempotencyKey());
+                return chargeResultDePagamento(payment);
+            }
+            // Sem token — Checkout Pro hospedado (link gerado no admin).
             JsonNode pref = client.criarPreferencia(montarPreferenciaCartao(req), req.idempotencyKey());
             return chargeResultDePreferencia(pref);
         }
@@ -391,6 +400,76 @@ public class MercadoPagoProvider implements PaymentProvider {
         return body;
     }
 
+    /**
+     * Checkout Transparente — `POST /v1/payments` direto. `token`/`payment_method_id`/
+     * `installments`/`issuer_id` vêm do Card Form/Brick (SDK no navegador —
+     * PAN/CVV trafegam só navegador→MP). `payer.identification` (CPF/CNPJ) é
+     * coletado pelo Brick e alimenta o antifraude — sem ele a recusa
+     * `cc_rejected_*` dispara. Resposta é síncrona: approved/rejected/in_process.
+     */
+    private Map<String, Object> montarPagamentoCartao(ChargeRequest req, String cardToken) {
+        String pedidoNumero = String.valueOf(req.metadata().getOrDefault("pedidoNumero",
+                req.metadata().getOrDefault("pedidoId", "")));
+        String paymentMethodId = metaStr(req, "paymentMethodId");
+        if (paymentMethodId == null) {
+            throw ApiException.validacao(
+                    "paymentMethodId ausente — o Brick do Mercado Pago deve enviá-lo junto ao token");
+        }
+        int installments = 1;
+        Object inst = req.metadata().get("installments");
+        if (inst instanceof Number n) installments = n.intValue();
+        else if (inst != null) {
+            try {
+                installments = Integer.parseInt(String.valueOf(inst));
+            } catch (NumberFormatException ignored) { /* fica 1 */ }
+        }
+        installments = Math.max(1, Math.min(24, installments));
+
+        Map<String, Object> body = new HashMap<>(Map.of(
+                "transaction_amount", req.amount().amount(),
+                "description", req.description() != null && !req.description().isBlank()
+                        ? req.description() : "Pedido " + pedidoNumero,
+                "token", cardToken,
+                "payment_method_id", paymentMethodId,
+                "installments", installments,
+                "external_reference", req.idempotencyKey()));
+
+        String issuerId = metaStr(req, "issuerId");
+        if (issuerId != null) body.put("issuer_id", issuerId);
+
+        Map<String, Object> payer = new HashMap<>();
+        if (req.customerEmail() != null && !req.customerEmail().isBlank()) {
+            payer.put("email", req.customerEmail().trim());
+        }
+        String idType = metaStr(req, "identificationType");
+        String idNumber = metaStr(req, "identificationNumber");
+        if (idType != null && idNumber != null) {
+            payer.put("identification", Map.of(
+                    "type", idType, "number", idNumber.replaceAll("\\D", "")));
+        }
+        if (!payer.isEmpty()) body.put("payer", payer);
+
+        // binary_mode=true → recusa instantânea em vez de in_process pendurado
+        // para sempre em pagamentos que o antifraude seguraria por dias.
+        body.put("binary_mode", true);
+
+        String webhookUrl = webhookUrl();
+        if (webhookUrl != null) {
+            body.put("notification_url", webhookUrl);
+        } else {
+            log.warn("APP_PUBLIC_URL ausente — pagamento de cartão criado SEM "
+                    + "notification_url (confirmação só por reconciliação)");
+        }
+        return body;
+    }
+
+    private static String metaStr(ChargeRequest req, String chave) {
+        Object v = req.metadata().get(chave);
+        if (v == null) return null;
+        String s = String.valueOf(v).trim();
+        return s.isEmpty() ? null : s;
+    }
+
     private String webhookUrl() {
         String base = infobipProps.publicBaseUrl();
         if (base == null || base.isBlank()) return null;
@@ -418,14 +497,42 @@ public class MercadoPagoProvider implements PaymentProvider {
         if (id == null) {
             throw MercadoPagoException.provedor("payment criado sem id no Mercado Pago", 0);
         }
+        String status = texto(payment, "status");
+        String detail = texto(payment, "status_detail");
+        PaymentStatus mapped = mapStatus(status, detail);
         String qrCode = textoAninhado(payment, "point_of_interaction", "transaction_data", "qr_code");
         String qrBase64 = textoAninhado(payment, "point_of_interaction", "transaction_data",
                 "qr_code_base64");
-        return new ChargeResult(id, mapStatus(texto(payment, "status"),
-                texto(payment, "status_detail")),
+        // status_detail persiste como failureCode/Message — cartão recusado
+        // no checkout transparente precisa exibir o motivo real (ex.:
+        // cc_rejected_insufficient_amount), não "falhou" genérico.
+        boolean falhou = mapped == PaymentStatus.FAILED;
+        return new ChargeResult(id, mapped,
                 textoAninhado(payment, "point_of_interaction", "transaction_data", "ticket_url"),
                 qrBase64, qrCode,
-                parseInstant(texto(payment, "date_of_expiration")), rawOf(payment));
+                parseInstant(texto(payment, "date_of_expiration")), rawOf(payment),
+                falhou ? detail : null, falhou ? traduzirRecusa(detail) : null);
+    }
+
+    /** status_detail oficial MP → mensagem amigável para o comprador. */
+    static String traduzirRecusa(String statusDetail) {
+        if (statusDetail == null) return "Pagamento recusado pelo adquirente";
+        return switch (statusDetail) {
+            case "cc_rejected_insufficient_amount" -> "Saldo ou limite insuficiente no cartão";
+            case "cc_rejected_bad_filled_card_number" -> "Número do cartão inválido";
+            case "cc_rejected_bad_filled_date" -> "Data de validade inválida";
+            case "cc_rejected_bad_filled_security_code" -> "Código de segurança (CVV) inválido";
+            case "cc_rejected_bad_filled_other" -> "Dados do cartão inválidos — confira e tente novamente";
+            case "cc_rejected_call_for_authorize" -> "O emissor pede autorização — ligue para o banco e tente novamente";
+            case "cc_rejected_card_disabled" -> "Cartão desabilitado — ative-o junto ao banco";
+            case "cc_rejected_card_error" -> "O cartão não aceita a transação — tente outro cartão";
+            case "cc_rejected_duplicated_payment" -> "Pagamento duplicado recusado — aguarde antes de tentar de novo";
+            case "cc_rejected_high_risk" -> "Pagamento recusado pela análise de risco do adquirente";
+            case "cc_rejected_blacklist" -> "Cartão não autorizado para esta compra";
+            case "cc_rejected_max_attempts" -> "Limite de tentativas do cartão excedido — tente mais tarde";
+            case "cc_rejected_other_reason" -> "Pagamento recusado pelo emissor — tente outro cartão";
+            default -> "Pagamento recusado pelo adquirente (" + statusDetail + ")";
+        };
     }
 
     private ChargeResult chargeResultDePreferencia(JsonNode pref) {

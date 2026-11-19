@@ -270,10 +270,11 @@ export class CheckoutPage implements OnInit {
         condicao_pagamento: v.condicao || undefined,
         observacoes: v.observacoes || undefined,
       });
-      // Pedido criado — se o cliente escolheu pagar online, gera a cobrança
-      // no PSP (idempotente pela chave do pedido+método: retry nunca duplica).
-      // Falha aqui não derruba o pedido — a tela de confirmação permite retentar.
-      if (v.metodo) {
+      // Pedido criado — Pix gera a cobrança já (QR na tela de confirmação).
+      // Cartão NÃO cria aqui: a página de sucesso decide o fluxo pelo PSP —
+      // Mercado Pago renderiza o Brick (tokenização no navegador), demais
+      // PSPs criam a cobrança hospedada lá mesmo. Falha não derruba o pedido.
+      if (v.metodo === 'PIX') {
         try {
           await this.pagamentos.criar({
             pedidoId: pedido.id,
@@ -286,7 +287,9 @@ export class CheckoutPage implements OnInit {
           );
         }
       }
-      await this.router.navigate(['/checkout/sucesso', pedido.id]);
+      await this.router.navigate(['/checkout/sucesso', pedido.id], {
+        queryParams: v.metodo ? { metodo: v.metodo } : {},
+      });
     } catch (e: unknown) {
       // Envelope ErroApp do backend: { erro: { codigo, mensagem } } — exibe a
       // razão real (ex.: itens indisponíveis, carrinho já convertido).

@@ -229,8 +229,29 @@ export class PagamentoService {
   private http = inject(HttpClient);
 
   /** Idempotente: a mesma chave nunca gera duas cobranças no PSP. */
-  criar(input: { pedidoId: number; method: MetodoPagamento; idempotencyKey?: string }) {
+  criar(input: {
+    pedidoId: number;
+    method: MetodoPagamento;
+    idempotencyKey?: string;
+    /** Checkout transparente — token de uso único gerado pelo SDK do MP no
+     *  navegador (PAN/CVV nunca trafegam na HWeld). */
+    cardToken?: string;
+    installments?: number;
+    paymentMethodId?: string;
+    issuerId?: string;
+    identificationType?: string;
+    identificationNumber?: string;
+  }) {
     return firstValueFrom(this.http.post<Pagamento>(`${api}/payments`, input));
+  }
+
+  /** Config pública do checkout — PSP do cartão + Public Key MP (sem segredos). */
+  checkoutConfig() {
+    return firstValueFrom(
+      this.http.get<{ provedorCartao: string; publicKey?: string; parcelasMax?: number }>(
+        `${api}/payments/checkout-config`,
+      ),
+    );
   }
 
   buscar(id: string) {
