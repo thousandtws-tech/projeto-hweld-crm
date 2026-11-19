@@ -66,7 +66,7 @@ public class FiscalDocument {
     @Column(name = "status_detail", length = 500)
     private String statusDetail;
 
-    /** Referência única da emissão no provedor (`ref` na Focus NFe). */
+    /** Referência única da emissão no provedor (`integrationId` na Spedy). */
     @Column(name = "external_id", length = 160)
     private String externalId;
 

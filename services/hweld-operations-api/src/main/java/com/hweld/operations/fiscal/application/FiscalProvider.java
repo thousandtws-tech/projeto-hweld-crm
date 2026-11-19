@@ -4,7 +4,7 @@ import com.hweld.operations.fiscal.domain.FiscalDocument;
 import java.util.Map;
 
 /**
- * Port do provedor fiscal (NF-e/NFS-e via gateway — ex.: Focus NFe, Nuvem
+ * Port do provedor fiscal (NF-e/NFS-e via gateway — ex.: Spedy
  * Fiscal, ou integração SEFAZ direta). O contrato é deliberadamente genérico:
  * dados tributários concretos são construídos pelo adapter a partir da
  * `configuracao_fiscal` do core-api + dados do documento.
@@ -17,7 +17,7 @@ public interface FiscalProvider {
     default String environment() { return "homologacao"; }
 
     /**
-     * Referência única determinística da emissão (`ref` na Focus NFe) —
+     * Referência única determinística da emissão (`integrationId` na Spedy) —
      * persistida em `external_id` ANTES do POST para reconciliação pós-falha.
      * `null` = o provedor atribui o identificador na resposta.
      */

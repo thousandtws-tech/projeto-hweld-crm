@@ -5,7 +5,6 @@ import com.hweld.operations.fiscal.domain.FiscalDocumentEvent;
 import com.hweld.operations.fiscal.domain.FiscalDocumentEventRepository;
 import com.hweld.operations.fiscal.domain.FiscalDocumentRepository;
 import com.hweld.operations.fiscal.infrastructure.FiscalProviderException;
-import com.hweld.operations.fiscal.infrastructure.focusnfe.NFeMapper.NFeValidationException;
 import com.hweld.operations.shared.application.EventTypes;
 import com.hweld.operations.shared.application.IntegrationEvent;
 import com.hweld.operations.shared.application.ObjectStorage;
@@ -36,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
  * provedor configurado (`hweld.fiscal.provider`). Não calcula tributos —
  * apenas orquestra e registra protocolos/rejeições/autorizações.
  *
- * Semântica de emissão com provedor real (Focus NFe):
+ * Semântica de emissão com provedor real (Spedy):
  * - `external_id` = `ref` determinística persistida ANTES do POST — timeout
  *   nunca é prova de falha; a resolução acontece via `GET /{ref}`.
  * - O POST de emissão NÃO passa por retry automático (efeito colateral);
@@ -167,12 +166,12 @@ public class FiscalService {
     /**
      * Resolve o adapter de novas emissões. `provider=auto` (default) escolhe
      * o primeiro adapter com credenciais configuradas — Spedy gerenciada pelo
-     * cliente, depois Focus (env), senão stub. Nome explícito força o adapter.
+     * cliente, senão stub. Nome explícito força o adapter.
      */
     private FiscalProvider resolveProvider() {
         String wanted = props.provider() == null ? "auto" : props.provider().trim();
         if ("auto".equalsIgnoreCase(wanted)) {
-            for (String nome : List.of("spedy", "focusnfe")) {
+            for (String nome : List.of("spedy")) {
                 FiscalProvider p = providers.get(nome);
                 if (p != null && p.configured()) return p;
             }

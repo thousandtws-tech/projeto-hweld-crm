@@ -270,7 +270,7 @@ export const fiscalService = {
 
 /**
  * Orquestração fiscal no hweld-operations-api (`/fiscal-documents`): emissão,
- * consulta, cancelamento e artefatos via provedor configurado (Focus NFe).
+ * consulta, cancelamento e artefatos via provedor configurado (Spedy).
  * O frontend nunca fala com o provedor — só com endpoints internos.
  */
 export const fiscalDocService = {

@@ -53,9 +53,10 @@ integrações. Atualizado em 2026-11-13.
 - Payments: port `PaymentProvider`, `StubPaymentProvider`, webhooks HMAC +
   idempotência `(provider, external_event_id)`, cancel/refund/reconcile
 - Billing: `billing_invoices` (faturas/recebíveis)
-- Fiscal: `FocusNFeProvider` (API v2 real), `NFeMapper`, máquina de estados,
-  reconciliação de docs não-terminais, webhooks Focus autenticados + dedupe,
-  admin de gatilhos `/v2/hooks`, artefatos XML/DANFE → `ObjectStorage`
+- Fiscal: `SpedyProvider` (API v1 real), `SpedyNFeMapper`, máquina de estados,
+  reconciliação de docs não-terminais, webhooks Spedy (Standard Webhooks
+  HMAC) + dedupe, credenciais do cliente cifradas via Integrações,
+  artefatos XML/DANFE → `ObjectStorage`
 - Notificações: templates + `notification_deliveries`,
   `EmailProvider` (`log` | `smtp`)
 - Outbox transacional + relay com backoff/DLQ → core-api e realtime-engine
@@ -111,10 +112,10 @@ integrações. Atualizado em 2026-11-13.
    pagamento real em produção.
 2. **E-mail transacional** — `EMAIL_PROVIDER=log`. Falta SMTP real
    (`EMAIL_PROVIDER=smtp` + `SMTP_*`) ou serviço gerenciado.
-3. **Fiscal em produção** — Focus NFe implementado, falta tokens
-   `FOCUS_NFE_*`, `FOCUS_NFE_PRODUCTION_ENABLED=true`, dados do emitente e
-   defaults tributários (natureza/CFOP/ICMS/PIS/COFINS). NFS-e municipal =
-   iteração futura.
+3. **Fiscal em produção** — Spedy implementado (NF-e); falta o cliente
+   cadastrar a `X-Api-Key` em Integrações → Spedy e revisar os defaults
+   tributários (`FISCAL_NFE_*`: natureza/CFOP/ICMS/PIS/COFINS) com o
+   contador. NFS-e municipal/NFC-e = iteração futura.
 4. **MinIO/S3 em produção** — `MINIO_*` para artefatos fiscais (XML/DANFE);
    hoje noop em dev.
 

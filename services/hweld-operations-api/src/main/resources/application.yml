@@ -124,56 +124,30 @@ hweld:
     # Dev only: aceita webhook do provider 'stub' sem assinatura. Sempre false fora de dev/test.
     allow-unsigned-stub-webhook: ${PAYMENT_STUB_ALLOW_UNSIGNED:false}
   fiscal:
-    provider: ${FISCAL_PROVIDER:auto}   # auto | stub | focusnfe | spedy
+    provider: ${FISCAL_PROVIDER:auto}   # auto | stub | spedy
     auto-emit-on-payment-confirmed: ${FISCAL_AUTO_EMIT:false}
     ambiente: ${FISCAL_AMBIENTE:homologacao}
     reconcile-interval-ms: ${FISCAL_RECONCILE_INTERVAL_MS:120000}
     reconcile-initial-delay-ms: ${FISCAL_RECONCILE_INITIAL_DELAY_MS:30000}
     reconcile-min-age-ms: ${FISCAL_RECONCILE_MIN_AGE_MS:60000}
     reconcile-batch-size: ${FISCAL_RECONCILE_BATCH_SIZE:20}
-    focus:
-      # Ambiente ativo: homologacao | producao — isolamento total, sem fallback.
-      environment: ${FOCUS_NFE_ENV:homologacao}
-      homologation-url: ${FOCUS_NFE_HOMOLOGATION_URL:https://homologacao.focusnfe.com.br}
-      production-url: ${FOCUS_NFE_PRODUCTION_URL:https://api.focusnfe.com.br}
-      # Tokens por ambiente (Basic Auth: username=token, senha vazia). Sem default.
-      homologation-token: ${FOCUS_NFE_HOMOLOGATION_TOKEN:}
-      production-token: ${FOCUS_NFE_PRODUCTION_TOKEN:}
-      # Guard de produção: emissão real só com habilitação explícita.
-      production-enabled: ${FOCUS_NFE_PRODUCTION_ENABLED:false}
-      timeout-ms: ${FOCUS_NFE_TIMEOUT_MS:30000}
-      download-timeout-ms: ${FOCUS_NFE_DOWNLOAD_TIMEOUT_MS:15000}
-      # Segredo do webhook — o par authorization/authorization_header do gatilho.
-      webhook-auth-token: ${FOCUS_NFE_WEBHOOK_AUTH_TOKEN:}
-      webhook-auth-header: ${FOCUS_NFE_WEBHOOK_AUTH_HEADER:X-Webhook-Token}
-      # URL pública deste endpoint (para registro do gatilho via API).
-      webhook-url: ${FOCUS_NFE_WEBHOOK_URL:}
-      emitente:
-        cnpj: ${FOCUS_NFE_EMITENTE_CNPJ:}
-        nome: ${FOCUS_NFE_EMITENTE_NOME:}
-        nome-fantasia: ${FOCUS_NFE_EMITENTE_NOME_FANTASIA:}
-        inscricao-estadual: ${FOCUS_NFE_EMITENTE_IE:}
-        logradouro: ${FOCUS_NFE_EMITENTE_LOGRADOURO:}
-        numero: ${FOCUS_NFE_EMITENTE_NUMERO:}
-        bairro: ${FOCUS_NFE_EMITENTE_BAIRRO:}
-        municipio: ${FOCUS_NFE_EMITENTE_MUNICIPIO:}
-        uf: ${FOCUS_NFE_EMITENTE_UF:}
-        cep: ${FOCUS_NFE_EMITENTE_CEP:}
-        regime-tributario: ${FOCUS_NFE_EMITENTE_REGIME_TRIBUTARIO:1}
-        inscricao-municipal: ${FOCUS_NFE_EMITENTE_IM:}
-      nfe:
-        natureza-operacao: ${FOCUS_NFE_NATUREZA_OPERACAO:Venda de mercadoria}
-        cfop: ${FOCUS_NFE_CFOP:}
-        unidade: ${FOCUS_NFE_UNIDADE:UN}
-        tipo-documento: ${FOCUS_NFE_TIPO_DOCUMENTO:1}
-        finalidade-emissao: ${FOCUS_NFE_FINALIDADE_EMISSAO:1}
-        modalidade-frete: ${FOCUS_NFE_MODALIDADE_FRETE:9}
-        presenca-comprador: ${FOCUS_NFE_PRESENCA_COMPRADOR:9}
-        consumidor-final: ${FOCUS_NFE_CONSUMIDOR_FINAL:0}
-        icms-origem: ${FOCUS_NFE_ICMS_ORIGEM:0}
-        icms-situacao-tributaria: ${FOCUS_NFE_ICMS_ST:}
-        pis-situacao-tributaria: ${FOCUS_NFE_PIS_ST:}
-        cofins-situacao-tributaria: ${FOCUS_NFE_COFINS_ST:}
+    # Defaults fiscais dos itens/nota — consumidos pelos adapters (Spedy).
+    # O emitente NÃO é configurado aqui: vive no backoffice do provedor
+    # (certificado, endereço, série e regime — identificado pela X-Api-Key).
+    nfe:
+      natureza-operacao: ${FISCAL_NFE_NATUREZA_OPERACAO:Venda de mercadoria}
+      cfop: ${FISCAL_NFE_CFOP:}
+      unidade: ${FISCAL_NFE_UNIDADE:UN}
+      tipo-documento: ${FISCAL_NFE_TIPO_DOCUMENTO:1}
+      finalidade-emissao: ${FISCAL_NFE_FINALIDADE_EMISSAO:1}
+      modalidade-frete: ${FISCAL_NFE_MODALIDADE_FRETE:9}
+      presenca-comprador: ${FISCAL_NFE_PRESENCA_COMPRADOR:9}
+      consumidor-final: ${FISCAL_NFE_CONSUMIDOR_FINAL:0}
+      indicador-ie-destinatario: ${FISCAL_NFE_INDICADOR_IE_DESTINATARIO:}
+      icms-origem: ${FISCAL_NFE_ICMS_ORIGEM:0}
+      icms-situacao-tributaria: ${FISCAL_NFE_ICMS_ST:}
+      pis-situacao-tributaria: ${FISCAL_NFE_PIS_ST:}
+      cofins-situacao-tributaria: ${FISCAL_NFE_COFINS_ST:}
   storage:
     # MinIO/S3 — endpoint ausente = NoopObjectStorage (dev sem infra).
     endpoint: ${MINIO_ENDPOINT:}

@@ -8,9 +8,8 @@ import com.hweld.operations.fiscal.application.FiscalDataGateway.EmpresaFiscal;
 import com.hweld.operations.fiscal.application.FiscalDataGateway.EnderecoFiscal;
 import com.hweld.operations.fiscal.application.FiscalDataGateway.ItemFiscal;
 import com.hweld.operations.fiscal.application.FiscalDataGateway.PedidoFiscal;
-import com.hweld.operations.fiscal.infrastructure.focusnfe.FocusNFeProperties;
-import com.hweld.operations.fiscal.infrastructure.focusnfe.FocusNFeProperties.NfeDefaults;
-import com.hweld.operations.fiscal.infrastructure.focusnfe.NFeMapper.NFeValidationException;
+import com.hweld.operations.fiscal.application.NFeValidationException;
+import com.hweld.operations.fiscal.infrastructure.NfeDefaults;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -18,15 +17,9 @@ import org.junit.jupiter.api.Test;
 
 class SpedyNFeMapperTest {
 
-    private static NfeDefaults defaults() {
-        return new NfeDefaults("Venda de mercadoria", "5102", "UN", 1, 1, 9, 9,
-                false, null, "102", "07", "07", 0);
-    }
-
     private static SpedyNFeMapper mapper() {
-        var props = new FocusNFeProperties("homologacao", null, null, "tok", null,
-                false, 30_000, 15_000, null, null, null, null, defaults());
-        return new SpedyNFeMapper(props);
+        return new SpedyNFeMapper(new NfeDefaults("Venda de mercadoria", "5102",
+                "UN", 1, 1, 9, 9, false, null, "102", "07", "07", 0));
     }
 
     private static EmpresaFiscal empresa() {

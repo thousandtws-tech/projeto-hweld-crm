@@ -378,7 +378,7 @@ export interface NotaFiscal {
 
 /* ---------------------------------------------------------------------------
  * hweld-operations-api — documentos de orquestração fiscal (`/fiscal-documents`).
- * Estado interno do documento + status bruto do provedor (ex.: Focus NFe).
+ * Estado interno do documento + status bruto do provedor (ex.: Spedy).
  * ------------------------------------------------------------------------- */
 export type StatusFiscalDocumento =
   | "REQUESTED"

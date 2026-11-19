@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  * de acesso no layout NF-e real (44 dígitos, DV módulo-11) e protocolo fake.
  * Gera XML/PDF sintéticos e hospeda no object storage (`fiscal/{id}.*`)
  * quando configurado — NÃO emite documento fiscal real; produção exige
- * adapter credenciado (ex.: Focus NFe/Nuvem Fiscal) e homologação.
+ * adapter credenciado (ex.: Spedy) e homologação.
  */
 @Component
 public class StubFiscalProvider implements FiscalProvider {

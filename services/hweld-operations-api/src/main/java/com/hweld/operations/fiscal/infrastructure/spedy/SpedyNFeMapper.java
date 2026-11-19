@@ -2,8 +2,8 @@ package com.hweld.operations.fiscal.infrastructure.spedy;
 
 import com.hweld.operations.fiscal.application.FiscalDataGateway.DadosFiscaisPedido;
 import com.hweld.operations.fiscal.application.FiscalDataGateway.ItemFiscal;
-import com.hweld.operations.fiscal.infrastructure.focusnfe.FocusNFeProperties;
-import com.hweld.operations.fiscal.infrastructure.focusnfe.NFeMapper.NFeValidationException;
+import com.hweld.operations.fiscal.application.NFeValidationException;
+import com.hweld.operations.fiscal.infrastructure.NfeDefaults;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
@@ -29,10 +29,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class SpedyNFeMapper {
 
-    private final FocusNFeProperties props;
+    private final NfeDefaults nfe;
 
-    public SpedyNFeMapper(FocusNFeProperties props) {
-        this.props = props;
+    public SpedyNFeMapper(NfeDefaults nfe) {
+        this.nfe = nfe;
     }
 
     /**
@@ -47,7 +47,6 @@ public class SpedyNFeMapper {
             Map<String, Object> suplementos) {
         var erros = new ArrayList<String>();
         var sup = suplementos != null ? suplementos : Map.<String, Object>of();
-        var nfe = props.nfe();
 
         var body = new LinkedHashMap<String, Object>();
         body.put("integrationId", documentId);
@@ -219,7 +218,7 @@ public class SpedyNFeMapper {
     }
 
     /** `taxes` do item — CSOSN (3 dígitos, Simples) vs CST (2 dígitos, normal). */
-    private Map<String, Object> taxes(Map<String, Object> sup, FocusNFeProperties.NfeDefaults nfe) {
+    private Map<String, Object> taxes(Map<String, Object> sup, NfeDefaults nfe) {
         var taxes = new LinkedHashMap<String, Object>();
         var icms = new LinkedHashMap<String, Object>();
         Integer origem = inteiro(primeiro(sup.get("icms_origem"),

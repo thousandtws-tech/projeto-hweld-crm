@@ -32,7 +32,7 @@ Leia os AGENTS.md aplicáveis. Stack: painel-admin React/TS (TanStack Router, ui
 
 - Contexto `notification` da operations-api: `NotificationService` (fila QUEUED → dispatch agendado → retry exponencial → DEAD), `NotificationDelivery` (já possui coluna `channel`, hoje sempre `EMAIL`), `NotificationTemplate` + `TemplateRenderer` (variáveis `{{x}}`), `NotificationEventHandler` (mapa eventType → template), `NotificationController`.
 - `shared`: `IntegrationEvent`, `IntegrationEventHandler`, `EventTypes`, outbox transacional (`shared.infrastructure.outbox`).
-- Padrão de credenciais da Focus NFe: `FocusNFeProperties` (`@ConfigurationProperties`) — segredos via variáveis de ambiente do Railway, nunca no banco; webhook autenticado por header-token em `FiscalWebhookController`.
+- Padrão de credenciais fiscais (Spedy): credenciais do cliente cifradas em `integration_settings`, gerenciadas pelo painel; webhook autenticado por assinatura em `FiscalWebhookController`.
 - Eventos de domínio já emitidos pelo core-api via `/api/v1/internal/events`: `ORDER_CREATED`, `PAYMENT_REQUESTED`, `PAYMENT_CONFIRMED`, `PAYMENT_FAILED`, `PAYMENT_EXPIRED`, `INVOICE_AUTHORIZED`, `INVOICE_REJECTED` etc.
 - Telefone do destinatário: `contato.telefone` / `empresa.telefone` (VARCHAR(20), migração 0003_crm.sql). Os payloads de evento hoje carregam `contatoEmail` — incluir `contatoTelefone` onde necessário.
 
@@ -65,7 +65,7 @@ Diferencie credencial válida, remetente habilitado, callback configurado e envi
 
 Documentação oficial vigente; autenticação `Authorization: App {API_KEY}` e envio em `POST https://{BASE_URL}/sms/3/messages` (contrato ilustrativo no prompt original — revalidar na doc atual, não enviar valores fictícios).
 
-Implemente `InfobipProperties` (`@ConfigurationProperties(prefix = "hweld.notification.infobip")`) seguindo `FocusNFeProperties`: URLs e segredos via env, defaults sensatos, fail-fast com mensagem clara quando obrigatório falta. Valide a Base URL: hosts oficiais Infobip (incl. variantes regionais documentadas), HTTPS obrigatório, proibir hosts privados/localhost, não seguir redirect que vaze a API key para outro host.
+Implemente `InfobipProperties` (`@ConfigurationProperties(prefix = "hweld.notification.infobip")`): URLs e segredos via env, defaults sensatos, fail-fast com mensagem clara quando obrigatório falta. Valide a Base URL: hosts oficiais Infobip (incl. variantes regionais documentadas), HTTPS obrigatório, proibir hosts privados/localhost, não seguir redirect que vaze a API key para outro host.
 
 `InfobipSmsProvider implements SmsProvider` (port novo, irmão de `EmailProvider`) em `notification/infrastructure`, com timeouts configuráveis e erros tipados: credencial inválida, sem permissão SMS, remetente inválido, restrição da conta, rate limit (`Retry-After` respeitado), falha transitória. Sanitizar logs — nunca registrar API key, telefone completo ou corpo da mensagem.
 

@@ -41,7 +41,7 @@ Referência linha a linha: `infra/railway/env/*.env.example`.
   `MINIO_*`, `ELASTICSEARCH_*`, `EDGE_TOKEN`.
 - **operations-api**: `DB_*`, `JWT_SECRET`, `INTERNAL_SERVICE_TOKEN`,
   `CORE_API_URL` (private `*.railway.internal`), `MOTOR_*`, `MINIO_*`,
-  `PAYMENT_*`, `FISCAL_*`/`FOCUS_NFE_*`, `SMTP_*`/`MAIL_*`, `EDGE_TOKEN`.
+  `PAYMENT_*`, `FISCAL_*`/`FISCAL_NFE_*`, `SMTP_*`/`MAIL_*`, `EDGE_TOKEN`.
   `API_DOCS_ENABLED` fica `false` — default fail-safe.
 - **realtime-engine**: `PHX_SERVER`, `SECRET_KEY_BASE`, `JWT_SECRET`,
   `MOTOR_INGEST_TOKEN`, `DATABASE_URL`, `RUST_API_URL` (private),
@@ -69,8 +69,7 @@ Ver `docs/runbooks/backup-restore.md`.
 
 | Segredo | Onde | Status |
 |---|---|---|
-| `FOCUS_NFE_HOMOLOGATION_TOKEN` / `FOCUS_NFE_PRODUCTION_TOKEN` | operations-api | Homologação OK; produção exige `FOCUS_NFE_PRODUCTION_ENABLED=true`. |
-| `FOCUS_NFE_WEBHOOK_AUTH_TOKEN` | operations-api + painel Focus | Segredo do webhook fiscal. |
+| Spedy `X-Api-Key` / `whsec_*` | painel → `integration_settings` (cifrado) | Credenciais do cliente — nunca em env; webhook auto-registrado ao salvar. |
 | `PAYMENT_*_WEBHOOK_SECRET` | operations-api | Por PSP (Mercado Pago, Asaas…). |
 | `SMTP_*` | operations-api | Provider real de e-mail transacional. |
 | `NEW_RELIC_LICENSE_KEY` | core-api | Telemetria OTLP (opcional). |

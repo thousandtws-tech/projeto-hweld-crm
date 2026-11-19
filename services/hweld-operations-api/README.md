@@ -43,11 +43,8 @@ Swagger UI: `/swagger-ui.html`.
 | `PAYMENT_PROVIDER` | `stub` | PSP padrão (`stub` = adapter de teste) |
 | `PAYMENT_STUB_WEBHOOK_SECRET` | `dev-stub-webhook-secret` | segredo HMAC do webhook stub |
 | `PAYMENT_STUB_ALLOW_UNSIGNED` | `false` | **dev only**: aceita webhook stub sem assinatura |
-| `FISCAL_PROVIDER` / `FISCAL_AUTO_EMIT` / `FISCAL_AMBIENTE` | `stub`/`false`/`homologacao` | orquestração fiscal (`focusnfe` = adapter real) |
-| `FOCUS_NFE_ENV` / `FOCUS_NFE_{HOMOLOGATION,PRODUCTION}_TOKEN` | `homologacao`/— | ambientes isolados Focus NFe v2 |
-| `FOCUS_NFE_PRODUCTION_ENABLED` | `false` | guard — emissão real só com habilitação explícita |
-| `FOCUS_NFE_WEBHOOK_AUTH_TOKEN` / `..._HEADER` / `..._URL` | —/`X-Webhook-Token`/— | segredo e registro do hook |
-| `FOCUS_NFE_EMITENTE_*` · `FOCUS_NFE_{NATUREZA_OPERACAO,CFOP,UNIDADE,ICMS_*,PIS_*,COFINS_*}` | — | emitente e defaults fiscais NF-e |
+| `FISCAL_PROVIDER` / `FISCAL_AUTO_EMIT` / `FISCAL_AMBIENTE` | `auto`/`false`/`homologacao` | orquestração fiscal (`spedy` = adapter real, credenciais do cliente no painel) |
+| `FISCAL_NFE_{NATUREZA_OPERACAO,CFOP,UNIDADE,ICMS_*,PIS_*,COFINS_*}` | — | defaults fiscais NF-e dos itens/nota |
 | `FISCAL_RECONCILE_{INTERVAL,MIN_AGE,BATCH_SIZE}*` | `120s`/`60s`/`20` | reconciliador de docs não-terminais |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | allowlist CORS (dev) |
 | `MINIO_*` | — | object storage dos XML/DANFE (vazio = noop dev) |
@@ -127,8 +124,10 @@ curl -X POST localhost:8090/api/v1/internal/events \
 
 - PSP real (Mercado Pago/Asaas/Pagar.me): `StubPaymentProvider` implementa o
   contrato; produção exige adapter real + credenciais + homologação.
-- Provedor fiscal: `FocusNFeProvider` implementa a API v2 (NF-e completo;
-  NFS-e básico). Produção exige `FOCUS_NFE_*` + habilitação explícita —
-  ver [`docs/fiscal-focusnfe.md`](../../docs/fiscal-focusnfe.md). Regras
-  tributárias não são calculadas aqui (defaults via config).
+- Provedor fiscal: `SpedyProvider` implementa a API v1 da Spedy (NF-e:
+  emissão, consulta, cancelamento, carta de correção, XML/DANFE). A
+  `X-Api-Key` é do cliente — cifrada no banco e gerenciada pelo painel
+  (Administração → Integrações → Spedy); emitente, certificado e série
+  vivem no backoffice Spedy. Regras tributárias não são calculadas aqui
+  (defaults via `hweld.fiscal.nfe.*`).
 - E-mail real: configure `EMAIL_PROVIDER=smtp` + `SMTP_*`.

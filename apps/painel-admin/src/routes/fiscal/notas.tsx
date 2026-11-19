@@ -39,7 +39,7 @@ export const Route = createFileRoute("/fiscal/notas")({
   component: FiscalPage,
 });
 
-/** Notas fiscais — emitir via provedor configurado (Spedy/Focus), acompanhar, cancelar com motivo. */
+/** Notas fiscais — emitir via provedor configurado (Spedy), acompanhar, cancelar com motivo. */
 function FiscalPage() {
   const [notas, setNotas] = useState<NotaFiscal[]>([]);
   const [docs, setDocs] = useState<FiscalDocumento[]>([]);
@@ -378,7 +378,7 @@ function FiscalPage() {
             <Chip size="small" variant="outlined" color="warning" label="Serviço de orquestração indisponível" />
           ) : (
             <Typography variant="caption" className="text-muted-foreground">
-              ciclo de vida no provedor (Focus NFe): emissão, autorização, artefatos, cancelamento
+              ciclo de vida no provedor (Spedy): emissão, autorização, artefatos, cancelamento
             </Typography>
           )
         }
