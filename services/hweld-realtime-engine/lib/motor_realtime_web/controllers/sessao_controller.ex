@@ -40,10 +40,22 @@ defmodule MotorRealtimeWeb.SessaoController do
   end
 
   # Proxy ao Rust — 200 traz o access_token JWT, 401 credencial inválida.
+  # `x-edge-token` é exigido pela EdgeGuard do core em produção — o motor
+  # é service-to-service, então injeta o segredo compartilhado.
   defp autenticar(email, senha) do
     url = "#{api_url()}/auth/staff/login"
 
-    case Req.post(url, json: %{email: email, senha: senha}, receive_timeout: 5_000) do
+    headers =
+      case Application.get_env(:motor_realtime, :edge_token) do
+        token when is_binary(token) and token != "" -> [{"x-edge-token", token}]
+        _ -> []
+      end
+
+    case Req.post(url,
+           json: %{email: email, senha: senha},
+           headers: headers,
+           receive_timeout: 5_000
+         ) do
       {:ok, %{status: 200, body: %{"access_token" => token}}} ->
         # Só aceita se o token for realmente staff (defesa em profundidade).
         with {:ok, claims} <- AuthJwt.verificar(token),

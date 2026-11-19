@@ -10,7 +10,8 @@ defmodule MotorRealtime.BarramentoTest do
     e = %Evento{tipo: "pedido.criado", audiencia: :staff, dados: %{"id" => 1}}
     assert {:ok, 1} = Barramento.publicar(e)
 
-    assert_received ^e
+    # `seq` é atribuída no publish — comparamos os campos, não o struct.
+    assert_received %Evento{tipo: "pedido.criado", audiencia: :staff, dados: %{"id" => 1}}
     refute_received %Evento{audiencia: {:empresa, _}}
   end
 
@@ -22,8 +23,8 @@ defmodule MotorRealtime.BarramentoTest do
     e = %Evento{tipo: "pedido.status_alterado", audiencia: {:empresa, 7}, dados: %{}}
     assert {:ok, 2} = Barramento.publicar(e)
 
-    assert_received ^e
-    assert_received ^e
+    assert_received %Evento{tipo: "pedido.status_alterado", audiencia: {:empresa, 7}}
+    assert_received %Evento{tipo: "pedido.status_alterado", audiencia: {:empresa, 7}}
     refute_received %Evento{}
   end
 
@@ -34,8 +35,8 @@ defmodule MotorRealtime.BarramentoTest do
     e = %Evento{tipo: "catalogo.produtos", audiencia: :todos, dados: %{}}
     assert {:ok, 2} = Barramento.publicar(e)
 
-    assert_received ^e
-    assert_received ^e
+    assert_received %Evento{tipo: "catalogo.produtos", audiencia: :todos}
+    assert_received %Evento{tipo: "catalogo.produtos", audiencia: :todos}
     refute_received %Evento{}
   end
 end
