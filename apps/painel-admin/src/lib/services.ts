@@ -471,3 +471,46 @@ export const spedyService = {
     apiOps.listaArray<import("./models").DocumentoSpedy>(
       `integracoes/spedy/documentos?limite=${limite}`),
 };
+
+export const melhorEnvioService = {
+  view: () =>
+    apiOps.getRecurso<import("./models").IntegracaoMelhorEnvio>("integracoes/melhorenvio"),
+  salvar: (b: {
+    versao?: number;
+    nome_conta?: string;
+    config?: {
+      ambiente?: string;
+      cep_origem?: string;
+      cotacao_pausada?: boolean;
+      servicos?: string;
+    };
+    segredos?: { token?: string };
+  }) => apiOps.putRecurso<import("./models").IntegracaoMelhorEnvio>(
+    "integracoes/melhorenvio", b),
+  habilitar: (habilitado: boolean) =>
+    apiOps.post<import("./models").IntegracaoMelhorEnvio>(
+      "integracoes/melhorenvio/habilitacao", { habilitado }),
+  testarConexao: () =>
+    apiOps.post<{ verificacao_status: string; mensagem?: string }>(
+      "integracoes/melhorenvio/testar-conexao", {}),
+};
+
+export const logisticaService = {
+  /** Cotação por pedido — dados autoritatídicos do core-api. */
+  cotarPedido: (pedidoId: number, servicos?: string) =>
+    apiOps.post<import("./models").CotacaoFrete>(
+      `logistica/cotacoes?pedido_id=${pedidoId}${servicos ? `&servicos=${encodeURIComponent(servicos)}` : ""}`,
+      {}),
+  /** Cotação manual (sandbox do painel) — cep_destino + produtos. */
+  cotarManual: (b: {
+    cepDestino: string;
+    produtos: {
+      id: string; width: number; height: number; length: number;
+      weight: number; insurance_value: number; quantity: number;
+    }[];
+    servicos?: string;
+  }) => apiOps.post<import("./models").CotacaoFrete>("logistica/cotacoes", b),
+  historico: (limite = 30) =>
+    apiOps.listaArray<import("./models").CotacaoLogistica>(
+      `logistica/cotacoes?limite=${limite}`),
+};

@@ -20,6 +20,7 @@ use hweld_application::use_cases::estoque::ServicoEstoque;
 use hweld_application::use_cases::financeiro::{ServicoCaixas, ServicoPagamentos};
 use hweld_application::use_cases::fiscal::{ServicoConfigFiscal, ServicoNotasFiscais};
 use hweld_application::use_cases::integracao::ServicoIntegracao;
+use hweld_application::use_cases::logistica::ServicoLogistica;
 use hweld_application::use_cases::notificacoes::ServicoNotificacoes;
 use hweld_application::use_cases::orcamentos::ServicoOrcamentos;
 use hweld_application::use_cases::ordens::ServicoOrdensServico;
@@ -52,6 +53,8 @@ pub struct AppState {
     pub estoque: ServicoEstoque,
     pub ordens: ServicoOrdensServico,
     pub notas_fiscais: ServicoNotasFiscais,
+    /// Conjunto logístico do pedido para cotação de frete (Melhor Envio).
+    pub logistica: ServicoLogistica,
     /// Credenciais da integração SEFAZ (ambiente, CSC, certificado A1).
     pub config_fiscal: ServicoConfigFiscal,
     pub pagamentos: ServicoPagamentos,

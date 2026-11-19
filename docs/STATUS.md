@@ -57,6 +57,12 @@ integrações. Atualizado em 2026-11-13.
   reconciliação de docs não-terminais, webhooks Spedy (Standard Webhooks
   HMAC) + dedupe, credenciais do cliente cifradas via Integrações,
   artefatos XML/DANFE → `ObjectStorage`
+- Logística: `ShippingProvider` port + `MelhorEnvioProvider` (cotação real
+  `POST /me/shipment/calculate`, `custom_price`/`custom_delivery_time`),
+  `StubShippingProvider`, `LOGISTICS_PROVIDER=auto`, credenciais do cliente
+  (Bearer token cifrado, ambiente sandbox/produção, CEP origem), cotação
+  por pedido via `/internal/pedidos/{id}/dados-logisticos` (core-api) e
+  manual, histórico `logistics_quotes`. Compra/etiqueta/rastreio = fase B.
 - Notificações: templates + `notification_deliveries`,
   `EmailProvider` (`log` | `smtp`)
 - Outbox transacional + relay com backoff/DLQ → core-api e realtime-engine

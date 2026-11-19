@@ -20,6 +20,7 @@ use hweld_application::use_cases::crm::{
 use hweld_application::use_cases::estoque::ServicoEstoque;
 use hweld_application::use_cases::financeiro::{ServicoCaixas, ServicoPagamentos};
 use hweld_application::use_cases::fiscal::{ServicoConfigFiscal, ServicoNotasFiscais};
+use hweld_application::use_cases::logistica::ServicoLogistica;
 use hweld_application::use_cases::integracao::ServicoIntegracao;
 use hweld_application::use_cases::notificacoes::ServicoNotificacoes;
 use hweld_application::use_cases::orcamentos::ServicoOrcamentos;
@@ -439,6 +440,11 @@ fn montar_estado(
             gateway_fiscal,
             audit.clone(),
             realtime.clone(),
+        ),
+        logistica: ServicoLogistica::novo(
+            pedidos_repo.clone(),
+            enderecos_repo.clone(),
+            produtos_repo.clone(),
         ),
         config_fiscal: ServicoConfigFiscal::novo(
             config_fiscal_repo,

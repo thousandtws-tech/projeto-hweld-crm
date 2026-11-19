@@ -25,6 +25,7 @@ public class IntegrationSettings {
     public static final String INFOBIP_SMS = "infobip-sms";
     public static final String ZAPI_WHATSAPP = "zapi-whatsapp";
     public static final String SPEDY_FISCAL = "spedy-fiscal";
+    public static final String MELHOR_ENVIO_FRETE = "melhorenvio-frete";
 
     @Id
     @Column(length = 40)
@@ -84,6 +85,12 @@ public class IntegrationSettings {
     @Column(name = "last_check")
     private Map<String, Object> lastCheck;
 
+    /** Config genérica do provider (ex.: cep_origem, servicos) — campos
+     *  que não cabem nas colunas tipadas. Sem segredos: segredos vivem
+     *  exclusivamente nas colunas `*_enc`. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> config = Map.of();
+
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
 
@@ -129,6 +136,22 @@ public class IntegrationSettings {
                 && apiKeyEnc != null && !apiKeyEnc.isBlank();
     }
 
+    /** Credenciais mínimas para o adapter Melhor Envio: Bearer token,
+     *  ambiente e CEP de origem das coletas (`config.cep_origem`). */
+    public boolean credenciaisMelhorEnvioCompletas() {
+        return baseUrl != null && !baseUrl.isBlank()
+                && apiKeyEnc != null && !apiKeyEnc.isBlank()
+                && cepOrigem() != null;
+    }
+
+    /** CEP de origem das coletas — `config.cep_origem`, só dígitos ou null. */
+    public String cepOrigem() {
+        Object v = config != null ? config.get("cep_origem") : null;
+        if (v == null) return null;
+        String cep = v.toString().replaceAll("\\D", "");
+        return cep.length() == 8 ? cep : null;
+    }
+
     /** Update da linha Z-API — reusa pausa/destinatários/eventos; ignora campos SMS. */
     public void atualizarZapi(String nomeConta, boolean enabled, String externalId,
             boolean envioPausado, List<String> testRecipients,
@@ -157,6 +180,25 @@ public class IntegrationSettings {
         this.externalId = externalId == null || externalId.isBlank() ? null : externalId.trim();
         this.envioPausado = envioPausado;
         this.events = events == null ? Map.of() : Map.copyOf(events);
+        this.updatedBy = updatedBy;
+        this.updatedAt = Instant.now();
+    }
+
+    /**
+     * Update da linha Melhor Envio — `baseUrl` guarda o ambiente da API
+     * (`https://melhorenvio.com.br` produção | `https://sandbox.melhorenvio.com.br`
+     * sandbox), `externalId` o id do usuário na conta, `envioPausado` pausa
+     * cotações, `config` guarda cep_origem/serviços permitidos.
+     */
+    public void atualizarMelhorEnvio(String nomeConta, boolean enabled, String baseUrl,
+            String externalId, boolean envioPausado, Map<String, Object> config,
+            String updatedBy) {
+        this.nomeConta = nomeConta == null || nomeConta.isBlank() ? null : nomeConta.trim();
+        this.enabled = enabled;
+        this.baseUrl = normalizeBaseUrl(baseUrl);
+        this.externalId = externalId == null || externalId.isBlank() ? null : externalId.trim();
+        this.envioPausado = envioPausado;
+        this.config = config == null ? Map.of() : Map.copyOf(config);
         this.updatedBy = updatedBy;
         this.updatedAt = Instant.now();
     }
@@ -220,6 +262,7 @@ public class IntegrationSettings {
     public List<String> getTestRecipients() { return testRecipients; }
     public Map<String, Boolean> getEvents() { return events; }
     public Map<String, Object> getLastCheck() { return lastCheck; }
+    public Map<String, Object> getConfig() { return config != null ? config : Map.of(); }
     public Instant getUpdatedAt() { return updatedAt; }
     public String getUpdatedBy() { return updatedBy; }
 }

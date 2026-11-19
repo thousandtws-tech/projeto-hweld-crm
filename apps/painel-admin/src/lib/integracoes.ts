@@ -1,4 +1,9 @@
-import type { IntegracaoInfobip, IntegracaoSpedy, IntegracaoZapi } from "@/lib/models";
+import type {
+  IntegracaoInfobip,
+  IntegracaoMelhorEnvio,
+  IntegracaoSpedy,
+  IntegracaoZapi,
+} from "@/lib/models";
 
 /**
  * Catálogo de integrações do HWeld — metadados públicos e estáticos,
@@ -133,10 +138,15 @@ export const CATALOGO: IntegracaoCatalogo[] = [
     iniciais: "ME",
     cor: "#00a6e0",
     categoria: "logistica",
-    descricao: "Cotação e compra de fretes com múltiplas transportadoras.",
-    implementada: false,
+    descricao: "Cotação de fretes com múltiplas transportadoras — Correios e privadas.",
+    implementada: true,
     escopo: "CRM e Loja",
-    funcionalidades: ["Cálculo de frete no checkout", "Etiquetas de envio", "Rastreio de entregas"],
+    funcionalidades: [
+      "Cotação por pedido com dados do cadastro",
+      "Cotação manual por CEP e dimensões",
+      "Sandbox e produção na mesma conta",
+      "Histórico de cotações",
+    ],
   },
   {
     slug: "didit",
@@ -209,6 +219,18 @@ export function estadoSpedy(v: IntegracaoSpedy): EstadoConexao {
     case "falha": return "falha";
     default:
       return v.segredos?.campos?.api_key ? "pendente" : "desconectado";
+  }
+}
+
+/** `estado` do view Melhor Envio → estado de conexão do catálogo. Mesma
+ *  regra da Spedy: "desativada" com token salvo = pendente, não "Desconectado". */
+export function estadoMelhorEnvio(v: IntegracaoMelhorEnvio): EstadoConexao {
+  switch (v.estado) {
+    case "ativa": return "conectado";
+    case "pendente": return "pendente";
+    case "falha": return "falha";
+    default:
+      return v.segredos?.campos?.token ? "pendente" : "desconectado";
   }
 }
 

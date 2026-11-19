@@ -11,14 +11,25 @@ import {
   CATEGORIAS,
   categoriaRotulo,
   estadoInfobip,
+  estadoMelhorEnvio,
   estadoSpedy,
   estadoZapi,
   type CategoriaIntegracao,
   type EstadoConexao,
   type IntegracaoCatalogo,
 } from "@/lib/integracoes";
-import type { IntegracaoInfobip, IntegracaoSpedy, IntegracaoZapi } from "@/lib/models";
-import { integracoesService, spedyService, zapiService } from "@/lib/services";
+import type {
+  IntegracaoInfobip,
+  IntegracaoMelhorEnvio,
+  IntegracaoSpedy,
+  IntegracaoZapi,
+} from "@/lib/models";
+import {
+  integracoesService,
+  melhorEnvioService,
+  spedyService,
+  zapiService,
+} from "@/lib/services";
 import Chip from "@mui/material/Chip";
 import InputAdornment from "@mui/material/InputAdornment";
 import MenuItem from "@mui/material/MenuItem";
@@ -63,10 +74,11 @@ function IntegracoesCatalogoPage() {
 
   const carregar = useCallback(async () => {
     setCarregando(true);
-    const [inf, zap, spe] = await Promise.allSettled([
+    const [inf, zap, spe, me] = await Promise.allSettled([
       comTimeout(integracoesService.infobip()),
       comTimeout(zapiService.view()),
       comTimeout(spedyService.view()),
+      comTimeout(melhorEnvioService.view()),
     ]);
     const prox: EstadoPorSlug = {};
     const errs: string[] = [];
@@ -87,6 +99,12 @@ function IntegracoesCatalogoPage() {
     } else {
       prox.spedy = "falha";
       errs.push("Spedy");
+    }
+    if (me.status === "fulfilled") {
+      prox["melhor-envio"] = estadoMelhorEnvio(me.value as IntegracaoMelhorEnvio);
+    } else {
+      prox["melhor-envio"] = "falha";
+      errs.push("Melhor Envio");
     }
     // Nunca implementadas no backend → sempre "em_breve".
     for (const item of CATALOGO) {

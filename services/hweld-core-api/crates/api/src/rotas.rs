@@ -223,6 +223,7 @@ pub fn configurar(cfg: &mut web::ServiceConfig, docs_habilitados: bool) {
             // auth própria por X-Service-Token, sem JWT de usuário.
             .service(interno::eventos_financeiros)
             .service(interno::dados_fiscais)
+            .service(interno::dados_logisticos)
             .service(interno::contato_notificacao)
             // Busca (Elasticsearch) — staff.
             .service(busca::buscar_staff)

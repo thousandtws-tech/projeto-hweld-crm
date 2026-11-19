@@ -61,6 +61,22 @@ pub async fn dados_fiscais(
     Ok(HttpResponse::Ok().json(dados))
 }
 
+/// Conjunto logístico autoritativo do pedido para o operations-api cotar
+/// frete (Melhor Envio): itens com peso/dimensões do cadastro do produto e
+/// CEP do endereço de entrega (nunca o de faturamento).
+#[get("/internal/pedidos/{id}/dados-logisticos")]
+pub async fn dados_logisticos(
+    state: web::Data<AppState>,
+    _servico: AuthServico,
+    path: web::Path<i64>,
+) -> Resposta<HttpResponse> {
+    let dados = state
+        .logistica
+        .dados_logisticos_pedido(Id::<Pedido>::novo(path.into_inner()))
+        .await?;
+    Ok(HttpResponse::Ok().json(dados))
+}
+
 /// Dados mínimos de notificação do contato (e-mail/telefone) para o
 /// operations-api resolver destinatários fora do contexto de JWT — usado
 /// pelo handler de eventos SMS/e-mail quando o payload traz só `contatoId`.

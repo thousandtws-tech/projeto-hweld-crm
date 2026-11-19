@@ -667,3 +667,58 @@ export interface DocumentoSpedy {
   motivo_rejeicao: string;
   criado_em: string;
 }
+
+export interface IntegracaoMelhorEnvio {
+  provedor: string;
+  categoria: string;
+  ambiente: string;
+  provider_ativo: string;
+  nome_conta: string;
+  conta_id: string;
+  habilitado: boolean;
+  estado: "ativa" | "pendente" | "falha" | "desativada";
+  versao: number;
+  config: {
+    ambiente: string;
+    cep_origem: string;
+    cotacao_pausada: boolean;
+    servicos?: string;
+  };
+  segredos: { campos: { token: boolean } };
+  ultima_verificacao_em: string;
+  verificacao_status: "ok" | "falha" | "nunca";
+  verificacao_erro: string;
+}
+
+/** Resposta de `POST /api/v1/logistica/cotacoes` — provider-neutral. */
+export interface CotacaoFrete {
+  id: string;
+  provider: string;
+  cep_origem: string;
+  cep_destino: string;
+  pedido_id: number | null;
+  servicos: CotacaoServico[];
+  criado_em: string;
+}
+
+export interface CotacaoServico {
+  servico_id: number;
+  nome: string;
+  transportadora: string;
+  preco: number | null;
+  prazo_dias: number | null;
+  erro?: string;
+}
+
+/** Linha do histórico `GET /api/v1/logistica/cotacoes`. */
+export interface CotacaoLogistica {
+  id: string;
+  provider: string;
+  pedido_id: number | null;
+  cep_origem: string;
+  cep_destino: string;
+  status: "OK" | "ERRO";
+  erro: string;
+  servicos_count: number;
+  criado_em: string;
+}

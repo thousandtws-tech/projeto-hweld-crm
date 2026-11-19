@@ -148,6 +148,11 @@ hweld:
       icms-situacao-tributaria: ${FISCAL_NFE_ICMS_ST:}
       pis-situacao-tributaria: ${FISCAL_NFE_PIS_ST:}
       cofins-situacao-tributaria: ${FISCAL_NFE_COFINS_ST:}
+  logistics:
+    provider: ${LOGISTICS_PROVIDER:auto}   # auto | stub | melhorenvio
+    timeout-ms: ${LOGISTICS_TIMEOUT_MS:15000}
+    # User-Agent exigido pela API Melhor Envio: app + e-mail de contato.
+    user-agent: ${LOGISTICS_USER_AGENT:HWeld Operations (contato@hweld.com.br)}
   storage:
     # MinIO/S3 — endpoint ausente = NoopObjectStorage (dev sem infra).
     endpoint: ${MINIO_ENDPOINT:}

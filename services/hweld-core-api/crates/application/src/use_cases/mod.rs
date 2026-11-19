@@ -9,6 +9,7 @@ pub mod estoque;
 pub mod financeiro;
 pub mod fiscal;
 pub mod integracao;
+pub mod logistica;
 pub mod notificacoes;
 pub mod orcamentos;
 pub mod ordens;
