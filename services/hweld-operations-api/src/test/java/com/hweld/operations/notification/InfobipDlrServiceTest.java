@@ -8,30 +8,40 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hweld.operations.notification.application.InfobipDlrService;
+import com.hweld.operations.notification.domain.IntegrationSettings;
+import com.hweld.operations.notification.domain.IntegrationSettingsRepository;
 import com.hweld.operations.notification.domain.NotificationDelivery;
 import com.hweld.operations.notification.domain.NotificationDelivery.Status;
 import com.hweld.operations.notification.domain.NotificationDeliveryRepository;
-import com.hweld.operations.notification.infrastructure.infobip.InfobipProperties;
+import com.hweld.operations.shared.infrastructure.security.CredentialCipher;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
 import tools.jackson.databind.ObjectMapper;
 
-/** DLR autenticado por token — lote, duplicado, fora de ordem, sem correlação. */
+/** DLR autenticado por segredo de path — lote, duplicado, fora de ordem, sem correlação. */
 class InfobipDlrServiceTest {
 
-    private static final String TOKEN = "segredo-dlr";
+    private static final String SECRET = "segredo-dlr";
 
     private NotificationDeliveryRepository deliveries;
+    private IntegrationSettingsRepository settings;
+    private CredentialCipher cipher;
     private InfobipDlrService service;
 
     @BeforeEach
     void setUp() {
         deliveries = mock(NotificationDeliveryRepository.class);
-        var props = new InfobipProperties(
-                "https://x.api.infobip.com", "key", "HWeld", 5000, TOKEN, "X-DLR-Token", "");
-        service = new InfobipDlrService(deliveries, props, new ObjectMapper());
+        settings = mock(IntegrationSettingsRepository.class);
+        cipher = new CredentialCipher(new MockEnvironment()
+                .withProperty("hweld.security.jwt-secret", "segredo-teste-com-32-caracteres!!"));
+        IntegrationSettings cfg = IntegrationSettings.criar(IntegrationSettings.INFOBIP_SMS);
+        cfg.definirWebhookSecret(cipher.encrypt(SECRET));
+        when(settings.findById(IntegrationSettings.INFOBIP_SMS))
+                .thenReturn(Optional.of(cfg));
+        service = new InfobipDlrService(deliveries, settings, cipher, new ObjectMapper());
     }
 
     private NotificationDelivery deliveryComMessageId(String messageId) {
@@ -49,18 +59,19 @@ class InfobipDlrServiceTest {
     }
 
     @Test
-    void rejeitaTokenInvalidoSemTocarEmEntregas() {
+    void rejeitaSegredoInvalidoSemTocarEmEntregas() {
         var out = service.process(lote("m1", 3, "DELIVERED_TO_HANDSET"), "errado");
         assertThat(out.result()).isEqualTo(InfobipDlrService.Result.UNAUTHORIZED);
         verify(deliveries, never()).save(any());
     }
 
     @Test
-    void rejeitaSemTokenConfigurado() {
-        var propsVazio = new InfobipProperties(
-                "https://x.api.infobip.com", "key", "HWeld", 5000, "", "X-DLR-Token", "");
-        var svc = new InfobipDlrService(deliveries, propsVazio, new ObjectMapper());
-        var out = svc.process(lote("m1", 3, "DELIVERED"), TOKEN);
+    void rejeitaSemSegredoConfigurado() {
+        var settingsVazio = mock(IntegrationSettingsRepository.class);
+        when(settingsVazio.findById(IntegrationSettings.INFOBIP_SMS))
+                .thenReturn(Optional.of(IntegrationSettings.criar(IntegrationSettings.INFOBIP_SMS)));
+        var svc = new InfobipDlrService(deliveries, settingsVazio, cipher, new ObjectMapper());
+        var out = svc.process(lote("m1", 3, "DELIVERED"), SECRET);
         assertThat(out.result()).isEqualTo(InfobipDlrService.Result.UNCONFIGURED);
     }
 
@@ -69,7 +80,7 @@ class InfobipDlrServiceTest {
         var d = deliveryComMessageId("m-1");
         when(deliveries.findByMessageId("m-1")).thenReturn(Optional.of(d));
 
-        var out = service.process(lote("m-1", 3, "DELIVERED_TO_HANDSET"), TOKEN);
+        var out = service.process(lote("m-1", 3, "DELIVERED_TO_HANDSET"), SECRET);
 
         assertThat(out.result()).isEqualTo(InfobipDlrService.Result.PROCESSED);
         assertThat(out.matched()).isEqualTo(1);
@@ -83,9 +94,9 @@ class InfobipDlrServiceTest {
         var d = deliveryComMessageId("m-2");
         when(deliveries.findByMessageId("m-2")).thenReturn(Optional.of(d));
 
-        service.process(lote("m-2", 3, "DELIVERED"), TOKEN);
+        service.process(lote("m-2", 3, "DELIVERED"), SECRET);
         // REJECTED tardio NÃO rebaixa DELIVERED
-        var out = service.process(lote("m-2", 5, "REJECTED"), TOKEN);
+        var out = service.process(lote("m-2", 5, "REJECTED"), SECRET);
 
         assertThat(d.getStatus()).isEqualTo(Status.DELIVERED.name());
         assertThat(d.getDlr()).hasSize(2); // relatório preservado
@@ -95,7 +106,7 @@ class InfobipDlrServiceTest {
     @Test
     void reportSemCorrelacaoContaSemFalharLote() {
         when(deliveries.findByMessageId(any())).thenReturn(Optional.empty());
-        var out = service.process(lote("desconhecido", 3, "DELIVERED"), TOKEN);
+        var out = service.process(lote("desconhecido", 3, "DELIVERED"), SECRET);
         assertThat(out.result()).isEqualTo(InfobipDlrService.Result.PROCESSED);
         assertThat(out.matched()).isEqualTo(0);
         assertThat(out.unmatched()).isEqualTo(1);
@@ -110,9 +121,9 @@ class InfobipDlrServiceTest {
         when(deliveries.findByMessageId("p2")).thenReturn(Optional.of(falha));
         when(deliveries.findByMessageId("p3")).thenReturn(Optional.of(expirado));
 
-        service.process(lote("p1", 1, "PENDING_ACCEPTED"), TOKEN);
-        service.process(lote("p2", 5, "REJECTED"), TOKEN);
-        service.process(lote("p3", 4, "EXPIRED"), TOKEN);
+        service.process(lote("p1", 1, "PENDING_ACCEPTED"), SECRET);
+        service.process(lote("p2", 5, "REJECTED"), SECRET);
+        service.process(lote("p3", 4, "EXPIRED"), SECRET);
 
         assertThat(pendentes.getStatus()).isEqualTo(Status.ACCEPTED.name());
         assertThat(falha.getStatus()).isEqualTo(Status.FAILED.name());

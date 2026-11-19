@@ -190,6 +190,12 @@ public class NotificationDelivery {
         this.lastError = null;
     }
 
+    /** Adia sem consumir tentativa — canal pausado aguarda na fila. */
+    public void defer(Instant nextAttempt) {
+        this.status = Status.QUEUED.name();
+        this.nextRetryAt = nextAttempt;
+    }
+
     public void markFailed(String error, Instant nextRetry) {
         this.status = Status.FAILED.name();
         this.lastError = error == null ? null : error.substring(0, Math.min(error.length(), 500));

@@ -50,4 +50,12 @@ public interface NotificationDeliveryRepository extends JpaRepository<Notificati
             @Param("templateCode") String templateCode);
 
     long countByChannelAndStatusIn(String channel, List<String> statuses);
+
+    /** Últimos relatórios DLR recebidos — card "Eventos de webhook". */
+    @Query("""
+            SELECT d FROM NotificationDelivery d
+            WHERE d.channel = :channel AND d.remoteStatus IS NOT NULL
+            ORDER BY COALESCE(d.deliveredAt, d.sentAt, d.createdAt) DESC
+            """)
+    Page<NotificationDelivery> findLatestDlr(@Param("channel") String channel, Pageable pageable);
 }

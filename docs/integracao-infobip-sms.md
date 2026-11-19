@@ -1,4 +1,12 @@
-# Prompt para o Devin — Integração SMS Infobip no CRM HWeld
+#
+> **Atualização (v2 — credenciais do cliente):** a decisão "segredos via env"
+> foi revertida — credenciais Infobip (Base URL, API key, remetente) passaram
+> a ser gerenciadas pelo CLIENTE no painel (Integrações), cifradas AES-256-GCM
+> em `integration_settings` (V9). `webhook_secret` é gerado no servidor e
+> compõe o path do DLR (`/sms/dlr/{segredo}`). `SMS_PROVIDER=auto` usa Infobip
+> quando credenciado, senão `log`. Envs restantes: `APP_PUBLIC_URL`,
+> `INTEGRATION_SECRETS_KEY` (opcional, deriva de JWT_SECRET), `INFOBIP_TIMEOUT_MS`.
+ Prompt para o Devin — Integração SMS Infobip no CRM HWeld
 
 Repositório: projeto-hweld-crm (monorepo)
 Produto: CRM + Portal B2B HWeld (soldas e reparos)

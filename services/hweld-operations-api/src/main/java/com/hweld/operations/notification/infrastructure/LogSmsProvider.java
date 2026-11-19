@@ -4,16 +4,15 @@ import com.hweld.operations.notification.application.SmsProvider;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * Adapter default de desenvolvimento: "envia" via log estruturado com
- * `messageId` sintético — exercita o ciclo completo (fila → DLR simulável)
- * sem credenciais. Em produção: `SMS_PROVIDER=infobip` + `INFOBIP_*`.
+ * Adapter de desenvolvimento: "envia" via log estruturado com `messageId`
+ * sintético — exercita o ciclo completo (fila → DLR simulável) sem
+ * credenciais. Selecionado pelo `SmsProviderRouter` quando `sms-provider`
+ * é `log` ou quando `auto` e a integração ainda não tem credenciais.
  */
 @Component
-@ConditionalOnProperty(name = "hweld.notification.sms-provider", havingValue = "log", matchIfMissing = true)
 public class LogSmsProvider implements SmsProvider {
 
     private static final Logger log = LoggerFactory.getLogger(LogSmsProvider.class);

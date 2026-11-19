@@ -1,9 +1,11 @@
 package com.hweld.operations.notification.application;
 
+import com.hweld.operations.notification.domain.IntegrationSettings;
+import com.hweld.operations.notification.domain.IntegrationSettingsRepository;
 import com.hweld.operations.notification.domain.NotificationDelivery;
 import com.hweld.operations.notification.domain.NotificationDelivery.Status;
 import com.hweld.operations.notification.domain.NotificationDeliveryRepository;
-import com.hweld.operations.notification.infrastructure.infobip.InfobipProperties;
+import com.hweld.operations.shared.infrastructure.security.CredentialCipher;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Map;
@@ -28,22 +30,28 @@ public class InfobipDlrService {
     public enum Result { PROCESSED, UNAUTHORIZED, UNCONFIGURED, INVALID_PAYLOAD }
 
     private final NotificationDeliveryRepository deliveries;
-    private final InfobipProperties props;
+    private final IntegrationSettingsRepository settings;
+    private final CredentialCipher cipher;
     private final ObjectMapper mapper;
 
     public InfobipDlrService(NotificationDeliveryRepository deliveries,
-            InfobipProperties props, ObjectMapper mapper) {
+            IntegrationSettingsRepository settings, CredentialCipher cipher,
+            ObjectMapper mapper) {
         this.deliveries = deliveries;
-        this.props = props;
+        this.settings = settings;
+        this.cipher = cipher;
         this.mapper = mapper;
     }
 
     @Transactional
-    public Outcome process(String rawBody, String authToken) {
-        if (props.dlrAuthToken() == null || props.dlrAuthToken().isBlank()) {
+    public Outcome process(String rawBody, String pathSecret) {
+        IntegrationSettings cfg = settings.findById(IntegrationSettings.INFOBIP_SMS)
+                .orElse(null);
+        if (cfg == null || cfg.getWebhookSecretEnc() == null) {
             return new Outcome(Result.UNCONFIGURED, 0, 0);
         }
-        if (authToken == null || !constantTimeEquals(authToken, props.dlrAuthToken())) {
+        String esperado = cipher.decrypt(cfg.getWebhookSecretEnc());
+        if (pathSecret == null || !constantTimeEquals(pathSecret, esperado)) {
             return new Outcome(Result.UNAUTHORIZED, 0, 0);
         }
 

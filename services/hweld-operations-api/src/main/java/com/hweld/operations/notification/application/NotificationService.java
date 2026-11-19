@@ -1,5 +1,7 @@
 package com.hweld.operations.notification.application;
 
+import com.hweld.operations.notification.domain.IntegrationSettings;
+import com.hweld.operations.notification.domain.IntegrationSettingsRepository;
 import com.hweld.operations.notification.domain.NotificationDelivery;
 import com.hweld.operations.notification.domain.NotificationDeliveryRepository;
 import com.hweld.operations.notification.domain.NotificationTemplate;
@@ -49,6 +51,7 @@ public class NotificationService {
 
     private final NotificationTemplateRepository templates;
     private final NotificationDeliveryRepository deliveries;
+    private final IntegrationSettingsRepository integrations;
     private final TemplateRenderer renderer;
     private final EmailProvider emailProvider;
     private final SmsProvider smsProvider;
@@ -56,10 +59,12 @@ public class NotificationService {
     private final Props props;
 
     public NotificationService(NotificationTemplateRepository templates,
-            NotificationDeliveryRepository deliveries, TemplateRenderer renderer,
+            NotificationDeliveryRepository deliveries,
+            IntegrationSettingsRepository integrations, TemplateRenderer renderer,
             EmailProvider emailProvider, SmsProvider smsProvider, Outbox outbox, Props props) {
         this.templates = templates;
         this.deliveries = deliveries;
+        this.integrations = integrations;
         this.renderer = renderer;
         this.emailProvider = emailProvider;
         this.smsProvider = smsProvider;
@@ -117,6 +122,34 @@ public class NotificationService {
                 templateCode, e164 != null ? e164 : "(telefone inválido)", "SMS", payload)
                 .asSms(dedupKey, sourceEventId, pedidoId);
 
+        if (e164 == null) {
+            d.markSuppressed("telefone ausente/inválido: " + mask(phoneRaw));
+        } else {
+            var count = SmsSegmenter.count(text);
+            if (maxSegments > 0 && count.segments() > maxSegments) {
+                d.markSuppressed("mensagem excede o máximo de " + maxSegments
+                        + " segmentos (" + count.segments() + ")");
+            } else {
+                d.recordSegments(count.segments());
+            }
+        }
+        deliveries.save(d);
+        return d;
+    }
+
+    /**
+     * SMS de texto livre (sem template) — usado pelo "Enviar SMS" de teste
+     * do card de integração com mensagem customizada. Mesmo pipeline de
+     * normalização/segmentos/supressão do `queueSms`.
+     */
+    @Transactional
+    public NotificationDelivery queueSmsText(String phoneRaw, String text,
+            String dedupKey, String sourceEventId, Long pedidoId, int maxSegments) {
+        String e164 = PhoneNormalizer.toE164(phoneRaw);
+        NotificationDelivery d = new NotificationDelivery(
+                null, e164 != null ? e164 : "(telefone inválido)", "SMS",
+                Map.of("text", text))
+                .asSms(dedupKey, sourceEventId, pedidoId);
         if (e164 == null) {
             d.markSuppressed("telefone ausente/inválido: " + mask(phoneRaw));
         } else {
@@ -197,6 +230,13 @@ public class NotificationService {
     }
 
     private void sendSms(NotificationDelivery d) {
+        // Envio pausado na integração: aguarda na fila sem gastar tentativa.
+        var cfg = integrations.findById(IntegrationSettings.INFOBIP_SMS).orElse(null);
+        if (cfg != null && cfg.isEnvioPausado()) {
+            d.defer(Instant.now().plus(Duration.ofMinutes(5)));
+            deliveries.save(d);
+            return;
+        }
         d.markSending();
         try {
             String text = d.getPayload() != null ? (String) d.getPayload().get("text") : null;

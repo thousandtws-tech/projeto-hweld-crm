@@ -3,12 +3,14 @@ package com.hweld.operations.notification.infrastructure.infobip;
 import com.hweld.operations.notification.application.SmsProvider;
 import com.hweld.operations.notification.application.SmsSendException;
 import com.hweld.operations.notification.application.SmsSendException.Kind;
+import com.hweld.operations.notification.domain.IntegrationSettings;
+import com.hweld.operations.notification.domain.IntegrationSettingsRepository;
+import com.hweld.operations.shared.infrastructure.security.CredentialCipher;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -19,32 +21,30 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * Adapter Infobip SMS API — `POST {baseUrl}/sms/3/messages` com
  * `Authorization: App {API_KEY}` (doc: infobip.com/docs/api/sms-api).
- * Ativo apenas com `SMS_PROVIDER=infobip`; credenciais inválidas falham
- * cedo no primeiro uso, nunca no boot (provider pode estar inativo).
+ * Credenciais vêm de `integration_settings` (gestão do cliente no painel,
+ * cifradas via `CredentialCipher`) — resolvidas por chamada, nunca
+ * cacheadas em claro além do RestClient da configuração corrente.
  */
 @Component
-@ConditionalOnProperty(name = "hweld.notification.sms-provider", havingValue = "infobip")
 public class InfobipSmsProvider implements SmsProvider {
 
     private static final Logger log = LoggerFactory.getLogger(InfobipSmsProvider.class);
 
+    private final IntegrationSettingsRepository settings;
+    private final CredentialCipher cipher;
     private final InfobipProperties props;
-    private final RestClient client;
     private final ObjectMapper mapper;
 
-    public InfobipSmsProvider(InfobipProperties props, ObjectMapper mapper) {
+    /** Cliente da configuração corrente — reconstruído só se ela mudar. */
+    private volatile String cachedFingerprint;
+    private volatile RestClient cachedClient;
+
+    public InfobipSmsProvider(IntegrationSettingsRepository settings,
+            CredentialCipher cipher, InfobipProperties props, ObjectMapper mapper) {
+        this.settings = settings;
+        this.cipher = cipher;
         this.props = props;
         this.mapper = mapper;
-        java.net.http.HttpClient jdk = java.net.http.HttpClient.newBuilder()
-                .connectTimeout(Duration.ofMillis(Math.min(props.timeoutMs(), 3000)))
-                .build();
-        var factory = new JdkClientHttpRequestFactory(jdk);
-        factory.setReadTimeout(Duration.ofMillis(props.timeoutMs()));
-        this.client = RestClient.builder()
-                .baseUrl(props.baseUrl() != null ? props.baseUrl() : "")
-                .requestFactory(factory)
-                .defaultHeader("Authorization", "App " + props.apiKey())
-                .build();
     }
 
     @Override
@@ -52,18 +52,39 @@ public class InfobipSmsProvider implements SmsProvider {
         return "infobip";
     }
 
+    /** Credenciais resolvidas do banco — ou null se incompletas. */
+    public record Resolved(String baseUrl, String apiKey, String sender) {}
+
+    public Resolved resolve() {
+        IntegrationSettings cfg = settings.findById(IntegrationSettings.INFOBIP_SMS)
+                .orElse(null);
+        if (cfg == null || !cfg.credenciaisCompletas()) return null;
+        return new Resolved(cfg.getBaseUrl(), cipher.decrypt(cfg.getApiKeyEnc()), cfg.getSender());
+    }
+
+    public boolean configured() {
+        IntegrationSettings cfg = settings.findById(IntegrationSettings.INFOBIP_SMS)
+                .orElse(null);
+        return cfg != null && cfg.credenciaisCompletas();
+    }
+
     @Override
     public SmsReceipt send(String to, String text) {
-        if (!props.configured()) {
+        Resolved r = resolve();
+        if (r == null) {
             throw new SmsSendException(Kind.INVALID_CREDENTIALS,
-                    "Infobip não configurado (INFOBIP_BASE_URL/API_KEY/SENDER)");
+                    "Infobip sem credenciais — configure em Integrações");
+        }
+        if (!r.baseUrl().startsWith("https://")) {
+            throw new SmsSendException(Kind.INVALID_CREDENTIALS,
+                    "base URL Infobip deve ser HTTPS — recusado: " + r.baseUrl());
         }
         var body = Map.of("messages", List.of(Map.of(
-                "sender", props.sender(),
+                "sender", r.sender(),
                 "destinations", List.of(Map.of("to", to)),
                 "text", text)));
         try {
-            String raw = client.post().uri("/sms/3/messages")
+            String raw = client(r).post().uri("/sms/3/messages")
                     .body(body)
                     .retrieve()
                     .body(String.class);
@@ -96,11 +117,15 @@ public class InfobipSmsProvider implements SmsProvider {
      */
     @Override
     public ConnectionTest testConnection() {
-        if (!props.configured()) {
-            return new ConnectionTest(false, "credenciais ausentes (INFOBIP_BASE_URL/API_KEY/SENDER)");
+        Resolved r = resolve();
+        if (r == null) {
+            return new ConnectionTest(false, "credenciais ausentes — salve a configuração");
+        }
+        if (!r.baseUrl().startsWith("https://")) {
+            return new ConnectionTest(false, "base URL deve ser HTTPS");
         }
         try {
-            String raw = client.get().uri("/account/1/balance")
+            String raw = client(r).get().uri("/account/1/balance")
                     .retrieve()
                     .body(String.class);
             JsonNode resp = mapper.readTree(raw);
@@ -113,6 +138,29 @@ public class InfobipSmsProvider implements SmsProvider {
         } catch (Exception e) {
             return new ConnectionTest(false, "falha de conexão: " + e.getMessage());
         }
+    }
+
+    /** RestClient por credencial resolvida — troca ao salvar nova config. */
+    private RestClient client(Resolved r) {
+        String fp = r.baseUrl() + "|" + Integer.toHexString(r.apiKey().hashCode());
+        RestClient c = cachedClient;
+        if (c == null || !fp.equals(cachedFingerprint)) {
+            synchronized (this) {
+                java.net.http.HttpClient jdk = java.net.http.HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofMillis(Math.min(props.timeoutMs(), 3000)))
+                        .build();
+                var factory = new JdkClientHttpRequestFactory(jdk);
+                factory.setReadTimeout(Duration.ofMillis(props.timeoutMs()));
+                c = RestClient.builder()
+                        .baseUrl(r.baseUrl())
+                        .requestFactory(factory)
+                        .defaultHeader("Authorization", "App " + r.apiKey())
+                        .build();
+                cachedClient = c;
+                cachedFingerprint = fp;
+            }
+        }
+        return c;
     }
 
     private SmsSendException mapHttpError(RestClientResponseException e) {

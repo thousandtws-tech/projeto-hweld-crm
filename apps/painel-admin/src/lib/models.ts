@@ -539,22 +539,43 @@ export interface CmsLoja {
 
 // ── Integrações (hweld-operations-api) ────────────────────────────────────
 
-/** Estado consolidado da integração Infobip SMS — `GET /integracoes/infobip`. */
+/**
+ * Visão da integração Infobip SMS — `GET /integracoes/infobip`.
+ * Segredos são write-only: `segredos.campos` só diz se cada um está
+ * configurado. `versao` sustenta o optimistic locking do formulário.
+ */
 export interface IntegracaoInfobip {
   provedor: string;
-  envConfigurado: boolean;
-  baseUrlConfigurada: boolean;
-  apiKeyConfigurada: boolean;
-  remetente: string;
-  callbackConfigurado: boolean;
-  webhookUrl: string;
-  ativado: boolean;
-  maxSegmentos: number;
-  destinatariosTeste: string[];
-  eventos: Record<string, boolean>;
-  ultimaValidacao: { at?: string; ok?: boolean; detail?: string };
+  categoria: string;
+  ambiente: string;
+  /** Provider efetivo do canal — "infobip" com credenciais, senão "log". */
+  provider_ativo: string;
+  nome_conta: string;
+  habilitado: boolean;
+  estado: "ativa" | "pendente" | "falha" | "desativada";
+  versao: number;
+  config: {
+    base_url: string;
+    remetente: string;
+    limite_segmentos: number;
+    envio_pausado: boolean;
+    eventos: Record<string, boolean>;
+    destinatarios_teste: string[];
+    callback_url?: string;
+  };
+  segredos: { campos: { api_key: boolean; webhook_secret: boolean } };
+  ultima_verificacao_em: string;
+  verificacao_status: "ok" | "falha" | "nunca";
+  verificacao_erro: string;
   pendentes: number;
-  ultimoEnvio: string;
+}
+
+/** Relatório de entrega recebido — `GET /integracoes/infobip/eventos`. */
+export interface EventoDlr {
+  event_id: string;
+  status: string;
+  recebido_em: string;
+  ultimo_erro: string;
 }
 
 /** Entrega da fila transacional (canal SMS) — `notification_deliveries`. */

@@ -54,10 +54,16 @@ Swagger UI: `/swagger-ui.html`.
 | `EMAIL_PROVIDER` | `log` | `log` (dev) ou `smtp` |
 | `SMTP_HOST`/`SMTP_PORT`/`SMTP_USERNAME`/`SMTP_PASSWORD`/`SMTP_AUTH`/`SMTP_STARTTLS` | `localhost`/`1025`/… | SMTP transacional |
 | `MAIL_FROM` / `MAIL_FROM_NAME` | `noreply@hweld.com.br`/`HWeld` | remetente |
-| `SMS_PROVIDER` | `log` | `log` (dev) ou `infobip` |
-| `INFOBIP_BASE_URL` / `INFOBIP_API_KEY` / `INFOBIP_SENDER` | — | conta Infobip — URL HTTPS específica, `Authorization: App {key}` e remetente autorizado |
-| `INFOBIP_DLR_AUTH_TOKEN` / `..._HEADER` / `INFOBIP_WEBHOOK_URL` | —/`X-DLR-Token`/— | segredo do callback DLR `/api/v1/webhooks/infobip/sms/dlr` |
+| `SMS_PROVIDER` | `auto` | `auto` (Infobip com credenciais no banco, senão `log`), `log`, `infobip` |
+| `APP_PUBLIC_URL` | — | base pública do serviço — compõe a URL do DLR `/api/v1/webhooks/infobip/sms/dlr/{segredo}` exibida no card de Integrações |
+| `INTEGRATION_SECRETS_KEY` | derivada de `JWT_SECRET` | chave AES-256 dos segredos de integração no banco (hex-64/base64/texto) |
+| `INFOBIP_TIMEOUT_MS` | `10000` | timeout das chamadas à API Infobip |
 | `SMS_DLR_RECONCILE_AGE_MS` | `6h` | SENT sem DLR vira UNKNOWN (sem reenvio automático) |
+
+Credenciais Infobip (Base URL, API key, remetente) são configuradas pelo
+cliente no painel (**Administração → Integrações**), cifradas em
+`integration_settings` — nunca por env. O segredo do webhook DLR é gerado
+pelo servidor na primeira gravação e compõe o path público do callback.
 | `OTEL_ENABLED` / `OTEL_EXPORTER_OTLP_ENDPOINT` | `false`/NR US | tracing OTLP |
 
 ## APIs (prefixo `/api/v1`)

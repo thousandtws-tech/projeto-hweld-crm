@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -11,10 +12,11 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 /**
- * Toggles operacionais de uma integração (`integration_settings`). Segredos
- * NUNCA aqui — credenciais vêm de env (`INFOBIP_*`), padrão FocusNFe. Guarda
- * apenas o que muda em runtime: ativação, remetente, limites, destinatários
- * de teste e gatilhos por evento.
+ * Configuração operacional + credenciais de uma integração
+ * (`integration_settings`), gerenciada pelo cliente no painel.
+ * `apiKeyEnc`/`webhookSecretEnc` são cifrados (AES-GCM) — a entidade só
+ * carrega ciphertext; quem lê/escreve passa pelo `CredentialCipher`.
+ * `versao` implementa optimistic locking do formulário (409 em divergência).
  */
 @Entity
 @Table(name = "integration_settings")
@@ -26,8 +28,27 @@ public class IntegrationSettings {
     @Column(length = 40)
     private String code;
 
+    @Version
+    @Column(nullable = false)
+    private long versao;
+
+    @Column(name = "nome_conta", length = 120)
+    private String nomeConta;
+
     @Column(nullable = false)
     private boolean enabled = false;
+
+    /** Endpoint da conta — ex.: `https://xxxxxx.api.infobip.com` (HTTPS). */
+    @Column(name = "base_url", length = 200)
+    private String baseUrl;
+
+    /** API key cifrada — write-only para o exterior. */
+    @Column(name = "api_key_enc", columnDefinition = "text")
+    private String apiKeyEnc;
+
+    /** Segredo do callback DLR, gerado no servidor — cifrado. */
+    @Column(name = "webhook_secret_enc", columnDefinition = "text")
+    private String webhookSecretEnc;
 
     /** Remetente autorizado no painel Infobip (alfa ou E.164). */
     @Column(length = 32)
@@ -36,7 +57,11 @@ public class IntegrationSettings {
     @Column(name = "max_segments", nullable = false)
     private int maxSegments = 3;
 
-    /** Destinatários E.164 permitidos no "Enviar SMS de teste". */
+    /** Congela o canal sem desligar — itens aguardam na fila. */
+    @Column(name = "envio_pausado", nullable = false)
+    private boolean envioPausado = false;
+
+    /** Destinatários E.164 do SMS de teste — vazia = sem restrição. */
     @JdbcTypeCode(SqlTypes.JSON)
     private List<String> testRecipients = List.of();
 
@@ -65,21 +90,45 @@ public class IntegrationSettings {
     }
 
     public boolean isEventEnabled(String eventType) {
-        return enabled && Boolean.TRUE.equals(events.get(eventType));
+        return enabled && !envioPausado && Boolean.TRUE.equals(events.get(eventType));
     }
 
+    /** Lista vazia = teste livre (admin); preenchida = só os E.164 dela. */
     public boolean isTestRecipientAllowed(String e164) {
-        return testRecipients != null && testRecipients.contains(e164);
+        return testRecipients == null || testRecipients.isEmpty()
+                || testRecipients.contains(e164);
     }
 
-    public void atualizar(boolean enabled, String sender, int maxSegments,
-            List<String> testRecipients, Map<String, Boolean> events, String updatedBy) {
+    /** Credenciais mínimas para o adapter Infobip enviar de fato. */
+    public boolean credenciaisCompletas() {
+        return baseUrl != null && !baseUrl.isBlank()
+                && apiKeyEnc != null && !apiKeyEnc.isBlank()
+                && sender != null && !sender.isBlank();
+    }
+
+    public void atualizar(String nomeConta, boolean enabled, String baseUrl,
+            String sender, int maxSegments, boolean envioPausado,
+            List<String> testRecipients, Map<String, Boolean> events,
+            String updatedBy) {
+        this.nomeConta = nomeConta == null || nomeConta.isBlank() ? null : nomeConta.trim();
         this.enabled = enabled;
+        this.baseUrl = normalizeBaseUrl(baseUrl);
         this.sender = sender == null || sender.isBlank() ? null : sender.trim();
         this.maxSegments = Math.max(1, Math.min(maxSegments, 10));
+        this.envioPausado = envioPausado;
         this.testRecipients = testRecipients == null ? List.of() : List.copyOf(testRecipients);
         this.events = events == null ? Map.of() : Map.copyOf(events);
         this.updatedBy = updatedBy;
+        this.updatedAt = Instant.now();
+    }
+
+    public void definirApiKey(String enc) {
+        this.apiKeyEnc = enc;
+        this.updatedAt = Instant.now();
+    }
+
+    public void definirWebhookSecret(String enc) {
+        this.webhookSecretEnc = enc;
         this.updatedAt = Instant.now();
     }
 
@@ -90,10 +139,22 @@ public class IntegrationSettings {
                 "detail", detail == null ? "" : detail);
     }
 
+    private static String normalizeBaseUrl(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String url = raw.trim();
+        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+    }
+
     public String getCode() { return code; }
+    public long getVersao() { return versao; }
+    public String getNomeConta() { return nomeConta; }
     public boolean isEnabled() { return enabled; }
+    public String getBaseUrl() { return baseUrl; }
+    public String getApiKeyEnc() { return apiKeyEnc; }
+    public String getWebhookSecretEnc() { return webhookSecretEnc; }
     public String getSender() { return sender; }
     public int getMaxSegments() { return maxSegments; }
+    public boolean isEnvioPausado() { return envioPausado; }
     public List<String> getTestRecipients() { return testRecipients; }
     public Map<String, Boolean> getEvents() { return events; }
     public Map<String, Object> getLastCheck() { return lastCheck; }

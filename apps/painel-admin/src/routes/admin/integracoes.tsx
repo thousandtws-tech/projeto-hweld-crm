@@ -2,28 +2,29 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   AlertTriangle,
   CheckCircle2,
+  Copy,
   History,
   Loader2,
   MessageSquare,
   Play,
   RefreshCcw,
-  Settings2,
-  ShieldCheck,
+  Send,
+  Webhook,
+  XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
-import { FormDialog, FormField } from "@/components/ui-kit/FormDialog";
+import { ApiError } from "@/lib/api";
 import { exigePerfil } from "@/lib/guards";
-import type { EntregaSms, IntegracaoInfobip } from "@/lib/models";
+import type { EntregaSms, EventoDlr, IntegracaoInfobip } from "@/lib/models";
 import { integracoesService } from "@/lib/services";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import Switch from "@mui/material/Switch";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
 
 export const Route = createFileRoute("/admin/integracoes")({
   beforeLoad: exigePerfil("admin"),
@@ -52,45 +53,77 @@ const STATUS_ENTREGA: Record<string, string> = {
   DEAD: "Falha definitiva",
 };
 
-const PREVIEW_SMS_TESTE = "HWeld: SMS de teste da integração Infobip. Nenhuma ação necessária.";
+const ESTADO: Record<string, { rotulo: string; status: string }> = {
+  ativa: { rotulo: "Ativa", status: "ativo" },
+  pendente: { rotulo: "Pendente", status: "urgente" },
+  falha: { rotulo: "Falha na verificação", status: "cancelado" },
+  desativada: { rotulo: "Desativada", status: "inativo" },
+};
 
-/** Dependências que impedem o estado "pronta para uso". */
-function pendencias(cfg: IntegracaoInfobip): string[] {
-  const p: string[] = [];
-  if (cfg.provedor === "log") {
-    p.push("Provider de log (dev) — configure SMS_PROVIDER=infobip + INFOBIP_* no ambiente");
-  } else {
-    if (!cfg.baseUrlConfigurada) p.push("Base URL da conta (INFOBIP_BASE_URL)");
-    if (!cfg.apiKeyConfigurada) p.push("API key (INFOBIP_API_KEY)");
-    if (!cfg.remetente) p.push("Remetente autorizado (INFOBIP_SENDER ou configuração)");
-    if (!cfg.callbackConfigurado) p.push("Callback DLR (INFOBIP_DLR_AUTH_TOKEN)");
-  }
-  return p;
-}
+const inputSm = { size: "small" as const, fullWidth: true };
 
-/** Módulo Integrações — card Infobip SMS: estado, toggles, testes e histórico. */
+/** Módulo Integrações — detalhe Infobip SMS no padrão da referência:
+ *  credenciais do cliente (write-only), canal, DLR, teste, operação. */
 function IntegracoesPage() {
-  const [cfg, setCfg] = useState<IntegracaoInfobip | null>(null);
+  const [i, setI] = useState<IntegracaoInfobip | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [conflito, setConflito] = useState(false);
+
+  // Formulário (credenciais + canal) — salvo em uma única gravação
+  const [fNome, setFNome] = useState("");
+  const [fApiKey, setFApiKey] = useState("");
+  const [limparKey, setLimparKey] = useState(false);
+  const [fBaseUrl, setFBaseUrl] = useState("");
+  const [fRemetente, setFRemetente] = useState("");
+  const [fLimite, setFLimite] = useState("3");
+  const [fDestinatarios, setFDestinatarios] = useState("");
+  const [fPausado, setFPausado] = useState(false);
+  const [fEventos, setFEventos] = useState<Record<string, boolean>>({});
+  const [salvando, setSalvando] = useState(false);
+
+  // Verificação / teste SMS
   const [testando, setTestando] = useState(false);
-  const [dialogConfig, setDialogConfig] = useState(false);
-  const [dialogSms, setDialogSms] = useState(false);
-
-  const [form, setForm] = useState({ sender: "", maxSegmentos: "3", destinatarios: "" });
-  const [smsDestino, setSmsDestino] = useState("");
+  const [teste, setTeste] = useState<{ verificacao_status: string; mensagem?: string; nome_conta?: string } | null>(null);
+  const [fTelefone, setFTelefone] = useState("");
+  const [fTexto, setFTexto] = useState("");
   const [enviandoSms, setEnviandoSms] = useState(false);
+  const [alternando, setAlternando] = useState(false);
 
+  // DLRs + histórico
+  const [eventos, setEventos] = useState<EventoDlr[]>([]);
   const [historico, setHistorico] = useState<EntregaSms[]>([]);
   const [filtroStatus, setFiltroStatus] = useState("");
   const [filtroPedido, setFiltroPedido] = useState("");
 
+  const preencher = useCallback((v: IntegracaoInfobip) => {
+    setI(v);
+    setFNome(v.nome_conta ?? "");
+    setFBaseUrl(v.config?.base_url ?? "");
+    setFRemetente(v.config?.remetente ?? "");
+    setFLimite(String(v.config?.limite_segmentos ?? 3));
+    setFPausado(v.config?.envio_pausado === true);
+    setFEventos({ ...(v.config?.eventos ?? {}) });
+    setFDestinatarios((v.config?.destinatarios_teste ?? []).join(", "));
+    setFApiKey("");
+    setLimparKey(false);
+  }, []);
+
   const carregar = useCallback(async () => {
+    setConflito(false);
     try {
-      setCfg(await integracoesService.infobip());
+      preencher(await integracoesService.infobip());
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao carregar integração.");
     } finally {
       setCarregando(false);
+    }
+  }, [preencher]);
+
+  const carregarEventos = useCallback(async () => {
+    try {
+      setEventos(await integracoesService.eventos());
+    } catch {
+      /* card secundário — não bloqueia a página */
     }
   }, []);
 
@@ -107,83 +140,58 @@ function IntegracoesPage() {
 
   useEffect(() => {
     void carregar();
-  }, [carregar]);
+    void carregarEventos();
+  }, [carregar, carregarEventos]);
 
   useEffect(() => {
     void carregarHistorico();
   }, [carregarHistorico]);
 
-  const abrirConfig = () => {
-    if (!cfg) return;
-    setForm({
-      sender: cfg.remetente,
-      maxSegmentos: String(cfg.maxSegmentos),
-      destinatarios: cfg.destinatariosTeste.join(", "),
-    });
-    setDialogConfig(true);
-  };
-
-  const salvarConfig = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const salvar = async () => {
+    if (!i) return;
+    setSalvando(true);
     try {
-      const destinatarios = form.destinatarios
+      const segredos: { api_key?: string } = {};
+      if (limparKey) segredos.api_key = "";
+      else if (fApiKey.trim()) segredos.api_key = fApiKey.trim();
+      const destinatarios = fDestinatarios
         .split(/[,;\s]+/)
         .map((s) => s.trim())
         .filter(Boolean);
-      const cfgNova = await integracoesService.salvarConfig({
-        enabled: cfg?.ativado ?? false,
-        sender: form.sender.trim(),
-        maxSegments: Number(form.maxSegmentos) || 3,
-        testRecipients: destinatarios,
-        events: cfg?.eventos ?? {},
+      const limite = Number.parseInt(fLimite, 10);
+      const nova = await integracoesService.salvar({
+        versao: i.versao,
+        nome_conta: fNome.trim(),
+        config: {
+          base_url: fBaseUrl.trim(),
+          remetente: fRemetente.trim(),
+          limite_segmentos: Number.isFinite(limite) ? limite : 3,
+          envio_pausado: fPausado,
+          eventos: fEventos,
+          destinatarios_teste: destinatarios,
+        },
+        ...(Object.keys(segredos).length ? { segredos } : {}),
       });
-      setCfg(cfgNova);
-      setDialogConfig(false);
-      toast.success("Configuração da integração salva.");
+      preencher(nova);
+      toast.success("Configuração salva.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar configuração.");
+      if (err instanceof ApiError && err.status === 409) {
+        setConflito(true);
+        toast.error("Integração alterada por outro administrador — recarregue antes de salvar.");
+      } else {
+        toast.error(err instanceof Error ? err.message : "Falha ao salvar configuração.");
+      }
+    } finally {
+      setSalvando(false);
     }
   };
 
-  const alternarAtivacao = async () => {
-    if (!cfg) return;
-    try {
-      const cfgNova = await integracoesService.salvarConfig({
-        enabled: !cfg.ativado,
-        sender: cfg.remetente,
-        maxSegments: cfg.maxSegmentos,
-        testRecipients: cfg.destinatariosTeste,
-        events: cfg.eventos,
-      });
-      setCfg(cfgNova);
-      toast.success(cfgNova.ativado ? "Envios de SMS ativados." : "Novos envios pausados — relatórios DLR continuam registrados.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao alterar ativação.");
-    }
-  };
-
-  const alternarEvento = async (tipo: string, ligado: boolean) => {
-    if (!cfg) return;
-    try {
-      const cfgNova = await integracoesService.salvarConfig({
-        enabled: cfg.ativado,
-        sender: cfg.remetente,
-        maxSegments: cfg.maxSegmentos,
-        testRecipients: cfg.destinatariosTeste,
-        events: { ...cfg.eventos, [tipo]: ligado },
-      });
-      setCfg(cfgNova);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao alterar gatilho.");
-    }
-  };
-
-  const testarConexao = async () => {
+  const testar = async () => {
     setTestando(true);
+    setTeste(null);
     try {
       const r = await integracoesService.testarConexao();
-      if (r.ok) toast.success(`Conexão válida — ${r.detalhe}`);
-      else toast.error(`Conexão falhou — ${r.detalhe}`);
+      setTeste(r);
       await carregar();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha no teste de conexão.");
@@ -192,18 +200,37 @@ function IntegracoesPage() {
     }
   };
 
-  const enviarSmsTeste = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const enviarTeste = async () => {
+    const digitos = fTelefone.replace(/\D/g, "");
+    if (digitos.length < 10 || digitos.length > 15) {
+      toast.error("Informe o telefone com DDI e DDD — 10 a 15 dígitos.");
+      return;
+    }
     setEnviandoSms(true);
     try {
-      const d = await integracoesService.enviarSmsTeste(smsDestino);
-      setDialogSms(false);
-      toast.success(`SMS de teste enfileirado — entrega ${d.id.slice(0, 8)}…`);
+      const r = await integracoesService.enviarSmsTeste(digitos, fTexto.trim() || undefined);
+      toast.success(`SMS aceito — entrega ${r.id.slice(0, 8)}…`);
+      setFTelefone("");
+      setFTexto("");
       await carregarHistorico();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao enviar SMS de teste.");
     } finally {
       setEnviandoSms(false);
+    }
+  };
+
+  const alternarHabilitado = async () => {
+    if (!i) return;
+    setAlternando(true);
+    try {
+      const nova = await integracoesService.habilitar(!i.habilitado);
+      preencher(nova);
+      toast.success(nova.habilitado ? "Integração habilitada." : "Integração desabilitada — configuração mantida.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao alterar habilitação.");
+    } finally {
+      setAlternando(false);
     }
   };
 
@@ -217,17 +244,53 @@ function IntegracoesPage() {
     }
   };
 
-  const pendentes = cfg ? pendencias(cfg) : [];
-  const pronto = cfg !== null && pendentes.length === 0;
+  const copiar = async (texto: string) => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast.success("URL copiada.");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  };
+
+  const estado = i ? (ESTADO[i.estado] ?? ESTADO.desativada) : null;
+
+  if (carregando) {
+    return (
+      <>
+        <PageHeader title="Integrações" subtitle="Canais e provedores externos conectados ao HWeld" />
+        <SectionCard>
+          <div className="flex items-center gap-2 py-8 text-xs text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Carregando integração…
+          </div>
+        </SectionCard>
+      </>
+    );
+  }
+
+  if (!i) {
+    return (
+      <>
+        <PageHeader title="Integrações" subtitle="Canais e provedores externos conectados ao HWeld" />
+        <SectionCard>
+          <div className="py-8 text-center">
+            <Typography variant="body2" className="text-xs text-muted-foreground">
+              Não foi possível carregar esta integração.
+            </Typography>
+            <Button variant="outlined" size="small" className="mt-3" onClick={() => void carregar()}>
+              Tentar novamente
+            </Button>
+          </div>
+        </SectionCard>
+      </>
+    );
+  }
 
   return (
     <>
-      <PageHeader
-        title="Integrações"
-        subtitle="Canais e provedores externos conectados ao HWeld"
-      />
+      <PageHeader title="Integrações" subtitle="Canais e provedores externos conectados ao HWeld" />
 
-      {/* Card Infobip — SMS */}
+      {/* Cabeçalho da integração */}
       <SectionCard>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -236,99 +299,351 @@ function IntegracoesPage() {
             </div>
             <div>
               <Typography variant="h6" component="h2" className="text-sm font-semibold">
-                Infobip — SMS
+                Infobip
+                <span className="ml-2 rounded-md border border-border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Produção
+                </span>
               </Typography>
               <Typography variant="body2" className="text-xs text-muted-foreground">
-                Comunicação · mensagens transacionais (pedidos, cobranças, NF-e)
+                Comunicação · SMS transacional — API key cifrada no servidor, confirmação de
+                entrega por webhook (DLR).
               </Typography>
             </div>
           </div>
-          {cfg && (
-            <StatusPill
-              status={pronto ? (cfg.ativado ? "ativo" : "inativo") : "urgente"}
-              label={pronto ? (cfg.ativado ? "Ativa" : "Configurada — pausada") : "Integração pendente"}
-            />
-          )}
+          {estado && <StatusPill status={estado.status} label={estado.rotulo} />}
         </div>
-
-        {/* Estado — cada dependência separada, nunca mascara pendência */}
-        {cfg && (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <EstadoItem rotulo="Credenciais" ok={cfg.envConfigurado}
-              detalhe={cfg.provedor === "log" ? "provider de log (dev)" : "INFOBIP_* configuradas"} />
-            <EstadoItem rotulo="Remetente" ok={Boolean(cfg.remetente)}
-              detalhe={cfg.remetente || "não definido"} />
-            <EstadoItem rotulo="Callback DLR" ok={cfg.callbackConfigurado}
-              detalhe={cfg.callbackConfigurado ? "autenticado" : "não configurado"} />
-            <EstadoItem rotulo="Última validação"
-              ok={cfg.ultimaValidacao?.ok === true}
-              detalhe={cfg.ultimaValidacao?.at
-                ? new Date(cfg.ultimaValidacao.at).toLocaleString("pt-BR")
-                : "nunca testada"} />
-          </div>
-        )}
-
-        {cfg && pendentes.length > 0 && (
-          <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-[#B8891D]/40 bg-[#B8891D]/8 px-3.5 py-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#B8891D]" />
-            <div className="space-y-1">
-              <div className="text-xs font-bold text-[#B8891D]">Pendências antes do uso</div>
-              {pendentes.map((p) => (
-                <div key={p} className="text-xs text-muted-foreground">· {p}</div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Ações */}
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button variant="contained" size="small" onClick={abrirConfig} disabled={!cfg}>
-            <Settings2 className="mr-1.5 h-4 w-4" /> Configurar
-          </Button>
-          <Button variant="outlined" size="small" onClick={() => void testarConexao()}
-            disabled={!cfg || testando}>
-            {testando ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Play className="mr-1.5 h-4 w-4" />}
-            Testar conexão
-          </Button>
-          <Button variant="outlined" size="small" onClick={() => setDialogSms(true)}
-            disabled={!cfg || (cfg.destinatariosTeste?.length ?? 0) === 0}>
-            <MessageSquare className="mr-1.5 h-4 w-4" /> Enviar SMS de teste
-          </Button>
-          <Button variant="outlined" size="small"
-            color={cfg?.ativado ? "error" : "primary"}
-            onClick={() => void alternarAtivacao()} disabled={!cfg}>
-            {cfg?.ativado ? "Pausar novos envios" : "Ativar envios"}
-          </Button>
-        </div>
-
-        {/* Gatilhos por evento */}
-        {cfg && (
-          <div className="mt-5 border-t border-border/60 pt-4">
-            <Typography variant="body2" className="mb-2 text-xs font-semibold text-foreground">
-              Gatilhos SMS por evento
-            </Typography>
-            <div className="grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
-              {EVENTOS_SMS.map((ev) => (
-                <label key={ev.tipo}
-                  className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs text-muted-foreground hover:bg-secondary/50">
-                  {ev.rotulo}
-                  <Switch size="small"
-                    checked={cfg.ativado && Boolean(cfg.eventos?.[ev.tipo])}
-                    disabled={!cfg.ativado}
-                    onChange={(e) => void alternarEvento(ev.tipo, e.target.checked)} />
-                </label>
-              ))}
-            </div>
-            {!cfg.ativado && (
-              <Typography variant="body2" className="mt-1 text-[11px] text-muted-foreground">
-                Ative a integração para habilitar os gatilhos.
-              </Typography>
-            )}
+        {i.provider_ativo === "log" && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-border bg-secondary/50 px-3 py-2">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span className="text-[11px] text-muted-foreground">
+              Provider efetivo: <strong>log</strong> — enquanto as credenciais não estiverem
+              completas, os envios são simulados em log (sem custo, sem SMS real).
+            </span>
           </div>
         )}
       </SectionCard>
 
-      {/* Histórico SMS */}
+      {conflito && (
+        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-[#B8891D]/40 bg-[#B8891D]/8 px-3.5 py-3" role="alert">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-[#B8891D]" />
+          <span className="flex-1 text-xs text-muted-foreground">
+            Outro administrador alterou esta integração. Recarregue para ver a versão atual antes
+            de salvar.
+          </span>
+          <Button size="small" variant="outlined" onClick={() => void carregar()}>
+            Recarregar
+          </Button>
+        </div>
+      )}
+
+      {/* Credenciais */}
+      <SectionCard>
+        <Typography variant="h6" component="h3" className="text-sm font-semibold">
+          Credenciais
+        </Typography>
+        <Typography variant="body2" className="mb-4 text-xs text-muted-foreground">
+          API key da conta Infobip (Settings → API keys, escopo SMS). Campo em branco mantém o
+          valor atual; "Limpar" remove ao salvar.
+        </Typography>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <div className="mb-1 text-xs font-medium text-foreground">Nome da conexão</div>
+            <TextField {...inputSm} placeholder="Ex.: SMS da loja"
+              value={fNome} onChange={(e) => setFNome(e.target.value)} />
+          </div>
+          <div>
+            <div className="mb-1 flex items-center gap-2 text-xs font-medium text-foreground">
+              API key *
+              {i.segredos.campos.api_key && (
+                <span className="text-[10px] font-normal text-[#2E7D4F]">•••••• configurado</span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <TextField {...inputSm} type="password" autoComplete="new-password"
+                placeholder={limparKey ? "Será removida ao salvar"
+                  : i.segredos.campos.api_key ? "Deixe em branco para manter" : "App key da conta"}
+                value={fApiKey} disabled={limparKey}
+                onChange={(e) => setFApiKey(e.target.value)} />
+              {i.segredos.campos.api_key && (
+                <Button size="small" variant="outlined" color={limparKey ? "inherit" : "error"}
+                  onClick={() => setLimparKey((v) => !v)}>
+                  {limparKey ? "Desfazer" : "Limpar"}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="mb-1 flex items-center gap-2 text-xs font-medium text-foreground">
+            Segredo do webhook
+            {i.segredos.campos.webhook_secret && (
+              <span className="text-[10px] font-normal text-[#2E7D4F]">•••••• configurado</span>
+            )}
+          </div>
+          <TextField {...inputSm}
+            value={i.segredos.campos.webhook_secret
+              ? "Gerado automaticamente pelo servidor"
+              : "Será gerado automaticamente ao salvar"}
+            slotProps={{ input: { readOnly: true } }} />
+          <div className="mt-1 text-[11px] text-muted-foreground">
+            Autentica os relatórios de entrega (DLR) na URL pública — gerado pelo servidor.
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* Configuração do canal */}
+      <SectionCard>
+        <Typography variant="h6" component="h3" className="text-sm font-semibold">
+          Configuração do canal
+        </Typography>
+        <Typography variant="body2" className="mb-4 text-xs text-muted-foreground">
+          Endpoint da conta e remetente autorizado — cobrados por segmento (160 chars GSM-7, 70
+          com acentos/emoji).
+        </Typography>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <div className="mb-1 text-xs font-medium text-foreground">Base URL *</div>
+            <TextField {...inputSm} placeholder="https://xxxxxx.api.infobip.com"
+              value={fBaseUrl} onChange={(e) => setFBaseUrl(e.target.value)}
+              slotProps={{ htmlInput: { className: "font-mono" } }} />
+            <div className="mt-1 text-[11px] text-muted-foreground">
+              Host oficial da conta — visível no painel Infobip → API keys. HTTPS obrigatório.
+            </div>
+          </div>
+          <div>
+            <div className="mb-1 text-xs font-medium text-foreground">Remetente *</div>
+            <TextField {...inputSm} placeholder="HWeld ou +55…"
+              value={fRemetente} onChange={(e) => setFRemetente(e.target.value)} />
+            <div className="mt-1 text-[11px] text-muted-foreground">
+              Alfanumérico (até 11) ou número aprovado na conta.
+            </div>
+          </div>
+          <div>
+            <div className="mb-1 text-xs font-medium text-foreground">Limite de segmentos</div>
+            <TextField {...inputSm} placeholder="3" value={fLimite}
+              onChange={(e) => setFLimite(e.target.value)}
+              slotProps={{ htmlInput: { inputMode: "numeric" } }} />
+            <div className="mt-1 text-[11px] text-muted-foreground">
+              1–10 — mensagens maiores são recusadas antes do envio.
+            </div>
+          </div>
+          <div className="sm:col-span-2">
+            <div className="mb-1 text-xs font-medium text-foreground">
+              Destinatários de teste <span className="font-normal text-muted-foreground">(opcional)</span>
+            </div>
+            <TextField {...inputSm} placeholder="+55 41 99999-0000, +55 41 98888-1111"
+              value={fDestinatarios} onChange={(e) => setFDestinatarios(e.target.value)} />
+            <div className="mt-1 text-[11px] text-muted-foreground">
+              Separados por vírgula — quando preenchida, o SMS de teste só sai para estes números.
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="mb-1 text-xs font-medium text-foreground">Eventos com SMS</div>
+          <div className="grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
+            {EVENTOS_SMS.map((ev) => (
+              <div key={ev.tipo}
+                className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs text-muted-foreground hover:bg-secondary/50">
+                <span className="font-medium text-foreground">{ev.rotulo}</span>
+                <Switch size="small" checked={Boolean(fEventos[ev.tipo])}
+                  onChange={(e) => setFEventos((m) => ({ ...m, [ev.tipo]: e.target.checked }))} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-1 text-[11px] text-muted-foreground">
+            Avisos saem por SMS apenas com o toggle ligado — e-mail não é afetado.
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5">
+          <div>
+            <div className="text-xs font-semibold text-foreground">Pausar envios</div>
+            <div className="text-[11px] text-muted-foreground">
+              Congela o canal sem desligar a integração — itens aguardam na fila.
+            </div>
+          </div>
+          <Switch size="small" checked={fPausado}
+            onChange={(e) => setFPausado(e.target.checked)} />
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Button variant="contained" size="small" disabled={salvando}
+            onClick={() => void salvar()}>
+            {salvando ? "Salvando…" : "Salvar configuração"}
+          </Button>
+          <div className="flex-1" />
+          <span className="text-[11px] text-muted-foreground">
+            {i.ultima_verificacao_em
+              ? `Última verificação: ${new Date(i.ultima_verificacao_em).toLocaleString("pt-BR")} — ${i.verificacao_status === "ok" ? "ok" : "falhou"}`
+              : "Nunca verificada."}
+          </span>
+          <Button variant="outlined" size="small" disabled={testando}
+            onClick={() => void testar()}>
+            {testando ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Play className="mr-1.5 h-4 w-4" />}
+            Testar conexão
+          </Button>
+        </div>
+
+        {i.verificacao_status === "falha" && i.verificacao_erro && (
+          <div className="mt-2 text-[11px] text-destructive">{i.verificacao_erro}</div>
+        )}
+
+        {teste && (
+          <div className={`mt-3 flex items-center gap-2 rounded-xl border px-3 py-2.5 text-xs ${
+            teste.verificacao_status === "ok"
+              ? "border-[#2E7D4F]/40 bg-[#2E7D4F]/8 text-foreground"
+              : "border-destructive/40 bg-destructive/8 text-foreground"}`}
+            role="status">
+            {teste.verificacao_status === "ok"
+              ? <CheckCircle2 className="h-4 w-4 shrink-0 text-[#2E7D4F]" />
+              : <XCircle className="h-4 w-4 shrink-0 text-destructive" />}
+            <span>
+              {teste.verificacao_status === "ok"
+                ? `Conexão verificada${teste.nome_conta ? ` — ${teste.nome_conta}` : ""}.`
+                : `Falha na verificação${teste.mensagem ? ` — ${teste.mensagem}` : ""}.`}
+            </span>
+          </div>
+        )}
+      </SectionCard>
+
+      {/* Webhook DLR */}
+      <SectionCard>
+        <Typography variant="h6" component="h3" className="flex items-center gap-2 text-sm font-semibold">
+          <Webhook className="h-4 w-4 text-muted-foreground" /> Relatórios de entrega (DLR)
+        </Typography>
+        <Typography variant="body2" className="mb-3 mt-1 text-xs text-muted-foreground">
+          Cadastre esta URL no painel Infobip (notification profiles → delivery reports) para a
+          confirmação de entrega fechar o ciclo na fila de envio.
+        </Typography>
+        {i.config?.callback_url ? (
+          <div className="flex gap-2">
+            <TextField {...inputSm} value={i.config.callback_url}
+              slotProps={{ input: { readOnly: true }, htmlInput: { className: "font-mono" } }} />
+            <Button size="small" variant="outlined"
+              onClick={() => void copiar(i.config.callback_url ?? "")}>
+              <Copy className="mr-1 h-4 w-4" /> Copiar
+            </Button>
+          </div>
+        ) : (
+          <Typography variant="body2" className="text-xs text-muted-foreground">
+            A URL aparece após salvar — o segredo do path é gerado na primeira gravação.
+            {!i.segredos.campos.webhook_secret ? "" : " (APP_PUBLIC_URL ausente no servidor)"}
+          </Typography>
+        )}
+      </SectionCard>
+
+      {/* SMS de teste */}
+      <SectionCard>
+        <Typography variant="h6" component="h3" className="text-sm font-semibold">
+          SMS de teste
+        </Typography>
+        <Typography variant="body2" className="mb-3 mt-1 text-xs text-muted-foreground">
+          Envio único pela fila transacional — restrito aos destinatários da lista quando ela
+          está preenchida. Pode gerar custo na conta Infobip.
+        </Typography>
+        <div className="grid items-end gap-3 sm:grid-cols-[220px_1fr_auto]">
+          <div>
+            <div className="mb-1 text-xs font-medium text-foreground">Telefone</div>
+            <TextField {...inputSm} placeholder="+55 41 99999-0000"
+              slotProps={{ htmlInput: { inputMode: "tel" } }}
+              value={fTelefone} onChange={(e) => setFTelefone(e.target.value)} />
+          </div>
+          <div>
+            <div className="mb-1 text-xs font-medium text-foreground">
+              Mensagem <span className="font-normal text-muted-foreground">(opcional)</span>
+            </div>
+            <TextField {...inputSm} placeholder="Usa o texto padrão se vazio"
+              value={fTexto} onChange={(e) => setFTexto(e.target.value)} />
+          </div>
+          <Button variant="contained" size="small"
+            disabled={enviandoSms || fTelefone.replace(/\D/g, "").length === 0}
+            onClick={() => void enviarTeste()}>
+            {enviandoSms
+              ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+              : <Send className="mr-1.5 h-4 w-4" />}
+            {enviandoSms ? "Enviando…" : "Enviar SMS"}
+          </Button>
+        </div>
+      </SectionCard>
+
+      {/* Operação */}
+      <SectionCard>
+        <Typography variant="h6" component="h3" className="mb-3 text-sm font-semibold">
+          Operação
+        </Typography>
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5">
+          <div>
+            <div className="text-xs font-semibold text-foreground">Integração habilitada</div>
+            <div className="text-[11px] text-muted-foreground">
+              Quando desabilitada, nenhum SMS sai — configuração e credenciais são mantidas.
+            </div>
+          </div>
+          <Switch size="small" checked={i.habilitado} disabled={alternando}
+            onChange={() => void alternarHabilitado()} />
+        </div>
+      </SectionCard>
+
+      {/* Eventos de webhook (DLR) */}
+      <SectionCard>
+        <Typography variant="h6" component="h3" className="text-sm font-semibold">
+          Eventos de webhook
+        </Typography>
+        <Typography variant="body2" className="mb-3 mt-1 text-xs text-muted-foreground">
+          Últimos relatórios de entrega recebidos.
+        </Typography>
+        {eventos.length === 0 ? (
+          <Typography variant="body2" className="py-4 text-xs text-muted-foreground">
+            Nenhum DLR recebido ainda — depois de cadastrar a URL no painel Infobip, os
+            relatórios aparecem aqui.
+          </Typography>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <th className="py-2 pr-3 font-medium">Evento</th>
+                  <th className="py-2 pr-3 font-medium">Status</th>
+                  <th className="py-2 pr-3 font-medium">Recebido em</th>
+                  <th className="py-2 font-medium">Último erro</th>
+                </tr>
+              </thead>
+              <tbody>
+                {eventos.map((e) => (
+                  <tr key={e.event_id + e.recebido_em} className="border-b border-border/50 last:border-0">
+                    <td className="py-2 pr-3">
+                      <div className="font-medium">Relatório de entrega</div>
+                      <div className="max-w-[220px] truncate font-mono text-[10px] text-muted-foreground">
+                        {e.event_id}
+                      </div>
+                    </td>
+                    <td className="py-2 pr-3">
+                      <StatusPill
+                        status={/deliver/i.test(e.status) ? "ativo"
+                          : /reject|fail|expired|undeliverable/i.test(e.status) ? "cancelado"
+                          : "pendente"}
+                        label={e.status} />
+                    </td>
+                    <td className="py-2 pr-3 tabular-nums text-muted-foreground">
+                      {e.recebido_em ? new Date(e.recebido_em).toLocaleString("pt-BR") : "—"}
+                    </td>
+                    <td className="py-2 text-muted-foreground">
+                      {e.ultimo_erro
+                        ? <span className="text-destructive">{e.ultimo_erro}</span>
+                        : <span>—</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
+
+      {/* Histórico de envios */}
       <SectionCard>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <Typography variant="h6" component="h2" className="flex items-center gap-2 text-sm font-semibold">
@@ -353,7 +668,7 @@ function IntegracoesPage() {
 
         {historico.length === 0 ? (
           <Typography variant="body2" className="py-6 text-center text-xs text-muted-foreground">
-            {carregando ? "Carregando…" : "Nenhum SMS registrado ainda."}
+            Nenhum SMS registrado ainda.
           </Typography>
         ) : (
           <div className="overflow-x-auto">
@@ -413,79 +728,6 @@ function IntegracoesPage() {
           </div>
         )}
       </SectionCard>
-
-      {/* Configuração operacional — segredos ficam no ambiente, nunca aqui */}
-      <FormDialog open={dialogConfig} onOpenChange={setDialogConfig}
-        title="Infobip — configuração operacional"
-        description="Remetente, limites e destinatários de teste. Credenciais (Base URL, API key, token DLR) vêm das variáveis INFOBIP_* do ambiente."
-        submitLabel="Salvar" onSubmit={(e) => void salvarConfig(e)}>
-        <FormField label="Remetente autorizado">
-          <TextField size="small" fullWidth
-            placeholder="Ex.: HWeld ou +5511…"
-            value={form.sender}
-            onChange={(e) => setForm((f) => ({ ...f, sender: e.target.value }))} />
-        </FormField>
-        <FormField label="Máx. segmentos por SMS">
-          <TextField size="small" fullWidth type="number"
-            slotProps={{ htmlInput: { min: 1, max: 10 } }}
-            value={form.maxSegmentos}
-            onChange={(e) => setForm((f) => ({ ...f, maxSegmentos: e.target.value }))} />
-        </FormField>
-        <FormField label="Destinatários de teste (E.164, separados por vírgula)" wide>
-          <TextField size="small" fullWidth multiline minRows={2}
-            placeholder="+5511998887766, +5511987654321"
-            value={form.destinatarios}
-            onChange={(e) => setForm((f) => ({ ...f, destinatarios: e.target.value }))} />
-        </FormField>
-      </FormDialog>
-
-      {/* SMS de teste — destinatário explícito, preview e aviso de custo */}
-      <FormDialog open={dialogSms} onOpenChange={setDialogSms}
-        title="Enviar SMS de teste"
-        description="O envio passa pela fila transacional e pode gerar custo na conta Infobip."
-        submitLabel="Enviar SMS" onSubmit={(e) => void enviarSmsTeste(e)}>
-        <FormField label="Destinatário (lista de testes)" wide>
-          <TextField size="small" fullWidth select
-            value={smsDestino}
-            onChange={(e) => setSmsDestino(e.target.value)}
-            slotProps={{ select: { displayEmpty: true } }}>
-            <MenuItem value="">Selecione…</MenuItem>
-            {(cfg?.destinatariosTeste ?? []).map((d) => (
-              <MenuItem key={d} value={d}>{d}</MenuItem>
-            ))}
-          </TextField>
-        </FormField>
-        <FormField label="Prévia da mensagem" wide>
-          <Box className="rounded-xl border border-border bg-secondary/60 px-3 py-2.5 text-xs text-muted-foreground">
-            {PREVIEW_SMS_TESTE}
-          </Box>
-        </FormField>
-        <div className="col-span-2 flex items-start gap-2 rounded-xl border border-[#B8891D]/40 bg-[#B8891D]/8 px-3 py-2.5">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#B8891D]" />
-          <div className="text-[11px] text-muted-foreground">
-            Este é um envio real — pode gerar cobrança. Somente destinatários da lista de testes
-            são aceitos; em contas trial, o destino também precisa estar verificado no Infobip.
-          </div>
-        </div>
-        {enviandoSms && <Loader2 className="h-4 w-4 animate-spin" />}
-      </FormDialog>
     </>
-  );
-}
-
-function EstadoItem({ rotulo, ok, detalhe }: { rotulo: string; ok: boolean; detalhe: string }) {
-  return (
-    <div className="flex items-start gap-2 rounded-xl border border-border/60 bg-secondary/30 px-3 py-2.5">
-      {ok ? (
-        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#2E7D4F]" />
-      ) : (
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#B8891D]" />
-      )}
-      <div className="min-w-0">
-        <div className="text-xs font-semibold text-foreground">{rotulo}</div>
-        <div className="truncate text-[11px] text-muted-foreground" title={detalhe}>{detalhe}</div>
-      </div>
-      {ok && <CheckCircle2 className="ml-auto mt-0.5 h-3.5 w-3.5 shrink-0 text-[#2E7D4F]" />}
-    </div>
   );
 }

@@ -11,6 +11,7 @@ import com.hweld.operations.notification.application.EmailProvider;
 import com.hweld.operations.notification.application.NotificationService;
 import com.hweld.operations.notification.application.SmsProvider;
 import com.hweld.operations.notification.application.TemplateRenderer;
+import com.hweld.operations.notification.domain.IntegrationSettingsRepository;
 import com.hweld.operations.notification.domain.NotificationDelivery;
 import com.hweld.operations.notification.domain.NotificationDeliveryRepository;
 import com.hweld.operations.notification.domain.NotificationTemplate;
@@ -40,8 +41,10 @@ class NotificationServiceTest {
         emailProvider = mock(EmailProvider.class);
         outbox = mock(Outbox.class);
         props = new NotificationService.Props("log", "log", 3, 1000, 0, "noreply@x", "HWeld");
-        service = new NotificationService(templates, deliveries, new TemplateRenderer(),
-                emailProvider, mock(SmsProvider.class), outbox, props);
+        var integrations = mock(IntegrationSettingsRepository.class);
+        when(integrations.findById(any())).thenReturn(Optional.empty());
+        service = new NotificationService(templates, deliveries, integrations,
+                new TemplateRenderer(), emailProvider, mock(SmsProvider.class), outbox, props);
     }
 
     private NotificationTemplate template() {

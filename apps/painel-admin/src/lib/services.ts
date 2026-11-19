@@ -399,17 +399,30 @@ export const sessaoService = {
  */
 export const integracoesService = {
   infobip: () => apiOps.getRecurso<import("./models").IntegracaoInfobip>("integracoes/infobip"),
-  salvarConfig: (b: {
-    enabled?: boolean;
-    sender?: string;
-    maxSegments?: number;
-    testRecipients?: string[];
-    events?: Record<string, boolean>;
-  }) => apiOps.putRecurso<import("./models").IntegracaoInfobip>("integracoes/infobip/config", b),
+  salvar: (b: {
+    versao?: number;
+    nome_conta?: string;
+    config?: {
+      base_url?: string;
+      remetente?: string;
+      limite_segmentos?: number;
+      envio_pausado?: boolean;
+      eventos?: Record<string, boolean>;
+      destinatarios_teste?: string[];
+    };
+    segredos?: { api_key?: string };
+  }) => apiOps.putRecurso<import("./models").IntegracaoInfobip>("integracoes/infobip", b),
+  habilitar: (habilitado: boolean) =>
+    apiOps.post<import("./models").IntegracaoInfobip>("integracoes/infobip/habilitacao", { habilitado }),
   testarConexao: () =>
-    apiOps.post<{ ok: boolean; detalhe: string }>("integracoes/infobip/testar-conexao", {}),
-  enviarSmsTeste: (destinatario: string) =>
-    apiOps.post<import("./models").EntregaSms>("integracoes/infobip/sms-teste", { destinatario }),
+    apiOps.post<{ verificacao_status: string; mensagem?: string; nome_conta?: string }>(
+      "integracoes/infobip/testar-conexao", {}),
+  enviarSmsTeste: (telefone: string, texto?: string) =>
+    apiOps.post<{ aceito: boolean; id: string }>(
+      "integracoes/infobip/sms-teste",
+      texto ? { telefone, texto } : { telefone }),
+  eventos: () =>
+    apiOps.listaArray<import("./models").EventoDlr>("integracoes/infobip/eventos"),
   reprocessar: (deliveryId: string) =>
     apiOps.post<import("./models").EntregaSms>(
       `integracoes/infobip/deliveries/${deliveryId}/reprocessar`,

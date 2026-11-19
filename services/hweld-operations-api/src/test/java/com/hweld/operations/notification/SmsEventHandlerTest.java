@@ -44,7 +44,8 @@ class SmsEventHandlerTest {
 
     private IntegrationSettings cfg(boolean enabled, Map<String, Boolean> events) {
         var cfg = IntegrationSettings.criar(IntegrationSettings.INFOBIP_SMS);
-        cfg.atualizar(enabled, "HWeld", 3, List.of("+5541999887766"), events, "teste");
+        cfg.atualizar(null, enabled, "https://x.api.infobip.com", "HWeld", 3, false,
+                List.of("+5541999887766"), events, "teste");
         return cfg;
     }
 
