@@ -1,0 +1,76 @@
+<main class="em-breve">
+  <picture>
+    <source
+      type="image/webp"
+      srcset="assets/em-breve-soldador-1200.webp 1200w, assets/em-breve-soldador.webp 2400w"
+      sizes="100vw"
+    />
+    <img
+      class="foto"
+      src="assets/em-breve-soldador.jpg"
+      srcset="assets/em-breve-soldador-1200.jpg 1200w, assets/em-breve-soldador.jpg 2400w"
+      sizes="100vw"
+      alt=""
+      aria-hidden="true"
+      fetchpriority="high"
+      decoding="async"
+    />
+  </picture>
+  <div class="veu" aria-hidden="true"></div>
+  <div class="brilho brilho-navy" aria-hidden="true"></div>
+  <div class="brilho brilho-red" aria-hidden="true"></div>
+  <div class="grade" aria-hidden="true"></div>
+
+  <section class="conteudo">
+    <img class="logo" src="assets/icons/logo-hweld-white.png" alt="HWeld" />
+    <span class="divisor" aria-hidden="true"></span>
+
+    <h1 class="titulo">Em breve, uma nova experiência em soldagem.</h1>
+    <p class="subtitulo">
+      Estamos preparando o novo portal B2B da HWeld — catálogo técnico completo, sua
+      tabela de preços exclusiva e pedidos sem burocracia. Deixe seu e-mail e seja
+      avisado no lançamento.
+    </p>
+
+    @if (inscrito()) {
+      <div class="sucesso" role="status">
+        <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+        <span class="sucesso-texto">
+          <strong>Você está na lista.</strong>
+          Avisaremos assim que o portal estiver no ar.
+        </span>
+      </div>
+    } @else {
+      <form class="form" (ngSubmit)="avisar()" novalidate>
+        <label class="sr-only" for="email-aviso">Seu e-mail corporativo</label>
+        <div class="campo" [class.invalid]="invalido()">
+          <span class="material-symbols-outlined campo-icone" aria-hidden="true">mail</span>
+          <input
+            id="email-aviso"
+            type="email"
+            [formControl]="email"
+            placeholder="seu@empresa.com.br"
+            autocomplete="email"
+            [attr.aria-invalid]="invalido() || null"
+          />
+        </div>
+        <button
+          hwButton
+          variant="cta"
+          size="lg"
+          type="submit"
+          class="btn-avisar"
+          [disabled]="email.invalid"
+        >
+          Avise-me
+        </button>
+      </form>
+      @if (invalido()) {
+        <p class="campo-erro" role="alert">Informe um e-mail válido.</p>
+      }
+      <p class="microcopy">Sem spam — apenas o aviso de lançamento.</p>
+    }
+  </section>
+
+  <footer class="rodape">HWeld — Soluções em Soldagem</footer>
+</main>

@@ -21,6 +21,12 @@ export const routes: Routes = [
     title: 'Criar conta — HWeld',
   },
   {
+    path: 'em-breve',
+    loadComponent: () =>
+      import('./features/em-breve/em-breve').then((m) => m.EmBrevePage),
+    title: 'Em breve — HWeld',
+  },
+  {
     path: '',
     component: Shell,
     children: [
