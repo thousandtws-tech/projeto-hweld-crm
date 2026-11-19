@@ -75,6 +75,7 @@ public class SpedyWebhookService {
     }
 
     @Transactional
+    @SuppressWarnings("unchecked") // envelope externo → Map genérico para auditoria
     public Result process(String rawBody, String webhookId, String webhookTimestamp,
             String webhookSignature) {
         // 1) Autenticação: segredo whsec_ da conta, obtido da API e cifrado.

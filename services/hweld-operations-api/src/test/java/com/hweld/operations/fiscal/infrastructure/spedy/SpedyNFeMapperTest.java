@@ -113,7 +113,6 @@ class SpedyNFeMapperTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void freteGeraBlocoTransport() {
         var pedido = new PedidoFiscal(42L, "PV", "ok", new BigDecimal("100.00"),
                 BigDecimal.ZERO, new BigDecimal("15.00"), new BigDecimal("115.00"));

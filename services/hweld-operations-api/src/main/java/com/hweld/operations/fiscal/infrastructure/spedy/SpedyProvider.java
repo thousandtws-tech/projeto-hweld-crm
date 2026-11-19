@@ -262,7 +262,7 @@ public class SpedyProvider implements FiscalProvider {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> rawOf(JsonNode n) {
-        var mapa = new LinkedHashMap<>(json.convertValue(n, Map.class));
+        var mapa = new LinkedHashMap<String, Object>(json.convertValue(n, Map.class));
         mapa.remove("xml");
         mapa.remove("pdf");
         return mapa;

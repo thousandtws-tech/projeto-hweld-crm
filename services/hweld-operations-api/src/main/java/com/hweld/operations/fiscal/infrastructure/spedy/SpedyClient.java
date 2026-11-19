@@ -7,8 +7,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
@@ -42,7 +40,6 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public class SpedyClient {
 
-    private static final Logger log = LoggerFactory.getLogger(SpedyClient.class);
     private static final String API_PREFIX = "/v1";
     private static final long TIMEOUT_MS = 30_000;
 
