@@ -14,7 +14,8 @@ RUN npm run build
 FROM nginx:1.27-alpine
 ENV API_UPSTREAM=core-api:8080 \
     OPS_UPSTREAM=operations-api:8090 \
-    MOTOR_UPSTREAM=realtime-engine:4100
+    MOTOR_UPSTREAM=realtime-engine:4100 \
+    EDGE_TOKEN=""
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 EXPOSE 80
