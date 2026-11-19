@@ -9,8 +9,6 @@ import com.hweld.operations.shared.infrastructure.security.CredentialCipher;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -27,8 +25,6 @@ import tools.jackson.databind.ObjectMapper;
  */
 @Component
 public class InfobipSmsProvider implements SmsProvider {
-
-    private static final Logger log = LoggerFactory.getLogger(InfobipSmsProvider.class);
 
     private final IntegrationSettingsRepository settings;
     private final CredentialCipher cipher;

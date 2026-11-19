@@ -82,9 +82,10 @@ public class InfobipDlrService {
             }
             NotificationDelivery d = opt.get();
             JsonNode status = r.path("status");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> rawResult = mapper.convertValue(r, Map.class);
             d.applyDlr(mapGroup(status.path("groupId").asInt(-1)),
-                    status.path("name").asString(null),
-                    mapper.convertValue(r, Map.class));
+                    status.path("name").asString(null), rawResult);
             deliveries.save(d);
             matched++;
         }

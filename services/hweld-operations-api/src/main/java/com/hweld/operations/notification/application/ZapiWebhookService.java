@@ -7,7 +7,6 @@ import com.hweld.operations.notification.domain.NotificationDeliveryRepository;
 import com.hweld.operations.notification.domain.ZapiEvent;
 import com.hweld.operations.notification.domain.ZapiEventRepository;
 import com.hweld.operations.shared.infrastructure.security.CredentialCipher;
-import com.hweld.operations.shared.interfaces.error.ApiException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Map;

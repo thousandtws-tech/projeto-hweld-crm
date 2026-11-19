@@ -6,12 +6,6 @@ import com.hweld.operations.notification.infrastructure.infobip.InfobipSmsProvid
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-/**
- * Seleciona o adapter SMS por `hweld.notification.sms-provider`:
- * `log`/`infobip` forçam um provider; `auto` (default) usa Infobip quando
- * a integração tem credenciais completas no banco e cai para `log` sem
- * elas — dev não quebra e a configuração do cliente passa a valer sozinha.
- */
 @Component
 @Primary
 public class SmsProviderRouter implements SmsProvider {

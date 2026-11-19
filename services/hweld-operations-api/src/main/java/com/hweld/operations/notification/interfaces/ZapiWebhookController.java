@@ -71,8 +71,10 @@ public class ZapiWebhookController {
             case OK -> {
                 Map<String, Object> payload;
                 try {
-                    payload = rawBody == null || rawBody.isBlank()
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> parsed = rawBody == null || rawBody.isBlank()
                             ? Map.of() : mapper.readValue(rawBody, Map.class);
+                    payload = parsed;
                 } catch (Exception e) {
                     yield ResponseEntity.badRequest()
                             .body(Map.of("aceito", false, "erro", "payload inválido"));
