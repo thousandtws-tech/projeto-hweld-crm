@@ -101,6 +101,37 @@ class PaymentServiceTest {
     }
 
     @Test
+    void cobrancaExpiradaReemiteComChaveDerivada() {
+        // Preferência/QR morto no PSP mas PENDING local — o retry expira e
+        // reemite com a próxima chave da cadeia (-r2), nunca o link velho.
+        Payment morta = new Payment(UUID.randomUUID(), 10L, 7L, 42L, "stub",
+                PaymentMethod.CREDIT_CARD, new BigDecimal("199.90"),
+                "pedido-10-credit_card", "portal", "42");
+        morta.applyProviderResult("123-pref", "https://mp/link-morto", null, null,
+                Instant.now().minusSeconds(60));
+        when(orderGateway.getOrder(10L, "jwt", true)).thenReturn(order("aguardando_pagamento"));
+        when(payments.findByIdempotencyKey("pedido-10-credit_card"))
+                .thenReturn(Optional.of(morta));
+        when(payments.findByIdempotencyKey("pedido-10-credit_card-r2"))
+                .thenReturn(Optional.empty());
+        when(provider.createCharge(any())).thenAnswer(inv -> {
+            var req = (PaymentProvider.ChargeRequest) inv.getArgument(0);
+            assertThat(req.idempotencyKey()).isEqualTo("pedido-10-credit_card-r2");
+            return new PaymentProvider.ChargeResult("456-pref", PaymentStatus.PENDING,
+                    "https://mp/link-novo", null, null, Instant.now().plusSeconds(1800),
+                    Map.of());
+        });
+
+        Payment p = service.create(new PaymentService.CreatePaymentCommand(
+                10L, PaymentMethod.CREDIT_CARD, null, "pedido-10-credit_card", null),
+                portal, "jwt");
+
+        assertThat(morta.getStatus()).isEqualTo(PaymentStatus.EXPIRED);
+        assertThat(p.getCheckoutUrl()).isEqualTo("https://mp/link-novo");
+        verify(provider).createCharge(any());
+    }
+
+    @Test
     void pedidoCanceladoNaoAceitaCobranca() {
         when(orderGateway.getOrder(10L, "jwt", true)).thenReturn(order("cancelado"));
         assertThatThrownBy(() -> service.create(new PaymentService.CreatePaymentCommand(

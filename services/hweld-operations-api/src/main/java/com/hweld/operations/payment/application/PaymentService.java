@@ -18,6 +18,7 @@ import com.hweld.operations.shared.interfaces.error.ApiException;
 import com.hweld.operations.shared.interfaces.web.CorrelationIdFilter;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retry.Retry;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +93,29 @@ public class PaymentService {
 
         var existente = payments.findByIdempotencyKey(idemKey);
         if (existente.isPresent()) {
-            return existente.get();
+            // Segue a cadeia de retentativas (base, -r2, -r3…) até a cobrança
+            // mais recente — retentativa idempotente reutiliza a viva.
+            Payment p = existente.get();
+            int tentativa = 2;
+            for (var prox = payments.findByIdempotencyKey(idemKey + "-r" + tentativa);
+                    prox.isPresent();
+                    prox = payments.findByIdempotencyKey(idemKey + "-r" + ++tentativa)) {
+                p = prox.get();
+            }
+            if (!p.getStatus().isTerminal()) {
+                if (p.getExpiresAt() != null && p.getExpiresAt().isBefore(Instant.now())) {
+                    // Viva localmente mas morta no PSP (preferência/QR
+                    // expirado) — marca e reemite em vez de devolver link
+                    // quebrado para sempre.
+                    p.transitionTo(PaymentStatus.EXPIRED, "expirada",
+                            "cobrança expirada sem pagamento");
+                    payments.save(p);
+                } else {
+                    return p;
+                }
+            }
+            // Última da cadeia terminal — reemissão com a próxima chave livre.
+            idemKey = idemKey + "-r" + tentativa;
         }
 
         PaymentProvider.ChargeRequest chargeReq = new PaymentProvider.ChargeRequest(
