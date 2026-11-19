@@ -123,16 +123,18 @@
                 <p class="pag-erro-msg">
                   {{ pg.failureMessage ?? 'A cobrança não foi concluída.' }}
                 </p>
-                <div class="pag-acoes">
-                  <button hwButton (click)="pagarComPix()">
-                    <span class="material-symbols-outlined">qr_code_2</span>
-                    <span>Gerar novo Pix</span>
-                  </button>
-                  <button hwButton variant="secondary" (click)="pagarComCartao()">
-                    <span class="material-symbols-outlined">credit_card</span>
-                    <span>Pagar com cartão</span>
-                  </button>
-                </div>
+                @if (pedido()?.status === 'aguardando_pagamento') {
+                  <div class="pag-acoes">
+                    <button hwButton (click)="pagarComPix()">
+                      <span class="material-symbols-outlined">qr_code_2</span>
+                      <span>Gerar novo Pix</span>
+                    </button>
+                    <button hwButton variant="secondary" (click)="pagarComCartao()">
+                      <span class="material-symbols-outlined">credit_card</span>
+                      <span>Pagar com cartão</span>
+                    </button>
+                  </div>
+                }
               } @else {
                 @if (qrImagem(); as qr) {
                   <img class="pix-qr" [src]="qr" alt="QR Code Pix" width="160" height="160" />
@@ -159,16 +161,18 @@
           } @else {
             <div class="pag-resumo">
               <p class="pag-sem-cobranca">Nenhuma cobrança online gerada para este pedido.</p>
-              <div class="pag-acoes">
-                <button hwButton (click)="pagarComPix()">
-                  <span class="material-symbols-outlined">qr_code_2</span>
-                  <span>Pagar com Pix</span>
-                </button>
-                <button hwButton variant="secondary" (click)="pagarComCartao()">
-                  <span class="material-symbols-outlined">credit_card</span>
-                  <span>Pagar com cartão</span>
-                </button>
-              </div>
+              @if (pedido()?.status === 'aguardando_pagamento') {
+                <div class="pag-acoes">
+                  <button hwButton (click)="pagarComPix()">
+                    <span class="material-symbols-outlined">qr_code_2</span>
+                    <span>Pagar com Pix</span>
+                  </button>
+                  <button hwButton variant="secondary" (click)="pagarComCartao()">
+                    <span class="material-symbols-outlined">credit_card</span>
+                    <span>Pagar com cartão</span>
+                  </button>
+                </div>
+              }
             </div>
           }
         </div>

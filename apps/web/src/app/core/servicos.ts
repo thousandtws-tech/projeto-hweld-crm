@@ -253,7 +253,7 @@ export class LogisticaService {
   private http = inject(HttpClient);
 
   cotarPedido(pedidoId: number, servicos?: string) {
-    let params = new HttpParams().set('pedido_id', pedidoId);
+    let params = new HttpParams().set('pedidoId', pedidoId);
     if (servicos) params = params.set('servicos', servicos);
     return firstValueFrom(
       this.http.post<CotacaoFrete>(`${api}/logistica/cotacoes`, null, { params }),

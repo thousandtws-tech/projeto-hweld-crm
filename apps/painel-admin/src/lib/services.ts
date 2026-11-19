@@ -553,7 +553,7 @@ export const logisticaService = {
   /** Cotação por pedido — dados autoritatídicos do core-api. */
   cotarPedido: (pedidoId: number, servicos?: string) =>
     apiOps.post<import("./models").CotacaoFrete>(
-      `logistica/cotacoes?pedido_id=${pedidoId}${servicos ? `&servicos=${encodeURIComponent(servicos)}` : ""}`,
+      `logistica/cotacoes?pedidoId=${pedidoId}${servicos ? `&servicos=${encodeURIComponent(servicos)}` : ""}`,
       {}),
   /** Cotação manual (sandbox do painel) — cep_destino + produtos. */
   cotarManual: (b: {

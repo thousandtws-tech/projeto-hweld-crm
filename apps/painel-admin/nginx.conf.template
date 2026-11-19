@@ -21,6 +21,28 @@ server {
         proxy_set_header X-Forwarded-Proto https;
     }
 
+    # Fiscal (NF-e) e frete também são operations-api — sem estas rotas
+    # o painel fiscal/Melhor Envio caia no core-api (404 em produção).
+    location /api/v1/fiscal-documents {
+        resolver [fd12::10] valid=10s ipv6=on;
+        set $ops_upstream http://${OPS_UPSTREAM};
+        proxy_pass $ops_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    location /api/v1/logistica/ {
+        resolver [fd12::10] valid=10s ipv6=on;
+        set $ops_upstream http://${OPS_UPSTREAM};
+        proxy_pass $ops_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
     location /api/v1/ {
         resolver [fd12::10] valid=10s ipv6=on;
         set $api_upstream http://${API_UPSTREAM};
