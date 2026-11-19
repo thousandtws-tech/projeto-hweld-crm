@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
+import { ZapiCard } from "@/components/integracoes/ZapiCard";
 import { ApiError } from "@/lib/api";
 import { exigePerfil } from "@/lib/guards";
 import type { EntregaSms, EventoDlr, IntegracaoInfobip } from "@/lib/models";
@@ -733,6 +734,8 @@ function IntegracoesPage() {
           </div>
         )}
       </SectionCard>
+
+      <ZapiCard />
     </>
   );
 }

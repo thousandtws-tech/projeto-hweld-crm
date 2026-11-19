@@ -578,6 +578,49 @@ export interface EventoDlr {
   ultimo_erro: string;
 }
 
+/** Card Z-API WhatsApp — `GET /integracoes/zapi`. */
+export interface IntegracaoZapi {
+  provedor: string;
+  categoria: string;
+  ambiente: string;
+  provider_ativo: string;
+  nome_conta: string;
+  habilitado: boolean;
+  estado: "ativa" | "pendente" | "falha" | "desativada" | "conectando";
+  versao: number;
+  config: {
+    instance_id: string;
+    envio_pausado: boolean;
+    eventos: Record<string, boolean>;
+    destinatarios_teste: string[];
+    webhook_received?: string;
+    webhook_delivery?: string;
+    webhook_disconnected?: string;
+  };
+  conexao: {
+    consultado: boolean;
+    conectado?: boolean;
+    smartphone?: boolean;
+    sessao?: string;
+    erro?: string;
+  };
+  segredos: { campos: { instance_token: boolean; client_token: boolean; webhook_secret: boolean } };
+  ultima_verificacao_em: string;
+  verificacao_status: "ok" | "falha" | "nunca";
+  verificacao_erro: string;
+  pendentes: number;
+}
+
+/** Evento de webhook Z-API — `GET /integracoes/zapi/eventos`. */
+export interface EventoZapi {
+  id: string;
+  tipo: string;
+  direcao: "in" | "out" | "sys";
+  telefone: string;
+  conteudo: string;
+  recebido_em: string;
+}
+
 /** Entrega da fila transacional (canal SMS) — `notification_deliveries`. */
 export interface EntregaSms {
   id: string;

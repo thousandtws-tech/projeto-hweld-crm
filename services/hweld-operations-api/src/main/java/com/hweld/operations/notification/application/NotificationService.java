@@ -55,19 +55,23 @@ public class NotificationService {
     private final TemplateRenderer renderer;
     private final EmailProvider emailProvider;
     private final SmsProvider smsProvider;
+    private final com.hweld.operations.notification.infrastructure.zapi.ZapiWhatsAppProvider zapi;
     private final Outbox outbox;
     private final Props props;
 
     public NotificationService(NotificationTemplateRepository templates,
             NotificationDeliveryRepository deliveries,
             IntegrationSettingsRepository integrations, TemplateRenderer renderer,
-            EmailProvider emailProvider, SmsProvider smsProvider, Outbox outbox, Props props) {
+            EmailProvider emailProvider, SmsProvider smsProvider,
+            com.hweld.operations.notification.infrastructure.zapi.ZapiWhatsAppProvider zapi,
+            Outbox outbox, Props props) {
         this.templates = templates;
         this.deliveries = deliveries;
         this.integrations = integrations;
         this.renderer = renderer;
         this.emailProvider = emailProvider;
         this.smsProvider = smsProvider;
+        this.zapi = zapi;
         this.outbox = outbox;
         this.props = props;
     }
@@ -165,6 +169,51 @@ public class NotificationService {
         return d;
     }
 
+    /**
+     * Enfileira WhatsApp via Z-API — texto de template sms_* reutilizado
+     * (corpo puro). Sem segmentação: WhatsApp aceita texto longo nativo.
+     */
+    @Transactional
+    public NotificationDelivery queueWhatsApp(String templateCode, String phoneRaw,
+            Map<String, Object> vars, String dedupKey, String sourceEventId,
+            Long pedidoId) {
+        NotificationTemplate t = templates.findByCodeAndActiveTrue(templateCode)
+                .orElseThrow(() -> ApiException.validacao("template inexistente/inativo: " + templateCode));
+        if (dedupKey != null) {
+            var existente = deliveries.findByDedupKey(dedupKey);
+            if (existente.isPresent()) return existente.get();
+        }
+        String e164 = PhoneNormalizer.toE164(phoneRaw);
+        String text = renderer.render(
+                t.getBodyText() != null ? t.getBodyText() : "", vars, false);
+        Map<String, Object> payload = new java.util.HashMap<>(vars);
+        payload.put("text", text);
+        NotificationDelivery d = new NotificationDelivery(
+                templateCode, e164 != null ? e164 : "(telefone inválido)", "WhatsApp", payload)
+                .asChannel("WHATSAPP", dedupKey, sourceEventId, pedidoId);
+        if (e164 == null) {
+            d.markSuppressed("telefone ausente/inválido: " + mask(phoneRaw));
+        }
+        deliveries.save(d);
+        return d;
+    }
+
+    /** WhatsApp de texto livre — "Enviar mensagem de teste" do card Z-API. */
+    @Transactional
+    public NotificationDelivery queueWhatsAppText(String phoneRaw, String text,
+            String dedupKey, String sourceEventId, Long pedidoId) {
+        String e164 = PhoneNormalizer.toE164(phoneRaw);
+        NotificationDelivery d = new NotificationDelivery(
+                null, e164 != null ? e164 : "(telefone inválido)", "WhatsApp",
+                Map.of("text", text))
+                .asChannel("WHATSAPP", dedupKey, sourceEventId, pedidoId);
+        if (e164 == null) {
+            d.markSuppressed("telefone ausente/inválido: " + mask(phoneRaw));
+        }
+        deliveries.save(d);
+        return d;
+    }
+
     private static String mask(String phone) {
         if (phone == null || phone.length() < 4) return "***";
         return phone.substring(0, phone.length() - 4) + "****";
@@ -189,8 +238,9 @@ public class NotificationService {
     @Transactional
     public void reconcileSmsWithoutDlr() {
         Instant cutoff = Instant.now().minusMillis(props.dlrReconcileAgeMs());
-        List<NotificationDelivery> pendentes = deliveries.findByChannelAndStatusAndSentAtBefore(
-                "SMS", NotificationDelivery.Status.SENT.name(), cutoff, PageRequest.of(0, 100));
+        List<NotificationDelivery> pendentes = deliveries.findByChannelInAndStatusAndSentAtBefore(
+                List.of("SMS", "WHATSAPP"), NotificationDelivery.Status.SENT.name(),
+                cutoff, PageRequest.of(0, 100));
         for (NotificationDelivery d : pendentes) {
             d.markUnknown("sem DLR do provider há mais de " + props.dlrReconcileAgeMs() / 60000 + " min");
             deliveries.save(d);
@@ -200,6 +250,10 @@ public class NotificationService {
     private void send(NotificationDelivery d) {
         if ("SMS".equals(d.getChannel())) {
             sendSms(d);
+            return;
+        }
+        if ("WHATSAPP".equals(d.getChannel())) {
+            sendWhatsApp(d);
             return;
         }
         d.markSending();
@@ -277,6 +331,52 @@ public class NotificationService {
         }
     }
 
+    private void sendWhatsApp(NotificationDelivery d) {
+        var cfg = integrations.findById(IntegrationSettings.ZAPI_WHATSAPP).orElse(null);
+        if (cfg != null && cfg.isEnvioPausado()) {
+            d.defer(Instant.now().plus(Duration.ofMinutes(5)));
+            deliveries.save(d);
+            return;
+        }
+        d.markSending();
+        try {
+            String text = d.getPayload() != null ? (String) d.getPayload().get("text") : null;
+            SmsProvider.SmsReceipt receipt = zapi.send(d.getRecipient(), text);
+            d.applySmsReceipt(receipt.messageId(), receipt.bulkId(), receipt.segments());
+            deliveries.save(d);
+            outbox.publish("notification_delivery", d.getId().toString(), IntegrationEvent.of(
+                    EventTypes.NOTIFICATION_SENT, d.getId().toString(),
+                    Map.of("deliveryId", d.getId().toString(), "channel", "WHATSAPP"),
+                    CorrelationIdFilter.current()));
+        } catch (SmsSendException e) {
+            log.warn("whatsapp falhou delivery={} tentativa={} kind={}: {}",
+                    d.getId(), d.getAttempts(), e.kind(), e.getMessage());
+            if (!e.isRetryable() || d.getAttempts() >= props.maxAttempts()) {
+                d.markDead(e.kind() + ": " + e.getMessage());
+                outbox.publish("notification_delivery", d.getId().toString(), IntegrationEvent.of(
+                        EventTypes.NOTIFICATION_FAILED, d.getId().toString(),
+                        Map.of("deliveryId", d.getId().toString(), "channel", "WHATSAPP",
+                                "lastError", String.valueOf(e.getMessage())),
+                        CorrelationIdFilter.current()));
+            } else {
+                Instant retry = e.retryAfterMs() != null
+                        ? Instant.now().plusMillis(e.retryAfterMs())
+                        : nextRetry(d.getAttempts());
+                d.markFailed(e.getMessage(), retry);
+            }
+            deliveries.save(d);
+        } catch (Exception e) {
+            log.warn("whatsapp falhou inesperada delivery={} tentativa={}: {}",
+                    d.getId(), d.getAttempts(), e.getMessage());
+            if (d.getAttempts() >= props.maxAttempts()) {
+                d.markDead(e.getMessage());
+            } else {
+                d.markFailed(e.getMessage(), nextRetry(d.getAttempts()));
+            }
+            deliveries.save(d);
+        }
+    }
+
     private Instant nextRetry(int attempt) {
         long base = props.retryBaseDelayMs() * (1L << Math.min(attempt - 1, 6));
         long jitter = ThreadLocalRandom.current().nextLong(base / 4 + 1);
@@ -286,12 +386,13 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public Page<NotificationDelivery> list(String status, String recipient,
             String channel, Long pedidoId, Pageable pageable) {
-        if ("SMS".equalsIgnoreCase(channel)) {
+        if ("SMS".equalsIgnoreCase(channel) || "WHATSAPP".equalsIgnoreCase(channel)) {
+            String ch = channel.toUpperCase();
             if (status != null) return deliveries.findByChannelAndStatusOrderByCreatedAtDesc(
-                    "SMS", status.toUpperCase(), pageable);
+                    ch, status.toUpperCase(), pageable);
             if (pedidoId != null) return deliveries.findByChannelAndPedidoIdOrderByCreatedAtDesc(
-                    "SMS", pedidoId, pageable);
-            return deliveries.findByChannelOrderByCreatedAtDesc("SMS", pageable);
+                    ch, pedidoId, pageable);
+            return deliveries.findByChannelOrderByCreatedAtDesc(ch, pageable);
         }
         if (recipient != null) return deliveries.findByRecipientOrderByCreatedAtDesc(recipient, pageable);
         if (status != null) return deliveries.findByStatusOrderByCreatedAtDesc(status.toUpperCase(), pageable);

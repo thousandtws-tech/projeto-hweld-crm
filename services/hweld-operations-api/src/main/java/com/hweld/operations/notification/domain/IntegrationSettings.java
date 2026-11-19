@@ -23,6 +23,7 @@ import org.hibernate.type.SqlTypes;
 public class IntegrationSettings {
 
     public static final String INFOBIP_SMS = "infobip-sms";
+    public static final String ZAPI_WHATSAPP = "zapi-whatsapp";
 
     @Id
     @Column(length = 40)
@@ -49,6 +50,14 @@ public class IntegrationSettings {
     /** Segredo do callback DLR, gerado no servidor — cifrado. */
     @Column(name = "webhook_secret_enc", columnDefinition = "text")
     private String webhookSecretEnc;
+
+    /** ID externo do recurso do provider — ex.: instance ID da Z-API. */
+    @Column(name = "external_id", length = 80)
+    private String externalId;
+
+    /** Segundo segredo cifrado — ex.: Client-Token da conta Z-API. */
+    @Column(name = "client_token_enc", columnDefinition = "text")
+    private String clientTokenEnc;
 
     /** Remetente autorizado no painel Infobip (alfa ou E.164). */
     @Column(length = 32)
@@ -106,6 +115,32 @@ public class IntegrationSettings {
                 && sender != null && !sender.isBlank();
     }
 
+    /** Credenciais mínimas para o adapter Z-API: instance ID + token + Client-Token. */
+    public boolean credenciaisZapiCompletas() {
+        return externalId != null && !externalId.isBlank()
+                && apiKeyEnc != null && !apiKeyEnc.isBlank()
+                && clientTokenEnc != null && !clientTokenEnc.isBlank();
+    }
+
+    /** Update da linha Z-API — reusa pausa/destinatários/eventos; ignora campos SMS. */
+    public void atualizarZapi(String nomeConta, boolean enabled, String externalId,
+            boolean envioPausado, List<String> testRecipients,
+            Map<String, Boolean> events, String updatedBy) {
+        this.nomeConta = nomeConta == null || nomeConta.isBlank() ? null : nomeConta.trim();
+        this.enabled = enabled;
+        this.externalId = externalId == null || externalId.isBlank() ? null : externalId.trim();
+        this.envioPausado = envioPausado;
+        this.testRecipients = testRecipients == null ? List.of() : List.copyOf(testRecipients);
+        this.events = events == null ? Map.of() : Map.copyOf(events);
+        this.updatedBy = updatedBy;
+        this.updatedAt = Instant.now();
+    }
+
+    public void definirClientToken(String enc) {
+        this.clientTokenEnc = enc;
+        this.updatedAt = Instant.now();
+    }
+
     public void atualizar(String nomeConta, boolean enabled, String baseUrl,
             String sender, int maxSegments, boolean envioPausado,
             List<String> testRecipients, Map<String, Boolean> events,
@@ -152,6 +187,8 @@ public class IntegrationSettings {
     public String getBaseUrl() { return baseUrl; }
     public String getApiKeyEnc() { return apiKeyEnc; }
     public String getWebhookSecretEnc() { return webhookSecretEnc; }
+    public String getExternalId() { return externalId; }
+    public String getClientTokenEnc() { return clientTokenEnc; }
     public String getSender() { return sender; }
     public int getMaxSegments() { return maxSegments; }
     public boolean isEnvioPausado() { return envioPausado; }

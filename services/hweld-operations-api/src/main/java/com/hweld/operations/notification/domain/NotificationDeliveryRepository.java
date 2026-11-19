@@ -39,15 +39,23 @@ public interface NotificationDeliveryRepository extends JpaRepository<Notificati
     List<NotificationDelivery> findByChannelAndStatusAndSentAtBefore(
             String channel, String status, Instant cutoff, Pageable pageable);
 
+    /** Versão multi-canal (SMS + WHATSAPP) para a reconciliação de DLR. */
+    List<NotificationDelivery> findByChannelInAndStatusAndSentAtBefore(
+            List<String> channels, String status, Instant cutoff, Pageable pageable);
+
     /** Evento posterior torna pendências obsoletas — ex.: PaymentConfirmed
      *  suprime o sms_payment_requested ainda na fila do mesmo pedido. */
     @Query("""
             SELECT d FROM NotificationDelivery d
-            WHERE d.channel = 'SMS' AND d.status = 'QUEUED'
+            WHERE d.channel = :channel AND d.status = 'QUEUED'
               AND d.pedidoId = :pedidoId AND d.templateCode = :templateCode
             """)
-    List<NotificationDelivery> findSmsSupprimable(@Param("pedidoId") Long pedidoId,
-            @Param("templateCode") String templateCode);
+    List<NotificationDelivery> findSupprimable(@Param("channel") String channel,
+            @Param("pedidoId") Long pedidoId, @Param("templateCode") String templateCode);
+
+    default List<NotificationDelivery> findSmsSupprimable(Long pedidoId, String templateCode) {
+        return findSupprimable("SMS", pedidoId, templateCode);
+    }
 
     long countByChannelAndStatusIn(String channel, List<String> statuses);
 

@@ -44,7 +44,9 @@ class NotificationServiceTest {
         var integrations = mock(IntegrationSettingsRepository.class);
         when(integrations.findById(any())).thenReturn(Optional.empty());
         service = new NotificationService(templates, deliveries, integrations,
-                new TemplateRenderer(), emailProvider, mock(SmsProvider.class), outbox, props);
+                new TemplateRenderer(), emailProvider, mock(SmsProvider.class),
+                mock(com.hweld.operations.notification.infrastructure.zapi.ZapiWhatsAppProvider.class),
+                outbox, props);
     }
 
     private NotificationTemplate template() {

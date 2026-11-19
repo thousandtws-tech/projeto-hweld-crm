@@ -100,7 +100,13 @@ public class NotificationDelivery {
 
     /** Canal SMS + rastreabilidade (dedup por evento/origem, pedido). */
     public NotificationDelivery asSms(String dedupKey, String sourceEventId, Long pedidoId) {
-        this.channel = "SMS";
+        return asChannel("SMS", dedupKey, sourceEventId, pedidoId);
+    }
+
+    /** Canal explícito (SMS|WHATSAPP) + rastreabilidade. */
+    public NotificationDelivery asChannel(String channel, String dedupKey,
+            String sourceEventId, Long pedidoId) {
+        this.channel = channel;
         this.dedupKey = dedupKey;
         this.sourceEventId = sourceEventId;
         this.pedidoId = pedidoId;

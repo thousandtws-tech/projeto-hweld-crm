@@ -431,3 +431,39 @@ export const integracoesService = {
   historico: (f: Filtros = {}) =>
     apiOps.pagina<import("./models").EntregaSms>("integracoes/infobip/historico", f),
 };
+
+/** Integração Z-API WhatsApp — operations-api `/api/v1/integracoes/zapi`. */
+export const zapiService = {
+  view: () => apiOps.getRecurso<import("./models").IntegracaoZapi>("integracoes/zapi"),
+  salvar: (b: {
+    versao?: number;
+    nome_conta?: string;
+    config?: {
+      instance_id?: string;
+      envio_pausado?: boolean;
+      eventos?: Record<string, boolean>;
+      destinatarios_teste?: string[];
+    };
+    segredos?: { instance_token?: string; client_token?: string };
+  }) => apiOps.putRecurso<import("./models").IntegracaoZapi>("integracoes/zapi", b),
+  habilitar: (habilitado: boolean) =>
+    apiOps.post<import("./models").IntegracaoZapi>("integracoes/zapi/habilitacao", { habilitado }),
+  testarConexao: () =>
+    apiOps.post<{ verificacao_status: string; mensagem?: string }>(
+      "integracoes/zapi/testar-conexao", {}),
+  qrcode: () =>
+    apiOps.getRecurso<{ imagem?: string; erro?: string }>("integracoes/zapi/qrcode"),
+  desconectar: () =>
+    apiOps.post<import("./models").IntegracaoZapi>("integracoes/zapi/desconectar", {}),
+  mensagemTeste: (telefone: string, texto?: string) =>
+    apiOps.post<{ aceito: boolean; id: string }>(
+      "integracoes/zapi/mensagem-teste",
+      texto ? { telefone, texto } : { telefone }),
+  eventos: () =>
+    apiOps.listaArray<import("./models").EventoZapi>("integracoes/zapi/eventos"),
+  reprocessar: (deliveryId: string) =>
+    apiOps.post<import("./models").EntregaSms>(
+      `integracoes/zapi/deliveries/${deliveryId}/reprocessar`, {}),
+  historico: (f: Filtros = {}) =>
+    apiOps.pagina<import("./models").EntregaSms>("integracoes/zapi/historico", f),
+};
