@@ -2,7 +2,6 @@ package com.hweld.operations.payment.infrastructure.provider;
 
 import com.hweld.operations.payment.application.PaymentProperties;
 import com.hweld.operations.payment.application.PaymentProvider;
-import com.hweld.operations.payment.domain.PaymentMethod;
 import com.hweld.operations.payment.domain.PaymentStatus;
 import com.hweld.operations.shared.domain.Money;
 import java.nio.charset.StandardCharsets;
@@ -52,6 +51,7 @@ public class StubPaymentProvider implements PaymentProvider {
     }
 
     @Override
+    @SuppressWarnings("unchecked") // convertValue(n, Map.class) — mesmo padrão dos demais providers
     public ChargeResult createCharge(ChargeRequest req) {
         String externalId = "stub_" + UUID.randomUUID();
         Instant expires = Instant.now().plus(props.pixExpirationMinutes(), ChronoUnit.MINUTES);

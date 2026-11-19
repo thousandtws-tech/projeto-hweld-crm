@@ -5,7 +5,6 @@ import com.hweld.operations.notification.domain.IntegrationSettingsRepository;
 import com.hweld.operations.notification.infrastructure.infobip.InfobipProperties;
 import com.hweld.operations.payment.domain.Payment;
 import com.hweld.operations.payment.domain.PaymentRepository;
-import com.hweld.operations.payment.domain.WebhookEventRecord;
 import com.hweld.operations.payment.domain.WebhookEventRepository;
 import com.hweld.operations.payment.infrastructure.pagbank.PagBankClient;
 import com.hweld.operations.payment.infrastructure.pagbank.PagBankProvider;
