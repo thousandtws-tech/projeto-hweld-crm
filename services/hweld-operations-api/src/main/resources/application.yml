@@ -2,8 +2,6 @@ spring:
   application:
     name: hweld-operations-api
   threads:
-    # Virtual threads: requests são IO-bound (JDBC/core-api/motor) — escala
-    # concorrência sem inflar pool de plataforma. Boot 4 + Java 25.
     virtual:
       enabled: true
   datasource:
@@ -49,7 +47,6 @@ server:
   shutdown: graceful
   forward-headers-strategy: framework
   compression:
-    # JSON paginado comprimido na borda — listas de 100+ itens caem ~90% em bytes.
     enabled: true
     mime-types: application/json,application/xml,text/css,text/html,text/plain,application/javascript
     min-response-size: 1KB
@@ -66,8 +63,6 @@ management:
         enabled: true
       show-details: never
   health:
-    # Sem SMTP real em dev (EMAIL_PROVIDER=log), o indicador de mail daria
-    # DOWN permanente — os probes liveness/readiness seguem ativos.
     mail:
       enabled: false
   observations:
@@ -90,19 +85,17 @@ logging:
 
 hweld:
   security:
-    # Mesmo segredo HS256 do core-api (>=32 bytes). OBRIGATÓRIO — sem default:
-    # um segredo conhecido em fallback deixaria tokens falsificáveis em prod.
     jwt-secret: ${JWT_SECRET}
-    # Token service-to-service para /api/v1/internal/** — também fail-fast.
     internal-service-token: ${INTERNAL_SERVICE_TOKEN}
-    # Segredo de borda (x-edge-token injetado pelo Worker Cloudflare).
-    # Vazio = guarda desligada (dev). Em prod: mesmo valor do Worker.
     edge-token: ${EDGE_TOKEN:}
-    # Origens com permissão de CORS (dev: painel Vite). CSV → List<String>.
     cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
   core-api:
     url: ${CORE_API_URL:http://localhost:8080}
     timeout-ms: ${CORE_API_TIMEOUT_MS:4000}
+    # Segredo de borda do core-api — quando EDGE_TOKEN está ligado na origem,
+    # chamadas sem o header morrem em 403. Fallback: mesmo EDGE_TOKEN do
+    # Worker (segredo compartilhado entre as origens do Railway).
+    edge-token: ${CORE_API_EDGE_TOKEN:${EDGE_TOKEN:}}
   motor:
     url: ${MOTOR_URL:http://localhost:4100}
     token: ${MOTOR_INGEST_TOKEN:}
@@ -111,34 +104,25 @@ hweld:
     poll-interval-ms: 2000
     batch-size: 50
     max-attempts: 8
-    # Lease do claim SKIP LOCKED — worker morto devolve o evento à fila após o lease.
     claim-lease-ms: ${OUTBOX_CLAIM_LEASE_MS:60000}
   payment:
-    # auto = PSP real credenciado pelo cliente (PagBank → Mercado Pago) → stub.
     default-provider: ${PAYMENT_PROVIDER:auto}
     webhook-secrets:
-      # Vazio = nenhum webhook stub passa na validação de assinatura (fail-safe).
       stub: ${PAYMENT_STUB_WEBHOOK_SECRET:}
-      # Mercado Pago usa segredo próprio em integration_settings (painel), não env.
-      # asaas: ${PAYMENT_ASAAS_WEBHOOK_SECRET:}
     pix-expiration-minutes: ${PAYMENT_PIX_EXPIRATION_MINUTES:30}
     pagbank:
       timeout-ms: ${PAGBANK_TIMEOUT_MS:10000}
     mercadopago:
       timeout-ms: ${MERCADOPAGO_TIMEOUT_MS:10000}
-    # Dev only: aceita webhook do provider 'stub' sem assinatura. Sempre false fora de dev/test.
     allow-unsigned-stub-webhook: ${PAYMENT_STUB_ALLOW_UNSIGNED:false}
   fiscal:
-    provider: ${FISCAL_PROVIDER:auto}   # auto | stub | spedy
+    provider: ${FISCAL_PROVIDER:auto}
     auto-emit-on-payment-confirmed: ${FISCAL_AUTO_EMIT:false}
     ambiente: ${FISCAL_AMBIENTE:homologacao}
     reconcile-interval-ms: ${FISCAL_RECONCILE_INTERVAL_MS:120000}
     reconcile-initial-delay-ms: ${FISCAL_RECONCILE_INITIAL_DELAY_MS:30000}
     reconcile-min-age-ms: ${FISCAL_RECONCILE_MIN_AGE_MS:60000}
     reconcile-batch-size: ${FISCAL_RECONCILE_BATCH_SIZE:20}
-    # Defaults fiscais dos itens/nota — consumidos pelos adapters (Spedy).
-    # O emitente NÃO é configurado aqui: vive no backoffice do provedor
-    # (certificado, endereço, série e regime — identificado pela X-Api-Key).
     nfe:
       natureza-operacao: ${FISCAL_NFE_NATUREZA_OPERACAO:Venda de mercadoria}
       cfop: ${FISCAL_NFE_CFOP:}
@@ -154,39 +138,30 @@ hweld:
       pis-situacao-tributaria: ${FISCAL_NFE_PIS_ST:}
       cofins-situacao-tributaria: ${FISCAL_NFE_COFINS_ST:}
   logistics:
-    provider: ${LOGISTICS_PROVIDER:auto}   # auto | stub | melhorenvio
+    provider: ${LOGISTICS_PROVIDER:auto}
     timeout-ms: ${LOGISTICS_TIMEOUT_MS:15000}
-    # User-Agent exigido pela API Melhor Envio: app + e-mail de contato.
     user-agent: ${LOGISTICS_USER_AGENT:HWeld Operations (contato@hweld.com.br)}
   storage:
-    # MinIO/S3 — endpoint ausente = NoopObjectStorage (dev sem infra).
     endpoint: ${MINIO_ENDPOINT:}
     bucket: ${MINIO_BUCKET:hweld}
     region: ${MINIO_REGION:us-east-1}
     access-key: ${MINIO_ACCESS_KEY:}
     secret-key: ${MINIO_SECRET_KEY:}
   notification:
-    email-provider: ${EMAIL_PROVIDER:log}   # log | smtp
-    sms-provider: ${SMS_PROVIDER:auto}      # auto | log | infobip
+    email-provider: ${EMAIL_PROVIDER:log}
+    sms-provider: ${SMS_PROVIDER:auto}
     max-attempts: 4
     retry-base-delay-ms: 30000
-    # SMS SENT sem DLR após este tempo → UNKNOWN (reconciliação, sem reenvio).
     dlr-reconcile-age-ms: ${SMS_DLR_RECONCILE_AGE_MS:21600000}
     default-from: ${MAIL_FROM:noreply@hweld.com.br}
     default-from-name: ${MAIL_FROM_NAME:HWeld}
     infobip:
       timeout-ms: ${INFOBIP_TIMEOUT_MS:10000}
-      # Base pública deste serviço — compõe a URL do DLR exibida no card
-      # (o segredo do path é gerado no servidor na 1ª gravação).
       public-base-url: ${APP_PUBLIC_URL:}
   integrations:
-    # Chave AES-256 dos segredos de integração no banco (hex-64/b64/texto).
-    # Vazio = deriva de JWT_SECRET — defina para rotacionar isoladamente.
     secrets-key: ${INTEGRATION_SECRETS_KEY:}
 
 springdoc:
-  # Spec + UI expõem todas as rotas, incluindo /internal/**.
-  # Fail-safe: default OFF — dev liga via API_DOCS_ENABLED=true no compose/.env.
   swagger-ui:
     path: /swagger-ui.html
     enabled: ${API_DOCS_ENABLED:false}

@@ -16,7 +16,7 @@ import org.springframework.web.client.RestClient;
 public class HttpClientsConfig {
 
     @ConfigurationProperties(prefix = "hweld.core-api")
-    public record CoreApiProps(String url, long timeoutMs) {
+    public record CoreApiProps(String url, long timeoutMs, String edgeToken) {
         public CoreApiProps {
             if (timeoutMs <= 0) timeoutMs = 4000;
         }

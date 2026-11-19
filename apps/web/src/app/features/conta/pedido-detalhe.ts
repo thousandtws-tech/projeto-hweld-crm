@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ContaService, LogisticaService, PagamentoService } from '../../core/servicos';
 import { RealtimeService } from '../../core/realtime';
@@ -60,6 +61,17 @@ export class PedidoDetalhePage implements OnInit {
       (e) => e.tipo.startsWith('pagamento.') && Number(e.dados['pedidoId']) === this.id,
       () => this.carregarPagamento(),
     );
+    // Angular reutiliza o componente ao navegar pedido→pedido: o snapshot
+    // manteria o id antigo — a tela mostraria dados do pedido anterior.
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const novo = Number(params.get('id'));
+      if (novo && novo !== this.id) {
+        this.id = novo;
+        this.pagamento.set(null);
+        this.carregar();
+        this.carregarPagamento();
+      }
+    });
   }
 
   ngOnInit(): void {

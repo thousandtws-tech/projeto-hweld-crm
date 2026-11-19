@@ -102,7 +102,19 @@ export class RealtimeService implements OnDestroy {
           headers,
           signal: ctrl.signal,
         });
-        if (!res.ok || !res.body) throw new Error(`SSE ${res.status}`);
+        if (!res.ok || !res.body) {
+          if (res.status === 401 && token) {
+            // Fetch cru não passa no interceptor: access token expirado
+            // reconectava para sempre com o JWT morto — renova e retenta.
+            const renovou = await this.auth.refresh();
+            if (!renovou) ctrl.abort();
+          } else if (res.status === 403) {
+            // Sem permissão de verdade (ex.: token staff na rota portal) —
+            // retry não resolve; para de reconectar.
+            ctrl.abort();
+          }
+          throw new Error(`SSE ${res.status}`);
+        }
         this.conectado.set(true);
         this.retryMs = RECONECTAR_PADRAO_MS;
         await this.ler(res.body, ctrl.signal);

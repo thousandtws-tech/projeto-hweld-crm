@@ -26,12 +26,15 @@ public class CoreApiOrderGateway implements OrderGateway {
     private final RestClient client;
     private final ObjectMapper mapper;
     private final ContatoGateway contatos;
+    private final String edgeToken;
 
     public CoreApiOrderGateway(@Qualifier("coreApiClient") RestClient client,
-            ObjectMapper mapper, ContatoGateway contatos) {
+            ObjectMapper mapper, ContatoGateway contatos,
+            com.hweld.operations.shared.infrastructure.http.HttpClientsConfig.CoreApiProps props) {
         this.client = client;
         this.mapper = mapper;
         this.contatos = contatos;
+        this.edgeToken = props.edgeToken();
     }
 
     @Override
@@ -93,10 +96,14 @@ public class CoreApiOrderGateway implements OrderGateway {
 
     private JsonNode getJson(String path, String callerJwt) {
         try {
-            String raw = client.get().uri(path)
-                    .header("Authorization", "Bearer " + callerJwt)
-                    .retrieve()
-                    .body(String.class);
+            var spec = client.get().uri(path)
+                    .header("Authorization", "Bearer " + callerJwt);
+            // Rotas públicas do core passam pela guarda de borda — sem o
+            // token, EDGE_TOKEN ligado responderia 403 fora_da_borda.
+            if (edgeToken != null && !edgeToken.isBlank()) {
+                spec = spec.header("x-edge-token", edgeToken);
+            }
+            String raw = spec.retrieve().body(String.class);
             return mapper.readTree(raw);
         } catch (RestClientResponseException e) {
             HttpStatusCode status = e.getStatusCode();

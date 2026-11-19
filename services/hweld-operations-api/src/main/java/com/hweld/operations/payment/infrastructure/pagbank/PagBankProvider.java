@@ -206,10 +206,16 @@ public class PagBankProvider implements PaymentProvider {
         try {
             JsonNode payload = mapper.readTree(rawBody);
             String id = obrigatorio(payload, "id");
+            JsonNode charge = primeiroCharge(payload);
             // `reference_id` propaga do checkout/order para o evento — é a
             // chave de correlação quando o externalPaymentId ainda não é o
-            // id conhecido (checkout gera CHAR_* novo na transação).
-            String referenceId = texto(payload, "reference_id");
+            // id conhecido (checkout gera CHAR_* novo na transação). Em
+            // orders o idempotency key mora em charges[0].reference_id (o
+            // top-level é o número do pedido) — preferir o do charge.
+            String referenceId = charge != null ? texto(charge, "reference_id") : null;
+            if (referenceId == null || referenceId.isBlank()) {
+                referenceId = texto(payload, "reference_id");
+            }
             if (isCheckoutId(id)) {
                 // Evento do próprio checkout (EXPIRED/INACTIVE/ACTIVE/PAID).
                 String status = obrigatorio(payload, "status");
@@ -220,7 +226,6 @@ public class PagBankProvider implements PaymentProvider {
                         mapStatusCheckout(status), null, null, occurredAt,
                         referenceId, rawOf(payload));
             }
-            JsonNode charge = primeiroCharge(payload);
             if (charge == null) {
                 throw new PaymentProviderException("webhook pagbank sem charges[]");
             }

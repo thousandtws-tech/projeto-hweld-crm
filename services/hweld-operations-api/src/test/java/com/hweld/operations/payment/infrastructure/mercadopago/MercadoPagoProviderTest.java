@@ -81,7 +81,9 @@ class MercadoPagoProviderTest {
         assertEquals(PaymentStatus.PROCESSING, MercadoPagoProvider.mapStatus("in_mediation", null));
         assertEquals(PaymentStatus.CONFIRMED, MercadoPagoProvider.mapStatus("approved", null));
         assertEquals(PaymentStatus.FAILED, MercadoPagoProvider.mapStatus("rejected", null));
-        assertEquals(PaymentStatus.FAILED, MercadoPagoProvider.mapStatus("charged_back", null));
+        // charged_back: dinheiro devolvido ao comprador — CONFIRMED→REFUNDED,
+        // não FAILED (transição inválida descartava o chargeback).
+        assertEquals(PaymentStatus.REFUNDED, MercadoPagoProvider.mapStatus("charged_back", null));
         assertEquals(PaymentStatus.CANCELLED, MercadoPagoProvider.mapStatus("cancelled", null));
         assertEquals(PaymentStatus.EXPIRED, MercadoPagoProvider.mapStatus("cancelled", "expired"));
         assertEquals(PaymentStatus.REFUNDED, MercadoPagoProvider.mapStatus("refunded", null));

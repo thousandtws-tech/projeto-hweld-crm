@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PagamentoService } from '../../core/servicos';
@@ -45,6 +46,17 @@ export class CheckoutSucessoPage implements OnInit {
       (e) => e.tipo.startsWith('pagamento.') && Number(e.dados['pedidoId']) === this.pedidoId,
       () => this.carregarPagamento(),
     );
+    // Reuso do componente ao trocar de pedido — o snapshot prenderia o id
+    // anterior e a tela exibiria a cobrança do pedido errado.
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const novo = Number(params.get('id'));
+      if (novo && novo !== this.pedidoId) {
+        this.pedidoId = novo;
+        this.numero.set(params.get('id'));
+        this.pagamento.set(null);
+        this.carregarPagamento();
+      }
+    });
   }
 
   ngOnInit(): void {

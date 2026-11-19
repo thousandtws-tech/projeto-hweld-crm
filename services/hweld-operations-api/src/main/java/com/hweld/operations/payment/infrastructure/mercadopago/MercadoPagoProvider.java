@@ -456,7 +456,11 @@ public class MercadoPagoProvider implements PaymentProvider {
             case "pending" -> PaymentStatus.PENDING;
             case "authorized", "in_process", "in_mediation" -> PaymentStatus.PROCESSING;
             case "approved" -> PaymentStatus.CONFIRMED;
-            case "rejected", "charged_back" -> PaymentStatus.FAILED;
+            case "rejected" -> PaymentStatus.FAILED;
+            // charged_back = contestação: o dinheiro SAIU — CONFIRMED→FAILED
+            // era inválido e o chargeback sumia sem registro; REFUNDED é a
+            // transição correta (crédito devolvido ao comprador).
+            case "charged_back" -> PaymentStatus.REFUNDED;
             case "cancelled" -> PaymentStatus.CANCELLED;
             case "refunded" -> PaymentStatus.REFUNDED;
             default -> PaymentStatus.PENDING;

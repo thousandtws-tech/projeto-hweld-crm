@@ -12,6 +12,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     '[class]': 'classe()',
     '[attr.aria-busy]': 'loading() || null',
     '[attr.aria-disabled]': 'disabled() || loading() || null',
+    // aria-disabled não bloqueia o clique — sem o atributo real, duplo
+    // clique em pagar disparava dois POST /payments. attr.disabled (não a
+    // property) porque o selector também casa <a>, que não tem `disabled`.
+    '[attr.disabled]': 'disabled() || loading() ? "" : null',
+    '[style.pointer-events]': 'disabled() || loading() ? "none" : null',
   },
   styleUrl: './button.scss',
 })
