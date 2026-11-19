@@ -150,7 +150,8 @@ export class CheckoutSucessoPage implements OnInit, OnDestroy {
       });
   }
 
-  /** Card Payment Brick: tokenização e formulário acontecem 100% no SDK/MP. */
+  /** Card Payment Brick: tokenização e formulário acontecem 100% no SDK/MP.
+   *  SDK bloqueado no cliente (ad-blocker/rede) → cai no link hospedado. */
   private async montarBrick(): Promise<void> {
     const cfg = this.checkoutCfg();
     const valor = this.pagamento()?.amount ?? this.totalPedido;
@@ -162,10 +163,14 @@ export class CheckoutSucessoPage implements OnInit, OnDestroy {
         valor,
         cfg.publicKey,
         (fd) => this.pagarComToken(fd),
-        () => this.toast.erro('Não foi possível carregar o formulário do cartão.'),
+        () => {
+          // onError durante a montagem (iframe/3DS bloqueado) → fallback.
+          if (!this.mpBrick) this.criarCobrancaHospedada();
+          else this.toast.erro('Não foi possível carregar o formulário do cartão.');
+        },
       );
     } catch {
-      this.toast.erro('Não foi possível carregar o pagamento com cartão.');
+      this.criarCobrancaHospedada();
     } finally {
       this.mpBrickMontando = false;
     }

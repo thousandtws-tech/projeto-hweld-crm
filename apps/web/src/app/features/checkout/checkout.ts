@@ -65,6 +65,8 @@ export class CheckoutPage implements OnInit, OnDestroy {
   /** Método espelhado em signal — FormControl não é reativo pra computed. */
   metodoSel = signal<'' | MetodoPagamento>('');
   pagandoCartao = signal(false);
+  /** SDK do MP bloqueado no cliente → volta pro botão normal + link hospedado. */
+  brickFalhou = signal(false);
   private brickCtl: MpBrickController | null = null;
   private montandoBrick = false;
 
@@ -74,7 +76,8 @@ export class CheckoutPage implements OnInit, OnDestroy {
     return (
       this.metodoSel() === 'CREDIT_CARD' &&
       cfg?.provedorCartao === 'mercadopago' &&
-      !!cfg.publicKey
+      !!cfg.publicKey &&
+      !this.brickFalhou()
     );
   });
   enderecos = signal<Endereco[]>([]);
@@ -188,13 +191,25 @@ export class CheckoutPage implements OnInit, OnDestroy {
         Number(this.subtotal()),
         cfg.publicKey!,
         (fd) => void this.pagarComToken(fd),
-        () => this.erro.set('Não foi possível carregar o formulário de pagamento.'),
+        () => {
+          if (!this.brickCtl) this.fallbackCheckoutHospedado();
+          else this.erro.set('Não foi possível carregar o formulário de pagamento.');
+        },
       );
     } catch {
-      this.erro.set('Não foi possível carregar o formulário de pagamento.');
+      this.fallbackCheckoutHospedado();
     } finally {
       this.montandoBrick = false;
     }
+  }
+
+  /** SDK/Brick indisponível → "Finalizar pedido" reaparece e a cobrança sai
+   *  hospedada na página de confirmação (mesmo fluxo dos demais PSPs). */
+  private fallbackCheckoutHospedado(): void {
+    this.brickFalhou.set(true);
+    this.erro.set(
+      'Formulário de cartão indisponível neste navegador — finalize o pedido e o pagamento será gerado na confirmação.',
+    );
   }
 
   /** onSubmit do Brick: valida o pedido, cria a cobrança com o token e vai
