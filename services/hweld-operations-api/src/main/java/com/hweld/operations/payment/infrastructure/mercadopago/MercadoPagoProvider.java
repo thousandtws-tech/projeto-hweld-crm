@@ -13,8 +13,7 @@ import com.hweld.operations.shared.interfaces.error.ApiException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
+
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
@@ -66,10 +65,6 @@ public class MercadoPagoProvider implements PaymentProvider {
 
     private static final Logger log = LoggerFactory.getLogger(MercadoPagoProvider.class);
     public static final String NAME = "mercadopago";
-
-    /** Formato oficial de `expiration_date_to` em preferências Checkout Pro. */
-    private static final DateTimeFormatter FORMATO_EXPIRACAO = DateTimeFormatter
-            .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").withZone(ZoneOffset.UTC);
 
     private static final long SIGNATURE_TOLERANCE_SECONDS = 300;
 
@@ -313,8 +308,6 @@ public class MercadoPagoProvider implements PaymentProvider {
     private Map<String, Object> montarPreferenciaCartao(ChargeRequest req) {
         String pedidoNumero = String.valueOf(req.metadata().getOrDefault("pedidoNumero",
                 req.metadata().getOrDefault("pedidoId", "")));
-        Instant expiracao = Instant.now().plus(props.pixExpirationMinutes(), ChronoUnit.MINUTES);
-
         Map<String, Object> item = new HashMap<>(Map.of(
                 "id", "pedido-" + req.metadata().getOrDefault("pedidoId", pedidoNumero),
                 "title", req.description() != null && !req.description().isBlank()
@@ -323,15 +316,12 @@ public class MercadoPagoProvider implements PaymentProvider {
                 "unit_price", req.amount().amount(),
                 "currency_id", req.amount().currency()));
 
-        // expiration_date_to: formato oficial yyyy-MM-dd'T'HH:mm:ss.SSSXXX
-        // (Instant.toString() omite milissegundos → preferência criada mas a
-        // página hospedada falha com "Ops, ocorreu um erro").
-        String expiraFmt = FORMATO_EXPIRACAO.format(expiracao.truncatedTo(ChronoUnit.MILLIS));
+        // Sem `expires`/`expiration_date_to`: o TTL do Pix (30min) é do nosso
+        // Payment, não do link hospedado — preferência expirada no MP renderiza
+        // a página fatal "Ops, ocorreu um erro". Sem o campo, o link não vence.
         Map<String, Object> body = new HashMap<>(Map.of(
                 "items", List.of(item),
-                "external_reference", req.idempotencyKey(),
-                "expires", true,
-                "expiration_date_to", expiraFmt));
+                "external_reference", req.idempotencyKey()));
 
         // Só cartão de crédito no checkout (ticket/bank_transfer/atm/débito
         // excluídos). account_money NÃO pode ser excluído — a API rejeita
