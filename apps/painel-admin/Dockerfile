@@ -13,6 +13,7 @@ RUN npm run build
 #   dev/compose → nomes dos containers · Railway → *.railway.internal
 FROM nginx:1.27-alpine
 ENV API_UPSTREAM=core-api:8080 \
+    OPS_UPSTREAM=operations-api:8090 \
     MOTOR_UPSTREAM=realtime-engine:4100
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
