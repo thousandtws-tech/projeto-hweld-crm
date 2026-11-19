@@ -9,14 +9,14 @@ import { msgErro } from "@/lib/api";
 import { brl, fmtDataHora, statusLabel } from "@/lib/format";
 import { exigePerfil } from "@/lib/guards";
 import type {
-  ConfigFiscal,
   Empresa,
   FiscalDocumento,
   FiscalDocumentoEvento,
+  IntegracaoSpedy,
   NotaFiscal,
   Pedido,
 } from "@/lib/models";
-import { crmService, fiscalDocService, fiscalService, pedidosService } from "@/lib/services";
+import { crmService, fiscalDocService, fiscalService, pedidosService, spedyService } from "@/lib/services";
 import { useRealtimeEvent } from "@/lib/use-realtime";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/fiscal/notas")({
   component: FiscalPage,
 });
 
-/** Notas fiscais — emitir via provedor (Focus NFe), acompanhar, cancelar com motivo. */
+/** Notas fiscais — emitir via provedor configurado (Spedy/Focus), acompanhar, cancelar com motivo. */
 function FiscalPage() {
   const [notas, setNotas] = useState<NotaFiscal[]>([]);
   const [docs, setDocs] = useState<FiscalDocumento[]>([]);
@@ -48,8 +48,8 @@ function FiscalPage() {
   const [carregando, setCarregando] = useState(true);
   const [emitindo, setEmitindo] = useState(false);
   const [opsIndisponivel, setOpsIndisponivel] = useState(false);
-  const [configFiscal, setConfigFiscal] = useState<ConfigFiscal | null>(null);
-  const [configErro, setConfigErro] = useState(false);
+  const [integracao, setIntegracao] = useState<IntegracaoSpedy | null>(null);
+  const [integracaoErro, setIntegracaoErro] = useState(false);
 
   const [emitirOpen, setEmitirOpen] = useState(false);
   const [pedidoId, setPedidoId] = useState("");
@@ -87,32 +87,32 @@ function FiscalPage() {
     }
   }, []);
 
-  const carregarConfig = () =>
-    fiscalService
-      .config()
-      .then((c) => {
-        setConfigFiscal(c);
-        setConfigErro(false);
+  // Estado real do provedor fiscal — credenciais vivem em Integrações → Spedy.
+  const carregarIntegracao = () =>
+    spedyService
+      .view()
+      .then((v) => {
+        setIntegracao(v);
+        setIntegracaoErro(false);
       })
-      .catch(() => setConfigErro(true));
+      .catch(() => setIntegracaoErro(true));
 
   useEffect(() => {
     void carregar();
     void carregarDocs();
-    void carregarConfig();
+    void carregarIntegracao();
   }, [carregar, carregarDocs]);
 
   useRealtimeEvent(
     (t) =>
       t.startsWith("fiscal.nota_") ||
       t === "pedido.status_alterado" ||
-      t === "fiscal.configuracao" ||
       t === "nf.solicitada" ||
       t === "integracao.evento_financeiro",
     () => {
       void carregar(true);
       void carregarDocs();
-      void carregarConfig();
+      void carregarIntegracao();
     },
   );
 
@@ -254,62 +254,42 @@ function FiscalPage() {
         }
       />
 
-      {/* Falha ao ler a configuração — nunca confundir com "faltam credenciais" */}
-      {configErro && (
+      {/* Falha ao ler a integração — nunca confundir com "faltam credenciais" */}
+      {integracaoErro && (
         <Alert
           severity="error"
           sx={{ mb: 2 }}
           action={
-            <Button color="inherit" size="small" onClick={() => void carregarConfig()}>
+            <Button color="inherit" size="small" onClick={() => void carregarIntegracao()}>
               Tentar novamente
             </Button>
           }
         >
-          <AlertTitle>Não foi possível verificar a configuração fiscal</AlertTitle>
-          O estado real da integração SEFAZ está indisponível no momento.
+          <AlertTitle>Não foi possível verificar a integração fiscal</AlertTitle>
+          O estado da conexão Spedy está indisponível no momento.
         </Alert>
       )}
 
-      {/* Status da integração SEFAZ — dirigido pela configuração real */}
-      {configFiscal?.status_integracao === "pendente_credenciais" && (
+      {/* Estado do provedor fiscal — credenciais vivem em Integrações → Spedy */}
+      {integracao && integracao.estado !== "ativa" && (
         <Alert severity="warning" icon={<AlertTriangle className="h-4 w-4" />} sx={{ mb: 2 }}>
-          <AlertTitle>Integração SEFAZ pendente para liberação definitiva em produção</AlertTitle>
-          As emissões operam em modo simulado (homologação interna).{" "}
-          {configFiscal && configFiscal.pendencias.length > 0
-            ? `Pendente: ${configFiscal.pendencias
-                .map(
-                  (p) =>
-                    (
-                      ({
-                        certificado_a1: "certificado A1",
-                        certificado_expirado: "certificado expirado",
-                        csc: "CSC",
-                        serie_nf: "série da NF-e",
-                        regime_tributario: "regime tributário",
-                      }) as Record<string, string>
-                    )[p] ?? p,
-                )
-                .join(", ")}. `
-            : ""}
-          Configure as credenciais em{" "}
-          <Link to="/fiscal/configuracao" className="font-medium text-primary hover:underline">
-            Configuração fiscal
+          <AlertTitle>Provedor fiscal não conectado</AlertTitle>
+          {integracao.estado === "falha"
+            ? "A última verificação da conexão falhou — revise a X-Api-Key e o ambiente. "
+            : "A emissão de NF-e depende da integração Spedy configurada e habilitada. "}
+          Configure em{" "}
+          <Link to="/admin/integracoes/$slug" params={{ slug: "spedy" }}
+            className="font-medium text-primary hover:underline">
+            Integrações → Spedy
           </Link>
           .
         </Alert>
       )}
-      {configFiscal?.status_integracao === "homologacao_pronta" && (
+      {integracao?.estado === "ativa" && integracao.ambiente === "homologacao" && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          <AlertTitle>Credenciais completas — ambiente de homologação</AlertTitle>
-          Certificado, CSC e parâmetros configurados. As transmissões seguem em homologação até
-          a ativação do emissor fiscal de produção.
-        </Alert>
-      )}
-      {configFiscal?.status_integracao === "producao_pronta" && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          <AlertTitle>Integração SEFAZ pronta para produção</AlertTitle>
-          Credenciais completas e ambiente em produção — aguardando ativação do transmissor
-          fiscal oficial.
+          <AlertTitle>Emissão em homologação (sandbox Spedy)</AlertTitle>
+          As notas são transmitidas ao ambiente de testes da Spedy — sem validade jurídica.
+          Troque o ambiente em Integrações → Spedy quando for emitir em produção.
         </Alert>
       )}
 

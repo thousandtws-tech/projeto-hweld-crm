@@ -455,22 +455,6 @@ export interface EventoRealtime {
   dados: Record<string, unknown>;
 }
 
-/** `GET /fiscal/configuracao` — visão mascarada (nunca traz segredos). */
-export interface ConfigFiscal {
-  ambiente: "homologacao" | "producao";
-  serie_nf: string | null;
-  regime_tributario: string | null;
-  csc_id: string | null;
-  csc_configurado: boolean;
-  certificado_configurado: boolean;
-  certificado_nome: string | null;
-  certificado_validade: string | null;
-  certificado_sha256: string | null;
-  status_integracao: "pendente_credenciais" | "homologacao_pronta" | "producao_pronta";
-  pendencias: string[];
-  updated_at: string;
-}
-
 export interface MarcaCms {
   id: string;
   nome: string;

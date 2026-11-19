@@ -18,7 +18,6 @@ import {
   Plug,
   Receipt,
   Search,
-  ShieldCheck,
   ShoppingCart,
   Sun,
   Tags,
@@ -120,12 +119,6 @@ const NAV: NavSection[] = [
         icon: Receipt,
         perfis: ["admin", "financeiro"],
       },
-      {
-        to: "/fiscal/configuracao",
-        label: "Config. fiscal",
-        icon: ShieldCheck,
-        perfis: ["admin", "financeiro"],
-      },
     ],
   },
   {
@@ -171,7 +164,6 @@ const MAPA_ROTAS: Record<string, { secao: string; label: string; parentTo?: stri
   "/estoque": { secao: "Operação", label: "Estoque" },
   "/operacao/ordens-servico": { secao: "Operação", label: "Ordens de serviço" },
   "/fiscal/notas": { secao: "Operação", label: "Notas fiscais" },
-  "/fiscal/configuracao": { secao: "Operação", label: "Configuração fiscal" },
   "/financeiro/pagamentos": { secao: "Financeiro", label: "Pagamentos" },
   "/financeiro/caixa": { secao: "Financeiro", label: "Caixa" },
   "/admin/usuarios": { secao: "Administração", label: "Usuários" },

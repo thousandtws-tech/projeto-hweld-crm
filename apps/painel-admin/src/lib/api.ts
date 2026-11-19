@@ -221,7 +221,7 @@ function criarApi(base: string) {
     get<T>(recurso: string, id: number | string): Promise<T> {
       return request<T>("GET", `${recurso}/${id}`);
     },
-    /** GET em recurso sem id (singletons, ex.: `/fiscal/configuracao`). */
+    /** GET em recurso sem id (singletons, ex.: `/integracoes/spedy`). */
     getRecurso<T>(recurso: string): Promise<T> {
       return request<T>("GET", recurso);
     },

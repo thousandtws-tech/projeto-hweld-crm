@@ -21,7 +21,6 @@ import { Route as AdminUsuariosRouteImport } from './routes/admin/usuarios'
 import { Route as CrmOportunidadesRouteImport } from './routes/crm/oportunidades'
 import { Route as FinanceiroCaixaRouteImport } from './routes/financeiro/caixa'
 import { Route as FinanceiroPagamentosRouteImport } from './routes/financeiro/pagamentos'
-import { Route as FiscalConfiguracaoRouteImport } from './routes/fiscal/configuracao'
 import { Route as FiscalNotasRouteImport } from './routes/fiscal/notas'
 import { Route as AdminIntegracoesIndexRouteImport } from './routes/admin/integracoes/index'
 import { Route as AdminIntegracoesSlugRouteImport } from './routes/admin/integracoes/$slug'
@@ -101,11 +100,6 @@ const FinanceiroCaixaRoute = FinanceiroCaixaRouteImport.update({
 const FinanceiroPagamentosRoute = FinanceiroPagamentosRouteImport.update({
   id: '/financeiro/pagamentos',
   path: '/financeiro/pagamentos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FiscalConfiguracaoRoute = FiscalConfiguracaoRouteImport.update({
-  id: '/fiscal/configuracao',
-  path: '/fiscal/configuracao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FiscalNotasRoute = FiscalNotasRouteImport.update({
@@ -224,7 +218,6 @@ export interface FileRoutesByFullPath {
   '/crm/oportunidades': typeof CrmOportunidadesRoute
   '/financeiro/caixa': typeof FinanceiroCaixaRoute
   '/financeiro/pagamentos': typeof FinanceiroPagamentosRoute
-  '/fiscal/configuracao': typeof FiscalConfiguracaoRoute
   '/fiscal/notas': typeof FiscalNotasRoute
   '/admin/integracoes/$slug': typeof AdminIntegracoesSlugRoute
   '/catalogo/produtos/$id': typeof CatalogoProdutosIdRoute
@@ -259,7 +252,6 @@ export interface FileRoutesByTo {
   '/crm/oportunidades': typeof CrmOportunidadesRoute
   '/financeiro/caixa': typeof FinanceiroCaixaRoute
   '/financeiro/pagamentos': typeof FinanceiroPagamentosRoute
-  '/fiscal/configuracao': typeof FiscalConfiguracaoRoute
   '/fiscal/notas': typeof FiscalNotasRoute
   '/admin/integracoes/$slug': typeof AdminIntegracoesSlugRoute
   '/catalogo/produtos/$id': typeof CatalogoProdutosIdRoute
@@ -295,7 +287,6 @@ export interface FileRoutesById {
   '/crm/oportunidades': typeof CrmOportunidadesRoute
   '/financeiro/caixa': typeof FinanceiroCaixaRoute
   '/financeiro/pagamentos': typeof FinanceiroPagamentosRoute
-  '/fiscal/configuracao': typeof FiscalConfiguracaoRoute
   '/fiscal/notas': typeof FiscalNotasRoute
   '/admin/integracoes/$slug': typeof AdminIntegracoesSlugRoute
   '/catalogo/produtos/$id': typeof CatalogoProdutosIdRoute
@@ -332,7 +323,6 @@ export interface FileRouteTypes {
     | '/crm/oportunidades'
     | '/financeiro/caixa'
     | '/financeiro/pagamentos'
-    | '/fiscal/configuracao'
     | '/fiscal/notas'
     | '/admin/integracoes/$slug'
     | '/catalogo/produtos/$id'
@@ -367,7 +357,6 @@ export interface FileRouteTypes {
     | '/crm/oportunidades'
     | '/financeiro/caixa'
     | '/financeiro/pagamentos'
-    | '/fiscal/configuracao'
     | '/fiscal/notas'
     | '/admin/integracoes/$slug'
     | '/catalogo/produtos/$id'
@@ -402,7 +391,6 @@ export interface FileRouteTypes {
     | '/crm/oportunidades'
     | '/financeiro/caixa'
     | '/financeiro/pagamentos'
-    | '/fiscal/configuracao'
     | '/fiscal/notas'
     | '/admin/integracoes/$slug'
     | '/catalogo/produtos/$id'
@@ -438,7 +426,6 @@ export interface RootRouteChildren {
   CrmOportunidadesRoute: typeof CrmOportunidadesRoute
   FinanceiroCaixaRoute: typeof FinanceiroCaixaRoute
   FinanceiroPagamentosRoute: typeof FinanceiroPagamentosRoute
-  FiscalConfiguracaoRoute: typeof FiscalConfiguracaoRoute
   FiscalNotasRoute: typeof FiscalNotasRoute
   AdminIntegracoesSlugRoute: typeof AdminIntegracoesSlugRoute
   CatalogoProdutosIdRoute: typeof CatalogoProdutosIdRoute
@@ -545,13 +532,6 @@ declare module '@tanstack/react-router' {
       path: '/financeiro/pagamentos'
       fullPath: '/financeiro/pagamentos'
       preLoaderRoute: typeof FinanceiroPagamentosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/fiscal/configuracao': {
-      id: '/fiscal/configuracao'
-      path: '/fiscal/configuracao'
-      fullPath: '/fiscal/configuracao'
-      preLoaderRoute: typeof FiscalConfiguracaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fiscal/notas': {
@@ -710,7 +690,6 @@ const rootRouteChildren: RootRouteChildren = {
   CrmOportunidadesRoute: CrmOportunidadesRoute,
   FinanceiroCaixaRoute: FinanceiroCaixaRoute,
   FinanceiroPagamentosRoute: FinanceiroPagamentosRoute,
-  FiscalConfiguracaoRoute: FiscalConfiguracaoRoute,
   FiscalNotasRoute: FiscalNotasRoute,
   AdminIntegracoesSlugRoute: AdminIntegracoesSlugRoute,
   CatalogoProdutosIdRoute: CatalogoProdutosIdRoute,

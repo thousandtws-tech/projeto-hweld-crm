@@ -266,26 +266,6 @@ export const fiscalService = {
     api
       .postAcao<NotaFiscal>("notas-fiscais", id, "cancelar", { motivo })
       .then(normalizarNotaFiscal),
-
-  // ── Configuração fiscal SEFAZ (credenciais, certificado A1) ────────────
-  config: () => api.getRecurso<import("./models").ConfigFiscal>("fiscal/configuracao"),
-  salvarConfig: (b: {
-    ambiente?: "homologacao" | "producao";
-    serie_nf?: string;
-    regime_tributario?: string;
-    csc_id?: string;
-    csc_token?: string;
-  }) => api.putRecurso<import("./models").ConfigFiscal>("fiscal/configuracao", b),
-  /** Upload binário do certificado A1 — metadados via headers X-*. */
-  uploadCertificado: (arquivo: File, senha?: string, validade?: string) =>
-    api.postBytes<import("./models").ConfigFiscal>("fiscal/configuracao/certificado", arquivo, {
-      "Content-Type": "application/x-pkcs12",
-      "X-Nome-Arquivo": arquivo.name || "certificado.pfx",
-      ...(senha?.trim() ? { "X-Certificado-Senha": senha.trim() } : {}),
-      ...(validade?.trim() ? { "X-Certificado-Validade": validade.trim() } : {}),
-    }),
-  removerCertificado: () =>
-    api.del<import("./models").ConfigFiscal>("fiscal/configuracao/certificado"),
 };
 
 /**
