@@ -31,8 +31,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class IntegrationService {
 
     public record SalvarReq(Long versao, String nomeConta, Map<String, Object> config,
-            Map<String, String> segredos) {}
-    public record SmsTesteReq(String telefone, String texto) {}
+            Map<String, String> segredos) {
+    }
+
+    public record SmsTesteReq(String telefone, String texto) {
+    }
 
     private final IntegrationSettingsRepository settings;
     private final NotificationDeliveryRepository deliveries;
@@ -63,7 +66,8 @@ public class IntegrationService {
     public Map<String, Object> view(String publicBase) {
         IntegrationSettings cfg = load();
         Map<String, Object> check = cfg.getLastCheck() != null
-                ? cfg.getLastCheck() : Map.of();
+                ? cfg.getLastCheck()
+                : Map.of();
         long pendentes = deliveries.countByChannelAndStatusIn("SMS",
                 List.of("QUEUED", "FAILED", "UNKNOWN"));
 
@@ -75,7 +79,8 @@ public class IntegrationService {
         config.put("eventos", cfg.getEvents());
         config.put("destinatarios_teste", cfg.getTestRecipients());
         String callback = callbackUrl(cfg, publicBase);
-        if (callback != null) config.put("callback_url", callback);
+        if (callback != null)
+            config.put("callback_url", callback);
 
         Map<String, Object> view = new TreeMap<>();
         view.put("provedor", "infobip");
@@ -100,10 +105,13 @@ public class IntegrationService {
     }
 
     private String estado(IntegrationSettings cfg) {
-        if (!cfg.isEnabled()) return "desativada";
-        if (!cfg.credenciaisCompletas()) return "pendente";
+        if (!cfg.isEnabled())
+            return "desativada";
+        if (!cfg.credenciaisCompletas())
+            return "pendente";
         Map<String, Object> check = cfg.getLastCheck();
-        if (check != null && Boolean.FALSE.equals(check.get("ok"))) return "falha";
+        if (check != null && Boolean.FALSE.equals(check.get("ok")))
+            return "falha";
         return "ativa";
     }
 
@@ -150,6 +158,23 @@ public class IntegrationService {
         return view(publicBase);
     }
 
+    /**
+     * Rotaciona o segredo do path do DLR — a URL com segredo trafega em
+     * painéis/logs da operadora; a rotação revoga a URL antiga e devolve a
+     * nova na view para o cliente reconfigurar no portal Infobip.
+     */
+    @Transactional
+    public Map<String, Object> rotacionarSegredo(String publicBase) {
+        IntegrationSettings cfg = load();
+        byte[] raw = new byte[24];
+        random.nextBytes(raw);
+        cfg.definirWebhookSecret(cipher.encrypt(HexFormat.of().formatHex(raw)));
+        settings.save(cfg);
+        audit.record("integracao.infobip.rotacionar_segredo", "integration_settings",
+                IntegrationSettings.INFOBIP_SMS, Map.of());
+        return view(publicBase);
+    }
+
     @Transactional
     public Map<String, Object> habilitar(boolean habilitado, String publicBase) {
         IntegrationSettings cfg = load();
@@ -175,14 +200,11 @@ public class IntegrationService {
         Map<String, Object> out = new TreeMap<>();
         out.put("verificacao_status", test.ok() ? "ok" : "falha");
         out.put("mensagem", test.detail());
-        if (test.ok() && cfg.getNomeConta() != null) out.put("nome_conta", cfg.getNomeConta());
+        if (test.ok() && cfg.getNomeConta() != null)
+            out.put("nome_conta", cfg.getNomeConta());
         return out;
     }
 
-    /**
-     * SMS de teste — allowlist vazia libera qualquer destinatário válido;
-     * preenchida restringe (padrão da referência).
-     */
     @Transactional
     public Map<String, Object> enviarSmsTeste(SmsTesteReq req) {
         IntegrationSettings cfg = load();
@@ -195,7 +217,6 @@ public class IntegrationService {
                     "destinatário fora da lista de testes — cadastre-o em Destinatários de teste");
         }
         if (req.texto() != null && !req.texto().isBlank()) {
-            // Texto livre não passa por template — enfileira como aviso avulso.
             NotificationDelivery d = notifications.queueSmsText(e164, req.texto().trim(),
                     null, null, null, cfg.getMaxSegments());
             audit.record("integracao.infobip.sms_teste", "notification_delivery",
@@ -209,7 +230,6 @@ public class IntegrationService {
         return Map.of("aceito", true, "id", d.getId().toString());
     }
 
-    /** Últimos DLRs recebidos — "Eventos de webhook" do card. */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> eventos(int limite) {
         var page = deliveries.findLatestDlr(
@@ -227,7 +247,6 @@ public class IntegrationService {
         return out;
     }
 
-    /** Reprocessamento auditado de um delivery SMS (admin confirma explicitamente). */
     @Transactional
     public NotificationDelivery reprocessar(UUID deliveryId) {
         NotificationDelivery d = notifications.get(deliveryId);
@@ -241,21 +260,25 @@ public class IntegrationService {
     }
 
     private String callbackUrl(IntegrationSettings cfg, String publicBase) {
-        if (cfg.getWebhookSecretEnc() == null) return null;
+        if (cfg.getWebhookSecretEnc() == null)
+            return null;
         String base = props.publicBaseUrl() != null && !props.publicBaseUrl().isBlank()
-                ? props.publicBaseUrl() : publicBase;
-        if (base == null || base.isBlank()) return null;
+                ? props.publicBaseUrl()
+                : publicBase;
+        if (base == null || base.isBlank())
+            return null;
         return base + "/api/v1/webhooks/infobip/sms/dlr/" + cipher.decrypt(cfg.getWebhookSecretEnc());
     }
 
-    /** Timestamp do último DLR — `doneDate` do relatório ou deliveredAt/sentAt. */
     private static String recebidoEm(NotificationDelivery d) {
         var reports = d.getDlr();
         if (reports != null && !reports.isEmpty()) {
             Object done = reports.get(reports.size() - 1).get("doneDate");
-            if (done instanceof String s && !s.isBlank()) return s;
+            if (done instanceof String s && !s.isBlank())
+                return s;
         }
-        if (d.getDeliveredAt() != null) return d.getDeliveredAt().toString();
+        if (d.getDeliveredAt() != null)
+            return d.getDeliveredAt().toString();
         return d.getSentAt() != null ? d.getSentAt().toString() : "";
     }
 
@@ -269,17 +292,22 @@ public class IntegrationService {
     }
 
     private static List<String> listOfStrings(Object v) {
-        if (!(v instanceof List<?> l)) return null;
+        if (!(v instanceof List<?> l))
+            return null;
         List<String> out = new ArrayList<>();
-        for (Object o : l) if (o instanceof String s && !s.isBlank()) out.add(s.trim());
+        for (Object o : l)
+            if (o instanceof String s && !s.isBlank())
+                out.add(s.trim());
         return out;
     }
 
     private static Map<String, Boolean> mapOfBooleans(Object v) {
-        if (!(v instanceof Map<?, ?> m)) return null;
+        if (!(v instanceof Map<?, ?> m))
+            return null;
         Map<String, Boolean> out = new TreeMap<>();
         for (var e : m.entrySet()) {
-            if (e.getKey() instanceof String k && e.getValue() instanceof Boolean b) out.put(k, b);
+            if (e.getKey() instanceof String k && e.getValue() instanceof Boolean b)
+                out.put(k, b);
         }
         return out;
     }

@@ -55,6 +55,12 @@ public class IntegrationController {
         return service.habilitar(Boolean.TRUE.equals(body.get("habilitado")), publicBase(http));
     }
 
+    /** Gira o segredo do path do webhook DLR — devolve a URL nova na view. */
+    @PostMapping("/webhook/rotacionar-segredo")
+    public Map<String, Object> rotacionarSegredo(HttpServletRequest http) {
+        return service.rotacionarSegredo(publicBase(http));
+    }
+
     @PostMapping("/testar-conexao")
     public Map<String, Object> testarConexao() {
         return service.testarConexao();
@@ -85,7 +91,7 @@ public class IntegrationController {
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int porPagina) {
         return notifications.list(status, null, "SMS", pedidoId,
-                PageRequest.of(Math.max(pagina, 0), Math.min(porPagina, 100)));
+                PageRequest.of(Math.max(pagina, 0), Math.max(1, Math.min(porPagina, 100))));
     }
 
     /** Base pública derivada do request quando `APP_PUBLIC_URL` não está setada. */

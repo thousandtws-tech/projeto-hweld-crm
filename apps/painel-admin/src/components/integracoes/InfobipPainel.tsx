@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Copy,
+  KeyRound,
   Loader2,
   Play,
   RefreshCcw,
@@ -81,6 +82,7 @@ export function InfobipPainel({
   const [fTexto, setFTexto] = useState("");
   const [enviandoSms, setEnviandoSms] = useState(false);
   const [alternando, setAlternando] = useState(false);
+  const [rotacionando, setRotacionando] = useState(false);
 
   // DLRs + histórico
   const [eventos, setEventos] = useState<EventoDlr[]>([]);
@@ -249,6 +251,21 @@ export function InfobipPainel({
     }
   };
 
+  const rotacionar = async () => {
+    if (!window.confirm(
+      "Gerar novo segredo do webhook DLR? A URL atual deixa de aceitar relatórios " +
+      "na hora — cadastre a URL nova no painel Infobip em seguida.")) return;
+    setRotacionando(true);
+    try {
+      preencher(await integracoesService.rotacionarSegredo());
+      toast.success("Segredo girado — copie a URL nova e atualize no painel Infobip.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao girar o segredo.");
+    } finally {
+      setRotacionando(false);
+    }
+  };
+
   if (carregando) {
     return (
       <SectionCard>
@@ -328,6 +345,13 @@ export function InfobipPainel({
                 <Button size="small" variant="outlined"
                   onClick={() => void copiar(i.config.callback_url ?? "")}>
                   <Copy className="mr-1 h-4 w-4" /> Copiar
+                </Button>
+                <Button size="small" variant="outlined" color="warning"
+                  disabled={rotacionando} onClick={() => void rotacionar()}>
+                  {rotacionando
+                    ? <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                    : <KeyRound className="mr-1 h-4 w-4" />}
+                  Girar segredo
                 </Button>
               </div>
             ) : (

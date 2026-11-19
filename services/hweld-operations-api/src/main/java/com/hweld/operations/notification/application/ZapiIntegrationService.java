@@ -186,6 +186,39 @@ public class ZapiIntegrationService {
         return view(publicBase);
     }
 
+    /**
+     * Rotaciona o segredo do path dos webhooks — o segredo trafega na URL
+     * (Z-API não assina payloads), então um vazamento em log/histórico
+     * comprometeria a integração para sempre. A rotação gera segredo novo,
+     * invalida a URL antiga imediatamente e re-registra os endpoints na
+     * instância — operação atômica do ponto de vista do cliente.
+     */
+    @Transactional
+    public Map<String, Object> rotacionarSegredo(String publicBase) {
+        IntegrationSettings cfg = load();
+        byte[] raw = new byte[24];
+        random.nextBytes(raw);
+        cfg.definirWebhookSecret(cipher.encrypt(HexFormat.of().formatHex(raw)));
+        settings.save(cfg);
+
+        boolean reconfigurado = false;
+        String callback = callbackBase(cfg, publicBase);
+        if (cfg.credenciaisZapiCompletas() && callback != null) {
+            try {
+                zapi.configureWebhooks(callback);
+                reconfigurado = true;
+            } catch (Exception e) {
+                org.slf4j.LoggerFactory.getLogger(getClass())
+                        .warn("zapi webhooks não reconfigurados após rotação: {}", e.getMessage());
+            }
+        }
+        audit.record("integracao.zapi.rotacionar_segredo", "integration_settings",
+                IntegrationSettings.ZAPI_WHATSAPP, Map.of("reconfigurado", reconfigurado));
+        Map<String, Object> view = view(publicBase);
+        view.put("webhooks_reconfigurados", reconfigurado);
+        return view;
+    }
+
     @Transactional
     public Map<String, Object> habilitar(boolean habilitado, String publicBase) {
         IntegrationSettings cfg = load();

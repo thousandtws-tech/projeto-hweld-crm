@@ -129,6 +129,11 @@ impl ServicoAuth {
     ) -> Resultado<SessaoPortal> {
         let email = email.trim().to_lowercase();
         validar_senha(senha)?;
+        // Hash antes da checagem de duplicidade: o Argon2 (~100ms) é o
+        // custo dominante e passa a pesar nos dois caminhos — sem isso,
+        // "e-mail já cadastrado" voltava em ~ms e o tempo de resposta
+        // denunciava a existência da conta mesmo com a mensagem genérica.
+        let hash = self.hasher.hash(senha).await?;
         if self.contatos.buscar_por_email(&email).await?.is_some() {
             return Err(ErroApp::conflito("e-mail já cadastrado"));
         }
@@ -152,7 +157,6 @@ impl ServicoAuth {
             )
             .await?;
 
-        let hash = self.hasher.hash(senha).await?;
         self.contatos
             .definir_acesso_portal(contato.id, true, Some(&hash))
             .await?;

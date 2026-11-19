@@ -70,6 +70,12 @@ public class ZapiIntegrationController {
         return service.desconectar(publicBase(http));
     }
 
+    /** Gira o segredo do path dos webhooks e re-registra na instância. */
+    @PostMapping("/webhook/rotacionar-segredo")
+    public Map<String, Object> rotacionarSegredo(HttpServletRequest http) {
+        return service.rotacionarSegredo(publicBase(http));
+    }
+
     @PostMapping("/mensagem-teste")
     public Map<String, Object> mensagemTeste(
             @RequestBody ZapiIntegrationService.MsgTesteReq req) {
@@ -96,7 +102,7 @@ public class ZapiIntegrationController {
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int porPagina) {
         return notifications.list(status, null, "WHATSAPP", pedidoId,
-                PageRequest.of(Math.max(pagina, 0), Math.min(porPagina, 100)));
+                PageRequest.of(Math.max(pagina, 0), Math.max(1, Math.min(porPagina, 100))));
     }
 
     private static String publicBase(HttpServletRequest req) {

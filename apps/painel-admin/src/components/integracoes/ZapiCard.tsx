@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   Copy,
   History,
+  KeyRound,
   Loader2,
   Play,
   QrCode,
@@ -84,6 +85,7 @@ export function ZapiCard({
   const [qrErro, setQrErro] = useState<string | null>(null);
   const [carregandoQr, setCarregandoQr] = useState(false);
   const [desconectando, setDesconectando] = useState(false);
+  const [rotacionando, setRotacionando] = useState(false);
 
   const [eventos, setEventos] = useState<EventoZapi[]>([]);
   const [historico, setHistorico] = useState<EntregaSms[]>([]);
@@ -256,6 +258,24 @@ export function ZapiCard({
       toast.success("URL copiada.");
     } catch {
       toast.error("Não foi possível copiar.");
+    }
+  };
+
+  const rotacionar = async () => {
+    if (!window.confirm(
+      "Gerar novo segredo de webhook? As URLs atuais deixam de funcionar na hora — " +
+      "os endpoints novos são registrados na instância automaticamente.")) return;
+    setRotacionando(true);
+    try {
+      const nova = await zapiService.rotacionarSegredo();
+      preencher(nova);
+      toast.success(nova.webhooks_reconfigurados === false
+        ? "Segredo girado, mas a instância não aceitou as URLs novas — verifique a conexão."
+        : "Segredo girado — URLs anteriores revogadas.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao girar o segredo.");
+    } finally {
+      setRotacionando(false);
     }
   };
 
@@ -462,6 +482,15 @@ export function ZapiCard({
                 </Button>
               </div>
             ))}
+            <div>
+              <Button size="small" variant="outlined" color="warning"
+                disabled={rotacionando} onClick={() => void rotacionar()}>
+                {rotacionando
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <KeyRound className="h-4 w-4" />}
+                Girar segredo das URLs
+              </Button>
+            </div>
           </div>
         ) : (
           <Typography variant="body2" className="text-xs text-muted-foreground">

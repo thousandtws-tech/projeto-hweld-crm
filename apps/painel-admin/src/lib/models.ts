@@ -552,6 +552,8 @@ export interface IntegracaoInfobip {
   verificacao_status: "ok" | "falha" | "nunca";
   verificacao_erro: string;
   pendentes: number;
+  /** Só presente na resposta do POST de rotação de segredo. */
+  webhooks_reconfigurados?: boolean;
 }
 
 /** Relatório de entrega recebido — `GET /integracoes/infobip/eventos`. */
@@ -593,6 +595,8 @@ export interface IntegracaoZapi {
   verificacao_status: "ok" | "falha" | "nunca";
   verificacao_erro: string;
   pendentes: number;
+  /** Só presente na resposta do POST de rotação de segredo. */
+  webhooks_reconfigurados?: boolean;
 }
 
 /** Evento de webhook Z-API — `GET /integracoes/zapi/eventos`. */

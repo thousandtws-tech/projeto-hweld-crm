@@ -397,6 +397,9 @@ export const integracoesService = {
   testarConexao: () =>
     apiOps.post<{ verificacao_status: string; mensagem?: string; nome_conta?: string }>(
       "integracoes/infobip/testar-conexao", {}),
+  rotacionarSegredo: () =>
+    apiOps.post<import("./models").IntegracaoInfobip>(
+      "integracoes/infobip/webhook/rotacionar-segredo", {}),
   enviarSmsTeste: (telefone: string, texto?: string) =>
     apiOps.post<{ aceito: boolean; id: string }>(
       "integracoes/infobip/sms-teste",
@@ -435,6 +438,9 @@ export const zapiService = {
     apiOps.getRecurso<{ imagem?: string; erro?: string }>("integracoes/zapi/qrcode"),
   desconectar: () =>
     apiOps.post<import("./models").IntegracaoZapi>("integracoes/zapi/desconectar", {}),
+  rotacionarSegredo: () =>
+    apiOps.post<import("./models").IntegracaoZapi>(
+      "integracoes/zapi/webhook/rotacionar-segredo", {}),
   mensagemTeste: (telefone: string, texto?: string) =>
     apiOps.post<{ aceito: boolean; id: string }>(
       "integracoes/zapi/mensagem-teste",
