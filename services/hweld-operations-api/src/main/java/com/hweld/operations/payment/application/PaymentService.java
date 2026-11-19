@@ -121,7 +121,9 @@ public class PaymentService {
         PaymentProvider.ChargeRequest chargeReq = new PaymentProvider.ChargeRequest(
                 idemKey, order.total(), cmd.method(),
                 "Pedido " + order.numero(), order.contatoEmail() != null ? order.contatoEmail() : cmd.emailContato(),
-                Map.of("pedidoId", cmd.pedidoId(), "pedidoNumero", order.numero(), "empresaId", order.empresaId()));
+                Map.of("pedidoId", cmd.pedidoId(), "pedidoNumero", order.numero(),
+                        "empresaId", order.empresaId(),
+                        "contatoTelefone", order.contatoTelefone() != null ? order.contatoTelefone() : ""));
 
         PaymentProvider.ChargeResult charge;
         try {

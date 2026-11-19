@@ -343,9 +343,24 @@ public class MercadoPagoProvider implements PaymentProvider {
                         Map.of("id", "atm"), Map.of("id", "debit_card")),
                 "installments", configInt("parcelas_max", 12, 1, 24)));
 
-        // Sem payer pré-preenchido: no sandbox um e-mail real (ou igual ao da
-        // conta de teste vendedora) quebra o checkout; a página hospedada
-        // coleta o pagador de qualquer forma.
+        // Payer com e-mail/telefone do contato: dados do comprador alimentam
+        // o score do antifraude MP (preferências sem payer pontuam pior e
+        // tendem a cc_rejected_high_risk). Em produção o checkout usa os dados
+        // para pré-selecionar; o comprador ainda confirma/edita na página.
+        Map<String, Object> payer = new HashMap<>();
+        if (req.customerEmail() != null && !req.customerEmail().isBlank()) {
+            payer.put("email", req.customerEmail().trim());
+        }
+        String fone = String.valueOf(req.metadata().getOrDefault("contatoTelefone", ""))
+                .replaceAll("\\D", "");
+        if (fone.startsWith("55") && fone.length() > 11) fone = fone.substring(2);
+        if (fone.length() >= 10) {
+            payer.put("phone", Map.of(
+                    "area_code", fone.substring(0, 2),
+                    "number", fone.substring(2)));
+        }
+        if (!payer.isEmpty()) body.put("payer", payer);
+
         String webhookUrl = webhookUrl();
         if (webhookUrl != null) {
             body.put("notification_url", webhookUrl);
