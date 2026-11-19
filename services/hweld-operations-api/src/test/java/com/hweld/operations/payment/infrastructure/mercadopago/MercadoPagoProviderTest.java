@@ -25,11 +25,13 @@ import com.hweld.operations.shared.interfaces.error.ApiException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -134,6 +136,19 @@ class MercadoPagoProviderTest {
         // ambiente=teste → sandbox_init_point.
         assertTrue(r.checkoutUrl().startsWith("https://sandbox.mercadopago.com"));
         assertEquals(PaymentStatus.PENDING, r.status());
+
+        // account_money não pode ser excluído — a API do MP rejeita a
+        // preferência inteira ("account_money cannot be excluded").
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> body = ArgumentCaptor.forClass(Map.class);
+        verify(client).criarPreferencia(body.capture(), eq("idem-1"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> pm = (Map<String, Object>) body.getValue().get("payment_methods");
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> excluidos =
+                pm != null ? (List<Map<String, String>>) pm.get("excluded_payment_types") : null;
+        assertTrue(excluidos == null || excluidos.stream()
+                .noneMatch(e -> "account_money".equals(e.get("id"))));
     }
 
     @Test

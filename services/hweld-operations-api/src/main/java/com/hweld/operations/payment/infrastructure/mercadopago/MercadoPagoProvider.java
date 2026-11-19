@@ -322,13 +322,14 @@ public class MercadoPagoProvider implements PaymentProvider {
                 "expires", true,
                 "expiration_date_to", expiracao.truncatedTo(ChronoUnit.SECONDS).toString()));
 
-        // Só cartão de crédito no checkout (ticket/bank_transfer/atm/débito/
-        // saldo em conta excluídos); installments = parcelas_max do painel.
+        // Só cartão de crédito no checkout (ticket/bank_transfer/atm/débito
+        // excluídos). account_money NÃO pode ser excluído — a API rejeita
+        // a preferência inteira ("account_money cannot be excluded").
+        // installments = parcelas_max do painel.
         body.put("payment_methods", Map.of(
                 "excluded_payment_types", List.of(
                         Map.of("id", "ticket"), Map.of("id", "bank_transfer"),
-                        Map.of("id", "atm"), Map.of("id", "debit_card"),
-                        Map.of("id", "account_money")),
+                        Map.of("id", "atm"), Map.of("id", "debit_card")),
                 "installments", configInt("parcelas_max", 12, 1, 24)));
 
         if (req.customerEmail() != null && !req.customerEmail().isBlank()) {
