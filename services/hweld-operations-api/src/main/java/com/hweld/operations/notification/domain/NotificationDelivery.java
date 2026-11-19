@@ -216,6 +216,7 @@ public class NotificationDelivery {
     public int getAttempts() { return attempts; }
     public Instant getNextRetryAt() { return nextRetryAt; }
     public Instant getSentAt() { return sentAt; }
+    public Instant getCreatedAt() { return createdAt; }
     public String getChannel() { return channel; }
     public String getDedupKey() { return dedupKey; }
     public String getMessageId() { return messageId; }

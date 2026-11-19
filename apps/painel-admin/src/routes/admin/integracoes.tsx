@@ -693,13 +693,18 @@ function IntegracoesPage() {
                       title={(d as { payload?: { text?: string } }).payload?.text ?? d.subject}>
                       {d.templateCode ?? d.subject}
                     </td>
-                    <td className="py-2 pr-3">
+                    <td className="py-2 pr-3" title={d.lastError ?? undefined}>
                       <StatusPill
                         status={d.status === "DELIVERED" || d.status === "SENT" ? "ativo"
                           : d.status === "DEAD" || d.status === "EXPIRED" ? "cancelado"
                           : d.status === "FAILED" || d.status === "UNKNOWN" ? "urgente"
                           : d.status === "SUPPRESSED" ? "inativo" : "pendente"}
                         label={STATUS_ENTREGA[d.status] ?? d.status} />
+                      {d.lastError ? (
+                        <p className="mt-0.5 max-w-[220px] truncate text-[10px] leading-tight text-muted-foreground">
+                          {d.lastError}
+                        </p>
+                      ) : null}
                     </td>
                     <td className="py-2 pr-3 tabular-nums">{d.segments ?? "—"}</td>
                     <td className="py-2 pr-3 tabular-nums">{d.attempts}</td>

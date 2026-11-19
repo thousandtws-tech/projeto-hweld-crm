@@ -82,7 +82,7 @@ public class InfobipSmsProvider implements SmsProvider {
         var body = Map.of("messages", List.of(Map.of(
                 "sender", r.sender(),
                 "destinations", List.of(Map.of("to", to)),
-                "text", text)));
+                "content", Map.of("text", text))));
         try {
             String raw = client(r).post().uri("/sms/3/messages")
                     .body(body)
