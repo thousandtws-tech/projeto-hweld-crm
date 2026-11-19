@@ -16,26 +16,6 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-/**
- * Adapter `FiscalProvider` da API Spedy v1 (docs.spedy.com.br).
- *
- * Escopo desta versão: NF-e (modelo 55) via `/v1/product-invoices` — emissão
- * assíncrona idempotente por `integrationId` (nosso `documentId`), consulta,
- * cancelamento (`DELETE` + `reason`), carta de correção, check-status na
- * SEFAZ e download de XML/DANFE para o object storage. Credenciais
- * (`X-Api-Key` + ambiente) são gerenciadas pelo cliente na integração
- * `spedy-fiscal` — nunca por variável de ambiente.
- *
- * Mapeamento dos status oficiais (ciclo de vida da nota):
- *   authorized    → AUTHORIZED
- *   rejected      → REJECTED
- *   canceled      → CANCELLED
- *   enqueued,
- *   processing,
- *   inContingent  → PROCESSING (aguardando retorno SEFAZ)
- *   error         → ERROR
- * O status bruto é preservado em `providerStatus`/`statusDetail`.
- */
 @Component
 public class SpedyProvider implements FiscalProvider {
 
@@ -65,7 +45,6 @@ public class SpedyProvider implements FiscalProvider {
         return NAME;
     }
 
-    /** Ambiente derivado da `base_url` configurada — sandbox = homologação. */
     @Override
     public String environment() {
         return settings.findById(IntegrationSettings.SPEDY_FISCAL)
@@ -74,7 +53,6 @@ public class SpedyProvider implements FiscalProvider {
                 .orElse("homologacao");
     }
 
-    /** Integração habilitada + `X-Api-Key` e ambiente presentes. */
     @Override
     public boolean configured() {
         return settings.findById(IntegrationSettings.SPEDY_FISCAL)
@@ -82,7 +60,6 @@ public class SpedyProvider implements FiscalProvider {
                 .orElse(false);
     }
 
-    /** `integrationId` = nosso documentId — idempotência e reconciliação. */
     @Override
     public String providerRef(String documentId) {
         return documentId;
@@ -101,7 +78,8 @@ public class SpedyProvider implements FiscalProvider {
         }
 
         Long notaFiscalId = req.dados() != null && req.dados().get("nota_fiscal_id") instanceof Number n
-                ? n.longValue() : null;
+                ? n.longValue()
+                : null;
         var dados = fiscalData.buscar(req.pedidoId(), notaFiscalId);
         Map<String, Object> payload = mapper.montar(req.documentId(), dados, req.dados());
 
@@ -116,12 +94,12 @@ public class SpedyProvider implements FiscalProvider {
         try {
             return toStatus(client.consultarNfe(externalId));
         } catch (SpedyException e) {
-            if (e.httpStatus() != 404) throw e;
-            // O externalId pode ser ainda o nosso documentId (crash pós-POST):
-            // reconcilia pelo integrationId oficial antes de desistir.
+            if (e.httpStatus() != 404)
+                throw e;
             JsonNode lista = client.consultarNfePorIntegrationId(externalId);
             JsonNode primeiro = primeiroItem(lista);
-            if (primeiro == null) throw e;
+            if (primeiro == null)
+                throw e;
             return toStatus(primeiro);
         }
     }
@@ -130,18 +108,15 @@ public class SpedyProvider implements FiscalProvider {
     public void cancel(String externalId, String motivo) {
         validarJustificativa(motivo);
         JsonNode resp = client.cancelarNfe(externalId, motivo.trim());
-        // A Spedy devolve o objeto da nota; o cancelamento pode ser assíncrono —
-        // webhook/reconciliação confirmam o `canceled`. Só falha com rejeição
-        // explícita do provedor.
         String status = texto(resp, "status");
         if ("rejected".equals(status) || "error".equals(status)) {
             throw SpedyException.provedor(
                     "cancelamento rejeitado: " + primeiro(resp,
-                            "processingDetail.message", "message"), 0);
+                            "processingDetail.message", "message"),
+                    0);
         }
     }
 
-    /** `POST /v1/product-invoices/{id}/corrections` — `letter` 15–1000 chars. */
     @Override
     public void cartaCorrecao(String externalId, String correcao) {
         if (correcao == null || correcao.trim().length() < 15 || correcao.trim().length() > 1000) {
@@ -151,24 +126,15 @@ public class SpedyProvider implements FiscalProvider {
         client.cartaCorrecaoNfe(externalId, correcao.trim());
     }
 
-    /**
-     * `POST /v1/product-invoices/{id}/check-status` — força a Spedy a
-     * reconciliar com a SEFAZ (equivalente funcional ao reenvio de webhook).
-     */
     @Override
     public void requestNotificationResend(String externalId) {
         client.checkStatusNfe(externalId);
     }
 
-    /**
-     * Converte o `data` do webhook Spedy — mesmo objeto retornado por
-     * `GET /v1/product-invoices/{id}`.
-     */
     public StatusResult parseWebhook(JsonNode data) {
         return toStatus(data);
     }
 
-    /** Baixa XML/DANFE (`GET .../xml`, `.../pdf`) para `fiscal/{docId}.*`. */
     @Override
     public Map<String, String> fetchArtifacts(String externalId, String documentId) {
         var chaves = new HashMap<String, String>();
@@ -181,7 +147,8 @@ public class SpedyProvider implements FiscalProvider {
             Map<String, String> chaves) {
         try {
             byte[] bytes = "xml".equals(tipo)
-                    ? client.baixarXmlNfe(externalId) : client.baixarPdfNfe(externalId);
+                    ? client.baixarXmlNfe(externalId)
+                    : client.baixarPdfNfe(externalId);
             if (bytes != null && bytes.length > 0) {
                 String chave = "fiscal/" + documentId + "." + tipo;
                 storage.salvar(chave, bytes, mime);
@@ -191,8 +158,6 @@ public class SpedyProvider implements FiscalProvider {
             log.warn("spedy: download {} da nota {} falhou: {}", tipo, externalId, e.getMessage());
         }
     }
-
-    // ── Mapeamento de respostas oficiais ──────────────────────────────────────
 
     private EmissionResult toEmission(JsonNode n) {
         String providerStatus = texto(n, "status");
@@ -221,22 +186,26 @@ public class SpedyProvider implements FiscalProvider {
     }
 
     private static FiscalDocument.Status mapearStatus(String providerStatus) {
-        if (providerStatus == null) return FiscalDocument.Status.PROCESSING;
+        if (providerStatus == null)
+            return FiscalDocument.Status.PROCESSING;
         return switch (providerStatus) {
             case "authorized" -> FiscalDocument.Status.AUTHORIZED;
             case "canceled", "cancelled" -> FiscalDocument.Status.CANCELLED;
             case "rejected" -> FiscalDocument.Status.REJECTED;
             case "error" -> FiscalDocument.Status.ERROR;
-            default -> FiscalDocument.Status.PROCESSING;
+            default -> {
+                log.warn("spedy status desconhecido '{}' — assumindo PROCESSING", providerStatus);
+                yield FiscalDocument.Status.PROCESSING;
+            }
         };
     }
 
-    /** Caminho com ponto: `authorization.protocol` → n.authorization.protocol. */
     private static String texto(JsonNode n, String caminho) {
         JsonNode atual = n;
         for (String parte : caminho.split("\\.")) {
             atual = atual != null ? atual.get(parte) : null;
-            if (atual == null) return null;
+            if (atual == null)
+                return null;
         }
         return !atual.isNull() && !atual.asString().isBlank() ? atual.asString() : null;
     }
@@ -244,19 +213,20 @@ public class SpedyProvider implements FiscalProvider {
     private static String primeiro(JsonNode n, String... caminhos) {
         for (String c : caminhos) {
             String v = texto(n, c);
-            if (v != null) return v;
+            if (v != null)
+                return v;
         }
         return null;
     }
 
-    /** Primeiro elemento de respostas de lista (`{data|items|content: [...]}` ou array). */
     private static JsonNode primeiroItem(JsonNode lista) {
-        if (lista == null) return null;
+        if (lista == null)
+            return null;
         JsonNode arr = lista.isArray() ? lista
                 : lista.has("data") && lista.path("data").isArray() ? lista.path("data")
-                : lista.has("items") && lista.path("items").isArray() ? lista.path("items")
-                : lista.has("content") && lista.path("content").isArray() ? lista.path("content")
-                : null;
+                        : lista.has("items") && lista.path("items").isArray() ? lista.path("items")
+                                : lista.has("content") && lista.path("content").isArray() ? lista.path("content")
+                                        : null;
         return arr != null && !arr.isEmpty() ? arr.get(0) : null;
     }
 

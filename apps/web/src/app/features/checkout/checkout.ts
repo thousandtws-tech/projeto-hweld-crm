@@ -152,9 +152,12 @@ export class CheckoutPage implements OnInit {
   }
 
   /** Autopreenchimento de endereço por CEP (ViaCEP) — padrão grandes lojas virtuais. */
+  private cepSeq = 0;
+
   async aoDigitarCep(): Promise<void> {
     const raw = this.enderecoForm.controls.cep.value;
     const digitos = raw.replace(/\D/g, '');
+    const seq = ++this.cepSeq;
     if (digitos.length !== 8) {
       this.cepLocalizado.set(false);
       return;
@@ -162,7 +165,7 @@ export class CheckoutPage implements OnInit {
     this.buscandoCep.set(true);
     try {
       const res = await fetch(`https://viacep.com.br/ws/${digitos}/json/`);
-      if (!res.ok) return;
+      if (!res.ok || seq !== this.cepSeq) return;
       const dados = (await res.json()) as {
         erro?: boolean;
         logradouro?: string;
@@ -170,6 +173,9 @@ export class CheckoutPage implements OnInit {
         localidade?: string;
         uf?: string;
       };
+      // Usuário redigitou o CEP durante o fetch — descarta a resposta
+      // velha para não sobrescrever o formulário com dados do CEP anterior.
+      if (seq !== this.cepSeq) return;
       if (dados.erro) {
         this.toast.erro('CEP não encontrado. Preencha os dados manualmente.');
         return;

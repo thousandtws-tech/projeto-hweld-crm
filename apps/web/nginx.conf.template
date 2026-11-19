@@ -9,7 +9,7 @@ server {
     # Pagamentos e logística vivem na operations-api (Java) — o restante
     # de /api/v1 segue para o core-api (Rust). proxy_pass via variável +
     # resolver: upstreams railway.internal mudam de IP a cada redeploy.
-    location /api/v1/payments {
+    location ~ ^/api/v1/payments(/|$) {
         resolver [fd12::10] valid=10s ipv6=on;
         set $ops_upstream http://${OPS_UPSTREAM};
         proxy_pass $ops_upstream;

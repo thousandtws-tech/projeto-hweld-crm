@@ -36,6 +36,7 @@ export class PedidoDetalhePage implements OnInit {
 
   pedido = signal<PedidoDetalhe | null>(null);
   pagamento = signal<Pagamento | null>(null);
+  erroPagamento = signal(false);
   cotacao = signal<CotacaoFrete | null>(null);
   carregando = signal(true);
   cotando = signal(false);
@@ -89,6 +90,9 @@ export class PedidoDetalhePage implements OnInit {
   }
 
   private carregarPagamento(): void {
+    // Falha de load não pode parecer "sem cobrança" — esconderia uma
+    // cobrança existente e exibiria o botão de gerar outra.
+    this.erroPagamento.set(false);
     this.pagamentos
       .doPedido(this.id)
       .then((lista) =>
@@ -96,7 +100,7 @@ export class PedidoDetalhePage implements OnInit {
           lista.find((p) => ['PENDING', 'PROCESSING'].includes(p.status)) ?? lista[0] ?? null,
         ),
       )
-      .catch(() => this.pagamento.set(null));
+      .catch(() => this.erroPagamento.set(true));
   }
 
   /** Nova cobrança (Pix) — idempotente por pedido+método, retry seguro. */

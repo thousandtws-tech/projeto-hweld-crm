@@ -3,7 +3,7 @@
     <span class="material-symbols-outlined">check</span>
   </div>
   <h1>Pedido {{ numero() }} Confirmado</h1>
-  <hw-status-chip [status]="'aguardando_pagamento'" />
+  <hw-status-chip [status]="statusPedido()" />
   <p class="sucesso-msg">
     Seu pedido foi registrado no sistema comercial da HWeld. Nossa equipe iniciará a conferência e o
     faturamento.
@@ -61,10 +61,14 @@
         }
       }
     </section>
+  } @else if (erroPagamento()) {
+    <p class="pag-erro-msg">
+      Não foi possível carregar a cobrança agora — o pedido está salvo e pode ser pago na sua conta.
+    </p>
   }
 
   <div class="sucesso-acoes">
-    <a [routerLink]="['/conta/pedidos', numero()]" hwButton size="lg">
+    <a [routerLink]="['/conta/pedidos', pedidoId]" hwButton size="lg">
       <span class="material-symbols-outlined">receipt_long</span>
       <span>Acompanhar meu pedido</span>
     </a>

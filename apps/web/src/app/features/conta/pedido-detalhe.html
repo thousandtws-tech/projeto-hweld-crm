@@ -158,6 +158,13 @@
                 }
               }
             </div>
+          } @else if (erroPagamento()) {
+            <div class="pag-resumo">
+              <p class="pag-erro-msg">
+                Não foi possível carregar a cobrança — pode já existir uma ativa.
+                Recarregue a página antes de gerar outra.
+              </p>
+            </div>
           } @else {
             <div class="pag-resumo">
               <p class="pag-sem-cobranca">Nenhuma cobrança online gerada para este pedido.</p>

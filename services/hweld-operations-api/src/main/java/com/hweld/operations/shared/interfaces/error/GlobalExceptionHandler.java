@@ -9,10 +9,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -63,6 +66,24 @@ public class GlobalExceptionHandler {
     ResponseEntity<ErroCorpo> headerAusente(MissingRequestHeaderException e) {
         return ResponseEntity.badRequest()
                 .body(ErroCorpo.of("header_ausente", "header obrigatório ausente: " + e.getHeaderName()));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    ResponseEntity<ErroCorpo> paramAusente(MissingServletRequestParameterException e) {
+        return ResponseEntity.badRequest()
+                .body(ErroCorpo.of("parametro_ausente", "parâmetro obrigatório ausente: " + e.getParameterName()));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    ResponseEntity<ErroCorpo> tipoInvalido(MethodArgumentTypeMismatchException e) {
+        return ResponseEntity.badRequest()
+                .body(ErroCorpo.of("parametro_invalido", "valor inválido para o parâmetro: " + e.getName()));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    ResponseEntity<ErroCorpo> metodoNaoSuportado(HttpRequestMethodNotSupportedException e) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(ErroCorpo.of("metodo_nao_suportado", "método não suportado: " + e.getMethod()));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

@@ -64,9 +64,9 @@ public class ZapiWebhookController {
     private ResponseEntity<Map<String, Object>> handle(
             String segredo, String rawBody, java.util.function.Consumer<Map<String, Object>> action) {
         return switch (service.checkSecret(segredo)) {
-            case UNCONFIGURED -> ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("aceito", false, "erro", "webhook não configurado"));
-            case INVALID -> ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            // UNCONFIGURED e INVALID respondem igual — distinguir 503 de 401
+            // virava oráculo para enumerar se a integração está ativa.
+            case UNCONFIGURED, INVALID -> ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("aceito", false, "erro", "segredo de webhook inválido"));
             case OK -> {
                 Map<String, Object> payload;

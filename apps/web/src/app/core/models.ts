@@ -219,7 +219,9 @@ export interface Pagamento {
   provider: string;
   method: MetodoPagamento;
   status: StatusPagamento;
-  amount: Dinheiro;
+  // ops-api serializa BigDecimal como número (diferente do core-api,
+  // que manda Dinheiro como string decimal via serde-str).
+  amount: number;
   currency: string;
   externalId: string | null;
   /** Link hospedado no PSP (cartão) — PAN/CVV nunca trafegam na loja. */

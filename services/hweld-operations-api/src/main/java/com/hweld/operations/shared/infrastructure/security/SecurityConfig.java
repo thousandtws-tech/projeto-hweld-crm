@@ -94,7 +94,19 @@ public class SecurityConfig {
         SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(key)
                 .macAlgorithm(MacAlgorithm.HS256).build();
-        decoder.setJwtValidator(JwtValidators.createDefault());
+        // iss/aud são opt-in (o emissor core-api pode não defini-los):
+        // configurados → validados; ausentes → só expiração/assinatura.
+        var validators = new java.util.ArrayList<org.springframework.security.oauth2.core.OAuth2TokenValidator<Jwt>>();
+        validators.add(JwtValidators.createDefault());
+        if (props.jwtIssuer() != null && !props.jwtIssuer().isBlank()) {
+            validators.add(JwtValidators.createDefaultWithIssuer(props.jwtIssuer()));
+        }
+        if (props.jwtAudience() != null && !props.jwtAudience().isBlank()) {
+            validators.add(new org.springframework.security.oauth2.jwt.JwtClaimValidator<List<String>>(
+                    org.springframework.security.oauth2.jwt.JwtClaimNames.AUD,
+                    aud -> aud != null && aud.contains(props.jwtAudience())));
+        }
+        decoder.setJwtValidator(new org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator<>(validators));
         return decoder;
     }
 

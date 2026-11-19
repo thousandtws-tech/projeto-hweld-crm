@@ -185,7 +185,10 @@ public class PagBankProvider implements PaymentProvider {
             if (charge == null) return false;
             String chargeId = texto(charge, "id");
             String claimedStatus = texto(charge, "status");
-            if (chargeId == null || claimedStatus == null) return false;
+            // Ids fora do formato (CHAR_*/ORDE_*) são lixo — rejeita antes
+            // do fetch-back para não fazer I/O na API a pedido anônimo.
+            if (chargeId == null || !chargeId.startsWith("CHAR_")
+                    || !id.startsWith("ORDE_") || claimedStatus == null) return false;
 
             JsonNode real = client.consultarCobranca(chargeId);
             String realOrderId = textoAninhado(real, "metadata", "ps_order_id");

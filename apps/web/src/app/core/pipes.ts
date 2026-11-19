@@ -5,10 +5,10 @@ import { Pipe, PipeTransform } from '@angular/core';
 const FMT_BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const FMT_QTD = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 });
 
-/** `Dinheiro` (string decimal "1234.56") → "R$ 1.234,56". Nunca parseFloat na regra. */
+/** `Dinheiro` (string decimal "1234.56" ou número do ops-api) → "R$ 1.234,56". */
 @Pipe({ name: 'brl', standalone: true })
 export class BrlPipe implements PipeTransform {
-  transform(valor: string | null | undefined): string {
+  transform(valor: string | number | null | undefined): string {
     if (!valor) return '—';
     const n = Number(valor);
     if (!Number.isFinite(n)) return '—';

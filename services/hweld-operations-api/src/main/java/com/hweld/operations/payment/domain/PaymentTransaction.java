@@ -44,6 +44,10 @@ public class PaymentTransaction {
     @Column(name = "external_id", length = 120)
     private String externalId;
 
+    // Payload bruto do PSP fica no banco para auditoria, mas nunca
+    // serializa — a rota de transações é acessível ao portal e o corpo
+    // cru pode carregar campos internos do provedor.
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> payload;
 

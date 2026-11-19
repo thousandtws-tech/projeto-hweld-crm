@@ -2,9 +2,9 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { PagamentoService } from '../../core/servicos';
+import { ContaService, PagamentoService } from '../../core/servicos';
 import { RealtimeService } from '../../core/realtime';
-import { Pagamento, StatusPagamento } from '../../core/models';
+import { Pagamento, StatusPagamento, StatusPedido } from '../../core/models';
 import { BrlPipe } from '../../core/pipes';
 import { HwButton } from '../../shared/ui/button';
 import { HwStatusChip } from '../../shared/ui/status-chip';
@@ -21,13 +21,18 @@ import { ToastService } from '../../shared/ui/toast';
 export class CheckoutSucessoPage implements OnInit {
   private route = inject(ActivatedRoute);
   private pagamentos = inject(PagamentoService);
+  private conta = inject(ContaService);
   private toast = inject(ToastService);
   private rt = inject(RealtimeService);
-  private pedidoId = 0;
+  pedidoId = 0;
 
+  // `numero` é o número real do pedido (PV-XXXXXX) — o :id da rota é o
+  // id numérico interno; exibir o id parecia número de pedido mas não era.
   numero = signal<string | null>(null);
+  statusPedido = signal<StatusPedido>('aguardando_pagamento');
   pagamento = signal<Pagamento | null>(null);
   carregandoPagamento = signal(true);
+  erroPagamento = signal(false);
   copiado = signal(false);
 
   /** `pixQrCode` varia por PSP: PagBank envia URL PNG; Mercado Pago, base64 puro.
@@ -52,8 +57,8 @@ export class CheckoutSucessoPage implements OnInit {
       const novo = Number(params.get('id'));
       if (novo && novo !== this.pedidoId) {
         this.pedidoId = novo;
-        this.numero.set(params.get('id'));
         this.pagamento.set(null);
+        this.carregarPedido();
         this.carregarPagamento();
       }
     });
@@ -63,14 +68,28 @@ export class CheckoutSucessoPage implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     this.pedidoId = Number(id);
     this.numero.set(id);
+    this.carregarPedido();
     this.carregarPagamento();
   }
 
+  private carregarPedido(): void {
+    this.conta
+      .pedido(this.pedidoId)
+      .then((p) => {
+        this.numero.set(p.numero);
+        this.statusPedido.set(p.status);
+      })
+      .catch(() => {});
+  }
+
   private carregarPagamento(): void {
+    // Falha de rede virava "sem cobrança" silencioso — sinaliza o erro
+    // para a tela poder dizer que não conseguiu carregar.
+    this.erroPagamento.set(false);
     this.pagamentos
       .doPedido(this.pedidoId)
       .then((lista) => this.pagamento.set(this.maisRelevante(lista)))
-      .catch(() => this.pagamento.set(null))
+      .catch(() => this.erroPagamento.set(true))
       .finally(() => this.carregandoPagamento.set(false));
   }
 
