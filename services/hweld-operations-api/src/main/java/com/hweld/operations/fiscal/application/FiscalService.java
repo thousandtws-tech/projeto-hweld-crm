@@ -4,8 +4,7 @@ import com.hweld.operations.fiscal.domain.FiscalDocument;
 import com.hweld.operations.fiscal.domain.FiscalDocumentEvent;
 import com.hweld.operations.fiscal.domain.FiscalDocumentEventRepository;
 import com.hweld.operations.fiscal.domain.FiscalDocumentRepository;
-import com.hweld.operations.fiscal.infrastructure.focusnfe.FocusNFeException;
-import com.hweld.operations.fiscal.infrastructure.focusnfe.FocusNFeProvider;
+import com.hweld.operations.fiscal.infrastructure.FiscalProviderException;
 import com.hweld.operations.fiscal.infrastructure.focusnfe.NFeMapper.NFeValidationException;
 import com.hweld.operations.shared.application.EventTypes;
 import com.hweld.operations.shared.application.IntegrationEvent;
@@ -102,8 +101,10 @@ public class FiscalService {
             return existente.get();
         }
 
+        FiscalProvider provider = resolveProvider();
+
         FiscalDocument doc = new FiscalDocument(pedidoId, empresaId, billingInvoiceId,
-                notaFiscalId, docType, props.provider());
+                notaFiscalId, docType, provider.name());
         repository.save(doc);
         recordEvent(doc, FiscalDocumentEvent.Type.REQUESTED, null, "solicitação de emissão",
                 Map.of("pedidoId", pedidoId, "docType", docType.name()));
@@ -112,11 +113,6 @@ public class FiscalService {
                 Map.of("fiscalDocumentId", doc.getId().toString(), "pedidoId", pedidoId,
                         "empresaId", empresaId, "docType", docType.name()),
                 CorrelationIdFilter.current()));
-
-        FiscalProvider provider = providers.get(props.provider());
-        if (provider == null) {
-            throw ApiException.validacao("provider fiscal desconhecido: " + props.provider());
-        }
 
         // Persiste a referência ANTES do POST — crash/timeout depois do envio
         // reconcilia pela mesma ref (a UNIQUE provider+env+ref também bloqueia
@@ -135,7 +131,7 @@ public class FiscalService {
             FiscalProvider.EmissionResult result = callProviderOnce(provider,
                     () -> provider.requestEmission(req));
             aplicarResultadoEmissao(doc, result);
-        } catch (FocusNFeException e) {
+        } catch (FiscalProviderException e) {
             tratarFalhaProvider(doc, e);
         } catch (NFeValidationException e) {
             doc.applySync(FiscalDocument.Status.REJECTED, null, "validação local",
@@ -168,7 +164,28 @@ public class FiscalService {
         return doc;
     }
 
-    private void tratarFalhaProvider(FiscalDocument doc, FocusNFeException e) {
+    /**
+     * Resolve o adapter de novas emissões. `provider=auto` (default) escolhe
+     * o primeiro adapter com credenciais configuradas — Spedy gerenciada pelo
+     * cliente, depois Focus (env), senão stub. Nome explícito força o adapter.
+     */
+    private FiscalProvider resolveProvider() {
+        String wanted = props.provider() == null ? "auto" : props.provider().trim();
+        if ("auto".equalsIgnoreCase(wanted)) {
+            for (String nome : List.of("spedy", "focusnfe")) {
+                FiscalProvider p = providers.get(nome);
+                if (p != null && p.configured()) return p;
+            }
+            wanted = "stub";
+        }
+        FiscalProvider provider = providers.get(wanted);
+        if (provider == null) {
+            throw ApiException.validacao("provider fiscal desconhecido: " + wanted);
+        }
+        return provider;
+    }
+
+    private void tratarFalhaProvider(FiscalDocument doc, FiscalProviderException e) {
         String anterior = doc.getStatus();
         if (e.inconclusivo() || e.retriable()) {
             // Timeout/transporte/429/5xx: o provedor pode ter recebido a ref.
@@ -293,7 +310,7 @@ public class FiscalService {
         FiscalProvider.StatusResult remote;
         try {
             remote = callProviderRead(provider, () -> provider.getStatus(doc.getExternalId()));
-        } catch (FocusNFeException e) {
+        } catch (FiscalProviderException e) {
             if (e.httpStatus() == 404) {
                 // A ref não existe no provedor — o POST nunca chegou: falha
                 // definitiva, seguro reenviar como nova emissão se desejado.
@@ -357,7 +374,7 @@ public class FiscalService {
                 "cancelamento solicitado: " + truncar(motivo), null);
         try {
             callProviderOnce(provider, () -> { provider.cancel(doc.getExternalId(), motivo); return null; });
-        } catch (FocusNFeException e) {
+        } catch (FiscalProviderException e) {
             if (e.inconclusivo() || e.retriable()) {
                 // Permanece CANCELLATION_PENDING — reconciliação resolve.
                 recordEvent(doc, FiscalDocumentEvent.Type.ERROR, null,
@@ -392,11 +409,15 @@ public class FiscalService {
             throw ApiException.validacao("carta de correção exige documento autorizado");
         }
         FiscalProvider provider = providers.get(doc.getProvider());
-        if (!(provider instanceof FocusNFeProvider focus)) {
+        if (provider == null) {
             throw ApiException.validacao(
-                    "carta de correção não suportada pelo provedor " + doc.getProvider());
+                    "provedor do documento indisponível: " + doc.getProvider());
         }
-        focus.cartaCorrecao(doc.getExternalId(), correcao);
+        try {
+            provider.cartaCorrecao(doc.getExternalId(), correcao);
+        } catch (UnsupportedOperationException e) {
+            throw ApiException.validacao(e.getMessage());
+        }
         recordEvent(doc, FiscalDocumentEvent.Type.STATUS_CHANGE, null,
                 "carta de correção registrada", Map.of("correcao", correcao == null ? "" : correcao));
         audit.record("fiscal.carta_correcao", "fiscal_document", id.toString(), Map.of());

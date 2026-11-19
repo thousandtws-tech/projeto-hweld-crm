@@ -1,4 +1,4 @@
-import type { IntegracaoInfobip, IntegracaoZapi } from "@/lib/models";
+import type { IntegracaoInfobip, IntegracaoSpedy, IntegracaoZapi } from "@/lib/models";
 
 /**
  * Catálogo de integrações do HWeld — metadados públicos e estáticos,
@@ -117,10 +117,15 @@ export const CATALOGO: IntegracaoCatalogo[] = [
     iniciais: "Sp",
     cor: "#1e6fe8",
     categoria: "fiscal",
-    descricao: "Automação fiscal e emissão de documentos para a operação.",
-    implementada: false,
+    descricao: "Emissão de NF-e com credenciais próprias, webhooks assinados e reconciliação.",
+    implementada: true,
     escopo: "CRM",
-    funcionalidades: ["Emissão de documentos fiscais", "Automação tributária"],
+    funcionalidades: [
+      "Emissão de NF-e",
+      "Cancelamento e carta de correção",
+      "Webhooks assinados",
+      "XML e DANFE",
+    ],
   },
   {
     slug: "melhor-envio",
@@ -188,6 +193,15 @@ export function estadoZapi(v: IntegracaoZapi): EstadoConexao {
   switch (v.estado) {
     case "ativa": return "conectado";
     case "conectando":
+    case "pendente": return "pendente";
+    case "falha": return "falha";
+    default: return "desconectado";
+  }
+}
+
+export function estadoSpedy(v: IntegracaoSpedy): EstadoConexao {
+  switch (v.estado) {
+    case "ativa": return "conectado";
     case "pendente": return "pendente";
     case "falha": return "falha";
     default: return "desconectado";

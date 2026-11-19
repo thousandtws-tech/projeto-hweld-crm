@@ -640,3 +640,46 @@ export interface EntregaSms {
   pedidoId: number | null;
   messageId: string | null;
 }
+
+export interface IntegracaoSpedy {
+  provedor: string;
+  categoria: string;
+  ambiente: string;
+  provider_ativo: string;
+  nome_conta: string;
+  habilitado: boolean;
+  estado: "ativa" | "pendente" | "falha" | "desativada";
+  versao: number;
+  config: {
+    ambiente: string;
+    emissao_pausada: boolean;
+    empresa_id: string;
+    webhook_url?: string;
+  };
+  segredos: { campos: { api_key: boolean; webhook_secret: boolean } };
+  ultima_verificacao_em: string;
+  verificacao_status: "ok" | "falha" | "nunca";
+  verificacao_erro: string;
+  pendentes: number;
+}
+
+export interface EventoSpedy {
+  id: string;
+  evento: string;
+  resultado: string;
+  documento: string;
+  erro: string;
+  recebido_em: string;
+}
+
+export interface DocumentoSpedy {
+  id: string;
+  pedido_id: number | null;
+  tipo: string;
+  status: string;
+  status_provedor: string;
+  numero: string;
+  serie: string;
+  motivo_rejeicao: string;
+  criado_em: string;
+}

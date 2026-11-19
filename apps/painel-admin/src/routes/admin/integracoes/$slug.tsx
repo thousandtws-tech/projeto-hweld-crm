@@ -3,6 +3,7 @@ import { ArrowLeft, Clock } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { InfobipPainel } from "@/components/integracoes/InfobipPainel";
+import { SpedyPainel } from "@/components/integracoes/SpedyPainel";
 import { LogoIntegracao } from "@/components/integracoes/LogoIntegracao";
 import { ZapiCard } from "@/components/integracoes/ZapiCard";
 import { PageHeader, SectionCard, StatusPill } from "@/components/ui-kit/primitives";
@@ -11,6 +12,7 @@ import {
   CATALOGO_POR_SLUG,
   categoriaRotulo,
   estadoInfobip,
+  estadoSpedy,
   estadoUi,
   estadoZapi,
   type EstadoConexao,
@@ -118,9 +120,12 @@ function PainelDoProvider({
     (v: Parameters<typeof estadoInfobip>[0]) => onEstado(estadoInfobip(v)), [onEstado]);
   const onZapi = useCallback(
     (v: Parameters<typeof estadoZapi>[0]) => onEstado(estadoZapi(v)), [onEstado]);
+  const onSpedy = useCallback(
+    (v: Parameters<typeof estadoSpedy>[0]) => onEstado(estadoSpedy(v)), [onEstado]);
 
   if (item.slug === "infobip") return <InfobipPainel onView={onInfobip} />;
   if (item.slug === "zapi") return <ZapiCard onView={onZapi} />;
+  if (item.slug === "spedy") return <SpedyPainel onView={onSpedy} />;
   return null;
 }
 

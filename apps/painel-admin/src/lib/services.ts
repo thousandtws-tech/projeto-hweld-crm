@@ -467,3 +467,27 @@ export const zapiService = {
   historico: (f: Filtros = {}) =>
     apiOps.pagina<import("./models").EntregaSms>("integracoes/zapi/historico", f),
 };
+
+export const spedyService = {
+  view: () => apiOps.getRecurso<import("./models").IntegracaoSpedy>("integracoes/spedy"),
+  salvar: (b: {
+    versao?: number;
+    nome_conta?: string;
+    config?: {
+      ambiente?: string;
+      emissao_pausada?: boolean;
+      eventos?: Record<string, boolean>;
+    };
+    segredos?: { api_key?: string };
+  }) => apiOps.putRecurso<import("./models").IntegracaoSpedy>("integracoes/spedy", b),
+  habilitar: (habilitado: boolean) =>
+    apiOps.post<import("./models").IntegracaoSpedy>("integracoes/spedy/habilitacao", { habilitado }),
+  testarConexao: () =>
+    apiOps.post<{ verificacao_status: string; mensagem?: string }>(
+      "integracoes/spedy/testar-conexao", {}),
+  eventos: (limite = 20) =>
+    apiOps.listaArray<import("./models").EventoSpedy>(`integracoes/spedy/eventos?limite=${limite}`),
+  documentos: (limite = 50) =>
+    apiOps.listaArray<import("./models").DocumentoSpedy>(
+      `integracoes/spedy/documentos?limite=${limite}`),
+};

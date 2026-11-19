@@ -66,6 +66,21 @@ public class FocusNFeProvider implements FiscalProvider {
         return props.environment();
     }
 
+    /**
+     * `true` quando o token do ambiente ativo resolve sem exceção — usado
+     * pela resolução `provider=auto`; token ausente ou produção bloqueada
+     * fazem a seleção cair para o próximo adapter.
+     */
+    @Override
+    public boolean configured() {
+        try {
+            props.token();
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
+    }
+
     /** `ref` determinística — idempotência e reconciliação no provedor. */
     public static String ref(String documentId) {
         return "hweld-" + documentId;
@@ -117,12 +132,13 @@ public class FocusNFeProvider implements FiscalProvider {
     }
 
     /** `POST /nfe/{ref}/carta_correcao` — correção textual 15–1000 chars. */
-    public JsonNode cartaCorrecao(String ref, String correcao) {
+    @Override
+    public void cartaCorrecao(String ref, String correcao) {
         if (correcao == null || correcao.trim().length() < 15 || correcao.trim().length() > 1000) {
             throw ApiException.validacao(
                     "carta de correção deve ter entre 15 e 1000 caracteres");
         }
-        return client.cartaCorrecao(ref, correcao.trim());
+        client.cartaCorrecao(ref, correcao.trim());
     }
 
     @Override

@@ -66,4 +66,8 @@ public class FiscalWebhookEvent {
 
     public UUID getId() { return id; }
     public String getEventKey() { return eventKey; }
+    public UUID getFiscalDocumentId() { return fiscalDocumentId; }
+    public String getProcessingResult() { return processingResult; }
+    public String getErrorMessage() { return errorMessage; }
+    public Instant getReceivedAt() { return receivedAt; }
 }

@@ -1,5 +1,6 @@
 package com.hweld.operations.fiscal.infrastructure.focusnfe;
 
+import com.hweld.operations.fiscal.infrastructure.FiscalProviderException;
 import java.util.List;
 import java.util.Map;
 
@@ -10,41 +11,12 @@ import java.util.Map;
  * inconclusiva (timeout pós-POST) NÃO é retriável: exige reconciliação
  * pela referência antes de qualquer reenvio.
  */
-public class FocusNFeException extends RuntimeException {
-
-    private final String codigo;
-    private final int httpStatus;
-    private final List<Map<String, Object>> erros;
-    private final boolean retriable;
-    private final boolean inconclusivo;
-    private final long retryAfterMs;
+public class FocusNFeException extends FiscalProviderException {
 
     private FocusNFeException(String codigo, String mensagem, int httpStatus,
             List<Map<String, Object>> erros, boolean retriable, boolean inconclusivo,
             long retryAfterMs) {
-        super(mensagem);
-        this.codigo = codigo;
-        this.httpStatus = httpStatus;
-        this.erros = erros == null ? List.of() : erros;
-        this.retriable = retriable;
-        this.inconclusivo = inconclusivo;
-        this.retryAfterMs = retryAfterMs;
-    }
-
-    public String codigo() { return codigo; }
-    public int httpStatus() { return httpStatus; }
-    public List<Map<String, Object>> erros() { return erros; }
-    public boolean retriable() { return retriable; }
-    public boolean inconclusivo() { return inconclusivo; }
-    public long retryAfterMs() { return retryAfterMs; }
-
-    /** Primeira mensagem de erro detalhada, quando existir. */
-    public String primeiraMensagem() {
-        if (!erros.isEmpty()) {
-            Object m = erros.get(0).get("mensagem");
-            if (m != null) return m.toString();
-        }
-        return getMessage();
+        super(codigo, mensagem, httpStatus, erros, retriable, inconclusivo, retryAfterMs);
     }
 
     /** 400/422 — rejeição de dados ou regra do provedor (não reenviar). */

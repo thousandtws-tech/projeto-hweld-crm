@@ -24,6 +24,7 @@ public class IntegrationSettings {
 
     public static final String INFOBIP_SMS = "infobip-sms";
     public static final String ZAPI_WHATSAPP = "zapi-whatsapp";
+    public static final String SPEDY_FISCAL = "spedy-fiscal";
 
     @Id
     @Column(length = 40)
@@ -122,6 +123,12 @@ public class IntegrationSettings {
                 && clientTokenEnc != null && !clientTokenEnc.isBlank();
     }
 
+    /** Credenciais mínimas para o adapter Spedy: `X-Api-Key` + ambiente (base URL). */
+    public boolean credenciaisSpedyCompletas() {
+        return baseUrl != null && !baseUrl.isBlank()
+                && apiKeyEnc != null && !apiKeyEnc.isBlank();
+    }
+
     /** Update da linha Z-API — reusa pausa/destinatários/eventos; ignora campos SMS. */
     public void atualizarZapi(String nomeConta, boolean enabled, String externalId,
             boolean envioPausado, List<String> testRecipients,
@@ -131,6 +138,24 @@ public class IntegrationSettings {
         this.externalId = externalId == null || externalId.isBlank() ? null : externalId.trim();
         this.envioPausado = envioPausado;
         this.testRecipients = testRecipients == null ? List.of() : List.copyOf(testRecipients);
+        this.events = events == null ? Map.of() : Map.copyOf(events);
+        this.updatedBy = updatedBy;
+        this.updatedAt = Instant.now();
+    }
+
+    /**
+     * Update da linha Spedy — `baseUrl` guarda o ambiente da API
+     * (`https://api.spedy.com.br` | `https://sandbox-api.spedy.com.br`),
+     * `externalId` o id da empresa, `envioPausado` pausa emissões.
+     */
+    public void atualizarSpedy(String nomeConta, boolean enabled, String baseUrl,
+            String externalId, boolean envioPausado,
+            Map<String, Boolean> events, String updatedBy) {
+        this.nomeConta = nomeConta == null || nomeConta.isBlank() ? null : nomeConta.trim();
+        this.enabled = enabled;
+        this.baseUrl = baseUrl == null || baseUrl.isBlank() ? null : baseUrl.trim();
+        this.externalId = externalId == null || externalId.isBlank() ? null : externalId.trim();
+        this.envioPausado = envioPausado;
         this.events = events == null ? Map.of() : Map.copyOf(events);
         this.updatedBy = updatedBy;
         this.updatedAt = Instant.now();

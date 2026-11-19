@@ -30,6 +30,18 @@ public interface FiscalProvider {
     void cancel(String externalId, String motivo);
 
     /**
+     * `true` quando o adapter tem credenciais válidas para operar — usado
+     * pela resolução `provider=auto` (primeiro configurado vence).
+     */
+    default boolean configured() { return true; }
+
+    /** Carta de correção de NF-e — default: não suportada pelo adapter. */
+    default void cartaCorrecao(String externalId, String correcao) {
+        throw new UnsupportedOperationException(
+                "carta de correção não suportada pelo provedor " + name());
+    }
+
+    /**
      * Baixa artefatos do provedor (XML/DANFE) para o object storage interno
      * e devolve as chaves persistidas — `{"xml": "fiscal/{id}.xml", ...}`.
      * Default = nada a fazer (ex.: stub já grava os artefatos na emissão).

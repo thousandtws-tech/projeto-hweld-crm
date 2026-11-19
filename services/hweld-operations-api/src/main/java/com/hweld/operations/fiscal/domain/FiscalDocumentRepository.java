@@ -15,6 +15,8 @@ public interface FiscalDocumentRepository extends JpaRepository<FiscalDocument, 
 
     Page<FiscalDocument> findByEmpresaId(Long empresaId, Pageable pageable);
 
+    Page<FiscalDocument> findByProviderOrderByCreatedAtDesc(String provider, Pageable pageable);
+
     Optional<FiscalDocument> findByProviderAndExternalId(String provider, String externalId);
 
     /** Documentos aguardando resolução no provedor (reconciliação/webhook). */
