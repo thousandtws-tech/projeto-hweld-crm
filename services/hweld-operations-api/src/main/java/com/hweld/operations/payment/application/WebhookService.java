@@ -104,8 +104,14 @@ public class WebhookService {
             paymentService.applyWebhookResult(p, parsed);
             record.markProcessed(p.getId(), "PROCESSED", null);
         } catch (Exception e) {
-            record.markProcessed(p.getId(), "FAILED", e.getMessage());
-            webhookEvents.save(record);
+            // Libera o dedupe para o reenvio do PSP poder reprocessar — sem
+            // isto a linha commitada responderia DUPLICATE para sempre e o
+            // evento se perderia (o save da marca FAILED rola junto da TX).
+            try {
+                dedupe.release(providerName, parsed.eventId());
+            } catch (Exception ex) {
+                log.warn("falha ao liberar dedupe {}: {}", parsed.eventId(), ex.getMessage());
+            }
             throw e;
         }
         webhookEvents.save(record);

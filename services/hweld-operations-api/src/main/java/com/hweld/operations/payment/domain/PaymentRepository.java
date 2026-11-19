@@ -22,5 +22,7 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     Page<Payment> findByPedidoId(Long pedidoId, Pageable pageable);
 
+    boolean existsByPedidoIdAndStatus(Long pedidoId, PaymentStatus status);
+
     Page<Payment> findByProvider(String provider, Pageable pageable);
 }

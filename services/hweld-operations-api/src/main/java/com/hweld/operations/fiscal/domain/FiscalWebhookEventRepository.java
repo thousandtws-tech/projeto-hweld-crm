@@ -10,6 +10,8 @@ public interface FiscalWebhookEventRepository extends JpaRepository<FiscalWebhoo
 
     Optional<FiscalWebhookEvent> findByProviderAndEventKey(String provider, String eventKey);
 
+    void deleteByProviderAndEventKey(String provider, String eventKey);
+
     Page<FiscalWebhookEvent> findByProviderOrderByReceivedAtDesc(
             String provider, Pageable pageable);
 }

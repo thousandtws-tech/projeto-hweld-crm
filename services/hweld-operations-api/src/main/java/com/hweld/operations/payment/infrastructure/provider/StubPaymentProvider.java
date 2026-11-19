@@ -106,6 +106,11 @@ public class StubPaymentProvider implements PaymentProvider {
     @Override
     public boolean verifyWebhookSignature(String rawBody, Map<String, String> headers) {
         String secret = props.webhookSecret(NAME);
+        if (secret == null || secret.isBlank()) {
+            // Fail-closed: segredo ausente → HMAC de chave vazia seria
+            // falsificável. Só o flag explícito de dev libera unsigned.
+            return props.allowUnsignedStubWebhook();
+        }
         String signatureHeader = headers != null
                 ? java.util.Optional.ofNullable(headers.get("x-signature"))
                         .orElse(headers.get("x-hub-signature"))

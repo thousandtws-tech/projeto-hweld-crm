@@ -29,4 +29,14 @@ public class WebhookDedupe {
     public void record(WebhookEventRecord record) {
         repository.saveAndFlush(record);
     }
+
+    /**
+     * Libera o evento quando o processamento falhou: o PSP vai reenviar e o
+     * retry precisa poder processar de novo — sem isto a linha commitada faz o
+     * reenvio responder DUPLICATE para sempre (evento envenenado).
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void release(String provider, String eventId) {
+        repository.deleteByProviderAndEventId(provider, eventId);
+    }
 }

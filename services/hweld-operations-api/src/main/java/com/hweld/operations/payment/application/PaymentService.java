@@ -87,12 +87,32 @@ public class PaymentService {
 
         PaymentProvider provider = cmd.provider() != null
                 ? providers.get(cmd.provider()) : providers.defaultProvider();
+        if ("stub".equals(provider.name()) && actor.isPortal()) {
+            // Stub é provider de teste — portal nunca pode forçá-lo (a
+            // confirmação fake criaria pedido pago sem dinheiro).
+            throw ApiException.validacao("provider de pagamento indisponível");
+        }
+        if (cmd.provider() != null && !provider.configured() && !"stub".equals(provider.name())) {
+            throw ApiException.validacao("provider " + provider.name() + " não está configurado");
+        }
+
+        // Guarda anti-dupla-cobrança: pedido com cobrança CONFIRMED não aceita
+        // nova emissão — nem por chave nova, outro método ou outro provider.
+        if (payments.existsByPedidoIdAndStatus(cmd.pedidoId(), PaymentStatus.CONFIRMED)) {
+            throw ApiException.conflito("pedido " + cmd.pedidoId() + " já possui cobrança confirmada");
+        }
+
         String idemKey = cmd.idempotencyKey() != null && !cmd.idempotencyKey().isBlank()
                 ? cmd.idempotencyKey()
                 : "pedido-" + cmd.pedidoId() + "-" + cmd.method() + "-" + provider.name();
 
         var existente = payments.findByIdempotencyKey(idemKey);
         if (existente.isPresent()) {
+            if (existente.get().getEmpresaId() != order.empresaId()) {
+                // A chave é campo do cliente — sem escopo de empresa ela
+                // vazaria checkoutUrl/pix de pedido alheio (IDOR).
+                throw ApiException.proibido("cobrança de outra empresa");
+            }
             // Segue a cadeia de retentativas (base, -r2, -r3…) até a cobrança
             // mais recente — retentativa idempotente reutiliza a viva.
             Payment p = existente.get();
@@ -114,7 +134,10 @@ public class PaymentService {
                     return p;
                 }
             }
-            // Última da cadeia terminal — reemissão com a próxima chave livre.
+            // Última da cadeia terminal — inativa o link/cobrança morta no
+            // PSP (senão o cliente paga o link velho E o novo = cobrança
+            // dupla) e reemite com a próxima chave livre.
+            inativarCobrancaMorta(provider, p);
             idemKey = idemKey + "-r" + tentativa;
         }
 
@@ -150,8 +173,11 @@ public class PaymentService {
         try {
             payments.saveAndFlush(payment);
         } catch (DataIntegrityViolationException e) {
-            // corrida de idempotência — a linha já existe, retorna a gravada
-            return payments.findByIdempotencyKey(idemKey).orElseThrow(() -> e);
+            // Corrida de idempotência: a TX está morta após o flush falho e a
+            // cobrança criada no PSP ficaria órfã/pagável — inativa best-effort
+            // e pede repetição (a chamada seguinte devolve a linha vencedora).
+            inativarCobrancaMorta(provider, charge, null);
+            throw ApiException.conflito("cobrança em criação concorrente — repita a chamada");
         }
 
         transactions.save(new PaymentTransaction(payment.getId(),
@@ -198,6 +224,13 @@ public class PaymentService {
     @Transactional
     public Payment cancel(UUID id, AuthPrincipal actor, String callerJwt) {
         Payment p = get(id, actor, callerJwt);
+        // Valida ANTES de tocar o PSP: cancelar uma cobrança CONFIRMED no
+        // PagBank executa ESTORNO — sem o guard, a transição local falhava
+        // depois do dinheiro devolvido (estorno silencioso + reembolso duplo).
+        if (!p.getStatus().canTransitionTo(PaymentStatus.CANCELLED)) {
+            throw ApiException.conflito("não é possível cancelar cobrança "
+                    + p.getStatus() + " — use estorno para CONFIRMED");
+        }
         PaymentProvider provider = providers.get(p.getProvider());
         if (p.getExternalId() != null) {
             callProvider(provider, () -> { provider.cancelCharge(p.getExternalId()); return null; });
@@ -239,10 +272,6 @@ public class PaymentService {
      */
     @Transactional
     public void applyWebhookResult(Payment payment, PaymentProvider.ParsedWebhook parsed) {
-        // Adota o id canônico da transação antes de qualquer early-return:
-        // checkout hospedado nasce com o id do link (CHEC_*) e migra para o
-        // id da cobrança real (CHAR_*) no primeiro evento transacional.
-        payment.relinkExternalId(parsed.externalPaymentId());
         if (payment.getStatus() == parsed.status()) {
             return; // já estamos no estado — webhook redundante, mas válido
         }
@@ -251,6 +280,10 @@ public class PaymentService {
                     payment.getStatus(), parsed.status(), payment.getId());
             return;
         }
+        // Relink só em transição ACEITA: checkout hospedado migra o id do
+        // link (CHEC_*) para a cobrança real (CHAR_*) — um webhook tardio de
+        // tentativa recusada não pode repontar cancel/refund à cobrança morta.
+        payment.relinkExternalId(parsed.externalPaymentId());
         transitionAndPublish(payment, parsed.status(), parsed.failureCode(),
                 parsed.failureMessage(), PaymentTransaction.Type.WEBHOOK);
     }
@@ -339,14 +372,50 @@ public class PaymentService {
         return payload;
     }
 
+    /** Inativa best-effort uma cobrança morta/órfã no PSP — link antigo não
+     * pode continuar pagável após reemissão ou corrida de idempotência. */
+    private void inativarCobrancaMorta(PaymentProvider provider, Payment morta) {
+        inativarCobrancaMorta(provider, null, morta.getExternalId());
+    }
+
+    private void inativarCobrancaMorta(PaymentProvider provider,
+            PaymentProvider.ChargeResult charge, String externalId) {
+        String id = externalId != null ? externalId : charge != null ? charge.externalId() : null;
+        if (id == null) return;
+        try {
+            provider.cancelCharge(id);
+        } catch (Exception e) {
+            log.warn("não consegui inativar cobrança anterior {} no {}: {}",
+                    id, provider.name(), e.getMessage());
+        }
+    }
+
     private interface ProviderCall<T> { T run(); }
 
     private <T> T callProvider(PaymentProvider provider, ProviderCall<T> call) {
-        Retry retry = com.hweld.operations.shared.infrastructure.http.HttpClientsConfig
-                .retry("psp-" + provider.name(), 3);
+        // retryOnException: exceções com retryable()==false (INCONCLUSIVE =
+        // a escrita pode ter chegado no PSP — reenviar duplica cobrança) e
+        // erros de domínio (ApiException) NUNCA são retentadas.
+        Retry retry = Retry.of("psp-" + provider.name(), io.github.resilience4j.retry.RetryConfig.custom()
+                .maxAttempts(3)
+                .intervalFunction(io.github.resilience4j.core.IntervalFunction
+                        .ofExponentialRandomBackoff(java.time.Duration.ofMillis(500), 2.0))
+                .retryOnException(PaymentService::retentavel)
+                .build());
         CircuitBreaker cb = com.hweld.operations.shared.infrastructure.http.HttpClientsConfig
                 .circuitBreaker("psp-" + provider.name());
         return Retry.decorateSupplier(retry,
                 CircuitBreaker.decorateSupplier(cb, call::run)).get();
+    }
+
+    private static boolean retentavel(Throwable e) {
+        if (e instanceof ApiException) return false;
+        if (e instanceof com.hweld.operations.payment.infrastructure.pagbank.PagBankException pe) {
+            return pe.retryable();
+        }
+        if (e instanceof com.hweld.operations.payment.infrastructure.mercadopago.MercadoPagoException me) {
+            return me.retryable();
+        }
+        return true;
     }
 }

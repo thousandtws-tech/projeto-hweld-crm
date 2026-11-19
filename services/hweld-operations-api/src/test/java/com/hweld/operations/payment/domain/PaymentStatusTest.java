@@ -27,7 +27,12 @@ class PaymentStatusTest {
         for (PaymentStatus s : PaymentStatus.values()) {
             assertThat(PaymentStatus.CANCELLED.canTransitionTo(s)).isFalse();
             assertThat(PaymentStatus.REFUNDED.canTransitionTo(s)).isFalse();
-            assertThat(PaymentStatus.EXPIRED.canTransitionTo(s)).isFalse();
+            // FAILED/EXPIRED aceitam apenas CONFIRMED: nova tentativa na
+            // mesma sessão de checkout pode aprovar após uma recusa.
+            assertThat(PaymentStatus.FAILED.canTransitionTo(s))
+                    .isEqualTo(s == PaymentStatus.CONFIRMED);
+            assertThat(PaymentStatus.EXPIRED.canTransitionTo(s))
+                    .isEqualTo(s == PaymentStatus.CONFIRMED);
         }
     }
 

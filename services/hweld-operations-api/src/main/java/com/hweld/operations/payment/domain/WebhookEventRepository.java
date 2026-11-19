@@ -9,5 +9,7 @@ public interface WebhookEventRepository extends JpaRepository<WebhookEventRecord
 
     java.util.Optional<WebhookEventRecord> findByProviderAndEventId(String provider, String eventId);
 
+    void deleteByProviderAndEventId(String provider, String eventId);
+
     java.util.List<WebhookEventRecord> findTop100ByProviderOrderByReceivedAtDesc(String provider);
 }

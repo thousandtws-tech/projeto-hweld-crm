@@ -51,8 +51,10 @@ class PaymentServiceTest {
         orderGateway = mock(OrderGateway.class);
         outbox = mock(Outbox.class);
         audit = mock(AuditService.class);
-        when(provider.name()).thenReturn("stub");
-        var props = new PaymentProperties("stub", Map.of(), 30, false);
+        // "psp-teste" — portal não pode selecionar stub; o registry devolve
+        // este mock como default para qualquer ator.
+        when(provider.name()).thenReturn("psp-teste");
+        var props = new PaymentProperties("psp-teste", Map.of(), 30, false);
         var registry = new ProviderRegistry(List.of(provider), props);
         service = new PaymentService(payments, transactions, registry, orderGateway, outbox, audit, props);
     }
@@ -87,10 +89,10 @@ class PaymentServiceTest {
 
     @Test
     void idempotenciaRetornaExistenteSemChamarProvider() {
-        Payment existente = new Payment(UUID.randomUUID(), 10L, 7L, 42L, "stub",
-                PaymentMethod.PIX, new BigDecimal("199.90"), "pedido-10-PIX-stub", "portal", "42");
+        Payment existente = new Payment(UUID.randomUUID(), 10L, 7L, 42L, "psp-teste",
+                PaymentMethod.PIX, new BigDecimal("199.90"), "pedido-10-PIX-psp-teste", "portal", "42");
         when(orderGateway.getOrder(10L, "jwt", true)).thenReturn(order("aguardando_pagamento"));
-        when(payments.findByIdempotencyKey("pedido-10-PIX-stub")).thenReturn(Optional.of(existente));
+        when(payments.findByIdempotencyKey("pedido-10-PIX-psp-teste")).thenReturn(Optional.of(existente));
 
         Payment p = service.create(new PaymentService.CreatePaymentCommand(
                 10L, PaymentMethod.PIX, null, null, null), portal, "jwt");
@@ -151,6 +153,65 @@ class PaymentServiceTest {
                 .isInstanceOf(ApiException.class)
                 .satisfies(e -> assertThat(((ApiException) e).codigo()).isEqualTo("provedor_indisponivel"));
         verify(payments, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void pedidoJaConfirmadoNaoEmiteNovaCobranca() {
+        when(orderGateway.getOrder(10L, "jwt", true)).thenReturn(order("aguardando_pagamento"));
+        when(payments.existsByPedidoIdAndStatus(10L, PaymentStatus.CONFIRMED)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.create(new PaymentService.CreatePaymentCommand(
+                10L, PaymentMethod.PIX, null, "chave-nova-qualquer", null), portal, "jwt"))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining("cobrança confirmada");
+        verify(provider, never()).createCharge(any());
+    }
+
+    @Test
+    void idempotencyKeyDeOutraEmpresaNaoVazaCobranca() {
+        // Chave adivinhável apontando para cobrança de empresa 99 — o lookup
+        // sem escopo de empresa devolveria o checkout/pix dela (IDOR).
+        Payment alheio = new Payment(UUID.randomUUID(), 10L, 99L, 1L, "psp-teste",
+                PaymentMethod.PIX, new BigDecimal("199.90"), "pedido-10-PIX-psp-teste", "portal", "1");
+        when(orderGateway.getOrder(10L, "jwt", true)).thenReturn(order("aguardando_pagamento"));
+        when(payments.findByIdempotencyKey("pedido-10-PIX-psp-teste")).thenReturn(Optional.of(alheio));
+
+        assertThatThrownBy(() -> service.create(new PaymentService.CreatePaymentCommand(
+                10L, PaymentMethod.PIX, null, null, null), portal, "jwt"))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining("outra empresa");
+    }
+
+    @Test
+    void portalNaoSelecionaStub() {
+        PaymentProvider stub = mock(PaymentProvider.class);
+        when(stub.name()).thenReturn("stub");
+        var props = new PaymentProperties("psp-teste", Map.of(), 30, false);
+        var svc = new PaymentService(payments, transactions,
+                new ProviderRegistry(List.of(provider, stub), props),
+                orderGateway, outbox, audit, props);
+        when(orderGateway.getOrder(10L, "jwt", true)).thenReturn(order("aguardando_pagamento"));
+
+        assertThatThrownBy(() -> svc.create(new PaymentService.CreatePaymentCommand(
+                10L, PaymentMethod.PIX, "stub", null, null), portal, "jwt"))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining("indisponível");
+        verify(stub, never()).createCharge(any());
+    }
+
+    @Test
+    void cancelEmConfirmedRejeitadoAntesDoPsp() {
+        // CONFIRMED → CANCELLED é inválido: o guarda precisa disparar ANTES do
+        // provider — no PagBank, cancelCharge em cobrança paga é ESTORNO.
+        Payment p = new Payment(UUID.randomUUID(), 10L, 7L, 42L, "psp-teste",
+                PaymentMethod.PIX, new BigDecimal("199.90"), "k", "staff", "1");
+        p.applyProviderResult("ext-1", null, null, null, null);
+        p.transitionTo(PaymentStatus.CONFIRMED, null, null);
+        when(payments.findById(p.getId())).thenReturn(Optional.of(p));
+
+        assertThatThrownBy(() -> service.cancel(p.getId(), staff, "jwt"))
+                .isInstanceOf(ApiException.class);
+        verify(provider, never()).cancelCharge(anyString());
     }
 
     @Test

@@ -6,12 +6,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Dedupe de webhook fiscal em TX própria (REQUIRES_NEW) — mesmo padrão do
- * dedupe de pagamentos: a violação do UNIQUE (provider, event_key) aborta só
- * esta transação e o chamador decide o resultado. A linha gravada sobrevive
- * a rollback posterior (replay seguro).
- */
 @Component
 public class FiscalWebhookDedupe {
 
@@ -24,5 +18,15 @@ public class FiscalWebhookDedupe {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void record(FiscalWebhookEvent event) {
         repository.saveAndFlush(event);
+    }
+
+    /**
+     * Libera o evento quando o processamento falhou: o reenvio do PSP precisa
+     * poder processar de novo — sem isto a linha commitada responderia
+     * DUPLICATE para sempre e a NF travaria (evento envenenado).
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void release(String provider, String eventKey) {
+        repository.deleteByProviderAndEventKey(provider, eventKey);
     }
 }
