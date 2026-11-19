@@ -1,5 +1,3 @@
-//! Casos de uso de autenticação — staff (usuarios) e portal B2B (contatos).
-
 use std::sync::Arc;
 
 use hweld_domain::acesso::usuario::Usuario;
@@ -119,10 +117,6 @@ impl ServicoAuth {
         }
     }
 
-    /// Auto-cadastro público do portal B2B (estilo e-commerce): cria a empresa
-    /// + contato principal já com acesso ao portal e emite tokens (login direto).
-    /// Sem aprovação — se a política mudar para revisão, criar com
-    /// `acesso_portal: false` e notificar o staff.
     #[instrument(skip(self, senha), fields(email = %email))]
     pub async fn cadastro_portal(
         &self,
@@ -134,12 +128,7 @@ impl ServicoAuth {
         ctx: &ContextoSessao,
     ) -> Resultado<SessaoPortal> {
         let email = email.trim().to_lowercase();
-        if senha.len() < 8 {
-            return Err(ErroApp::Dominio(ErroDominio::valor_invalido(
-                "senha",
-                "mínimo de 8 caracteres",
-            )));
-        }
+        validar_senha(senha)?;
         if self.contatos.buscar_por_email(&email).await?.is_some() {
             return Err(ErroApp::conflito("e-mail já cadastrado"));
         }
@@ -190,7 +179,6 @@ impl ServicoAuth {
         self.tokens.revogar(refresh_token).await
     }
 
-    /// "Suas sessões" — sessões ativas do usuário, com dispositivo resolvido.
     pub async fn sessoes_staff(&self, sujeito: &SujeitoToken) -> Resultado<Vec<SessaoAutenticada>> {
         let linhas = self
             .sessoes
@@ -208,8 +196,6 @@ impl ServicoAuth {
             .collect())
     }
 
-    /// Encerra uma sessão específica do próprio usuário (somente dono).
-    /// Retorna 404 para sessão de terceiros — não revela existência.
     pub async fn encerrar_sessao_staff(
         &self,
         sujeito: &SujeitoToken,
@@ -225,7 +211,6 @@ impl ServicoAuth {
         Ok(())
     }
 
-    /// Encerra todas as outras sessões exceto `exceto` (a atual).
     pub async fn encerrar_outras_sessoes(
         &self,
         sujeito: &SujeitoToken,
@@ -255,7 +240,27 @@ impl ServicoAuth {
         {
             return Err(ErroApp::nao_autenticado("senha atual incorreta"));
         }
+        // Sem este check, a troca aceitava qualquer nova senha — inclusive
+        // vazia (o hash Argon2 de "" não é vazio e passaria no validar()).
+        validar_senha(nova_senha)?;
         let novo_hash = self.hasher.hash(nova_senha).await?;
         self.usuarios.atualizar_senha(usuario_id, &novo_hash).await
     }
+}
+
+/// Política de senha (OWASP): mínimo 10 caracteres com letra E dígito.
+/// `len()` conta bytes — senhas com acento pontuam mais, o que só aperta
+/// a régua; seguro para o mínimo. Usada em cadastro portal, troca de
+/// senha staff e criação de usuário no backoffice.
+pub(crate) fn validar_senha(senha: &str) -> Resultado<()> {
+    let forte = senha.len() >= 10
+        && senha.chars().any(|c| c.is_ascii_alphabetic())
+        && senha.chars().any(|c| c.is_ascii_digit());
+    if !forte {
+        return Err(ErroApp::Dominio(ErroDominio::valor_invalido(
+            "senha",
+            "mínimo de 10 caracteres com letra e número",
+        )));
+    }
+    Ok(())
 }

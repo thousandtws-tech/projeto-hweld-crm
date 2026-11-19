@@ -6,9 +6,21 @@ server {
     gzip on;
     gzip_types text/css application/javascript application/json image/svg+xml;
 
+    # Headers de segurança — clickjacking, MIME sniffing, referrer e CSP.
+    # CSP: app Angular self-hosted; imagens de CMS/PSP podem vir de https
+    # externo; ViaCEP é chamado direto pelo browser.
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://viacep.com.br; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" always;
+
     # Pagamentos e logística vivem na operations-api (Java) — o restante
     # de /api/v1 segue para o core-api (Rust). proxy_pass via variável +
     # resolver: upstreams railway.internal mudam de IP a cada redeploy.
+    # X-Edge-Token: este nginx É a borda — injeta o segredo que as origens
+    # (edge guard) exigem. Origens acessadas direto pelo *.up.railway.app
+    # sem o header morrem em 403.
     location ~ ^/api/v1/payments(/|$) {
         resolver [fd12::10] valid=10s ipv6=on;
         set $ops_upstream http://${OPS_UPSTREAM};
@@ -17,6 +29,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Edge-Token "${EDGE_TOKEN}";
     }
 
     location /api/v1/logistica/ {
@@ -27,6 +40,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Edge-Token "${EDGE_TOKEN}";
     }
 
     location /api/v1/ {
@@ -37,6 +51,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Edge-Token "${EDGE_TOKEN}";
     }
 
     # SSE do motor realtime — streaming sem buffer. Resolver obrigatório:
@@ -50,6 +65,7 @@ server {
         proxy_set_header Connection "";
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Edge-Token "${EDGE_TOKEN}";
         proxy_buffering off;
         proxy_cache off;
         proxy_read_timeout 1h;
@@ -65,6 +81,7 @@ server {
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Edge-Token "${EDGE_TOKEN}";
         proxy_read_timeout 1h;
     }
 

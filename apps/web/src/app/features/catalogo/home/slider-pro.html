@@ -26,9 +26,8 @@
                 @if (s.title) {
                   <h1
                     class="slide-title anim-item"
-                    [innerHTML]="s.title"
                     data-swiper-parallax="-260"
-                  ></h1>
+                  >{{ s.title }}</h1>
                 }
                 @if (s.subtitle) {
                   <p

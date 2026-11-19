@@ -14,10 +14,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * todo request. O hostname `*.up.railway.app` é público: sem a guarda, quem
  * descobrir a origem bate direto na API sem passar pelas políticas da edge.
  *
- * Isentos: `/actuator/**` (healthcheck do Railway + smoke pós-deploy) e
- * `/api/v1/internal/**` (service-to-service com `X-Service-Token` próprio).
- * Webhooks ficam protegidos — o PSP chama a URL pública da edge, que injeta
- * o token no proxy.
+ * Isentos: `/actuator/**` (healthcheck do Railway + smoke pós-deploy),
+ * `/api/v1/internal/**` (service-to-service com `X-Service-Token` próprio)
+ * e `/api/v1/webhooks/**` — os PSPs chamam a URL pública DIRETO na origem
+ * (registrada no painel do provedor), sem passar pela edge; a autenticidade
+ * ali é a assinatura/segredo do provedor, não o token de borda.
  *
  * Token vazio/ausente = filtro desligado (dev local). Comparação em tempo
  * constante — o token é segredo simétrico, não JWT.
@@ -42,7 +43,8 @@ public class EdgeTokenFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         return uri.equals("/actuator")
                 || uri.startsWith("/actuator/")
-                || uri.startsWith("/api/v1/internal/");
+                || uri.startsWith("/api/v1/internal/")
+                || uri.startsWith("/api/v1/webhooks/");
     }
 
     @Override

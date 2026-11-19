@@ -60,6 +60,7 @@ impl ServicoUsuarios {
         perfil: Perfil,
         ator: Option<Id<Usuario>>,
     ) -> Resultado<Usuario> {
+        crate::use_cases::auth::validar_senha(senha)?;
         let senha_hash = self.hasher.hash(senha).await?;
         let novo = NovoUsuario {
             nome,
