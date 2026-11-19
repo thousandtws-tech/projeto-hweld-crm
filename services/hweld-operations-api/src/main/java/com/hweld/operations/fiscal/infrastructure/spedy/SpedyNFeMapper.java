@@ -87,7 +87,7 @@ public class SpedyNFeMapper {
             receiver.put("stateTaxNumber", ie);
         }
         String im = primeiro(sup.get("im_destinatario"), sup.get("inscricao_municipal"));
-        if (im != null) receiver.put("municipalTaxNumber", apenasDigitos(im));
+        if (im != null) receiver.put("cityTaxNumber", apenasDigitos(im));
         if (empresa.email() != null && !empresa.email().isBlank()) {
             receiver.put("email", empresa.email().trim());
         }
