@@ -13,7 +13,8 @@ import com.hweld.operations.shared.interfaces.error.ApiException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
-
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
@@ -65,6 +66,10 @@ public class MercadoPagoProvider implements PaymentProvider {
 
     private static final Logger log = LoggerFactory.getLogger(MercadoPagoProvider.class);
     public static final String NAME = "mercadopago";
+
+    /** Datas na API do MP exigem offset explícito (`...SSS+00:00`), nunca `Z`. */
+    private static final DateTimeFormatter FORMATO_DATA_MP =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
     private static final long SIGNATURE_TOLERANCE_SECONDS = 300;
 
@@ -278,13 +283,18 @@ public class MercadoPagoProvider implements PaymentProvider {
                 req.metadata().getOrDefault("pedidoId", "")));
         Instant expiracao = Instant.now().plus(props.pixExpirationMinutes(), ChronoUnit.MINUTES);
 
+        // date_of_expiration: formato oficial yyyy-MM-dd'T'HH:mm:ssz com offset
+        // explícito — Instant.toString() emite sufixo "Z" que o MP rejeita
+        // (HTTP 400, cause code 23).
+        String expiraFmt = java.time.OffsetDateTime.ofInstant(expiracao, ZoneOffset.UTC)
+                .truncatedTo(ChronoUnit.MILLIS).format(FORMATO_DATA_MP);
         Map<String, Object> body = new HashMap<>(Map.of(
                 "transaction_amount", req.amount().amount(),
                 "description", req.description() != null && !req.description().isBlank()
                         ? req.description() : "Pedido " + pedidoNumero,
                 "payment_method_id", "pix",
                 "external_reference", req.idempotencyKey(),
-                "date_of_expiration", expiracao.truncatedTo(ChronoUnit.SECONDS).toString()));
+                "date_of_expiration", expiraFmt));
 
         if (req.customerEmail() != null && !req.customerEmail().isBlank()) {
             body.put("payer", Map.of("email", req.customerEmail().trim()));
