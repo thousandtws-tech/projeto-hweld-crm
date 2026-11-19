@@ -150,6 +150,11 @@ public class MercadoPagoClient {
             if (mensagem.startsWith("HTTP") && body.hasNonNull("message")) {
                 mensagem = body.path("message").asString();
             }
+            // Mensagens crípticas (ex.: causa só com código "23") carregam o
+            // corpo bruto truncado — sem isso o erro em produção é indiagnostável.
+            if (mensagem.length() < 40 && raw != null && !raw.isBlank()) {
+                mensagem = mensagem + " | body=" + (raw.length() > 400 ? raw.substring(0, 400) : raw);
+            }
         } catch (Exception ignored) {
             if (raw != null && !raw.isBlank()) {
                 mensagem = raw.length() > 200 ? raw.substring(0, 200) : raw;
