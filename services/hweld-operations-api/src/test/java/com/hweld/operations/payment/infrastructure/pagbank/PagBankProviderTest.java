@@ -105,6 +105,118 @@ class PagBankProviderTest {
         assertFalse(provider.verifyWebhookSignature("{\"id\":\"ORDE_1\"}", null));
     }
 
+    // ── cartão via checkout hospedado ───────────────────────────────────────
+
+    @Test
+    void criarCobrancaCartaoCriaCheckoutEMapeiaLinkPay() throws Exception {
+        // settings vazio → portões de habilitação/pausa não bloqueiam o teste.
+        when(client.criarCheckout(org.mockito.ArgumentMatchers.<java.util.Map<String, Object>>any()))
+                .thenAnswer(inv -> {
+                    java.util.Map<String, Object> body = inv.getArgument(0);
+                    // Contrato oficial: reference_id propaga para a Order gerada —
+                    // é a chave de correlação do webhook transacional.
+                    assertEquals("idem-1", body.get("reference_id"));
+                    @SuppressWarnings("unchecked")
+                    var metodos = (java.util.List<java.util.Map<String, Object>>)
+                            body.get("payment_methods");
+                    assertEquals("CREDIT_CARD", metodos.get(0).get("type"));
+                    assertEquals(Boolean.TRUE, body.get("customer_modifiable"));
+                    var checkout = mapper.createObjectNode();
+                    checkout.put("id", "CHEC_A1B2");
+                    checkout.put("status", "ACTIVE");
+                    checkout.put("expiration_date", "2026-01-10T14:00:00Z");
+                    var link = checkout.putArray("links").addObject();
+                    link.put("rel", "PAY");
+                    link.put("href", "https://pagamento.pagbank.com.br/pagamento?code=abc");
+                    return checkout;
+                });
+
+        var req = new com.hweld.operations.payment.application.PaymentProvider.ChargeRequest(
+                "idem-1",
+                com.hweld.operations.shared.domain.Money.of(new java.math.BigDecimal("250.00")),
+                com.hweld.operations.payment.domain.PaymentMethod.CREDIT_CARD,
+                "Pedido PV-1", "c@c.com", java.util.Map.of("pedidoId", "10"));
+
+        var result = provider.createCharge(req);
+
+        assertEquals("CHEC_A1B2", result.externalId());
+        assertEquals(PaymentStatus.PENDING, result.status());
+        assertEquals("https://pagamento.pagbank.com.br/pagamento?code=abc",
+                result.checkoutUrl());
+    }
+
+    @Test
+    void parseEventoDeCheckoutExtraiStatusDedupeEReferencia() {
+        String body = """
+            {
+              "id": "CHEC_A1B2",
+              "reference_id": "idem-1",
+              "status": "EXPIRED",
+              "created_at": "2026-01-10T12:00:00Z"
+            }
+            """;
+
+        ParsedWebhook parsed = provider.parseWebhook(body);
+
+        assertEquals("CHEC_A1B2", parsed.externalPaymentId());
+        assertEquals(PaymentStatus.EXPIRED, parsed.status());
+        assertEquals("CHEC_A1B2|EXPIRED", parsed.eventId());
+        assertEquals("idem-1", parsed.referenceId());
+    }
+
+    @Test
+    void fetchBackDeCheckoutConfereStatusReal() {
+        String body = """
+            {"id": "CHEC_A1B2", "status": "EXPIRED", "reference_id": "idem-1"}
+            """;
+        var real = mapper.createObjectNode();
+        real.put("id", "CHEC_A1B2");
+        real.put("status", "EXPIRED");
+        when(client.consultarCheckout("CHEC_A1B2")).thenReturn(real);
+
+        assertTrue(provider.verifyWebhookSignature(body, null));
+    }
+
+    @Test
+    void fetchBackDeCheckoutRejeitaStatusDivergente() {
+        String body = """
+            {"id": "CHEC_A1B2", "status": "EXPIRED"}
+            """;
+        var real = mapper.createObjectNode();
+        real.put("id", "CHEC_A1B2");
+        real.put("status", "ACTIVE"); // ainda ativo no PagBank — evento forjado
+        when(client.consultarCheckout("CHEC_A1B2")).thenReturn(real);
+
+        assertFalse(provider.verifyWebhookSignature(body, null));
+    }
+
+    @Test
+    void getChargeEReconciliacaoRoteiamCheckoutParaEndpointProprio() {
+        var checkout = mapper.createObjectNode();
+        checkout.put("id", "CHEC_A1B2");
+        checkout.put("status", "PAID"); // pago pelo link — reconcilia como CONFIRMED
+        checkout.putArray("links").addObject()
+                .put("rel", "PAY").put("href", "https://pay.link/x");
+        when(client.consultarCheckout("CHEC_A1B2")).thenReturn(checkout);
+
+        var result = provider.getCharge("CHEC_A1B2");
+
+        assertEquals(PaymentStatus.CONFIRMED, result.status());
+        assertEquals("https://pay.link/x", result.checkoutUrl());
+        org.mockito.Mockito.verify(client, org.mockito.Mockito.never())
+                .consultarCobranca(org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
+    void cancelDeCheckoutInativaOLinkEmVezDeCancelarCobranca() {
+        provider.cancelCharge("CHEC_A1B2");
+
+        org.mockito.Mockito.verify(client).inativarCheckout("CHEC_A1B2");
+        org.mockito.Mockito.verify(client, org.mockito.Mockito.never())
+                .cancelarCobranca(org.mockito.ArgumentMatchers.anyString(),
+                        org.mockito.ArgumentMatchers.any());
+    }
+
     private String webhook(String orderId, String chargeId, String status) {
         return """
             {"id": "%s", "charges": [{"id": "%s", "status": "%s"}]}

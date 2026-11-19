@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Copy,
+  CreditCard,
   Loader2,
   QrCode,
   RefreshCcw,
@@ -250,9 +251,10 @@ export function PagBankPainel({
             </div>
             <div className="rounded-xl border border-border px-3 py-2.5">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Meios ativos</div>
-              <div className="mt-0.5 font-medium text-foreground">Pix</div>
+              <div className="mt-0.5 font-medium text-foreground">Pix · Cartão</div>
               <div className="mt-1 text-[11px] text-muted-foreground">
-                Cartão e boleto entram na próxima fase.
+                Cartão via link de pagamento hospedado no PagBank — dados do
+                cartão nunca passam pelo sistema. Boleto entra na próxima fase.
               </div>
             </div>
             <div className="rounded-xl border border-border px-3 py-2.5">
@@ -291,8 +293,7 @@ export function PagBankPainel({
               URL de webhook enviada na criação do pedido
               {i.config?.webhook_url ? ` (${i.config.webhook_url})` : ""}.
               A autenticidade é confirmada por fetch-back — a confirmação nunca depende
-              de retorno de navegador. Cartão, boleto, checkout hospedado e recorrência
-              entram nas próximas fases.
+              de retorno de navegador. Boleto e recorrência entram nas próximas fases.
             </Typography>
           </div>
         </SectionCard>
@@ -459,7 +460,7 @@ export function PagBankPainel({
                     <th className="py-2 pr-3 font-medium">Pedido</th>
                     <th className="py-2 pr-3 font-medium">Valor</th>
                     <th className="py-2 pr-3 font-medium">Status</th>
-                    <th className="py-2 pr-3 font-medium">Pix</th>
+                    <th className="py-2 pr-3 font-medium">Pagamento</th>
                     <th className="py-2 font-medium">Criada</th>
                   </tr>
                 </thead>
@@ -490,6 +491,13 @@ export function PagBankPainel({
                             className="flex items-center gap-1 text-[11px] text-primary hover:underline"
                             onClick={() => void copiar(t.pix_copia_cola)}>
                             <QrCode className="h-3.5 w-3.5" /> copia-e-cola
+                            <Copy className="h-3 w-3" />
+                          </button>
+                        ) : t.checkout_url ? (
+                          <button type="button"
+                            className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+                            onClick={() => void copiar(t.checkout_url)}>
+                            <CreditCard className="h-3.5 w-3.5" /> link de pagamento
                             <Copy className="h-3 w-3" />
                           </button>
                         ) : "—"}

@@ -132,6 +132,7 @@ public class StubPaymentProvider implements PaymentProvider {
             return new ParsedWebhook(eventId, externalId, status,
                     textOrNull(n, "failureCode"), textOrNull(n, "failureMessage"),
                     n.has("occurredAt") ? Instant.parse(n.get("occurredAt").asString()) : Instant.now(),
+                    textOrNull(n, "referenceId"),
                     mapper.convertValue(n, Map.class));
         } catch (PaymentProviderException e) {
             throw e;

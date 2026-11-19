@@ -58,7 +58,7 @@ class WebhookServiceTest {
 
     private PaymentProvider.ParsedWebhook parsed(String eventId, PaymentStatus status) {
         return new PaymentProvider.ParsedWebhook(eventId, "stub_1", status,
-                null, null, Instant.now(), Map.of("k", "v"));
+                null, null, Instant.now(), null, Map.of("k", "v"));
     }
 
     private Payment payment() {

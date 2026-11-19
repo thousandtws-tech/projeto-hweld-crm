@@ -59,6 +59,13 @@ public interface PaymentProvider {
             Instant expiresAt,
             Map<String, Object> raw) {}
 
+    /**
+     * `referenceId` = referência de nível de pedido enviada ao PSP na
+     * criação (ex.: `reference_id` do PagBank = nossa idempotency key).
+     * Fallback de correlação quando o webhook traz um `externalPaymentId`
+     * ainda desconhecido — fluxos hospedados (checkout) geram ids novos
+     * por transação. `null` quando o PSP não expõe o campo.
+     */
     record ParsedWebhook(
             String eventId,
             String externalPaymentId,
@@ -66,5 +73,6 @@ public interface PaymentProvider {
             String failureCode,
             String failureMessage,
             Instant occurredAt,
+            String referenceId,
             Map<String, Object> raw) {}
 }

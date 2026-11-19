@@ -81,6 +81,29 @@ public class PagBankClient {
         return exchange("GET", "/public-keys", null, false);
     }
 
+    /**
+     * `POST /checkouts` — checkout hospedado: página de pagamento no
+     * ambiente PagBank (cartão sem PAN/CVV trafegar aqui). Resposta traz
+     * `id` CHEC_* e `links[rel=PAY]` com a URL do link de pagamento.
+     */
+    public JsonNode criarCheckout(Map<String, Object> body) {
+        return exchange("POST", "/checkouts", body, true);
+    }
+
+    /** `GET /checkouts/{id}` — status do checkout/link (fetch-back). */
+    public JsonNode consultarCheckout(String checkoutId) {
+        return exchange("GET", "/checkouts/" + checkoutId, null, false);
+    }
+
+    /**
+     * `POST /checkouts/{id}/inactivate` — bloqueia o pagamento pelo link.
+     * "Cancelamento" de um checkout ainda não pago; cobrança já paga é
+     * cancelada/estornada via `/charges/{id}/cancel`.
+     */
+    public JsonNode inativarCheckout(String checkoutId) {
+        return exchange("POST", "/checkouts/" + checkoutId + "/inactivate", null, true);
+    }
+
     private JsonNode exchange(String method, String uri, Object body, boolean escrita) {
         try {
             var spec = client().method(org.springframework.http.HttpMethod.valueOf(method))

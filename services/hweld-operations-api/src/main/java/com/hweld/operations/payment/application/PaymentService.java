@@ -210,6 +210,10 @@ public class PaymentService {
      */
     @Transactional
     public void applyWebhookResult(Payment payment, PaymentProvider.ParsedWebhook parsed) {
+        // Adota o id canônico da transação antes de qualquer early-return:
+        // checkout hospedado nasce com o id do link (CHEC_*) e migra para o
+        // id da cobrança real (CHAR_*) no primeiro evento transacional.
+        payment.relinkExternalId(parsed.externalPaymentId());
         if (payment.getStatus() == parsed.status()) {
             return; // já estamos no estado — webhook redundante, mas válido
         }

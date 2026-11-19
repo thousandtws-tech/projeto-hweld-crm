@@ -221,6 +221,7 @@ public class PagBankIntegrationService {
         m.put("moeda", p.getCurrency());
         m.put("external_id", p.getExternalId() != null ? p.getExternalId() : "");
         m.put("pix_copia_cola", p.getPixCopyPaste() != null ? p.getPixCopyPaste() : "");
+        m.put("checkout_url", p.getCheckoutUrl() != null ? p.getCheckoutUrl() : "");
         m.put("expira_em", p.getExpiresAt() != null ? p.getExpiresAt().toString() : "");
         m.put("criado_em", p.getCreatedAt() != null ? p.getCreatedAt().toString() : "");
         m.put("atualizado_em", p.getUpdatedAt() != null ? p.getUpdatedAt().toString() : "");

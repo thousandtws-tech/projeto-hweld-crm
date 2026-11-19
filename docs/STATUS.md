@@ -50,11 +50,14 @@ integrações. Atualizado em 2026-11-13.
 
 ## Feito — operations-api (Java)
 
-- Payments: port `PaymentProvider`, `PagBankProvider` (Orders API — Pix fase A,
-  QR copia-e-cola, webhook fetch-back, cancel/estorno `POST /charges/{id}/cancel`),
-  `StubPaymentProvider`, `PAYMENT_PROVIDER=auto`, credenciais do cliente
-  cifradas via Integrações → PagBank, dedupe `orderId|chargeId|status`,
-  cancel/refund/reconcile. Cartão/boleto/checkout/recorrência = fase B.
+- Payments: port `PaymentProvider`, `PagBankProvider` (Orders API — Pix
+  QR copia-e-cola; Checkout API — cartão via link hospedado CHEC_→PAY com
+  correlação `reference_id`=idemKey e relink CHEC→CHAR no 1º evento;
+  webhook fetch-back dual ORDE/CHEC, cancel/estorno `POST /charges/{id}/cancel`
+  + `/checkouts/{id}/inactivate`), `StubPaymentProvider`, `PAYMENT_PROVIDER=auto`,
+  credenciais do cliente cifradas via Integrações → PagBank, dedupe
+  `orderId|chargeId|status`/`checkoutId|status`, cancel/refund/reconcile.
+  Boleto, cartão transparente e recorrência = fases seguintes.
 - Billing: `billing_invoices` (faturas/recebíveis)
 - Fiscal: `SpedyProvider` (API v1 real), `SpedyNFeMapper`, máquina de estados,
   reconciliação de docs não-terminais, webhooks Spedy (Standard Webhooks
@@ -116,9 +119,10 @@ integrações. Atualizado em 2026-11-13.
 
 ## Pendente — integrações (gaps de produção)
 
-1. **PSP em produção** — PagBank implementado (Pix fase A); falta o cliente
-   cadastrar o token em Integrações → PagBank (produção) e homologar.
-   Cartão, boleto, checkout hospedado e recorrência = fases seguintes.
+1. **PSP em produção** — PagBank implementado (Pix + cartão via checkout
+   hospedado); falta o cliente cadastrar o token em Integrações → PagBank
+   (produção) e homologar. Boleto, cartão transparente e recorrência =
+   fases seguintes.
 2. **E-mail transacional** — `EMAIL_PROVIDER=log`. Falta SMTP real
    (`EMAIL_PROVIDER=smtp` + `SMTP_*`) ou serviço gerenciado.
 3. **Fiscal em produção** — Spedy implementado (NF-e); falta o cliente

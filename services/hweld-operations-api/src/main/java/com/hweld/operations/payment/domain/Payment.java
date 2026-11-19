@@ -151,6 +151,19 @@ public class Payment {
         this.updatedAt = Instant.now();
     }
 
+    /**
+     * Adota o identificador canônico da transação no PSP. Fluxos hospedados
+     * (checkout) nascem com o id do link e só recebem o id da cobrança real
+     * no primeiro evento transacional — o relink faz cancel/estorno/
+     * reconciliação operarem sobre a cobrança certa dali em diante.
+     */
+    public void relinkExternalId(String canonicalId) {
+        if (canonicalId != null && !canonicalId.isBlank() && !canonicalId.equals(this.externalId)) {
+            this.externalId = canonicalId.substring(0, Math.min(canonicalId.length(), 120));
+            this.updatedAt = Instant.now();
+        }
+    }
+
     public void applyProviderResult(String externalId, String checkoutUrl,
             String pixQrCode, String pixCopyPaste, Instant expiresAt) {
         this.externalId = externalId;

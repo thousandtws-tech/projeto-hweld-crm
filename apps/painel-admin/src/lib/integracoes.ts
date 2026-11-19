@@ -101,11 +101,12 @@ export const CATALOGO: IntegracaoCatalogo[] = [
     iniciais: "PB",
     cor: "#00b140",
     categoria: "pagamentos",
-    descricao: "Cobrança Pix com QR Code por pedido — confirmação por webhook PagBank.",
+    descricao: "Pix com QR Code e cartão de crédito via link de pagamento hospedado — confirmação por webhook PagBank.",
     implementada: true,
     escopo: "CRM e Loja",
     funcionalidades: [
       "Cobrança Pix com QR Code e copia-e-cola",
+      "Cartão de crédito via checkout hospedado (link de pagamento)",
       "Confirmação por webhook com verificação fetch-back",
       "Cancelamento e estorno",
       "Histórico de cobranças e eventos",

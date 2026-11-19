@@ -127,7 +127,7 @@ class PaymentServiceTest {
         Payment p = new Payment(UUID.randomUUID(), 10L, 7L, 42L, "stub",
                 PaymentMethod.PIX, new BigDecimal("199.90"), "k", "portal", "42");
         var parsed = new PaymentProvider.ParsedWebhook("evt-1", "stub_1",
-                PaymentStatus.CONFIRMED, null, null, Instant.now(), Map.of());
+                PaymentStatus.CONFIRMED, null, null, Instant.now(), null, Map.of());
 
         service.applyWebhookResult(p, parsed);
 
@@ -144,7 +144,7 @@ class PaymentServiceTest {
         p.transitionTo(PaymentStatus.CONFIRMED, null, null);
 
         var parsed = new PaymentProvider.ParsedWebhook("evt-2", "stub_1",
-                PaymentStatus.CONFIRMED, null, null, Instant.now(), Map.of());
+                PaymentStatus.CONFIRMED, null, null, Instant.now(), null, Map.of());
         service.applyWebhookResult(p, parsed);
 
         verify(outbox, never()).publish(anyString(), anyString(), any());

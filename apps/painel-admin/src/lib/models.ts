@@ -708,6 +708,7 @@ export interface TransacaoPagBank {
   moeda: string;
   external_id: string;
   pix_copia_cola: string;
+  checkout_url: string;
   expira_em: string;
   criado_em: string;
   atualizado_em: string;

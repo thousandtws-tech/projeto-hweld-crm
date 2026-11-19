@@ -81,6 +81,14 @@ public class WebhookService {
                 .orElseThrow(() -> new IllegalStateException("webhook recém-inserido ausente"));
 
         var payment = payments.findByProviderAndExternalId(providerName, parsed.externalPaymentId());
+        if (payment.isEmpty() && parsed.referenceId() != null && !parsed.referenceId().isBlank()) {
+            // Fluxos hospedados (checkout PagBank): o PSP emite um charge id
+            // novo por transação — a correlação cai na referência do pedido
+            // (= nossa idempotency key). O provider no filtro impede casar
+            // cobrança de outro PSP com a mesma chave.
+            payment = payments.findByIdempotencyKey(parsed.referenceId())
+                    .filter(p -> providerName.equals(p.getProvider()));
+        }
         if (payment.isEmpty()) {
             record.markProcessed(null, "IGNORED_UNKNOWN_PAYMENT", null);
             webhookEvents.save(record);
