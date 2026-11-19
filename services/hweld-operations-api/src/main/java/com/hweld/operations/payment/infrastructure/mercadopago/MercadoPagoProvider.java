@@ -13,6 +13,8 @@ import com.hweld.operations.shared.interfaces.error.ApiException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
@@ -64,6 +66,11 @@ public class MercadoPagoProvider implements PaymentProvider {
 
     private static final Logger log = LoggerFactory.getLogger(MercadoPagoProvider.class);
     public static final String NAME = "mercadopago";
+
+    /** Formato oficial de `expiration_date_to` em preferências Checkout Pro. */
+    private static final DateTimeFormatter FORMATO_EXPIRACAO = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").withZone(ZoneOffset.UTC);
+
     private static final long SIGNATURE_TOLERANCE_SECONDS = 300;
 
     private final MercadoPagoClient client;
@@ -316,11 +323,15 @@ public class MercadoPagoProvider implements PaymentProvider {
                 "unit_price", req.amount().amount(),
                 "currency_id", req.amount().currency()));
 
+        // expiration_date_to: formato oficial yyyy-MM-dd'T'HH:mm:ss.SSSXXX
+        // (Instant.toString() omite milissegundos → preferência criada mas a
+        // página hospedada falha com "Ops, ocorreu um erro").
+        String expiraFmt = FORMATO_EXPIRACAO.format(expiracao.truncatedTo(ChronoUnit.MILLIS));
         Map<String, Object> body = new HashMap<>(Map.of(
                 "items", List.of(item),
                 "external_reference", req.idempotencyKey(),
                 "expires", true,
-                "expiration_date_to", expiracao.truncatedTo(ChronoUnit.SECONDS).toString()));
+                "expiration_date_to", expiraFmt));
 
         // Só cartão de crédito no checkout (ticket/bank_transfer/atm/débito
         // excluídos). account_money NÃO pode ser excluído — a API rejeita
@@ -332,9 +343,9 @@ public class MercadoPagoProvider implements PaymentProvider {
                         Map.of("id", "atm"), Map.of("id", "debit_card")),
                 "installments", configInt("parcelas_max", 12, 1, 24)));
 
-        if (req.customerEmail() != null && !req.customerEmail().isBlank()) {
-            body.put("payer", Map.of("email", req.customerEmail().trim()));
-        }
+        // Sem payer pré-preenchido: no sandbox um e-mail real (ou igual ao da
+        // conta de teste vendedora) quebra o checkout; a página hospedada
+        // coleta o pagador de qualquer forma.
         String webhookUrl = webhookUrl();
         if (webhookUrl != null) {
             body.put("notification_url", webhookUrl);
