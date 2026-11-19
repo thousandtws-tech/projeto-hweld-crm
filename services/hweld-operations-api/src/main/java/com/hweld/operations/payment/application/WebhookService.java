@@ -52,21 +52,22 @@ public class WebhookService {
             java.util.Map<String, String> headers) {
         PaymentProvider provider = providers.get(providerName);
 
+        // Assinatura ANTES do parse e do dedupe: o parse pode fazer I/O
+        // (fetch-back Mercado Pago/PagBank) — payload forjado é rejeitado
+        // com um HMAC local, sem chamar a API do PSP, e não pode queimar
+        // o eventId (reenvio assinado do mesmo evento ainda processa).
+        boolean signatureValid = provider.verifyWebhookSignature(rawBody, headers);
+        if (!signatureValid) {
+            auditLogs.save(new AuditLogEntity("service", providerName, "webhook.invalid_signature",
+                    "webhook", "unsigned", Map.of("payload", "suprimido"), null));
+            return Result.REJECTED;
+        }
+
         PaymentProvider.ParsedWebhook parsed;
         try {
             parsed = provider.parseWebhook(rawBody);
         } catch (PaymentProviderException e) {
             throw ApiException.validacao(e.getMessage());
-        }
-
-        // Assinatura ANTES do dedupe: um request inválido não pode queimar
-        // o eventId — se o PSP reenviar o mesmo evento assinado, ele ainda
-        // será processado (e não respondido como DUPLICATE).
-        boolean signatureValid = provider.verifyWebhookSignature(rawBody, headers);
-        if (!signatureValid) {
-            auditLogs.save(new AuditLogEntity("service", providerName, "webhook.invalid_signature",
-                    "webhook", parsed.eventId(), Map.of("payload", "suprimido"), null));
-            return Result.REJECTED;
         }
 
         WebhookEventRecord record = new WebhookEventRecord(
