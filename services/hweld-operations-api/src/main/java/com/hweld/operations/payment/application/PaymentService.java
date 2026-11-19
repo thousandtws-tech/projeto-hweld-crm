@@ -103,6 +103,8 @@ public class PaymentService {
         PaymentProvider.ChargeResult charge;
         try {
             charge = callProvider(provider, () -> provider.createCharge(chargeReq));
+        } catch (ApiException e) {
+            throw e; // erro de domínio do provider (ex.: método não suportado) — não vira 502
         } catch (Exception e) {
             log.error("psp {} falhou ao criar cobrança (pedido {}): {}", provider.name(), cmd.pedidoId(), e.getMessage());
             throw ApiException.provedorIndisponivel("provedor de pagamento indisponível");

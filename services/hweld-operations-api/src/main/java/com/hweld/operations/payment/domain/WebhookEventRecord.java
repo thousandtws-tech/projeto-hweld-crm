@@ -69,5 +69,12 @@ public class WebhookEventRecord {
     }
 
     public UUID getId() { return id; }
+    public String getProvider() { return provider; }
+    public String getEventId() { return eventId; }
+    public boolean isSignatureValid() { return signatureValid; }
     public UUID getPaymentId() { return paymentId; }
+    public String getProcessingResult() { return processingResult; }
+    public String getErrorMessage() { return errorMessage; }
+    public Instant getReceivedAt() { return receivedAt; }
+    public Instant getProcessedAt() { return processedAt; }
 }

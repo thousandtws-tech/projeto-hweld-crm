@@ -16,6 +16,14 @@ public interface PaymentProvider {
 
     String name();
 
+    /**
+     * Credenciais operacionais presentes? Usado pela resolução `auto`
+     * (`PAYMENT_PROVIDER=auto`): PSP real credenciado → stub de fallback.
+     */
+    default boolean configured() {
+        return true;
+    }
+
     ChargeResult createCharge(ChargeRequest request);
 
     /** Reconciliação — consulta o estado atual da cobrança no PSP. */

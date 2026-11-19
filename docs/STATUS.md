@@ -50,8 +50,11 @@ integrações. Atualizado em 2026-11-13.
 
 ## Feito — operations-api (Java)
 
-- Payments: port `PaymentProvider`, `StubPaymentProvider`, webhooks HMAC +
-  idempotência `(provider, external_event_id)`, cancel/refund/reconcile
+- Payments: port `PaymentProvider`, `PagBankProvider` (Orders API — Pix fase A,
+  QR copia-e-cola, webhook fetch-back, cancel/estorno `POST /charges/{id}/cancel`),
+  `StubPaymentProvider`, `PAYMENT_PROVIDER=auto`, credenciais do cliente
+  cifradas via Integrações → PagBank, dedupe `orderId|chargeId|status`,
+  cancel/refund/reconcile. Cartão/boleto/checkout/recorrência = fase B.
 - Billing: `billing_invoices` (faturas/recebíveis)
 - Fiscal: `SpedyProvider` (API v1 real), `SpedyNFeMapper`, máquina de estados,
   reconciliação de docs não-terminais, webhooks Spedy (Standard Webhooks
@@ -113,9 +116,9 @@ integrações. Atualizado em 2026-11-13.
 
 ## Pendente — integrações (gaps de produção)
 
-1. **PSP real (PIX/cartão)** — só `StubPaymentProvider`. Falta adapter real
-   (Mercado Pago / Asaas / Pagar.me) + credenciais + homologação. Bloqueia
-   pagamento real em produção.
+1. **PSP em produção** — PagBank implementado (Pix fase A); falta o cliente
+   cadastrar o token em Integrações → PagBank (produção) e homologar.
+   Cartão, boleto, checkout hospedado e recorrência = fases seguintes.
 2. **E-mail transacional** — `EMAIL_PROVIDER=log`. Falta SMTP real
    (`EMAIL_PROVIDER=smtp` + `SMTP_*`) ou serviço gerenciado.
 3. **Fiscal em produção** — Spedy implementado (NF-e); falta o cliente

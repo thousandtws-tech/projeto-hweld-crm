@@ -8,4 +8,6 @@ public interface WebhookEventRepository extends JpaRepository<WebhookEventRecord
     boolean existsByProviderAndEventId(String provider, String eventId);
 
     java.util.Optional<WebhookEventRecord> findByProviderAndEventId(String provider, String eventId);
+
+    java.util.List<WebhookEventRecord> findTop100ByProviderOrderByReceivedAtDesc(String provider);
 }

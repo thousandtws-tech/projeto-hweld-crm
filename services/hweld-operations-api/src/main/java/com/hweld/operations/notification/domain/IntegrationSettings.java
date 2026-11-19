@@ -26,6 +26,7 @@ public class IntegrationSettings {
     public static final String ZAPI_WHATSAPP = "zapi-whatsapp";
     public static final String SPEDY_FISCAL = "spedy-fiscal";
     public static final String MELHOR_ENVIO_FRETE = "melhorenvio-frete";
+    public static final String PAGBANK_PAGAMENTOS = "pagbank-pagamentos";
 
     @Id
     @Column(length = 40)
@@ -180,6 +181,30 @@ public class IntegrationSettings {
         this.externalId = externalId == null || externalId.isBlank() ? null : externalId.trim();
         this.envioPausado = envioPausado;
         this.events = events == null ? Map.of() : Map.copyOf(events);
+        this.updatedBy = updatedBy;
+        this.updatedAt = Instant.now();
+    }
+
+    /**
+    /** Credenciais mínimas para o adapter PagBank: Bearer token + ambiente. */
+    public boolean credenciaisPagBankCompletas() {
+        return baseUrl != null && !baseUrl.isBlank()
+                && apiKeyEnc != null && !apiKeyEnc.isBlank();
+    }
+
+    /**
+     * Update da linha PagBank — `baseUrl` guarda o ambiente da API
+     * (`https://api.pagseguro.com` produção | `https://sandbox.api.pagseguro.com`
+     * sandbox), `externalId` o e-mail/nome da conta, `envioPausado` pausa
+     * a criação de cobranças sem desligar a integração.
+     */
+    public void atualizarPagBank(String nomeConta, boolean enabled, String baseUrl,
+            String externalId, boolean envioPausado, String updatedBy) {
+        this.nomeConta = nomeConta == null || nomeConta.isBlank() ? null : nomeConta.trim();
+        this.enabled = enabled;
+        this.baseUrl = normalizeBaseUrl(baseUrl);
+        this.externalId = externalId == null || externalId.isBlank() ? null : externalId.trim();
+        this.envioPausado = envioPausado;
         this.updatedBy = updatedBy;
         this.updatedAt = Instant.now();
     }

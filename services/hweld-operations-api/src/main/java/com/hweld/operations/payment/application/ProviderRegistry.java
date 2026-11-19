@@ -27,7 +27,18 @@ public class ProviderRegistry {
         return p;
     }
 
+    /**
+     * `auto` resolve para o PSP real credenciado pelo cliente (PagBank) ou,
+     * na ausência de credenciais, para o stub — mesmo padrão fiscal/logística.
+     */
     public PaymentProvider defaultProvider() {
-        return get(props.defaultProvider());
+        String configured = props.defaultProvider();
+        if ("auto".equalsIgnoreCase(configured)) {
+            return providers.values().stream()
+                    .filter(p -> !"stub".equals(p.name()) && p.configured())
+                    .findFirst()
+                    .orElseGet(() -> get("stub"));
+        }
+        return get(configured);
     }
 }

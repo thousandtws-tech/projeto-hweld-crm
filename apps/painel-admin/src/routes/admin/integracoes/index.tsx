@@ -12,6 +12,7 @@ import {
   categoriaRotulo,
   estadoInfobip,
   estadoMelhorEnvio,
+  estadoPagBank,
   estadoSpedy,
   estadoZapi,
   type CategoriaIntegracao,
@@ -21,12 +22,14 @@ import {
 import type {
   IntegracaoInfobip,
   IntegracaoMelhorEnvio,
+  IntegracaoPagBank,
   IntegracaoSpedy,
   IntegracaoZapi,
 } from "@/lib/models";
 import {
   integracoesService,
   melhorEnvioService,
+  pagBankService,
   spedyService,
   zapiService,
 } from "@/lib/services";
@@ -74,11 +77,12 @@ function IntegracoesCatalogoPage() {
 
   const carregar = useCallback(async () => {
     setCarregando(true);
-    const [inf, zap, spe, me] = await Promise.allSettled([
+    const [inf, zap, spe, me, pb] = await Promise.allSettled([
       comTimeout(integracoesService.infobip()),
       comTimeout(zapiService.view()),
       comTimeout(spedyService.view()),
       comTimeout(melhorEnvioService.view()),
+      comTimeout(pagBankService.view()),
     ]);
     const prox: EstadoPorSlug = {};
     const errs: string[] = [];
@@ -105,6 +109,12 @@ function IntegracoesCatalogoPage() {
     } else {
       prox["melhor-envio"] = "falha";
       errs.push("Melhor Envio");
+    }
+    if (pb.status === "fulfilled") {
+      prox.pagbank = estadoPagBank(pb.value as IntegracaoPagBank);
+    } else {
+      prox.pagbank = "falha";
+      errs.push("PagBank");
     }
     // Nunca implementadas no backend → sempre "em_breve".
     for (const item of CATALOGO) {

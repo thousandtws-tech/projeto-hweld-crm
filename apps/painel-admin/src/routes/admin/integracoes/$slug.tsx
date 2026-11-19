@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 
 import { InfobipPainel } from "@/components/integracoes/InfobipPainel";
 import { MelhorEnvioPainel } from "@/components/integracoes/MelhorEnvioPainel";
+import { PagBankPainel } from "@/components/integracoes/PagBankPainel";
 import { SpedyPainel } from "@/components/integracoes/SpedyPainel";
 import { LogoIntegracao } from "@/components/integracoes/LogoIntegracao";
 import { ZapiCard } from "@/components/integracoes/ZapiCard";
@@ -14,6 +15,7 @@ import {
   categoriaRotulo,
   estadoInfobip,
   estadoMelhorEnvio,
+  estadoPagBank,
   estadoSpedy,
   estadoUi,
   estadoZapi,
@@ -126,11 +128,14 @@ function PainelDoProvider({
     (v: Parameters<typeof estadoSpedy>[0]) => onEstado(estadoSpedy(v)), [onEstado]);
   const onMelhorEnvio = useCallback(
     (v: Parameters<typeof estadoMelhorEnvio>[0]) => onEstado(estadoMelhorEnvio(v)), [onEstado]);
+  const onPagBank = useCallback(
+    (v: Parameters<typeof estadoPagBank>[0]) => onEstado(estadoPagBank(v)), [onEstado]);
 
   if (item.slug === "infobip") return <InfobipPainel onView={onInfobip} />;
   if (item.slug === "zapi") return <ZapiCard onView={onZapi} />;
   if (item.slug === "spedy") return <SpedyPainel onView={onSpedy} />;
   if (item.slug === "melhor-envio") return <MelhorEnvioPainel onView={onMelhorEnvio} />;
+  if (item.slug === "pagbank") return <PagBankPainel onView={onPagBank} />;
   return null;
 }
 

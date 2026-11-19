@@ -495,6 +495,32 @@ export const melhorEnvioService = {
       "integracoes/melhorenvio/testar-conexao", {}),
 };
 
+export const pagBankService = {
+  view: () =>
+    apiOps.getRecurso<import("./models").IntegracaoPagBank>("integracoes/pagbank"),
+  salvar: (b: {
+    versao?: number;
+    nome_conta?: string;
+    config?: {
+      ambiente?: string;
+      cobrancas_pausadas?: boolean;
+    };
+    segredos?: { token?: string };
+  }) => apiOps.putRecurso<import("./models").IntegracaoPagBank>(
+    "integracoes/pagbank", b),
+  habilitar: (habilitado: boolean) =>
+    apiOps.post<import("./models").IntegracaoPagBank>(
+      "integracoes/pagbank/habilitacao", { habilitado }),
+  testarConexao: () =>
+    apiOps.post<{ verificacao_status: string; mensagem?: string }>(
+      "integracoes/pagbank/testar-conexao", {}),
+  eventos: () =>
+    apiOps.listaArray<import("./models").EventoPagBank>("integracoes/pagbank/eventos"),
+  transacoes: (pagina = 0, tamanho = 20) =>
+    apiOps.getRecurso<import("./models").PaginaTransacoesPagBank>(
+      `integracoes/pagbank/transacoes?pagina=${pagina}&tamanho=${tamanho}`),
+};
+
 export const logisticaService = {
   /** Cotação por pedido — dados autoritatídicos do core-api. */
   cotarPedido: (pedidoId: number, servicos?: string) =>

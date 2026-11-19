@@ -1,6 +1,7 @@
 import type {
   IntegracaoInfobip,
   IntegracaoMelhorEnvio,
+  IntegracaoPagBank,
   IntegracaoSpedy,
   IntegracaoZapi,
 } from "@/lib/models";
@@ -100,10 +101,15 @@ export const CATALOGO: IntegracaoCatalogo[] = [
     iniciais: "PB",
     cor: "#00b140",
     categoria: "pagamentos",
-    descricao: "Gateway de pagamento com Pix, cartão e split para a operação B2B.",
-    implementada: false,
+    descricao: "Cobrança Pix com QR Code por pedido — confirmação por webhook PagBank.",
+    implementada: true,
     escopo: "CRM e Loja",
-    funcionalidades: ["Cobranças Pix e cartão", "Webhooks de status", "Split de recebíveis"],
+    funcionalidades: [
+      "Cobrança Pix com QR Code e copia-e-cola",
+      "Confirmação por webhook com verificação fetch-back",
+      "Cancelamento e estorno",
+      "Histórico de cobranças e eventos",
+    ],
   },
   {
     slug: "infinitypay",
@@ -219,6 +225,18 @@ export function estadoSpedy(v: IntegracaoSpedy): EstadoConexao {
     case "falha": return "falha";
     default:
       return v.segredos?.campos?.api_key ? "pendente" : "desconectado";
+  }
+}
+
+/** `estado` do view PagBank → estado de conexão do catálogo. Mesma regra:
+ *  "desativada" com token salvo = pendente, não "Desconectado". */
+export function estadoPagBank(v: IntegracaoPagBank): EstadoConexao {
+  switch (v.estado) {
+    case "ativa": return "conectado";
+    case "pendente": return "pendente";
+    case "falha": return "falha";
+    default:
+      return v.segredos?.campos?.token ? "pendente" : "desconectado";
   }
 }
 

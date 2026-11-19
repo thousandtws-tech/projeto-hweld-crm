@@ -668,6 +668,59 @@ export interface DocumentoSpedy {
   criado_em: string;
 }
 
+export interface IntegracaoPagBank {
+  provedor: string;
+  categoria: string;
+  ambiente: string;
+  provider_ativo: string;
+  nome_conta: string;
+  habilitado: boolean;
+  estado: "ativa" | "pendente" | "falha" | "desativada";
+  versao: number;
+  config: {
+    ambiente: string;
+    cobrancas_pausadas: boolean;
+    webhook_url?: string;
+  };
+  segredos: { campos: { token: boolean } };
+  ultima_verificacao_em: string;
+  verificacao_status: "ok" | "falha" | "nunca";
+  verificacao_erro: string;
+}
+
+export interface EventoPagBank {
+  id: string;
+  evento: string;
+  resultado: string;
+  payment_id: string;
+  recebido_em: string;
+  processado_em: string;
+  erro: string;
+}
+
+export interface TransacaoPagBank {
+  id: string;
+  pedido_id: number | null;
+  pedido_numero: string;
+  metodo: string;
+  status: string;
+  valor: string;
+  moeda: string;
+  external_id: string;
+  pix_copia_cola: string;
+  expira_em: string;
+  criado_em: string;
+  atualizado_em: string;
+  erro: string;
+}
+
+export interface PaginaTransacoesPagBank {
+  itens: TransacaoPagBank[];
+  pagina: number;
+  tamanho: number;
+  total: number;
+}
+
 export interface IntegracaoMelhorEnvio {
   provedor: string;
   categoria: string;
