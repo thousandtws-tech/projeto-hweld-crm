@@ -1,6 +1,7 @@
 import type {
   IntegracaoInfobip,
   IntegracaoMelhorEnvio,
+  IntegracaoMercadoPago,
   IntegracaoPagBank,
   IntegracaoSpedy,
   IntegracaoZapi,
@@ -90,10 +91,16 @@ export const CATALOGO: IntegracaoCatalogo[] = [
     iniciais: "MP",
     cor: "#00b1ea",
     categoria: "pagamentos",
-    descricao: "Receba pagamentos por Pix, cartão e boleto no checkout da loja.",
-    implementada: false,
+    descricao: "Pix com QR Code e cartão de crédito via Checkout Pro — webhook HMAC-SHA256 assinado.",
+    implementada: true,
     escopo: "CRM e Loja",
-    funcionalidades: ["Pix, cartão e boleto", "Checkout transparente", "Conciliação de cobranças"],
+    funcionalidades: [
+      "Cobrança Pix com QR Code e copia-e-cola",
+      "Cartão de crédito via Checkout Pro (link hospedado)",
+      "Webhook com assinatura HMAC-SHA256 oficial",
+      "Cancelamento e estorno total ou parcial",
+      "Histórico de cobranças e eventos",
+    ],
   },
   {
     slug: "pagbank",
@@ -232,6 +239,18 @@ export function estadoSpedy(v: IntegracaoSpedy): EstadoConexao {
 /** `estado` do view PagBank → estado de conexão do catálogo. Mesma regra:
  *  "desativada" com token salvo = pendente, não "Desconectado". */
 export function estadoPagBank(v: IntegracaoPagBank): EstadoConexao {
+  switch (v.estado) {
+    case "ativa": return "conectado";
+    case "pendente": return "pendente";
+    case "falha": return "falha";
+    default:
+      return v.segredos?.campos?.token ? "pendente" : "desconectado";
+  }
+}
+
+/** `estado` do view Mercado Pago → estado de conexão do catálogo. Mesma
+ *  regra do PagBank: "desativada" com token salvo = pendente, não "Desconectado". */
+export function estadoMercadoPago(v: IntegracaoMercadoPago): EstadoConexao {
   switch (v.estado) {
     case "ativa": return "conectado";
     case "pendente": return "pendente";

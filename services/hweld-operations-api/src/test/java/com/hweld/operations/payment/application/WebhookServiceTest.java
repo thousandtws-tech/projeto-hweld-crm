@@ -29,6 +29,11 @@ import tools.jackson.databind.ObjectMapper;
 
 class WebhookServiceTest {
 
+    private static final java.util.Map<String, String> SIG =
+            java.util.Map.of("x-signature", "sig");
+    private static final java.util.Map<String, String> BAD =
+            java.util.Map.of("x-signature", "bad");
+
     private PaymentProvider provider;
     private WebhookEventRepository webhookEvents;
     private PaymentRepository payments;
@@ -71,19 +76,19 @@ class WebhookServiceTest {
     @Test
     void webhookValidoProcessaPagamento() {
         when(provider.parseWebhook("{}")).thenReturn(parsed("evt-1", PaymentStatus.CONFIRMED));
-        when(provider.verifyWebhookSignature("{}", "sig")).thenReturn(true);
+        when(provider.verifyWebhookSignature("{}", SIG)).thenReturn(true);
         when(payments.findByProviderAndExternalId("stub", "stub_1")).thenReturn(Optional.of(payment()));
 
-        assertThat(service.process("stub", "{}", "sig")).isEqualTo(WebhookService.Result.PROCESSED);
+        assertThat(service.process("stub", "{}", SIG)).isEqualTo(WebhookService.Result.PROCESSED);
         verify(paymentService).applyWebhookResult(any(), any());
     }
 
     @Test
     void assinaturaInvalidaRejeitaSemProcessar() {
         when(provider.parseWebhook("{}")).thenReturn(parsed("evt-2", PaymentStatus.CONFIRMED));
-        when(provider.verifyWebhookSignature("{}", "bad")).thenReturn(false);
+        when(provider.verifyWebhookSignature("{}", BAD)).thenReturn(false);
 
-        assertThat(service.process("stub", "{}", "bad")).isEqualTo(WebhookService.Result.REJECTED);
+        assertThat(service.process("stub", "{}", BAD)).isEqualTo(WebhookService.Result.REJECTED);
         verify(paymentService, never()).applyWebhookResult(any(), any());
         verify(dedupe, never()).record(any());
         verify(auditLogs).save(any());
@@ -92,20 +97,20 @@ class WebhookServiceTest {
     @Test
     void eventoDuplicadoEhNoop() {
         when(provider.parseWebhook("{}")).thenReturn(parsed("evt-1", PaymentStatus.CONFIRMED));
-        when(provider.verifyWebhookSignature("{}", "sig")).thenReturn(true);
+        when(provider.verifyWebhookSignature("{}", SIG)).thenReturn(true);
         doThrow(new DataIntegrityViolationException("dup")).when(dedupe).record(any());
 
-        assertThat(service.process("stub", "{}", "sig")).isEqualTo(WebhookService.Result.DUPLICATE);
+        assertThat(service.process("stub", "{}", SIG)).isEqualTo(WebhookService.Result.DUPLICATE);
         verify(paymentService, never()).applyWebhookResult(any(), any());
     }
 
     @Test
     void externalIdDesconhecidoIgnoraSemErro() {
         when(provider.parseWebhook("{}")).thenReturn(parsed("evt-3", PaymentStatus.CONFIRMED));
-        when(provider.verifyWebhookSignature("{}", "sig")).thenReturn(true);
+        when(provider.verifyWebhookSignature("{}", SIG)).thenReturn(true);
         when(payments.findByProviderAndExternalId("stub", "stub_1")).thenReturn(Optional.empty());
 
-        assertThat(service.process("stub", "{}", "sig")).isEqualTo(WebhookService.Result.IGNORED);
+        assertThat(service.process("stub", "{}", SIG)).isEqualTo(WebhookService.Result.IGNORED);
         verify(paymentService, never()).applyWebhookResult(any(), any());
     }
 
@@ -117,7 +122,7 @@ class WebhookServiceTest {
                 new PaymentProperties("stub", Map.of(), 30, false)),
                 webhookEvents, payments, paymentService, auditLogs, dedupe);
         org.assertj.core.api.Assertions.assertThatThrownBy(
-                () -> svc.process("inexistente", "{}", "sig"))
+                () -> svc.process("inexistente", "{}", SIG))
                 .isInstanceOf(ApiException.class);
     }
 }

@@ -70,7 +70,7 @@ class PagBankProviderTest {
         String body = webhook("ORDE_1", "CHAR_1", "PAID");
         when(client.consultarCobranca("CHAR_1")).thenReturn(charge("ORDE_1", "PAID"));
 
-        assertTrue(provider.verifyWebhookSignature(body, null));
+        assertTrue(provider.verifyWebhookSignature(body, java.util.Map.of()));
     }
 
     @Test
@@ -79,7 +79,7 @@ class PagBankProviderTest {
         String body = webhook("ORDE_1", "CHAR_1", "PAID");
         when(client.consultarCobranca("CHAR_1")).thenReturn(charge("ORDE_1", "WAITING"));
 
-        assertFalse(provider.verifyWebhookSignature(body, null));
+        assertFalse(provider.verifyWebhookSignature(body, java.util.Map.of()));
     }
 
     @Test
@@ -88,7 +88,7 @@ class PagBankProviderTest {
         String body = webhook("ORDE_999", "CHAR_1", "PAID");
         when(client.consultarCobranca("CHAR_1")).thenReturn(charge("ORDE_1", "PAID"));
 
-        assertFalse(provider.verifyWebhookSignature(body, null));
+        assertFalse(provider.verifyWebhookSignature(body, java.util.Map.of()));
     }
 
     @Test
@@ -97,12 +97,12 @@ class PagBankProviderTest {
         when(client.consultarCobranca("CHAR_1"))
                 .thenThrow(PagBankException.transporte("timeout"));
 
-        assertFalse(provider.verifyWebhookSignature(body, null));
+        assertFalse(provider.verifyWebhookSignature(body, java.util.Map.of()));
     }
 
     @Test
     void fetchBackRejeitaCorpoSemCharges() {
-        assertFalse(provider.verifyWebhookSignature("{\"id\":\"ORDE_1\"}", null));
+        assertFalse(provider.verifyWebhookSignature("{\"id\":\"ORDE_1\"}", java.util.Map.of()));
     }
 
     // ── cartão via checkout hospedado ───────────────────────────────────────
@@ -174,7 +174,7 @@ class PagBankProviderTest {
         real.put("status", "EXPIRED");
         when(client.consultarCheckout("CHEC_A1B2")).thenReturn(real);
 
-        assertTrue(provider.verifyWebhookSignature(body, null));
+        assertTrue(provider.verifyWebhookSignature(body, java.util.Map.of()));
     }
 
     @Test
@@ -187,7 +187,7 @@ class PagBankProviderTest {
         real.put("status", "ACTIVE"); // ainda ativo no PagBank — evento forjado
         when(client.consultarCheckout("CHEC_A1B2")).thenReturn(real);
 
-        assertFalse(provider.verifyWebhookSignature(body, null));
+        assertFalse(provider.verifyWebhookSignature(body, java.util.Map.of()));
     }
 
     @Test

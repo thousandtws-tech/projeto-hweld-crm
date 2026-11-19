@@ -35,11 +35,14 @@ public class WebhookController {
     public ResponseEntity<Map<String, Object>> receive(
             @PathVariable String provider,
             @RequestBody String rawBody,
-            @RequestHeader(value = "X-Signature", required = false) String signature,
-            @RequestHeader(value = "X-Hub-Signature", required = false) String hubSignature) {
+            @RequestHeader Map<String, String> requestHeaders) {
 
-        String sig = signature != null ? signature : hubSignature;
-        WebhookService.Result result = service.process(provider, rawBody, sig);
+        // Provedores usam headers diferentes (x-signature/x-request-id do
+        // Mercado Pago, X-Signature do stub, HMAC próprios). Normaliza para
+        // mapa case-insensitive — o adapter lê o que precisar.
+        Map<String, String> headers = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        headers.putAll(requestHeaders);
+        WebhookService.Result result = service.process(provider, rawBody, headers);
         return switch (result) {
             case PROCESSED -> ResponseEntity.ok(Map.of("aceito", true, "resultado", "processed"));
             case DUPLICATE -> ResponseEntity.ok(Map.of("aceito", true, "duplicado", true));

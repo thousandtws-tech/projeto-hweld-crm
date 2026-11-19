@@ -12,6 +12,7 @@ import {
   categoriaRotulo,
   estadoInfobip,
   estadoMelhorEnvio,
+  estadoMercadoPago,
   estadoPagBank,
   estadoSpedy,
   estadoZapi,
@@ -22,6 +23,7 @@ import {
 import type {
   IntegracaoInfobip,
   IntegracaoMelhorEnvio,
+  IntegracaoMercadoPago,
   IntegracaoPagBank,
   IntegracaoSpedy,
   IntegracaoZapi,
@@ -29,6 +31,7 @@ import type {
 import {
   integracoesService,
   melhorEnvioService,
+  mercadoPagoService,
   pagBankService,
   spedyService,
   zapiService,
@@ -77,12 +80,13 @@ function IntegracoesCatalogoPage() {
 
   const carregar = useCallback(async () => {
     setCarregando(true);
-    const [inf, zap, spe, me, pb] = await Promise.allSettled([
+    const [inf, zap, spe, me, pb, mp] = await Promise.allSettled([
       comTimeout(integracoesService.infobip()),
       comTimeout(zapiService.view()),
       comTimeout(spedyService.view()),
       comTimeout(melhorEnvioService.view()),
       comTimeout(pagBankService.view()),
+      comTimeout(mercadoPagoService.view()),
     ]);
     const prox: EstadoPorSlug = {};
     const errs: string[] = [];
@@ -115,6 +119,12 @@ function IntegracoesCatalogoPage() {
     } else {
       prox.pagbank = "falha";
       errs.push("PagBank");
+    }
+    if (mp.status === "fulfilled") {
+      prox["mercado-pago"] = estadoMercadoPago(mp.value as IntegracaoMercadoPago);
+    } else {
+      prox["mercado-pago"] = "falha";
+      errs.push("Mercado Pago");
     }
     // Nunca implementadas no backend → sempre "em_breve".
     for (const item of CATALOGO) {

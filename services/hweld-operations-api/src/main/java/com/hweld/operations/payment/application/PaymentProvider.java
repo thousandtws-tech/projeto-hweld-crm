@@ -34,10 +34,13 @@ public interface PaymentProvider {
     void refundCharge(String externalId, Money amount);
 
     /**
-     * Valida a assinatura do webhook (HMAC sobre o corpo cru).
-     * Chamada ANTES de parsear/processar o payload.
+     * Valida a autenticidade do webhook ANTES de parsear/processar.
+     * `headers` traz os headers da requisição normalizados
+     * (case-insensitive): HMAC do provedor — ex.: `x-signature` do
+     * Mercado Pago — ou o que o adapter precisar (PagBank valida por
+     * fetch-back e ignora headers).
      */
-    boolean verifyWebhookSignature(String rawBody, String signatureHeader);
+    boolean verifyWebhookSignature(String rawBody, Map<String, String> headers);
 
     /** Extrai o evento normalizado do corpo do webhook. */
     ParsedWebhook parseWebhook(String rawBody);

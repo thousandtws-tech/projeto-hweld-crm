@@ -28,14 +28,23 @@ public class ProviderRegistry {
     }
 
     /**
-     * `auto` resolve para o PSP real credenciado pelo cliente (PagBank) ou,
-     * na ausência de credenciais, para o stub — mesmo padrão fiscal/logística.
+     * `auto` resolve para o PSP real credenciado pelo cliente — prioridade
+     * explícita e determinística (HashMap não garante ordem com 2+ PSPs):
+     * PagBank primeiro, depois Mercado Pago, novos PSPs ao final. Sem
+     * credenciais, stub de fallback — mesmo padrão fiscal/logística.
      */
+    private static final List<String> AUTO_PRIORITY = List.of("pagbank", "mercadopago");
+
     public PaymentProvider defaultProvider() {
         String configured = props.defaultProvider();
         if ("auto".equalsIgnoreCase(configured)) {
+            for (String name : AUTO_PRIORITY) {
+                PaymentProvider p = providers.get(name);
+                if (p != null && p.configured()) return p;
+            }
             return providers.values().stream()
-                    .filter(p -> !"stub".equals(p.name()) && p.configured())
+                    .filter(p -> !"stub".equals(p.name())
+                            && !AUTO_PRIORITY.contains(p.name()) && p.configured())
                     .findFirst()
                     .orElseGet(() -> get("stub"));
         }

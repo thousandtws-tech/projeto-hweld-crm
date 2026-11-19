@@ -27,6 +27,7 @@ public class IntegrationSettings {
     public static final String SPEDY_FISCAL = "spedy-fiscal";
     public static final String MELHOR_ENVIO_FRETE = "melhorenvio-frete";
     public static final String PAGBANK_PAGAMENTOS = "pagbank-pagamentos";
+    public static final String MERCADOPAGO_PAGAMENTOS = "mercadopago-pagamentos";
 
     @Id
     @Column(length = 40)
@@ -216,6 +217,38 @@ public class IntegrationSettings {
      * cotações, `config` guarda cep_origem/serviços permitidos.
      */
     public void atualizarMelhorEnvio(String nomeConta, boolean enabled, String baseUrl,
+            String externalId, boolean envioPausado, Map<String, Object> config,
+            String updatedBy) {
+        this.nomeConta = nomeConta == null || nomeConta.isBlank() ? null : nomeConta.trim();
+        this.enabled = enabled;
+        this.baseUrl = normalizeBaseUrl(baseUrl);
+        this.externalId = externalId == null || externalId.isBlank() ? null : externalId.trim();
+        this.envioPausado = envioPausado;
+        this.config = config == null ? Map.of() : Map.copyOf(config);
+        this.updatedBy = updatedBy;
+        this.updatedAt = Instant.now();
+    }
+
+    /**
+     * Credenciais mínimas para o adapter Mercado Pago: Access Token +
+     * `config.ambiente` (`teste`|`producao` — define init_point do checkout
+     * e valida o prefixo do token TEST-/APP_USR-). `webhookSecretEnc`
+     * guarda o segredo de assinatura gerado no painel MP por URL de webhook.
+     */
+    public boolean credenciaisMercadoPagoCompletas() {
+        Object ambiente = config != null ? config.get("ambiente") : null;
+        return apiKeyEnc != null && !apiKeyEnc.isBlank()
+                && ambiente instanceof String a && !a.isBlank();
+    }
+
+    /**
+     * Update da linha Mercado Pago — `baseUrl` fixa em
+     * `https://api.mercadopago.com` (API única; teste/produção separam-se
+     * pelo token TEST-/APP_USR- e por `config.ambiente`), `externalId` o
+     * id/nickname da conta (`GET /users/me`), `config` guarda
+     * `ambiente`/`parcelas_max`, `envioPausado` pausa cobranças novas.
+     */
+    public void atualizarMercadoPago(String nomeConta, boolean enabled, String baseUrl,
             String externalId, boolean envioPausado, Map<String, Object> config,
             String updatedBy) {
         this.nomeConta = nomeConta == null || nomeConta.isBlank() ? null : nomeConta.trim();

@@ -114,16 +114,18 @@ hweld:
     # Lease do claim SKIP LOCKED — worker morto devolve o evento à fila após o lease.
     claim-lease-ms: ${OUTBOX_CLAIM_LEASE_MS:60000}
   payment:
-    # auto = PSP real credenciado pelo cliente (PagBank) → stub de fallback.
+    # auto = PSP real credenciado pelo cliente (PagBank → Mercado Pago) → stub.
     default-provider: ${PAYMENT_PROVIDER:auto}
     webhook-secrets:
       # Vazio = nenhum webhook stub passa na validação de assinatura (fail-safe).
       stub: ${PAYMENT_STUB_WEBHOOK_SECRET:}
-      # mercadopago: ${PAYMENT_MP_WEBHOOK_SECRET:}
+      # Mercado Pago usa segredo próprio em integration_settings (painel), não env.
       # asaas: ${PAYMENT_ASAAS_WEBHOOK_SECRET:}
     pix-expiration-minutes: ${PAYMENT_PIX_EXPIRATION_MINUTES:30}
     pagbank:
       timeout-ms: ${PAGBANK_TIMEOUT_MS:10000}
+    mercadopago:
+      timeout-ms: ${MERCADOPAGO_TIMEOUT_MS:10000}
     # Dev only: aceita webhook do provider 'stub' sem assinatura. Sempre false fora de dev/test.
     allow-unsigned-stub-webhook: ${PAYMENT_STUB_ALLOW_UNSIGNED:false}
   fiscal:

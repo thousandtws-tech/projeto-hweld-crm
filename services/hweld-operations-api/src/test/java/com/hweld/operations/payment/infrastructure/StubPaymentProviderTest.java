@@ -48,20 +48,20 @@ class StubPaymentProviderTest {
     void assinaturaCorretaValida() throws Exception {
         var p = provider(Map.of("stub", SECRET), false);
         String body = "{\"eventId\":\"e1\",\"externalId\":\"stub_1\",\"status\":\"CONFIRMED\"}";
-        assertThat(p.verifyWebhookSignature(body, "sha256=" + hmac(body, SECRET))).isTrue();
-        assertThat(p.verifyWebhookSignature(body, hmac(body, SECRET))).isTrue();
+        assertThat(p.verifyWebhookSignature(body, java.util.Map.of("x-signature", "sha256=" + hmac(body, SECRET)))).isTrue();
+        assertThat(p.verifyWebhookSignature(body, java.util.Map.of("x-signature", hmac(body, SECRET)))).isTrue();
     }
 
     @Test
     void assinaturaErradaRejeita() {
         var p = provider(Map.of("stub", SECRET), false);
-        assertThat(p.verifyWebhookSignature("{}", "sha256=deadbeef")).isFalse();
+        assertThat(p.verifyWebhookSignature("{}", java.util.Map.of("x-signature", "sha256=deadbeef"))).isFalse();
     }
 
     @Test
     void semAssinaturaRejeitaEmModoEstritoEPermiteEmDev() {
-        assertThat(provider(Map.of(), false).verifyWebhookSignature("{}", null)).isFalse();
-        assertThat(provider(Map.of(), true).verifyWebhookSignature("{}", null)).isTrue();
+        assertThat(provider(Map.of(), false).verifyWebhookSignature("{}", java.util.Map.of())).isFalse();
+        assertThat(provider(Map.of(), true).verifyWebhookSignature("{}", java.util.Map.of())).isTrue();
     }
 
     @Test

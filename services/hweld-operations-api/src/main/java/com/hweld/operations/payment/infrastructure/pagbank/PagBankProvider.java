@@ -170,7 +170,7 @@ public class PagBankProvider implements PaymentProvider {
      * desconhecido e desatualizado.
      */
     @Override
-    public boolean verifyWebhookSignature(String rawBody, String signatureHeader) {
+    public boolean verifyWebhookSignature(String rawBody, Map<String, String> headers) {
         try {
             JsonNode payload = mapper.readTree(rawBody);
             String id = texto(payload, "id");

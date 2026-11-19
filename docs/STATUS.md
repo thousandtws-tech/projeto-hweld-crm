@@ -54,10 +54,15 @@ integrações. Atualizado em 2026-11-13.
   QR copia-e-cola; Checkout API — cartão via link hospedado CHEC_→PAY com
   correlação `reference_id`=idemKey e relink CHEC→CHAR no 1º evento;
   webhook fetch-back dual ORDE/CHEC, cancel/estorno `POST /charges/{id}/cancel`
-  + `/checkouts/{id}/inactivate`), `StubPaymentProvider`, `PAYMENT_PROVIDER=auto`,
-  credenciais do cliente cifradas via Integrações → PagBank, dedupe
-  `orderId|chargeId|status`/`checkoutId|status`, cancel/refund/reconcile.
-  Boleto, cartão transparente e recorrência = fases seguintes.
+  + `/checkouts/{id}/inactivate`), `MercadoPagoProvider` (`/v1/payments` —
+  Pix `qr_code`+`qr_code_base64`; `/checkout/preferences` — cartão via
+  init_point com relink preference→payment no 1º evento; webhook HMAC-SHA256
+  oficial `id:…;request-id:…;ts:…;` ±300s + fetch-back `/v1/payments`,
+  cancel `PUT status=cancelled`, estorno `/refunds` em reais),
+  `StubPaymentProvider`, `PAYMENT_PROVIDER=auto` (prioridade PagBank →
+  Mercado Pago → stub), credenciais do cliente cifradas (token +
+  segredo de webhook), dedupe `notif-<id>`, cancel/refund/reconcile.
+  Boleto, cartão transparente e recorrência = fases seguintes (ambos PSPs).
 - Billing: `billing_invoices` (faturas/recebíveis)
 - Fiscal: `SpedyProvider` (API v1 real), `SpedyNFeMapper`, máquina de estados,
   reconciliação de docs não-terminais, webhooks Spedy (Standard Webhooks
@@ -119,8 +124,9 @@ integrações. Atualizado em 2026-11-13.
 
 ## Pendente — integrações (gaps de produção)
 
-1. **PSP em produção** — PagBank implementado (Pix + cartão via checkout
-   hospedado); falta o cliente cadastrar o token em Integrações → PagBank
+1. **PSP em produção** — PagBank e Mercado Pago implementados (Pix +
+   cartão via checkout hospedado/Checkout Pro); falta o cliente cadastrar
+   token + segredo de webhook em Integrações → PagBank / Mercado Pago
    (produção) e homologar. Boleto, cartão transparente e recorrência =
    fases seguintes.
 2. **E-mail transacional** — `EMAIL_PROVIDER=log`. Falta SMTP real

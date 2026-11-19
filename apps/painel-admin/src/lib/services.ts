@@ -521,6 +521,34 @@ export const pagBankService = {
       `integracoes/pagbank/transacoes?pagina=${pagina}&tamanho=${tamanho}`),
 };
 
+export const mercadoPagoService = {
+  view: () =>
+    apiOps.getRecurso<import("./models").IntegracaoMercadoPago>("integracoes/mercadopago"),
+  salvar: (b: {
+    versao?: number;
+    nome_conta?: string;
+    config?: {
+      ambiente?: string;
+      parcelas_max?: number;
+      cobrancas_pausadas?: boolean;
+    };
+    segredos?: { token?: string; webhook_secret?: string };
+  }) => apiOps.putRecurso<import("./models").IntegracaoMercadoPago>(
+    "integracoes/mercadopago", b),
+  habilitar: (habilitado: boolean) =>
+    apiOps.post<import("./models").IntegracaoMercadoPago>(
+      "integracoes/mercadopago/habilitacao", { habilitado }),
+  testarConexao: () =>
+    apiOps.post<{ verificacao_status: string; mensagem?: string }>(
+      "integracoes/mercadopago/testar-conexao", {}),
+  eventos: () =>
+    apiOps.listaArray<import("./models").EventoMercadoPago>(
+      "integracoes/mercadopago/eventos"),
+  transacoes: (pagina = 0, tamanho = 20) =>
+    apiOps.getRecurso<import("./models").PaginaTransacoesMercadoPago>(
+      `integracoes/mercadopago/transacoes?pagina=${pagina}&tamanho=${tamanho}`),
+};
+
 export const logisticaService = {
   /** Cotação por pedido — dados autoritatídicos do core-api. */
   cotarPedido: (pedidoId: number, servicos?: string) =>

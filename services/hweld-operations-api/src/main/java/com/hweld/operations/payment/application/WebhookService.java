@@ -48,7 +48,8 @@ public class WebhookService {
     public enum Result { PROCESSED, DUPLICATE, REJECTED, IGNORED }
 
     @Transactional
-    public Result process(String providerName, String rawBody, String signatureHeader) {
+    public Result process(String providerName, String rawBody,
+            java.util.Map<String, String> headers) {
         PaymentProvider provider = providers.get(providerName);
 
         PaymentProvider.ParsedWebhook parsed;
@@ -61,7 +62,7 @@ public class WebhookService {
         // Assinatura ANTES do dedupe: um request inválido não pode queimar
         // o eventId — se o PSP reenviar o mesmo evento assinado, ele ainda
         // será processado (e não respondido como DUPLICATE).
-        boolean signatureValid = provider.verifyWebhookSignature(rawBody, signatureHeader);
+        boolean signatureValid = provider.verifyWebhookSignature(rawBody, headers);
         if (!signatureValid) {
             auditLogs.save(new AuditLogEntity("service", providerName, "webhook.invalid_signature",
                     "webhook", parsed.eventId(), Map.of("payload", "suprimido"), null));

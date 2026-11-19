@@ -104,8 +104,12 @@ public class StubPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public boolean verifyWebhookSignature(String rawBody, String signatureHeader) {
+    public boolean verifyWebhookSignature(String rawBody, Map<String, String> headers) {
         String secret = props.webhookSecret(NAME);
+        String signatureHeader = headers != null
+                ? java.util.Optional.ofNullable(headers.get("x-signature"))
+                        .orElse(headers.get("x-hub-signature"))
+                : null;
         if (signatureHeader == null || signatureHeader.isBlank()) {
             return props.allowUnsignedStubWebhook();
         }
