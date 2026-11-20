@@ -629,177 +629,16 @@ pub struct SeloCms {
 
 #[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct CmsLoja {
+    #[serde(default)]
     pub marcas: Vec<MarcaCms>,
+    #[serde(default)]
     pub slides: Vec<SlideBannerCms>,
+    #[serde(default)]
     pub trio_banners: Vec<CardTrioCms>,
+    #[serde(default)]
     pub duo_banners: Vec<CardDuoCms>,
     #[serde(default)]
     pub selos: Vec<SeloCms>,
-}
-
-fn cms_padrao() -> CmsLoja {
-    CmsLoja {
-        marcas: vec![
-            MarcaCms { id: "esab".into(), nome: "ESAB".into(), logo: "assets/brands/esab.svg".into(), ativa: true },
-            MarcaCms { id: "miller".into(), nome: "Miller Electric".into(), logo: "assets/brands/miller.svg".into(), ativa: true },
-            MarcaCms { id: "lincoln".into(), nome: "Lincoln Electric".into(), logo: "assets/brands/lincoln-electric.svg".into(), ativa: true },
-            MarcaCms { id: "boxer".into(), nome: "Boxer Soldas".into(), logo: "assets/brands/boxer.svg".into(), ativa: true },
-            MarcaCms { id: "balmer".into(), nome: "Balmer".into(), logo: "assets/brands/balmer.svg".into(), ativa: true },
-            MarcaCms { id: "bambozzi".into(), nome: "Bambozzi".into(), logo: "assets/brands/bambozzi.svg".into(), ativa: true },
-            MarcaCms { id: "norton".into(), nome: "Norton Abrasivos".into(), logo: "assets/brands/norton.svg".into(), ativa: true },
-            MarcaCms { id: "carbografite".into(), nome: "Carbografite".into(), logo: "assets/brands/carbografite.svg".into(), ativa: true },
-            MarcaCms { id: "black-decker".into(), nome: "BLACK+DECKER".into(), logo: "assets/brands/black-decker.png".into(), ativa: true },
-            MarcaCms { id: "garthen".into(), nome: "Garthen".into(), logo: "assets/brands/garthen.png".into(), ativa: true },
-            MarcaCms { id: "motomil".into(), nome: "MOTOMIL".into(), logo: "assets/brands/motomil.png".into(), ativa: true },
-            MarcaCms { id: "pressure".into(), nome: "Pressure".into(), logo: "assets/brands/pressure.png".into(), ativa: true },
-            MarcaCms { id: "paletrans".into(), nome: "Paletrans".into(), logo: "assets/brands/paletrans.png".into(), ativa: true },
-        ],
-        slides: vec![
-            SlideBannerCms {
-                id: "ferramentas-eletricas".into(),
-                badge: "".into(),
-                title: "".into(),
-                subtitle: "".into(),
-                price: "".into(),
-                button_text: "".into(),
-                button_link: "/busca".into(),
-                bg_image: "assets/header/banner/icons/fundo.1.png".into(),
-                image_mobile: "assets/header/banner/icons/fundo.1-mobile.png".into(),
-                product_image: "".into(),
-                classe: "slide-ferramentas".into(),
-                ativo: true,
-            },
-            SlideBannerCms {
-                id: "soldagem".into(),
-                badge: "LINHA DE SOLDAGEM".into(),
-                title: "Equipamentos de Soldagem".into(),
-                subtitle: "Soluções e equipamentos para trabalhos de soldagem com qualidade e precisão.".into(),
-                price: "".into(),
-                button_text: "Ver produtos".into(),
-                button_link: "/busca".into(),
-                bg_image: "assets/header/banner/icons/fundo.2.png".into(),
-                image_mobile: "assets/header/banner/icons/fundo.2-mobile.png".into(),
-                product_image: "assets/header/banner/icons/soldagem-produto.png".into(),
-                classe: "slide-soldagem".into(),
-                ativo: true,
-            },
-        ],
-        trio_banners: vec![
-            CardTrioCms {
-                id: "trio-1".into(),
-                badge: "ATÉ 35% OFF".into(),
-                titulo: "Inversoras Industriais IGBT".into(),
-                descricao: "Arc Force, Hot Start e bivolt automático para alta produtividade em serralheria.".into(),
-                preco_destaque: "A partir de R$ 689,90".into(),
-                botao_texto: "Ver Ofertas".into(),
-                botao_link: "/busca?q=inversora".into(),
-                imagem_url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80".into(),
-                cor: "orange".into(),
-                ativo: true,
-            },
-            CardTrioCms {
-                id: "trio-2".into(),
-                badge: "PROTEÇÃO CERTIFICADA".into(),
-                titulo: "Máscaras de Auto-Escurecimento".into(),
-                descricao: "Filtro True Color DIN 9-13, 4 sensores e máxima ergonomia com CA ativo.".into(),
-                preco_destaque: "Parcele em até 10x sem juros".into(),
-                botao_texto: "Conferir Linha".into(),
-                botao_link: "/busca?q=mascara".into(),
-                imagem_url: "https://images.unsplash.com/photo-1508873535684-277a3cbcc4e8?auto=format&fit=crop&w=800&q=80".into(),
-                cor: "cyan".into(),
-                ativo: true,
-            },
-            CardTrioCms {
-                id: "trio-3".into(),
-                badge: "FATURAMENTO B2B".into(),
-                titulo: "Arames MIG & Eletrodos E7018".into(),
-                descricao: "Caixas fechadas e bobinas de 15kg com desconto progressivo para CNPJ.".into(),
-                preco_destaque: "Preço direto de distribuidora".into(),
-                botao_texto: "Comprar Lote".into(),
-                botao_link: "/busca?q=eletrodo".into(),
-                imagem_url: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80".into(),
-                cor: "blue".into(),
-                ativo: true,
-            },
-        ],
-        duo_banners: vec![
-            CardDuoCms {
-                id: "duo-1".into(),
-                tag: "LINHA CORTE CNC".into(),
-                titulo: "Sistemas de Corte Plasma de Alta Definição".into(),
-                descricao: "Precisão milimétrica em aço carbono, inox e alumínio. Corte rápido com tochas de alta durabilidade e consumíveis de reposição imediata.".into(),
-                destaque: "Corte até 32mm de espessura".into(),
-                botao_texto: "Ver Máquinas Plasma".into(),
-                botao_link: "/busca?q=plasma".into(),
-                imagem_url: "https://images.unsplash.com/photo-1585776245991-cf89dd7fc73a?auto=format&fit=crop&w=900&q=80".into(),
-                estilo: "plasma".into(),
-                ativo: true,
-            },
-            CardDuoCms {
-                id: "duo-2".into(),
-                tag: "COMBOS PROFISSIONAIS".into(),
-                titulo: "Kits Completos para Serralheria & Oficinas".into(),
-                descricao: "Leve Máquina Inversora + Máscara Automática + Tocha + Eletrodos com economia garantida de combo e frete unificado para sua empresa.".into(),
-                destaque: "Economia de até R$ 420,00 no combo".into(),
-                botao_texto: "Montar Meu Kit".into(),
-                botao_link: "/busca?q=kit".into(),
-                imagem_url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=80".into(),
-                estilo: "combo".into(),
-                ativo: true,
-            },
-        ],
-        selos: selos_padrao(),
-    }
-}
-
-fn selos_padrao() -> Vec<SeloCms> {
-    vec![
-        SeloCms {
-            id: "entrega-brasil".into(),
-            titulo: "Entrega em Todo o Brasil".into(),
-            descricao: "".into(),
-            link: "/conta/pedidos".into(),
-            icone_url: "assets/header/icons/icon-map.png".into(),
-            externo: false,
-            ativo: true,
-        },
-        SeloCms {
-            id: "faturamento-direto".into(),
-            titulo: "Faturamento Direto".into(),
-            descricao: "".into(),
-            link: "/conta".into(),
-            icone_url: "assets/header/icons/icon-faturamento-direto.png".into(),
-            externo: false,
-            ativo: true,
-        },
-        SeloCms {
-            id: "cotacao-b2b".into(),
-            titulo: "Cotação B2B em 30 min".into(),
-            descricao: "Preço especial por lote e atacado".into(),
-            link: "/busca".into(),
-            icone_url: "assets/header/icons/icon-cotacao.png".into(),
-            externo: false,
-            ativo: true,
-        },
-        SeloCms {
-            id: "portal-cnpj".into(),
-            titulo: "Portal do Cliente CNPJ".into(),
-            descricao: "2ª via, faturas e suporte de fábrica".into(),
-            link: "/conta".into(),
-            icone_url: "assets/header/icons/icon-usuario.png".into(),
-            externo: false,
-            ativo: true,
-        },
-        SeloCms {
-            id: "instagram".into(),
-            titulo: "Instagram Oficial".into(),
-            descricao: "Dicas técnicas e novidades @hweld".into(),
-            link: "https://instagram.com".into(),
-            icone_url: "assets/header/icons/icon-instagram.png".into(),
-            externo: true,
-            ativo: true,
-        },
-    ]
 }
 
 static CMS_CACHE: std::sync::RwLock<Option<(std::time::Instant, std::sync::Arc<CmsLoja>)>> =
@@ -833,16 +672,19 @@ async fn carregar_cms_remoto(
     storage: &dyn hweld_application::ports::armazenamento::ArmazenamentoObjetos,
 ) -> CmsLoja {
     if let Ok(bytes) = storage.ler(CMS_CHAVE).await {
-        if let Ok(mut cms) = serde_json::from_slice::<CmsLoja>(&bytes) {
-            if cms.selos.is_empty() {
-                cms.selos = selos_padrao();
-            }
+        if let Ok(cms) = serde_json::from_slice::<CmsLoja>(&bytes) {
             return cms;
         }
     }
-    let padrao = cms_padrao();
-    let _ = salvar_cms(storage, &padrao).await;
-    padrao
+    // Sem arquivo no storage → CMS vazio. O conteúdo nasce só do que o
+    // operador salvar pelo painel — nenhum template embutido no binário.
+    CmsLoja {
+        marcas: Vec::new(),
+        slides: Vec::new(),
+        trio_banners: Vec::new(),
+        duo_banners: Vec::new(),
+        selos: Vec::new(),
+    }
 }
 
 async fn salvar_cms(
