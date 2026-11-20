@@ -1,12 +1,22 @@
 <div class="sucesso-card">
   <div class="check-circulo" aria-hidden="true">
-    <span class="material-symbols-outlined">check</span>
+    <span class="material-symbols-outlined">
+      {{ pagamento()?.status === 'FAILED' ? 'schedule' : 'check' }}
+    </span>
   </div>
-  <h1>Pedido {{ numero() }} Confirmado</h1>
+  <h1>
+    Pedido {{ numero() }}
+    {{ pagamento()?.status === 'FAILED' ? 'recebido — aguardando pagamento' : 'confirmado' }}
+  </h1>
   <hw-status-chip [status]="statusPedido()" />
   <p class="sucesso-msg">
-    Seu pedido foi registrado no sistema comercial da HWeld. Nossa equipe iniciará a conferência e o
-    faturamento.
+    @if (pagamento()?.status === 'FAILED') {
+      Seu pedido foi registrado, mas o pagamento não foi concluído. Tente outro cartão abaixo ou
+      acompanhe o pedido para pagar depois.
+    } @else {
+      Seu pedido foi registrado no sistema comercial da HWeld. Nossa equipe iniciará a conferência e o
+      faturamento.
+    }
   </p>
 
   <!-- Instrumento de pagamento — Pix copia-e-cola ou link hospedado do cartão. -->
